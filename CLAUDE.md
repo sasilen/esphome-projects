@@ -74,6 +74,18 @@ eikä sitä säilytetä täällä.
 — sarjanumeroita, tarkkoja osoitteita, tilinumeroita. Vesimittarin sarjanumero on
 korvattu paikanpitäjällä `12345678` tästä syystä.
 
+Sama koskee **valokuvia, joissa tunnistetieto on metadatassa eikä kuvassa**.
+Puhelimen ottama kuva sisältää GPS-koordinaatit muutaman metrin tarkkuudella.
+Aja jokainen kuva tämän läpi ennen committia:
+
+```sh
+convert kuva.jpg -auto-orient -strip -resize 1600x -quality 82 projekti/nimi.jpg
+```
+
+`-strip` poistaa metadatan, `-auto-orient` pitää kuvan oikein päin sitä ennen.
+Tarkista jälkikäteen: `identify -verbose nimi.jpg | grep -i gps` ei saa tulostaa
+mitään.
+
 Tekijätieto on `Sami <4187961+sasilen@users.noreply.github.com>`. Älä ehdota
 työsähköpostia äläkä koneen generoimaa osoitetta.
 
