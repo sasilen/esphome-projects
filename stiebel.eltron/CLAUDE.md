@@ -945,6 +945,41 @@ addressed to it will carry `0xD2` in byte 0** — 0x680 shifted right by three i
 0xD0, plus command 2. That is the pattern to filter on once the node starts
 asking questions of its own.
 
+### The addressing rule, confirmed five times over
+
+[valexi7's fork](https://github.com/valexi7/ha-stiebel-control) carries a
+`CanMembers` table that includes sub-addressed members, which is the case this
+project actually needs:
+
+| Member | Address | Read id |
+|---|---|---|
+| `PUMP` | 0x180 | `{0x31, 0x00}` |
+| `FE7X` | 0x301 | `{0x61, 0x01}` |
+| `FEK` | 0x302 | `{0x61, 0x02}` |
+| `MANAGER` | 0x480 | `{0x91, 0x00}` |
+| `FE7` | 0x602 | `{0xC1, 0x02}` |
+
+Every one is the receiver shifted right by three in byte 0 with the command in
+the low nibble, and **the low bits of the address in byte 1** — 0x301 and 0x302
+share `0x61` and differ only in byte 1, exactly as 0x601 and 0x600 would.
+
+**That validates the captured write byte for byte.** Writing 0x010E to 0x601
+means `{0xC0, 0x01}`, which is precisely what the panel sent and what this file
+recorded as `C0 01 FA 01 0E 00 18`. The phase 2 frame is now confirmed against
+both a live capture and a working implementation.
+
+**One field in that table is stale — do not copy it.** `ESPCLIENT` sits at 0x680
+but its `ConfirmationID` is `{0xE2, 0x00}`, and 0xE0 shifted left by three is
+**0x700**, not 0x680. It is the value from bullitt186's archived version, where
+the client really was at 0x700, left behind when the address changed. For a
+client at 0x680 the confirmation byte is `0xD2`.
+
+**And the 0x600 block has two different names in two sources.** The WPF 10 list
+calls 0x601 `Mischermodul`; this table calls 0x602 `FE7`, a room control unit.
+Both fit what 0x601 does here — it holds the circuit's slope and room setpoints,
+which is a job either device performs. The name does not change the address or
+the element, so phase 2 is unaffected.
+
 **0x100 is the open question.** It is not in the published address table, yet it
 is the third busiest node here. Its behaviour — polling the boiler for
 temperatures and asking the manager for the date and time — is exactly what a
