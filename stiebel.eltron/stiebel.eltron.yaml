@@ -200,13 +200,15 @@ canbus:
                     break;
                   case 0xFE07:
                     // Published raw, and named after nothing, because it is
-                    // not identified. It reads 0 or 51-59 and jitters by one
-                    // every few seconds, so it is measured rather than
-                    // commanded — and it runs in three of the capture's four
-                    // states, including two where nothing is being heated.
-                    // Whatever it is, it is not the compressor. Watching it
-                    // in Home Assistant against the temperatures is the
-                    // cheapest way to find out what it is.
+                    // not identified. What is known: 0xFE1B commands it and
+                    // this measures the result, inverted — commanding 0xFE1B
+                    // to 100 is what stops it. It has three operating points,
+                    // 0 and about 56 and about 52 with the compressor
+                    // running, and it takes ten seconds to move between them,
+                    // coasting down through 7 and overshooting to 59 on the
+                    // way up. Something with mass in it, so a pump or a flow.
+                    // Which pump and in what units is open; see CLAUDE.md,
+                    // and check the heat pump's own display first.
                     id(elem_fe07).publish_state((int16_t) value);
                     break;
                 }

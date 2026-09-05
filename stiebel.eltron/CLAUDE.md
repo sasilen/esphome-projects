@@ -979,13 +979,77 @@ the reported value is a measurement of a commanded output rather than an echo.
 
 **0xFE07 is on in three of the four states**, including two where nothing is
 being heated and the return sits at 24 °C. It reads 0 or 51–59 and jitters by
-one every few seconds, so it is measured rather than commanded. It is also
-exactly anti-correlated with 0xFE1B across all four states, which is the thread
-to pull next. What it is not, is the compressor.
+one every few seconds, so it is measured rather than commanded. What it is not,
+is the compressor.
 
 **Neither is in the element list, so neither gets a scaling it has not earned.**
 The tenths in this file come from `et_dec_val`; an element with no entry has no
 type either, which is why 0xFE07 is published raw.
+
+## 0xFE07 and 0xFE1B: a command and its consequence
+
+0xFE1B is commanded 0 or 100 by the manager and echoed back exactly. Across the
+818 samples where both are known within 30 s of each other:
+
+| 0xFE1B | 0xFE07 zero | 0xFE07 non-zero |
+|---|---|---|
+| 0 | 1 | 467 |
+| 100 | 347 | 3 |
+
+That is 814 of 818 in agreement, and **the four exceptions are the interesting
+part**: every one of them falls inside a transition.
+
+**The transitions establish which way the arrow points.** An anti-correlation on
+its own cannot say whether 0xFE1B drives 0xFE07, the reverse, or neither. Two
+transitions in the capture are resolved finely enough to answer it, because
+0xFE07 is polled every four seconds while 0xFE1B is written every twenty:
+
+```
+17:25:52  FE1B = 100 already reported      FE07 = 53
+17:25:59                                   FE07 = 7
+17:26:04                                   FE07 = 0
+```
+
+```
+17:42:32  FE1B = 100                       FE07 = 0
+17:42:34  FE1B commanded 0
+17:42:39                                   FE07 = 59
+17:42:44                                   FE07 = 56      settles at 56-57
+```
+
+0xFE1B changes first and 0xFE07 follows, taking about ten seconds each way. It
+does not switch: it **coasts down through 7 to 0, and starts with an overshoot
+to 59 before settling.** A computed flag does neither. This is something with
+mass in it, measured while it spins up and down.
+
+The third transition, at 16:39, orders the other way — but the node had been
+stalled until 16:39:14 and the state changed while it was blind, so it says
+nothing.
+
+**And 0xFE07 has a load step.** With 0xFE1B off, the compressor's state splits
+it cleanly in two, with no overlap between the ranges:
+
+| Compressor | n | Mean | Range |
+|---|---|---|---|
+| off | 266 | 56.3 | 55 – 59 |
+| **on** | 201 | **52.3** | 51 – 54 |
+
+So 0xFE07 has three operating points — 0, about 56, and about 52 — and moves
+between them with mechanical lag.
+
+**What is established:** 0xFE1B commands something, 0xFE07 measures it, the
+polarity is inverted, and the thing has inertia and a load-dependent operating
+point. That is the behaviour of a pump or a flow, not of a status word.
+
+**What is not:** which pump, and in what units. The inversion is the oddity —
+commanding 0xFE1B *to* 100 is what stops it. That fits a blocking or diverting
+output better than a run command, and it is the reason this is not being named
+yet.
+
+**The cheapest way to settle it is the panel, not another capture.** The WPC's
+own display shows measured values; if one of them reads about 5.6 falling to 5.2
+while the compressor runs, that identifies 0xFE07 and hands over its unit and
+scaling in one go. Nothing needs to be flashed to try it.
 
 **0x000C deserves a second look.** `AUSSENTEMP` sat at exactly 15.3 °C across
 all 239 samples in two hours — not a tenth of movement. Either no outdoor sensor

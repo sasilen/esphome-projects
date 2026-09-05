@@ -309,9 +309,11 @@ to do:
   temperatures, two setpoints, the operating mode, the pump's own clock, the
   compressor and one unidentified signal — and checked against the capture, but
   not yet against ESPHome or the node itself
-- **Identify 0xFE07.** It runs whenever 0xFE1B is off, in states where nothing
-  is being heated, so it is not the compressor. That anti-correlation is the
-  thread to pull
+- **Identify 0xFE07 — from the heat pump's own display.** 0xFE1B commands it and
+  0xFE07 measures the result, inverted, with ten seconds of mechanical lag and
+  three operating points: 0, about 56, and about 52 while the compressor runs.
+  If a value on the panel reads 5.6 and falls to 5.2 under load, that is it —
+  and it hands over the unit and the scaling with it
 - Re-capture now that the watchdog window is two minutes rather than thirty
 
 **Phase 2 — write**
