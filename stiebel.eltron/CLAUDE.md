@@ -875,7 +875,7 @@ list at all, because their values can be checked against a calendar:
 | 0x0124 | 26 | year |
 | 0x0125 | 18 | hour |
 | 0x0126 | 0–59 | **minute** |
-| 0x0112 | 2 | unexplained |
+| 0x0112 | 2 | `PROGRAMMSCHALTER`, the operating mode |
 
 The minute is not inferred: 0x0126 rises by exactly one every sixty seconds
 across the whole capture and rolls 59 → 0, with the hour written in the same
@@ -889,32 +889,83 @@ capture clock read 17:49:05, and the offset is the same at every sample. Worth
 correcting on the panel — it shifts every time-of-day function in the machine,
 including any tariff window.
 
-**Some elements are byte-sized.** Every value in this group is a multiple of
+**Some elements are byte-swapped.** Every value in this group is a multiple of
 256: the number sits in byte 5 and byte 6 is padding. Read as a 16-bit word the
-hour reads 4608 rather than 18. The decoder cannot tell from a single frame,
-so it prints the raw hex alongside — but when mapping, **a value that is always
-a multiple of 256 is a byte, not a scaled integer.**
+hour reads 4608 rather than 18. The decoder cannot tell from a single frame, so
+it prints the raw hex alongside — but when mapping, **a value that is always a
+multiple of 256 is byte-swapped, not a scaled integer.**
 
-## Elements polled regularly — the mapping shortlist
+The element list has a name for exactly this: all six carry type
+`et_little_endian`. The observation and the table were arrived at
+independently and agree, which is the strongest evidence in this file that the
+decode is right end to end.
 
-Values are shown as tenths, which is the scaling the whole capture is consistent
-with. Names are deliberately absent: that is what the element list is for.
+## Naming the elements: the table covers half this bus
 
-| Answered by | Element | Range | Every | Distinct |
+Matched against Jürg Müller's element list. `juerg5524.ch` did not answer over
+either HTTP or HTTPS, so the work was done against the
+[andig/canprogs](https://github.com/andig/canprogs) mirror of `ElsterTable.inc`
+and its type enum in `KElsterTable.h`. Per repo convention neither is copied
+here.
+
+**Everything the low conversations ask for is named, and the data agrees.**
+
+| Answered by | Element | Name | Type | Value seen |
 |---|---|---|---|---|
-| 0x700 | 0xFDF3 | 27.8 – 53.7 | 5 s | 109 |
-| 0x700 | 0xFDF4 | 0.0 – 54.3 | 5 s | 106 |
-| 0x700 | 0xFDF5 | 26.2 – 54.0 | 5 s | 87 |
-| 0x700 | 0xFE07 | 0.0 – 5.9 | 4 s | 11 |
-| 0x700 | 0xFE09 | 13.9 – 15.9 | 10 s | 8 |
-| 0x700 | 0xFE0A | 13.4 – 13.6 | 5 s | 3 |
-| 0x700 | 0xFE4C | 1.8 | 5 s | 1 |
-| 0x180 | 0x000C | 15.3 | 10 s | 1 |
-| 0x180 | 0x000E | 47.5 – 50.5 | 10 s | 17 |
-| 0x180 | 0x0016 | 24.1 – 54.4 | 10 s | 93 |
+| 0x180 | 0x0003 | `SPEICHERSOLLTEMP` | dec | 50.0 |
+| 0x180 | 0x000C | `AUSSENTEMP` | dec | 15.3, frozen |
+| 0x180 | 0x000E | `SPEICHERISTTEMP` | dec | 48.6 → 50.5 |
+| 0x180 | 0x0016 | `RUECKLAUFISTTEMP` | dec | 26.2 → 54.1 → 24.6 |
+| 0x301 | 0x0004 | `VORLAUFSOLLTEMP` | dec | 25.0 |
+| 0x480 | 0x0112 | `PROGRAMMSCHALTER` | mode | 2 |
+| 0x480 | 0x0122–0x0126 | day, month, year, hour, minute | LE | the clock |
+| 0x480 | 0xFDB6 | `IMPULSRATE` | LE | |
+| 0x480 | 0xFDBF | `DYNAMIK` | LE | |
+| 0x601 | 0x0052 | `BRENNER` | LE | written 0 |
 
-The three 0xFDFx elements moving together over a 26-degree span, at five-second
-resolution, are the obvious first candidates for flow, return and source.
+`dec` is `et_dec_val`, tenths with negatives allowed — which is where the
+tenths reading in this file comes from, now sourced rather than assumed.
+
+**The names are corroborated, not merely looked up.** The tank setpoint reads
+50.0 while the tank actual climbs 48.6 → 50.5 and the return rises to 54 and
+decays again: that is one domestic hot water cycle, and four independently named
+elements telling the same story. A wrong table would not produce that.
+
+**Above 0xFE07 the table simply stops**, and that is exactly where the manager's
+own traffic lives. Of the eleven elements 0x480 polls from 0x700, seven are
+absent from the list entirely — 0xFE09, 0xFE0A, 0xFE1B, 0xFE1C, 0xFE1D, 0xFE1E,
+0xFE4C — and the three 0xFDFx names it does carry are wrong for this machine:
+
+| Element | Table says | Data says | Every |
+|---|---|---|---|
+| 0xFDF3 | `STATUS_MULTIFUNKTIONSAUSGANG` | 27.8 – 53.7, tracks the return within ~5 K | 5 s |
+| 0xFDF4 | `MODE_MULTIFUNKTIONSAUSGANG` | **is the return temperature** | 5 s |
+| 0xFDF5 | `ANTILEGIONELLEN_ZEITPUNKT` | 26.2 – 54.0, related but distinct | 5 s |
+| 0xFE07 | `INFOBLOCK_6` | 0.0 or 5.2 – 5.9, switches with the compressor | 4 s |
+| 0xFE09 | — | 13.9 – 15.9, slow | 10 s |
+| 0xFE0A | — | 13.4 – 13.6, slower still | 5 s |
+| 0xFE4C | — | 1.8, constant | 5 s |
+
+**0xFDF4 is the return temperature, and that is measured rather than guessed.**
+Against the 400 samples where both were readable it matches `RUECKLAUFISTTEMP`
+with a median absolute difference of **0.0 K** and r = 0.98 — the same physical
+value, read by a different node under a different index. A "Mode
+Multifunktionsausgang" does not track a return temperature to a tenth of a
+degree for two hours. The table's own header warns it is under construction and
+that indices must be verified before production use; this is what that warning
+looks like in practice.
+
+The remaining pattern is legible even without names: **0xFE07 and 0xFE1D switch
+between two states together**, and the temperatures rise while they are on and
+decay while they are off. That is the compressor, whatever the elements are
+called.
+
+**0x000C deserves a second look.** `AUSSENTEMP` sat at exactly 15.3 °C across
+all 239 samples in two hours — not a tenth of movement. Either no outdoor sensor
+feeds this bus or the value is a placeholder, and **that matters for this
+project specifically**: heating curve control assumes the machine has a live
+outdoor temperature to apply the curve to. Check it on the panel before building
+anything on top of the curve.
 
 ## The four elements the manager writes
 
@@ -928,10 +979,17 @@ traffic** and the frames are on record:
 | 0xFE1D | 0, 100 | 10 s |
 | 0xFE1E | 0, 3, 4, 6, 7, 15 | 20 s |
 
-0/100 reads as a percentage or an on/off actuator; 0xFE1E's small distinct set
-looks like a bitfield. Each write is answered by 0x700 echoing the value, so the
-**write-then-verify pattern is the machine's own**, and phase 2 should copy it
-rather than write blind.
+**None of the four is in the element list**, so their meaning has to come from
+behaviour. 0/100 reads as a percentage or an on/off actuator, and 0xFE1E's small
+distinct set looks like a bitfield. 0xFE1D is the informative one: it switches
+in step with 0xFE07, and the temperatures rise while both are on — so this
+group is the manager commanding the compressor side, not configuration.
+
+That is worth knowing before phase 2 borrows the pattern. **Copy the shape of
+these frames, not their elements.** Each write is answered by 0x700 echoing the
+value, so the write-then-verify handshake is the machine's own and phase 2
+should imitate it rather than write blind — but the elements phase 2 wants are
+setpoints and curve parameters, which live in the named low range, not here.
 
 ## Three anomalies, all visible because the log falls back to raw hex
 
@@ -1141,15 +1199,21 @@ two-hour capture, the address census, and the discovery that the bus polls
 itself. **Phase 1 can be finished passively** — the node never has to transmit
 to see the numbers it wants, which was the open question and is now closed.
 
-What is left:
+The element list has been matched: everything the low conversations carry is
+named, and the manager's own 0xFDxx/0xFExx range is not in the list at all. What
+is left:
 
-- **Map the element indices against Jürg Müller's element list.** The capture
-  hands over about seventy of them with their value ranges and poll intervals;
-  see "What a two-hour capture contains". This is table lookup, not decoding.
+- **Name the 0x700 range from behaviour, since the table cannot.** Seven of the
+  eleven elements are absent and three more are misnamed. 0xFDF4 is already
+  settled by correlation; the same method should reach 0xFDF3 and 0xFDF5 once a
+  capture spans a heating cycle as well as a hot water one.
+- **Check whether `AUSSENTEMP` is a live sensor.** It never moved in two hours,
+  and heating curve control depends on it.
 - **Explain 0x100.** It is not in the published address table, yet it is one of
   the two busiest talkers on this machine.
-- Create ESPHome sensors for the elements that are polled regularly, and expose
-  them to Home Assistant.
+- Create ESPHome sensors for the named elements and expose them to Home
+  Assistant. The four named temperatures plus the compressor state are enough to
+  be useful before the 0x700 range is understood.
 - **Re-capture once the watchdog window is two minutes**, to confirm the stall
   rate against a capture that is not two-thirds dead.
 

@@ -293,15 +293,20 @@ podman exec esphome esphome config /config/cantest.yaml
 ## Remaining tasks
 
 **Phase 1 — read.** Connected at X27 on board A2, bit rate confirmed, protocol
-decoded, addresses censused. Left to do:
+decoded, addresses censused, elements matched against the published list. Left
+to do:
 
-- Name the elements: match the indices in the capture against the published
-  element list. About seventy of them, with their value ranges and poll
-  intervals, are tabulated in [`CLAUDE.md`](CLAUDE.md)
+- **Name what the list does not cover.** Everything the panel asks for is named
+  — tank setpoint and actual, return temperature, flow setpoint, operating mode,
+  the clock. The manager's own range above 0xFE07 is missing from the list
+  entirely, and three names it does carry are wrong for this machine. That part
+  has to be named from behaviour; see [`CLAUDE.md`](CLAUDE.md)
+- **Check the outdoor sensor.** `AUSSENTEMP` did not move by a tenth of a degree
+  in two hours, and heating curve control depends on it being live
 - Work out what **0x100** is — it is one of the busiest nodes on this bus and it
   is not in the published address table
-- Create ESPHome sensors for the regularly polled elements and expose them to
-  Home Assistant
+- Create ESPHome sensors for the named elements and expose them to Home
+  Assistant
 - Re-capture now that the watchdog window is two minutes rather than thirty
 
 **Phase 2 — write**
