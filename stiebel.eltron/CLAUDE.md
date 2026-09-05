@@ -42,24 +42,138 @@ Together with the Shelly, the control set becomes:
 
 ---
 
+# Prior art: this is the Elster protocol, and it is documented
+
+The bus is not a Stiebel-specific unknown. It is the **Elster/Kromschröder CAN
+protocol**, shared across Stiebel Eltron, Tecalor and related controllers, and it
+has been reverse engineered thoroughly enough that phase 1 is a matching exercise
+against a published table rather than blind decoding.
+
+The canonical work is **Jürg Müller's `can_progs`** and its element list at
+<http://juerg5524.ch/list_data.php> (HTTP only; mirror:
+[andig/canprogs](https://github.com/andig/canprogs)). Everything below traces
+back to it.
+
+## What the sources confirm
+
+- **20 kbps, 11-bit standard identifiers.** Two independent sources state it, so
+  the "expected 20 kbps" in this file is a documented property of the protocol
+  family, not a guess. It still gets confirmed by capture before this node
+  transmits anything.
+- **Device addresses are a fixed scheme**, which is what makes a capture
+  readable:
+
+  | CAN id | Device |
+  |---|---|
+  | 0x000 | direct |
+  | 0x180 | boiler / heat pump |
+  | 0x280 | ATEZ |
+  | 0x300–0x303 | control modules (FEK / FE7 room control) |
+  | 0x400 | room sensor |
+  | 0x480 | manager (WPM) |
+  | 0x500 | heating module |
+  | 0x580 | bus coupler |
+  | 0x600–0x603 | mixer modules |
+  | 0x680 | PC / ComfortSoft |
+  | 0x700 | external device |
+  | 0x780 | DCF module |
+
+- **The frame carries a command code** distinguishing write (0), read (1),
+  response (2), acknowledge (3), write acknowledge (4), write response (5),
+  system (6), system response (7), and large telegrams (0x20 / 0x21).
+- **Community configurations address the pump as `3100` to read and `3000` to
+  write** — the receiver 0x180 shifted right by three (0x30) with the command
+  code in the low nibble. This is consistent with the scheme above, but the exact
+  byte layout is **taken on trust until a capture confirms it**; do not encode it
+  from this file alone.
+
+## Implementations worth reading before writing any of our own
+
+- [bullitt186/ha-stiebel-control](https://github.com/bullitt186/ha-stiebel-control)
+  — ESPHome + Home Assistant, **3800+ Elster signals** in `ElsterTable.h`. The
+  closest thing to a finished version of this project.
+- [roberreiter/StiebelEltron-heatpump-over-esphome-can-bus](https://github.com/roberreiter/StiebelEltron-heatpump-over-esphome-can-bus)
+  — ESPHome config that **reads and writes**, with the pump/FEK/own identifiers
+  as variables.
+- [andig/goelster](https://github.com/andig/goelster) — Go implementation of the
+  protocol.
+- [homeIoTDev/ElsterHeatingBridge](https://github.com/homeIoTDev/ElsterHeatingBridge)
+  — .NET service, Tecalor/Stiebel, includes a bus scanner.
+- [Home Assistant community thread](https://community.home-assistant.io/t/configured-my-esphome-with-mcp2515-can-bus-for-stiebel-eltron-heating-pump/366053)
+  — long thread, MCP2515 specifics and the failure modes people actually hit.
+
+Per repo convention none of this is copied here; it is linked at the source.
+
+## What this changes for us
+
+- **Phase 1 stops being decoding and becomes identification.** Capture, then
+  match identifiers and element indices against the published table.
+- **0x680 is not automatically free.** It is the PC/ComfortSoft address, and it
+  is what the earlier draft config here used. Users in the community thread
+  report it not working for them — an installed ISG or service tool may already
+  occupy it, and two nodes sharing an identifier corrupts arbitration. The phase 1
+  capture must therefore also answer *which addresses are already in use on this
+  bus* before phase 2 picks one.
+- **The ESP32's built-in TWAI does run this bus at 20 kbps** — bullitt186 uses
+  exactly that. This supports the reading already recorded at the end of this
+  file: the 25 kbps floor is ESPHome's `esp32_can` component, not the silicon.
+  It does not change the MCU decision, because reaching it would mean adopting an
+  external component instead of ESPHome's own.
+
+---
+
 # Existing Hardware
 
 ## Available
 
-- **ESP32, several boards** — chosen MCU. The one measured is ESP32-D0WD-V3 rev v3.1.
-- ESP8266 Wemos D1 Mini (NodeMCU) — works equally well, fallback
+- **ESP8266 Wemos D1 Mini (NodeMCU)** — chosen MCU
+- ESP32, several boards — reserve, see below. The one measured is ESP32-D0WD-V3 rev v3.1.
 - MCP2515 CAN bus modules with TJA1050 transceiver (3 pcs)
 - Dupont jumper wires
 - Various resistors (including 120 Ω — not used, see Wiring)
 
 ## MCU choice
 
-ESP32, but the margin over the ESP8266 is thin — take one because several are
-already in the box, not because it is required.
+The D1 Mini. The ESP32 was in this plan for **its built-in CAN controller** — it
+would have removed the MCP2515, the SPI wiring and the level-shifting rework in
+one go. That route is rejected (see the end of this file: ESPHome will not do
+20 kbps on `esp32_can`), and with it went the reason to prefer the ESP32.
 
-The only real advantage left is **RAM headroom**. Stiebel's element lists run to
+The MCP2515 hangs off SPI identically on both, so what remains is **RAM
+headroom**, and it is a phase 2 concern only. Stiebel's element lists run to
 hundreds of parameters; if 50–100 of them end up as HA entities the ESP8266 gets
-tight. For a dozen entities the ESP8266 is entirely sufficient.
+tight. Sniffing needs none of that, and a dozen entities the ESP8266 carries
+without trouble.
+
+**Switch only if the entity count actually forces it.** The move costs one board
+and a pin change — `esp8266:` → `esp32:`, and the SPI pins to the VSPI defaults
+(SCK 18, MISO 19, MOSI 23, CS 5). Nothing else in the configuration changes.
+
+## Does the D1 Mini cope with phase 2 — writing?
+
+Writing is not where the ESP8266 is weak. The MCP2515 does bit timing,
+arbitration, acknowledgement and retransmission **in hardware**; the MCU only
+moves frames across SPI. And the control loop is deliberately slow — write on
+change, deadband, minimum interval — so nothing on the write path is
+time-critical. A handful of writable parameters is a handful of `number:`
+entities.
+
+The pressure points are on the **read** side, in this order:
+
+1. **RAM, if the read set balloons.** This is the one documented reason to move
+   to the ESP32, and it is about how many sensors get created, not about writing.
+2. **The MCP2515 has two RX buffers, and ESPHome polls them in `loop()`.** At
+   20 kbps a full frame is roughly 6 ms on the wire, so a loop stall longer than
+   about 12 ms — a WiFi reconnect, a long log burst — can drop frames. The
+   component behaves the same on an ESP32; there is simply more slack. Keep the
+   loop light: this is why the sniffer lambda uses a fixed buffer instead of
+   building a `std::string` per frame, and why per-frame logging should go away
+   once the identifiers are mapped.
+3. **Do not become a device others depend on.** If the node only *requests* and
+   reacts, a stalled loop costs a late read and nothing else. If it takes a bus
+   identity that other participants poll and expect an answer from within a
+   window, a stalled loop becomes visible on the heat pump's bus. That is a
+   protocol-design decision in phase 2, and no MCU choice fixes it.
 
 **No external antenna needed.** The heat pump is in a technical room with good
 WiFi, not in a metal cabinet — the WROOM-32U / u.FL argument that applies to the
@@ -160,7 +274,7 @@ and no level shifter is needed anywhere.
 **The chosen solution avoids all of this: run the module entirely at 3.3 V and
 bypass its transceiver with the CAN Pal.**
 
-- Module VCC → 3.3 V. MCP2515 is in spec (2.7–5.5 V) and SPI is safe for the ESP32.
+- Module VCC → 3.3 V. MCP2515 is in spec (2.7–5.5 V) and SPI is safe for the ESP.
 - The on-board TJA1050 ends up under-volted and unused. Its CANH/CANL terminals and
   its 120 Ω stay unconnected, so **neither needs removing.**
 - **Lift MCP2515 pin 2 (RXCAN)** and wire it to the CAN Pal's RX. This is the only
@@ -178,21 +292,33 @@ CAN Pal's on-board 5 V generator makes it unnecessary.
 
 ---
 
-## ESP8266 (Wemos D1 Mini) ↔ MCP2515 (after modification)
+## ESP ↔ MCP2515 module (single 3.3 V rail)
 
-| MCP2515 module | Wemos D1 Mini | Note |
-|----------------|---------------|------|
-| MCP2515 VDD (pin 18) | 3V3 | after cutting it from the 5 V rail |
-| transceiver VCC (module VCC pin) | 5V | |
-| TJA1051T/3 pin 5 (VIO) | 3V3 | |
-| GND | G | |
-| CS | D8 (GPIO15) | |
-| SCK | D5 (GPIO14) | |
-| SI (MOSI) | D7 (GPIO13) | |
-| SO (MISO) | D6 (GPIO12) | |
-| INT | D1 (GPIO5) | |
+The module's VCC pin feeds the whole board, MCP2515 and TJA1050 alike. On the
+chosen solution that pin goes to **3.3 V and nothing else** — there is no second
+rail to wire, in either phase. The difference between the phases is only which
+transceiver sits on the bus side: the module's own TJA1050 while sniffing, the
+CAN Pal once the RXCAN pin is lifted.
 
-If the board fails to boot, move CS off D8 — GPIO15 must be low at boot.
+| MCP2515 module | Wemos D1 Mini | ESP32 (reserve) |
+|----------------|---------------|-----------------|
+| VCC | 3V3 | 3V3 |
+| GND | G | GND |
+| CS | D8 (GPIO15) | GPIO5 |
+| SCK | D5 (GPIO14) | GPIO18 |
+| SI (MOSI) | D7 (GPIO13) | GPIO23 |
+| SO (MISO) | D6 (GPIO12) | GPIO19 |
+| INT | — | — |
+
+Both columns are the board's hardware SPI pins — nothing forces them, but
+keeping them means no board-specific surprises.
+
+**INT stays unconnected.** ESPHome's `mcp2515` component polls the controller in
+its loop and takes no interrupt pin — wiring INT achieves nothing.
+
+If the D1 Mini fails to boot, move CS off D8: GPIO15 must be low at boot, and a
+CS line floating high before the MCU drives it holds it up. (On the ESP32, GPIO5
+is a strapping pin too, but high is the level it wants, so CS is safe there.)
 
 ---
 
@@ -233,8 +359,9 @@ supply voltage into the transceiver.
 
 Expected configuration for Stiebel Eltron WPC series:
 
-- Bitrate: **20 kbps** (expected, not yet measured)
-- CAN 2.0B
+- Bitrate: **20 kbps** — documented for the Elster protocol family (see Prior
+  art), still to be confirmed on this unit before transmitting
+- 11-bit standard identifiers
 - Listen-only mode initially — see below
 - 120 Ω termination only if located at the end of the CAN bus (this node is not)
 
@@ -283,38 +410,37 @@ frames appear.
 
 ---
 
-# ESPHome Configuration (starting point)
+# ESPHome Configuration
 
-```yaml
-esphome:
-  name: wpc_can
+The phase 1 sniffer is [`stiebel.eltron.yaml`](stiebel.eltron.yaml). It reads
+and logs; it writes nothing, and it is not the phase 2 configuration.
 
-esp8266:
-  board: d1_mini
+**The two unknowns are `substitutions:` at the top of the file** — crystal and
+bit rate. Both are one-line edits followed by a re-flash, because ESPHome fixes
+the bit rate at compile time; there is no way to sweep it at runtime.
 
-wifi:
-  ssid: "YOUR_WIFI"
-  password: "YOUR_PASSWORD"
+**`mode: LISTENONLY`** is what makes the sweep safe on a live bus. It belongs in
+the config even though the lifted TXD already enforces passivity in hardware:
+the two protect against different mistakes, and the hardware one is invisible in
+the source. If validation rejects `mode:`, the installed ESPHome does not expose
+listen-only on `mcp2515` — a clean failure at `esphome config`, not a surprise on
+the bus.
 
-logger:
+**`can_id: 0x000`** is the transmit identifier. It is never used, because
+nothing is transmitted, but the schema requires the key. It is not a bus
+identity; that decision belongs to phase 2 and to the FEK/ISG behaviour it has
+to mirror.
 
-api:
+**Two `on_frame:` triggers, both with `can_id_mask: 0x000`.** A zero mask
+matches every identifier — this is a sniffer, so filtering is the opposite of
+what is wanted. The protocol is documented as 11-bit standard identifiers, so
+the extended trigger exists only to prove that on the first capture; delete it
+once it has stayed silent.
 
-ota:
-
-spi:
-  clk_pin: D5
-  mosi_pin: D7
-  miso_pin: D6
-
-canbus:
-  - platform: mcp2515
-    id: can0
-    cs_pin: D8
-    clock: 16MHZ      # or 8MHZ — must match the module's crystal
-    can_id: 0x680
-    bit_rate: 20kbps
-```
+**The `CAN frames` counter** answers "is the bit rate right?" without reading
+the log at all: it stays at zero on a wrong rate and climbs steadily on a
+correct one. That is worth an entity of its own during a sweep that may take
+several re-flashes.
 
 ---
 
@@ -337,7 +463,10 @@ No MQTT broker is required.
 - Locate CAN_H, CAN_L and GND on the WPC 07.
 - Verify the CAN bitrate (expected 20 kbps) — stay listen-only until confirmed.
 - Capture CAN frames.
-- Map frame IDs against the published element lists.
+- Map identifiers and element indices against Jürg Müller's element list (see
+  Prior art).
+- Record which addresses are already occupied on this bus — phase 2 needs one
+  that is free, and 0x680 may not be.
 - Create ESPHome sensors.
 - Expose entities directly to Home Assistant.
 
@@ -353,7 +482,7 @@ No MQTT broker is required.
   (comfort/ECO), DHW setpoint, operating mode.
 - Give the node a bus identity. Writing means leaving listen-only, so the bit rate
   has to be confirmed first and the node must address the WPM the way an FEK or
-  ISG does.
+  ISG does — **using an identifier the phase 1 capture showed to be free.**
 - **Rate-limit the writes.** If the WPM persists these parameters, writing every
   few seconds is an EEPROM wear problem. Write on change only, with a deadband and
   a minimum interval.

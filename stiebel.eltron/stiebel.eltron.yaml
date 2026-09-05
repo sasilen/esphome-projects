@@ -1,0 +1,128 @@
+# Stiebel Eltron WPC 07 — phase 1 CAN sniffer
+#
+# Listen-only. This node never drives the bus: it exists to confirm the bit rate
+# and to capture frames for mapping against the element lists.
+#
+# Hardware for this phase (see CLAUDE.md, "Phase 1: sniffing before the final
+# circuit"): the plain MCP2515 + TJA1050 module run entirely at 3.3 V, its
+# on-board 120 Ohm removed, and the TJA1050's pin 1 (TXD) lifted and tied to VCC.
+# The CAN Pal is not needed until the write phase.
+#
+# Wemos D1 mini pins (hardware SPI):
+#   D5 = SCK, D6 = SO (MISO), D7 = SI (MOSI), D8 = CS
+# The module's INT pin stays unconnected — ESPHome's mcp2515 polls, it takes no
+# interrupt pin. If the board fails to boot, move CS off D8: GPIO15 must be low
+# at boot and a floating CS line can hold it high.
+
+substitutions:
+  # Read the marking on the crystal can. Wrong value = wrong bit rate by a
+  # factor of two and nothing decodes.
+  can_clock: "8MHZ"
+
+  # Expected, not yet measured. Sweep 20KBPS -> 25KBPS -> 50KBPS until frames
+  # appear in the log. Safe to sweep only because the node is listen-only in
+  # software and TXD is lifted in hardware.
+  can_bit_rate: "20KBPS"
+
+esphome:
+  name: wpc-can
+  friendly_name: WPC 07 CAN
+
+esp8266:
+  board: d1_mini
+
+logger:
+  level: DEBUG
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "WPC CAN fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+
+# ------------------------------------------------------------------------ CAN
+# mode: LISTENONLY is the whole point of this phase — a node in NORMAL mode
+# acknowledges frames and emits error frames even when it sends nothing of its
+# own, and with the wrong bit rate that disturbs the heat pump's own traffic.
+# If validation rejects `mode:`, the installed ESPHome is too old to expose it;
+# that is a safe failure, and the lifted TXD still covers it in hardware.
+#
+# can_id is the transmit identifier. Nothing is ever transmitted here, but the
+# schema requires it.
+
+canbus:
+  - platform: mcp2515
+    id: can0
+    cs_pin: D8
+    clock: ${can_clock}
+    bit_rate: ${can_bit_rate}
+    mode: LISTENONLY
+    can_id: 0x000
+
+    on_frame:
+      # can_id_mask 0x000 matches every identifier — this is a sniffer, not a
+      # filter. The Elster protocol is documented as 11-bit standard ids; the
+      # extended trigger below is here to prove that, and can go once it has
+      # stayed silent through a capture.
+      - can_id: 0x000
+        can_id_mask: 0x000
+        use_extended_id: false
+        then:
+          - lambda: |-
+              // Fixed buffer, no std::string: this runs once per frame and the
+              // ESP8266 heap does not want per-frame allocations.
+              id(frame_count) += 1;
+              char line[25] = {0};
+              for (size_t i = 0; i < x.size() && i < 8; i++)
+                sprintf(line + i * 3, "%02X ", x[i]);
+              ESP_LOGI("can", "std id=0x%03X dlc=%u  %s",
+                       (unsigned) can_id, (unsigned) x.size(), line);
+
+      - can_id: 0x000
+        can_id_mask: 0x000
+        use_extended_id: true
+        then:
+          - lambda: |-
+              id(frame_count) += 1;
+              char line[25] = {0};
+              for (size_t i = 0; i < x.size() && i < 8; i++)
+                sprintf(line + i * 3, "%02X ", x[i]);
+              ESP_LOGI("can", "ext id=0x%08X dlc=%u  %s",
+                       (unsigned) can_id, (unsigned) x.size(), line);
+
+spi:
+  clk_pin: D5
+  mosi_pin: D7
+  miso_pin: D6
+
+
+# -------------------------------------------------------------- Frame counter
+# The one number that answers "is the bit rate right?" without reading the log.
+# Stays at zero on a wrong bit rate; climbs steadily on a correct one.
+
+globals:
+  - id: frame_count
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+sensor:
+  - platform: template
+    name: "CAN frames"
+    id: can_frames
+    accuracy_decimals: 0
+    update_interval: 10s
+    state_class: total_increasing
+    lambda: "return id(frame_count);"

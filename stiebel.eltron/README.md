@@ -6,7 +6,9 @@ Read the heat pump's operating data over its CAN bus and — in phase 2 — writ
 parameters the WPM exposes, straight from Home Assistant via ESPHome. No MQTT.
 
 **Status: planning.** Most of the hardware is on hand, one part is still to be
-ordered, and nothing has been connected to the bus yet.
+ordered, and nothing has been connected to the bus yet. The phase 1 sniffer
+configuration [`stiebel.eltron.yaml`](stiebel.eltron.yaml) is written but has
+not been flashed or validated against a real ESPHome install.
 
 ## Why bother, when on/off control already exists
 
@@ -30,6 +32,12 @@ Writing is not blind reverse engineering: the FEK/FE7 room controller and the IS
 already write setpoints over this same bus, so mirroring what an existing
 participant writes is a much smaller step than inventing traffic.
 
+And it has been done before. This is the **Elster/Kromschröder CAN protocol**,
+reverse engineered years ago and published as an element list of thousands of
+signals, with working ESPHome configurations that both read and write. Read
+[`CLAUDE.md`](CLAUDE.md) before capturing anything — phase 1 is matching a
+capture against a known table, not decoding from scratch.
+
 > Polarity of the existing Shelly is counter-intuitive — **relay ON = pump runs**.
 > See [`../aidon/`](../aidon/) before writing automations against it.
 
@@ -37,12 +45,12 @@ participant writes is a much smaller step than inventing traffic.
 
 ```
 Stiebel WPC 07
-        │  CAN 2.0B, 20 kbps (expected, not yet measured)
+        │  Elster protocol, 20 kbps, 11-bit ids (documented, not yet measured)
         ▼
   MCP2515 + Adafruit CAN Pal (TJA1051T/3)
         │  SPI, all 3.3 V
         ▼
-   ESP32 (or ESP8266)
+  ESP8266 (Wemos D1 mini)
         │  ESPHome native API
         ▼
  Home Assistant
@@ -52,8 +60,9 @@ Stiebel WPC 07
 
 **Available**
 
-- ESP32, several boards (the measured one is ESP32-D0WD-V3 rev v3.1)
-- ESP8266 Wemos D1 Mini — works equally well, fallback
+- ESP8266 Wemos D1 Mini — the chosen board
+- ESP32, several boards — reserve for phase 2 (the measured one is
+  ESP32-D0WD-V3 rev v3.1)
 - MCP2515 modules with TJA1050 transceiver (3 pcs — one is allowed to die)
 - 120 Ω resistors — **not used**, this node taps an already-terminated bus
 
@@ -66,9 +75,11 @@ Stiebel WPC 07
 Do **not** order until the bit rate is measured. The CAN Pal is useful either way;
 nothing else is.
 
-The ESP32 wins only on RAM headroom — Stiebel's element lists run to hundreds of
-parameters, and 50–100 HA entities would get tight on an ESP8266. It does **not**
-avoid the level-shifting work: it is a 3.3 V part too.
+The ESP32 was here for its built-in CAN controller, and that route is rejected
+(see below). What is left is RAM headroom — Stiebel's element lists run to
+hundreds of parameters, and 50–100 HA entities would get tight on an ESP8266.
+That is a phase 2 question. The ESP32 does **not** avoid the level-shifting
+work: it is a 3.3 V part too.
 
 ## The one modification that matters
 
@@ -114,6 +125,34 @@ Full pin tables, the superseded two-rail plan and the grounding argument are in
    connected to the heat pump bus is exactly the arrangement where loop currents
    run through the CAN conductors.
 
+## First run — the sniffer
+
+The CAN Pal is not needed yet. Phase 1 runs on one plain module, and that module
+becomes the permanent sniffer:
+
+1. **Prepare the module.** Remove its 120 Ω. Lift the TJA1050's pin 1 (TXD) and
+   tie it to VCC. Read the crystal marking while the board is in your hand.
+2. **Wire it at 3.3 V** — the whole module, single rail. Pin table in
+   [`CLAUDE.md`](CLAUDE.md).
+3. **Set the crystal** in the `substitutions:` block of
+   [`stiebel.eltron.yaml`](stiebel.eltron.yaml) to match what you read.
+4. **Flash and check it boots** before going anywhere near the heat pump.
+
+```sh
+cd stiebel.eltron
+cp secrets.yaml.example secrets.yaml
+$EDITOR secrets.yaml
+esphome run  stiebel.eltron.yaml
+esphome logs stiebel.eltron.yaml
+```
+
+5. **Connect CANH, CANL and GND** to the bus and watch the `CAN frames` counter.
+   Zero means the bit rate is wrong: edit `can_bit_rate`, re-flash, try again.
+   20 → 25 → 50 kbps. The rate is compile-time, so each step is a re-flash.
+
+Once frames appear, capture a long log and start mapping identifiers against the
+element lists.
+
 ## Rejected: the ESP32's built-in CAN
 
 `esp32_can` would have dropped the MCP2515, the SPI wiring and the level-shifting
@@ -139,7 +178,10 @@ podman exec esphome esphome config /config/cantest.yaml
 - Locate CAN_H, CAN_L and GND on the WPC 07 (control board preferred, service
   RJ12 if the bus is exposed there)
 - Verify the bit rate — stay listen-only until confirmed
-- Capture frames, map frame IDs against the published element lists
+- Capture frames, map identifiers and element indices against the published
+  element list
+- **Note which addresses are already in use** — 0x680 is the PC address and may
+  be taken. Phase 2 needs a free one
 - Create ESPHome sensors and expose them to Home Assistant
 
 **Phase 2 — write**
