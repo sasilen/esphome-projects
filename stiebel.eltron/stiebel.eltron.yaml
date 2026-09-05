@@ -164,6 +164,66 @@ canbus:
                        (unsigned) can_id, (unsigned) receiver, CMD[cmd],
                        ext ? "ex" : "e", element, val, tail);
 
+              // ---- publish the named elements ---------------------------
+              // Dispatch on sender AND element. The same index means
+              // different things on different devices, which is the main
+              // lesson of matching the capture against the element list:
+              // 0xFDF4 from 0x700 is a return temperature, and the list's
+              // name for that index is something else entirely.
+
+              if (cmd == 2 && can_id == 0x180) {
+                // et_dec_val: tenths, signed, negatives are legal
+                const float t = (int16_t) value / 10.0f;
+                switch (element) {
+                  case 0x0003: id(dhw_setpoint).publish_state(t); break;
+                  case 0x000C: id(outdoor_temp).publish_state(t); break;
+                  case 0x000E: id(dhw_temp).publish_state(t);     break;
+                  case 0x0016: id(return_temp).publish_state(t);  break;
+                }
+              } else if (cmd == 2 && can_id == 0x301 && element == 0x0004) {
+                id(flow_setpoint).publish_state((int16_t) value / 10.0f);
+              } else if ((cmd == 0 || cmd == 2) && can_id == 0x480) {
+                // The clock and the mode are et_little_endian: the number is
+                // the high byte and the low byte is padding. Writes count as
+                // well as responses here — the manager writes the minute
+                // every 60 s and is only asked for the date now and then.
+                const uint8_t n = value >> 8;
+                switch (element) {
+                  case 0x0112: {
+                    static const char *const MODE[6] = {
+                        "Emergency", "Standby", "Automatic",
+                        "Day", "Setback", "DHW only"};
+                    id(operating_mode).publish_state(n < 6 ? MODE[n] : "?");
+                    break;
+                  }
+                  case 0x0122: id(clk_day)   = n; break;
+                  case 0x0123: id(clk_month) = n; break;
+                  case 0x0124: id(clk_year)  = n; break;
+                  case 0x0125: id(clk_hour)  = n; break;
+                  case 0x0126:
+                    id(clk_minute) = n;
+                    // The minute is the only part that arrives every minute,
+                    // so it is what triggers a publish. Publish only a date
+                    // that is actually a date: unknown is honest, and both
+                    // "2000-00-00" and a corrupt frame's "2026-255-05" are
+                    // not. Every part is refreshed whenever the panel polls,
+                    // so a rejected reading costs one minute, not a stuck
+                    // entity.
+                    if (id(clk_month) >= 1 && id(clk_month) <= 12 &&
+                        id(clk_day) >= 1 && id(clk_day) <= 31 &&
+                        id(clk_hour) <= 23 && id(clk_minute) <= 59 &&
+                        id(clk_year) <= 99) {
+                      char stamp[24];
+                      snprintf(stamp, sizeof(stamp),
+                               "20%02u-%02u-%02u %02u:%02u",
+                               id(clk_year), id(clk_month), id(clk_day),
+                               id(clk_hour), id(clk_minute));
+                      id(pump_clock).publish_state(stamp);
+                    }
+                    break;
+                }
+              }
+
 spi:
   clk_pin: D5
   mosi_pin: D7
@@ -186,6 +246,30 @@ globals:
     restore_value: false
     initial_value: "0"
   - id: quiet_checks
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+
+  # The heat pump's own clock, assembled from five elements that arrive
+  # separately. clk_month stays 0 until a date has actually been seen, which
+  # is what the frame handler tests before publishing.
+  - id: clk_day
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+  - id: clk_month
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+  - id: clk_year
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+  - id: clk_hour
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+  - id: clk_minute
     type: uint8_t
     restore_value: false
     initial_value: "0"
@@ -250,3 +334,90 @@ sensor:
     state_class: total_increasing
     entity_category: diagnostic
     lambda: "return id(frame_count);"
+
+
+# ------------------------------------------------------------------ Sensors
+# The elements that matching the capture against the published element list
+# named with confidence. Entity names are English, matching this project's
+# documents rather than the list's German.
+#
+# All of these are `update_interval: never` and carry no lambda: they are
+# publish-only, and the frame handler pushes into them as values arrive on the
+# bus. Polling them would invent an update rate the bus does not have.
+#
+# Four of the five update on their own, because the panel polls 0x180 every
+# ten seconds without anyone touching the machine. **The two setpoints do
+# not** — they were asked for once in a two-hour capture, so they stay unknown
+# until something on the bus asks. That is worth knowing before wondering why
+# an entity is empty.
+#
+# Deliberately absent: IMPULSRATE, DYNAMIK and BRENNER. They are named in the
+# list, but each appeared once or twice in two hours, none has a verified
+# meaning on this machine, and an entity that is unknown forever is noise.
+# Also absent is everything from 0x700 — that range is not in the list at all.
+# The compressor is legible there anyway (0xFE07 and 0xFE1D switch together),
+# and it is one `case` away once those two are confirmed.
+
+  - platform: template
+    id: return_temp
+    name: "Return temperature"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  - platform: template
+    id: dhw_temp
+    name: "DHW tank temperature"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  - platform: template
+    id: dhw_setpoint
+    name: "DHW setpoint"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  - platform: template
+    id: flow_setpoint
+    name: "Flow setpoint"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  # Read the capture before trusting this one: it sat at exactly 15.3 °C for
+  # two hours without a tenth of movement. Either no outdoor sensor feeds this
+  # bus or the value is a placeholder — and heating curve control, which is
+  # what phase 2 is for, depends on the answer.
+  - platform: template
+    id: outdoor_temp
+    name: "Outdoor temperature"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+
+text_sensor:
+  - platform: template
+    id: operating_mode
+    name: "Operating mode"
+    update_interval: never
+
+  # Not decoration: this is how the eleven-minute clock drift was found, and
+  # it is how anyone notices it drifting again.
+  - platform: template
+    id: pump_clock
+    name: "Heat pump clock"
+    entity_category: diagnostic
+    update_interval: never

@@ -1103,6 +1103,57 @@ the log at all: it stays at zero on a wrong rate and climbs steadily on a
 correct one. That is worth an entity of its own during a sweep that may take
 several re-flashes.
 
+## The sensors, and why they are publish-only
+
+Seven entities carry the elements the element list named. **Not yet validated or
+flashed** — the reasoning below is checked against the capture, not against a
+running node.
+
+Every one of them is `update_interval: never` with no lambda: the frame handler
+pushes into them as values arrive. Polling a template sensor would invent an
+update rate the bus does not have, and the bus already publishes faster than
+Home Assistant needs.
+
+**The dispatch matches on sender *and* element**, never on the element alone.
+That is the one structural lesson of the naming work: 0xFDF4 read from 0x700 is
+a return temperature, and the published list's name for that same index is
+something else entirely. An index without a device is not an identifier.
+
+| Entity | From | Element | Updates |
+|---|---|---|---|
+| Return temperature | 0x180 | 0x0016 | every 10 s |
+| DHW tank temperature | 0x180 | 0x000E | every 10 s |
+| Outdoor temperature | 0x180 | 0x000C | every 10 s |
+| DHW setpoint | 0x180 | 0x0003 | **when something asks** |
+| Flow setpoint | 0x301 | 0x0004 | **when something asks** |
+| Operating mode | 0x480 | 0x0112 | occasionally |
+| Heat pump clock | 0x480 | 0x0122–0x0126 | every minute |
+
+The two setpoints were each asked for exactly once in two hours, so they stay
+unknown until the bus asks again. **That is a property of the bus, not a bug**,
+and it is worth knowing before wondering why an entity is empty. Nothing here
+polls for them, because polling means transmitting and phase 1 does not.
+
+**The clock is assembled, not read.** Five elements arrive separately; only the
+minute arrives every minute, so the minute triggers the publish and the rest are
+cached. Two guards keep it honest: nothing is published until a real date has
+been seen, and a reading that is not a valid date is dropped rather than shown.
+A rejected reading costs one minute, because every part is refreshed the next
+time the panel polls.
+
+Replaying the capture through the handler on a host compiler produced 239 return
+temperatures, 228 tank temperatures, one of each setpoint, `Automatic` for the
+mode, and a clock running from `2026-09-05 18:01` to `18:07` while the capture
+itself ended at 17:56 — the eleven-minute drift, arrived at a third time and by
+a different route.
+
+Left out on purpose: `IMPULSRATE`, `DYNAMIK` and `BRENNER` are named in the list
+but appeared once or twice in two hours with no verified meaning here, and an
+entity that is unknown forever is noise. Everything from 0x700 is left out
+because the list does not reach it — though the compressor is legible there
+regardless, and 0xFE07 with 0xFE1D is one `case` away once those two are
+confirmed.
+
 ## The silent stall: an overflow flag that never clears
 
 **Observed 2026-09-05.** Frames arrived normally, the counter reached 269, and
@@ -1211,9 +1262,10 @@ is left:
   and heating curve control depends on it.
 - **Explain 0x100.** It is not in the published address table, yet it is one of
   the two busiest talkers on this machine.
-- Create ESPHome sensors for the named elements and expose them to Home
-  Assistant. The four named temperatures plus the compressor state are enough to
-  be useful before the 0x700 range is understood.
+- **Validate and flash the sensors.** Seven entities are written and checked
+  against the capture on a host compiler, but not against ESPHome's schema and
+  not on the node. Check the flash and RAM figures while doing it — the sniffer
+  alone was 45.2 % and 40.0 %.
 - **Re-capture once the watchdog window is two minutes**, to confirm the stall
   rate against a capture that is not two-thirds dead.
 

@@ -305,8 +305,9 @@ to do:
   in two hours, and heating curve control depends on it being live
 - Work out what **0x100** is — it is one of the busiest nodes on this bus and it
   is not in the published address table
-- Create ESPHome sensors for the named elements and expose them to Home
-  Assistant
+- **Validate and flash the sensors.** Seven entities are written — three
+  temperatures, two setpoints, the operating mode and the pump's own clock — and
+  checked against the capture, but not yet against ESPHome or the node itself
 - Re-capture now that the watchdog window is two minutes rather than thirty
 
 **Phase 2 — write**
