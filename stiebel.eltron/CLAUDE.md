@@ -955,10 +955,37 @@ degree for two hours. The table's own header warns it is under construction and
 that indices must be verified before production use; this is what that warning
 looks like in practice.
 
-The remaining pattern is legible even without names: **0xFE07 and 0xFE1D switch
-between two states together**, and the temperatures rise while they are on and
-decay while they are off. That is the compressor, whatever the elements are
-called.
+## The compressor, found by elimination
+
+An earlier version of this file said 0xFE07 and 0xFE1D switch between two states
+together and called the pair the compressor. **They do not, and it is not.**
+Reading the whole capture as a state machine rather than as two time series is
+what corrected it — the two coincide in exactly one window out of three.
+
+The capture holds four states. Ignore the two stall gaps and the machine visits
+each of them once:
+
+| | 0xFE1B | 0xFE1C | **0xFE1D** | **0xFE07** | flow / return | tank |
+|---|---|---|---|---|---|---|
+| 16:02, 17:27–17:42 | 100 | 100 | 1 | **0** | falling 52 → 47 | 50.4 |
+| 16:42–17:12 | 0 | 0 | 1 | **57** | 27.8 / 24.1 | 47.5 |
+| **17:17–17:22** | 0 | 100 | **98** | **52** | **52.7 / 53.6** | **49.2 → 49.8, rising** |
+| 17:47–17:52 | 0 | 0 | 1 | **57** | 29.9 / 24.7 | 50.5 |
+
+**0xFE1D is the compressor.** Its one on-window is the one where heat is
+actually made: the tank climbs toward its 50.0 setpoint and flow and return sit
+at 53–54. The manager commands 0 or 100 and the module reports 1 or 98 back, so
+the reported value is a measurement of a commanded output rather than an echo.
+
+**0xFE07 is on in three of the four states**, including two where nothing is
+being heated and the return sits at 24 °C. It reads 0 or 51–59 and jitters by
+one every few seconds, so it is measured rather than commanded. It is also
+exactly anti-correlated with 0xFE1B across all four states, which is the thread
+to pull next. What it is not, is the compressor.
+
+**Neither is in the element list, so neither gets a scaling it has not earned.**
+The tenths in this file come from `et_dec_val`; an element with no entry has no
+type either, which is why 0xFE07 is published raw.
 
 **0x000C deserves a second look.** `AUSSENTEMP` sat at exactly 15.3 °C across
 all 239 samples in two hours — not a tenth of movement. Either no outdoor sensor
@@ -1105,9 +1132,9 @@ several re-flashes.
 
 ## The sensors, and why they are publish-only
 
-Seven entities carry the elements the element list named. **Not yet validated or
-flashed** — the reasoning below is checked against the capture, not against a
-running node.
+Nine entities: seven for the elements the element list named, two more from
+0x700 that it does not reach. **Not yet validated or flashed** — the reasoning
+below is checked against the capture, not against a running node.
 
 Every one of them is `update_interval: never` with no lambda: the frame handler
 pushes into them as values arrive. Polling a template sensor would invent an
@@ -1141,18 +1168,34 @@ been seen, and a reading that is not a valid date is dropped rather than shown.
 A rejected reading costs one minute, because every part is refreshed the next
 time the panel polls.
 
+**Two more entities come from 0x700, which the element list does not reach.**
+They are named from behaviour instead, and named only as far as the behaviour
+goes — see "The compressor, found by elimination":
+
+| Entity | From | Element | Kind |
+|---|---|---|---|
+| Compressor | 0x700 | 0xFE1D | binary, on above 50 |
+| Element 0xFE07 | 0x700 | 0xFE07 | raw integer, diagnostic |
+
+`Compressor` is binary because 0 and 100 are the only commands in the capture.
+If an intermediate value ever appears, this wants to become a percentage.
+`Element 0xFE07` carries no unit, no device class and no scaling, because none
+of the three is known — publishing it raw is what makes it identifiable later,
+and watching it in Home Assistant against the temperatures is the cheapest way
+to find out what it is. Rename it the day it is identified.
+
 Replaying the capture through the handler on a host compiler produced 239 return
 temperatures, 228 tank temperatures, one of each setpoint, `Automatic` for the
-mode, and a clock running from `2026-09-05 18:01` to `18:07` while the capture
-itself ended at 17:56 — the eleven-minute drift, arrived at a third time and by
-a different route.
+mode, 72 compressor-on samples against 196 off, and a clock running from
+`2026-09-05 18:01` to `18:07` while the capture itself ended at 17:56 — the
+eleven-minute drift, arrived at a third time and by a different route.
 
 Left out on purpose: `IMPULSRATE`, `DYNAMIK` and `BRENNER` are named in the list
 but appeared once or twice in two hours with no verified meaning here, and an
-entity that is unknown forever is noise. Everything from 0x700 is left out
-because the list does not reach it — though the compressor is legible there
-regardless, and 0xFE07 with 0xFE1D is one `case` away once those two are
-confirmed.
+entity that is unknown forever is noise. 0xFE1B and 0xFE1C are left out for the
+opposite reason — they are commanded outputs whose behaviour is clear enough to
+be interesting but not clear enough to name, and 0xFE1B is the anti-correlation
+that will probably identify 0xFE07.
 
 ## The silent stall: an overflow flag that never clears
 
@@ -1262,7 +1305,7 @@ is left:
   and heating curve control depends on it.
 - **Explain 0x100.** It is not in the published address table, yet it is one of
   the two busiest talkers on this machine.
-- **Validate and flash the sensors.** Seven entities are written and checked
+- **Validate and flash the sensors.** Nine entities are written and checked
   against the capture on a host compiler, but not against ESPHome's schema and
   not on the node. Check the flash and RAM figures while doing it — the sniffer
   alone was 45.2 % and 40.0 %.

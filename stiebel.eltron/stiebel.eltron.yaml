@@ -182,6 +182,34 @@ canbus:
                 }
               } else if (cmd == 2 && can_id == 0x301 && element == 0x0004) {
                 id(flow_setpoint).publish_state((int16_t) value / 10.0f);
+              } else if (cmd == 2 && can_id == 0x700) {
+                // Neither of these is in the element list, so both are named
+                // from behaviour and neither gets a scaling it has not
+                // earned. The list's tenths apply to et_dec_val elements;
+                // an element with no entry has no type either.
+                switch (element) {
+                  case 0xFE1D:
+                    // The compressor. The manager commands 0 or 100 and the
+                    // module reports 1 or 98 back, and its on-window is the
+                    // only one in the capture that matches heat actually
+                    // being made: tank rising, flow and return at 53-54.
+                    // Binary because 0 and 100 are the only commands seen —
+                    // if a middle value ever appears this wants to become a
+                    // percentage instead.
+                    id(compressor).publish_state(value > 50);
+                    break;
+                  case 0xFE07:
+                    // Published raw, and named after nothing, because it is
+                    // not identified. It reads 0 or 51-59 and jitters by one
+                    // every few seconds, so it is measured rather than
+                    // commanded — and it runs in three of the capture's four
+                    // states, including two where nothing is being heated.
+                    // Whatever it is, it is not the compressor. Watching it
+                    // in Home Assistant against the temperatures is the
+                    // cheapest way to find out what it is.
+                    id(elem_fe07).publish_state((int16_t) value);
+                    break;
+                }
               } else if ((cmd == 0 || cmd == 2) && can_id == 0x480) {
                 // The clock and the mode are et_little_endian: the number is
                 // the high byte and the low byte is padding. Writes count as
@@ -406,6 +434,25 @@ sensor:
     unit_of_measurement: "°C"
     accuracy_decimals: 1
     update_interval: never
+
+  # No unit and no device class on purpose: 0xFE07 is not in the element list,
+  # so nothing is known about its scaling and the raw integer is the only
+  # honest thing to publish. Rename it the day it is identified.
+  - platform: template
+    id: elem_fe07
+    name: "Element 0xFE07"
+    state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+
+binary_sensor:
+  # Named from behaviour rather than from the list — see the frame handler.
+  - platform: template
+    id: compressor
+    name: "Compressor"
+    device_class: running
 
 
 text_sensor:

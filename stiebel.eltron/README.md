@@ -305,9 +305,13 @@ to do:
   in two hours, and heating curve control depends on it being live
 - Work out what **0x100** is — it is one of the busiest nodes on this bus and it
   is not in the published address table
-- **Validate and flash the sensors.** Seven entities are written — three
-  temperatures, two setpoints, the operating mode and the pump's own clock — and
-  checked against the capture, but not yet against ESPHome or the node itself
+- **Validate and flash the sensors.** Nine entities are written — three
+  temperatures, two setpoints, the operating mode, the pump's own clock, the
+  compressor and one unidentified signal — and checked against the capture, but
+  not yet against ESPHome or the node itself
+- **Identify 0xFE07.** It runs whenever 0xFE1B is off, in states where nothing
+  is being heated, so it is not the compressor. That anti-correlation is the
+  thread to pull
 - Re-capture now that the watchdog window is two minutes rather than thirty
 
 **Phase 2 — write**
