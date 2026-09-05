@@ -1,4 +1,4 @@
-# espohome
+# esphome
 
 Kotiautomaatioprojekteja ESPHomella. Yhteinen tavoite kaikissa: lukea ja ohjata
 taloteknistä laitetta **paikallisesti** Home Assistantista ilman valmistajan
