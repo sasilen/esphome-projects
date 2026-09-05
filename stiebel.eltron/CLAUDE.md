@@ -1314,6 +1314,23 @@ The overnight capture decides it, and the test is cheap: a command that recurs o
 a schedule with sensible payloads is part of the protocol, while one that appears
 in isolated bursts near a stall is damage.
 
+**The first evidence says damage.** Both frames arrived while the node was
+stalling every 26 to 77 seconds under the heavy logging. Once the load came off
+and the node ran 22 minutes clean, 25 minutes of capture produced 26 raw frames
+and **every one of them was an ordinary system frame** — no 0x704, no command 10.
+
+That also answers the objection this file raised against itself. A `dlc` of 3
+cannot be a corrupted payload because the CAN CRC covers the identifier and the
+length — **but the CRC protects the wire, not the driver's buffer handling.**
+When the MCP2515's receive buffers overflow and the driver loses track, it can
+read stale or partial buffer contents and hand up a frame that was never on the
+bus at all. The same explanation covers the 0xFB frames of the first capture,
+which likewise arrived seconds before a stall.
+
+So the leading reading is now that these are artefacts of the overflow bug
+rather than traffic. A clean overnight run settles it: if a healthy node
+produces none of them, they were never real.
+
 ```sh
 grep " raw dlc=" wpc-night.log | awk '{print $NF, $0}' | sort | uniq -c
 ```
