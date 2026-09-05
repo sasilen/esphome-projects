@@ -1087,6 +1087,52 @@ the secondary target in the original plan rather than the primary one.
 Curve second, because it is capped by hardware this project does not control
 and cannot see.
 
+### The electric element is a third lever, and it is about speed, not efficiency
+
+The machine has a second heat generator and it has done real work:
+
+```
+WAERMEERTRAG_2WE_WW_SUM_MWH   = 9    to hot water
+WAERMEERTRAG_2WE_HEIZ_SUM_MWH = 3    to heating
+```
+
+Twelve megawatt hours over the machine's life is not an accident — it runs
+routinely. But `NHZ_ANZAHL_STUFEN` at 0x05A0 answers with the 0x8000 sentinel,
+so how it is configured is not visible from the elements seen so far.
+
+**Candidates for forcing it, none confirmed on this machine:**
+
+| Element | Name | Effect |
+|---|---|---|
+| 0x05AB | `MANUELL_NHZ_STUFE` | direct manual stage override |
+| 0x0589 | `NHZ_VERZOEGERUNG_WW` | delay before the element engages for DHW |
+| 0x058A | `NHZ_AUSSENTEMP_SOFORT_WW` | outdoor temperature below which it engages at once |
+| 0xFDAB | `ZWEITER_WE_STATUS` | **feedback** — whether it is actually running |
+
+None appeared in the menu walk, which proves nothing: these are service-level
+parameters a display has no reason to show. **They are settled by reading them,
+and reading is transmitting**, so this is phase 2 work.
+
+**The economics have to be stated, because they are not obvious.** The element
+is COP 1 and the heat pump is perhaps COP 3, so pushing surplus into the tank
+electrically costs roughly three times the electricity per stored kilowatt hour.
+That only pays when the price ratio beats 3:1, or when the surplus is
+genuinely worthless otherwise.
+
+**Speed is the real argument for it.** If the cheap window is an hour or two,
+the heat pump cannot move enough energy in time and the element can. The choice
+is then not about efficiency at all but about whether the charge fits the
+window:
+
+| Window | Lever |
+|---|---|
+| long and cheap | raise the DHW setpoint, let the heat pump work |
+| short and very cheap | the element, accepting COP 1 |
+
+`ZWEITER_WE_STATUS` matters more than the forcing elements, whichever is used:
+without it there is no way to tell whether a write did anything, and a control
+loop that cannot observe its own actuator is not a control loop.
+
 ### And the counters found tonight can settle it
 
 This does not have to stay an argument. `WAERMEERTRAG_*` and
