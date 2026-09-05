@@ -1046,10 +1046,51 @@ commanding 0xFE1B *to* 100 is what stops it. That fits a blocking or diverting
 output better than a run command, and it is the reason this is not being named
 yet.
 
-**The cheapest way to settle it is the panel, not another capture.** The WPC's
-own display shows measured values; if one of them reads about 5.6 falling to 5.2
-while the compressor runs, that identifies 0xFE07 and hands over its unit and
-scaling in one go. Nothing needs to be flashed to try it.
+### The panel was checked, and nothing reads 5.6 or 5.2
+
+That was worth doing and it removes something — but note what it removes. **The
+tenths were an assumption of this file's, never a finding.** 0xFE07 has no entry
+in the element list and therefore no type, and `et_dec_val` was read across from
+the elements that do have one. Looking for 5.6 tested that assumption, not the
+element.
+
+So the number to glance for is **56 falling to 52** — a percentage, most likely
+a pump's — or possibly 0.56 and 0.52. The pattern to match is the ratio and the
+zero, not the decimal point. And it may not be on the panel at all: these are
+module-level values on the manager's own conversation with 0x700, and a display
+has no obligation to show them.
+
+### A second handle: 0xFE09 is in the same circuit
+
+Worth more than another number hunt. 0xFE09 steps in lockstep with 0xFE07,
+within seconds of it:
+
+| | 0xFE07 | 0xFE09 |
+|---|---|---|
+| 0xFE1B = 100 | 0 | **14.0** |
+| 0xFE1B = 0, compressor off | ~56 | **15.5** |
+| 0xFE1B = 0, compressor on | ~52 | **15.9** |
+
+At 17:26:04 0xFE07 reached zero and 0xFE09 fell to 14.0 eight seconds later; at
+17:42 it climbed back the moment 0xFE07 restarted. **A temperature that moves
+when a pump starts is a temperature in that pump's circuit** — with no flow the
+sensor drifts toward its surroundings, with flow it reads the fluid.
+
+That gives a target with a shape rather than a bare number: **a temperature
+around 14–16 °C that jumps about 1.5 K when something starts.** Finding it on
+the panel names the circuit, and naming the circuit names 0xFE07.
+
+One thing it argues against: the compressor running moved 0xFE09 *up* by 0.4 K,
+not down. Extracting heat from a source loop cools it by several degrees, so
+whatever this circuit is, **it is probably not the brine side.**
+
+### If the panel has nothing, the node can answer it
+
+Flash the configuration and watch `Element 0xFE07` for a day or two. The capture
+covers one hot water cycle and no space heating at all; a heating run puts the
+diverter in its other position, and whether 0xFE07 keeps the same two operating
+points across that is what separates a source-side circuit from a heating-side
+one. That costs nothing but time, and the entity is already there.
 
 **0x000C deserves a second look.** `AUSSENTEMP` sat at exactly 15.3 °C across
 all 239 samples in two hours — not a tenth of movement. Either no outdoor sensor
