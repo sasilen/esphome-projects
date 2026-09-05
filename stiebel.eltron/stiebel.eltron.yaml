@@ -235,6 +235,20 @@ canbus:
                   // same rule as 0xFE07.
                   case 0xFE1B: id(elem_fe1b).publish_state((int16_t) value); break;
                   case 0xFE1C: id(elem_fe1c).publish_state((int16_t) value); break;
+                  case 0xFE1E: id(elem_fe1e).publish_state((int16_t) value); break;
+
+                  // Tenths here but raw for 0xFE07, and the difference is
+                  // evidence rather than taste. 0xFDF4 is proven to be the
+                  // return temperature, and et_dec_val proven for its twin at
+                  // 0x180 — so its neighbours in the same index block, on the
+                  // same five-second cycle, in the same 26-54 range, are
+                  // temperatures on tenths too. 0xFE07 has no such sibling and
+                  // stays raw.
+                  case 0xFDF3: id(elem_fdf3).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFDF4: id(return_temp_mod).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFDF5: id(elem_fdf5).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFE09: id(elem_fe09).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFE0A: id(elem_fe0a).publish_state((int16_t) value / 10.0f); break;
                   case 0xFE07:
                     // Published raw, and named after nothing, because it is
                     // not identified. What is known: 0xFE1B commands it and
@@ -512,6 +526,71 @@ sensor:
     name: "Element 0xFE1C"
     state_class: measurement
     accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+  - platform: template
+    id: elem_fe1e
+    name: "Element 0xFE1E"
+    state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+  # The return temperature as the module reports it, independent of whether
+  # the panel is awake and polling 0x180. Same physical value as "Return
+  # temperature", read by a different node under a different index.
+  - platform: template
+    id: return_temp_mod
+    name: "Return temperature (module)"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+
+  # Unidentified, but temperatures — see the frame handler for why the tenths
+  # are earned here and not on 0xFE07.
+  - platform: template
+    id: elem_fdf3
+    name: "Element 0xFDF3"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+
+  - platform: template
+    id: elem_fdf5
+    name: "Element 0xFDF5"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+
+  # The second handle on 0xFE07: it steps within seconds of it, so it is a
+  # temperature in the circuit 0xFE1B stops.
+  - platform: template
+    id: elem_fe09
+    name: "Element 0xFE09"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+
+  - platform: template
+    id: elem_fe0a
+    name: "Element 0xFE0A"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
     entity_category: diagnostic
     update_interval: never
 
