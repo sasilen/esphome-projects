@@ -963,15 +963,47 @@ built on an element that can return them needs to drop them rather than publish
 them. 0x8080 is the same thing for `et_time_domain`, where the list's own code
 already tests for it.
 
-### What is still missing: a write
+### The write, captured
 
-The panel was browsed, not edited, so every one of these arrived as a response
-to a read. **Phase 2 needs to see one of these parameters actually written**,
-and getting that is a thirty-second job: change the heating curve or a room
-setpoint by one step on the panel with the capture running. The frame that
-appears is the exact frame phase 2 has to imitate, for the exact parameter it
-wants to control — which is a much shorter step than generalising from the
-manager writing 0xFE1D to a module.
+Nudging the curve one step on the panel produced it:
+
+```
+19:48:13.818   100>601 wr   ex=010E = 24 (0x0018)      the panel writes 0.24
+19:48:19.921   601>100 resp ex=010E = 24 (0x0018)      confirmed on the next poll
+```
+
+**This is the frame phase 2 has to send**, for the parameter phase 2 exists to
+control, and nothing about it has to be generalised from anything else:
+
+| | |
+|---|---|
+| CAN identifier | the sender's own — **0x680** for this node |
+| byte 0 | `0xC0` — receiver 0x601 shifted right by three, command 0 = write |
+| byte 1 | `0x01` — the receiver's low bits, which is what makes it 0x601 and not 0x600 |
+| bytes 2–4 | `FA 01 0E` — extended index marker, then element 0x010E |
+| bytes 5–6 | `00 18` — 24, and `et_cent_val` makes that 0.24 |
+
+So the complete payload is `C0 01 FA 01 0E 00 18`, and only the value bytes
+change.
+
+**The write is not acknowledged, and that is the surprise.** Nothing answered it
+at all. The confirmation at 19:48:19 is 0x601 answering a *poll* six seconds
+later, on the panel's normal cycle — not an acknowledgement of the write.
+
+That is a different contract from the one this file recorded earlier. Writes
+from 0x480 to 0x700 are answered in the same millisecond, which is where the
+"write-then-verify is the machine's own pattern" note came from. **It is the
+machine's pattern with that module, not with this one.** For 0x601 the pattern
+is write, then read back on your own schedule and check.
+
+Phase 2 therefore cannot treat silence as failure. A curve write that produces
+no response is normal; the only way to know it took is to ask.
+
+### The clock is no longer eleven minutes fast
+
+`Heat pump clock` read `2026-09-05 19:48` at a wall-clock 19:48:20 during the
+same session — in step, where it had been eleven minutes ahead. The drift is
+historical, and the entity is what will show it if it returns.
 
 ## Naming the elements: the table covers half this bus
 
