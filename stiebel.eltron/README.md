@@ -164,10 +164,12 @@ it is; [`wiring-phase1.svg`](wiring-phase1.svg) — which pin goes where, and th
 order to check things in. The board itself is in
 [`mcp2515-module.jpg`](mcp2515-module.jpg).
 
-1. **Prepare the module.** Termination needs no work on the module measured for
-   these drawings — H to L reads 49 kΩ, so the 120 Ω never reaches the bus.
-   Repeat that measurement if you use one of the other two. The one remaining
-   step is to lift TJA1050 pin 1 and tie it to VCC.
+1. **Prepare the module — there is nothing to do.** Termination is already out of
+   circuit on the module measured for these drawings: H to L reads 49 kΩ. And
+   `mode: LISTENONLY` compiles on the installed ESPHome, so listen-only is
+   enforced in software and the TJA1050 pin 1 lift is optional. **Phase 1 needs
+   no soldering.** Repeat the 49 kΩ measurement if you use one of the other two
+   modules.
    Pull the termination jumper cap; measuring across the H and L screw posts tells
    you when it is out (~120 Ω → open). Then lift the TJA1050's pin 1 (TXD) and tie
    it to VCC. That pin lift is the only soldering here, and it is optional if you
@@ -202,8 +204,16 @@ Note that the dashboard names the file after the device, so on the host it will
 be `wpc-can.yaml` while the repo keeps `stiebel.eltron.yaml` to match its
 directory. Same content, two naming conventions.
 
-Then take the downloaded binary to the machine holding the board and write it
-over USB, either from `web.esphome.io` in a Chromium-based browser, or with
+**Try `Install → Plug into this computer` first.** It compiles on the server and
+then flashes over serial from the machine running the *browser*, which is exactly
+this situation and needs no file handling at all. The catch is that the browser's
+WebSerial requires a secure context: it works when the dashboard is reached over
+HTTPS or localhost, and is blocked on a plain `http://` LAN address. That is
+probably why the aidon build went the manual route.
+
+If that option is missing or fails, take the **Manual download** binary to the
+machine holding the board and write it over USB, either from `web.esphome.io` in
+a Chromium-based browser — that site is HTTPS, so WebSerial works — or with
 esptool:
 
 ```sh

@@ -127,5 +127,7 @@ sensor:
     id: can_frames
     accuracy_decimals: 0
     update_interval: 10s
+    unit_of_measurement: "frames"
     state_class: total_increasing
+    entity_category: diagnostic
     lambda: "return id(frame_count);"

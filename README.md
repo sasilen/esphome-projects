@@ -42,12 +42,10 @@ Ainoa vapaa ESP32 on siis 30-nastainen PCB-antennilevy. Huomaa myös että
 USB-siltapiiri vaihtuu levytyypin mukana, eli myös ajuri: CH34x vs. CP210x.
 D1 minit ovat CH340G ja USB-C, eli sama CH34x-ajuri kuin diymoren ESP32:issa.
 
-**Yksi asia kannattaa varmistaa D1 mineistä ennen ensimmäistä flashausta:**
-myynti-ilmoitus lupasi "4MBit Flash Memory". ESP8266-12F:ssä on käytännössä aina
-4 **MB** eli 32 Mbit, ja ESPHomen `board: d1_mini` olettaa juuri sen. Jos levyllä
-oikeasti olisi 512 kB, OTA ei mahtuisi. Kyse on lähes varmasti ilmoituksen
-kirjoitusvirheestä — todennettavissa käynnistyslokista tai `esptool flash_id`
--komennolla.
+**Flash-koko on todennettu: 4 MB.** Myynti-ilmoitus lupasi "4MBit Flash Memory",
+mikä olisi 512 kB eikä riittäisi OTA:lle. `esptool flash_id` lukee piiriltä
+`Detected flash size: 4MB`, eli ilmoituksen sanamuoto oli väärä ja ESPHomen
+`board: d1_mini` -oletus osuu oikeaan.
 
 Minit menevät siis tasan eikä varalevyä jää, ESP32:ista jää yksi yli. Tämä on
 huomionarvoista siksi, että **aidon on ainoa projekti jossa ESP8266 ei ole

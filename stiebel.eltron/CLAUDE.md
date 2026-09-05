@@ -539,23 +539,34 @@ frames appear.
 The phase 1 sniffer is [`stiebel.eltron.yaml`](stiebel.eltron.yaml). It reads
 and logs; it writes nothing, and it is not the phase 2 configuration.
 
-`board: d1_mini` assumes 4 MB of flash, which is what an ESP8266-12F carries.
-The boards in stock are ESP8266-12F with CH340G over USB-C, so the flashing
-machine wants the CH34x driver and a USB-C cable. Confirm the flash size from the
-first boot log — the listing said "4MBit", which would be 512 kB and too small
-for OTA. It is near-certainly a wording error, but this is the project that finds
-out first.
+`board: d1_mini` assumes 4 MB of flash, and `esptool flash_id` confirms it:
+**Detected flash size: 4MB**, chip ESP8266EX. The listing said "4MBit", which
+would have been 512 kB and too small for OTA — a wording error, now settled by
+reading the chip rather than trusting either the listing or the board profile.
+
+The USB bridge on the board that was flashed is an **FT232R, not the CH340G the
+listing described**, so `ftdi_sio` covers it and no CH34x driver is needed. Its
+DTR/RTS are wired: `esptool` resets the board into the bootloader on its own, and
+no manual GPIO0 handling is needed.
 
 **The two unknowns are `substitutions:` at the top of the file** — crystal and
 bit rate. Both are one-line edits followed by a re-flash, because ESPHome fixes
 the bit rate at compile time; there is no way to sweep it at runtime.
 
-**`mode: LISTENONLY`** is what makes the sweep safe on a live bus. It belongs in
-the config even though the lifted TXD already enforces passivity in hardware:
-the two protect against different mistakes, and the hardware one is invisible in
-the source. If validation rejects `mode:`, the installed ESPHome does not expose
-listen-only on `mcp2515` — a clean failure at `esphome config`, not a surprise on
-the bus.
+**`mode: LISTENONLY`** is what makes the sweep safe on a live bus. **It compiles
+on ESPHome 2026.8.2** — the version matters, because this whole question was
+about whether the installed one exposes the option. It does, so listen-only is
+enforced in software and **the TXD lift is no longer needed.**
+Phase 1 requires no soldering at all: the termination was already out of circuit
+and the only remaining modification has just become optional.
+
+Keep it in mind anyway as the hardware belt to the software braces. The two
+protect against different mistakes, and if a future ESPHome upgrade ever drops
+the option, the lift is what makes a bit-rate sweep safe again.
+
+The build lands at **flash 45.2 %, RAM 40.0 %** on a D1 mini — comparable to
+aidon's 46.8 % / 53.3 %, so there is room for the sensor set that phase 1 will
+grow.
 
 **`can_id: 0x000`** is the transmit identifier. It is never used, because
 nothing is transmitted, but the schema requires the key. It is not a bus
@@ -572,6 +583,27 @@ once it has stayed silent.
 the log at all: it stays at zero on a wrong rate and climbs steadily on a
 correct one. That is worth an entity of its own during a sweep that may take
 several re-flashes.
+
+## The two failure signatures, and why they must not be confused
+
+With the module unwired the boot log says:
+
+```
+[C][canbus:020]: config standard id=0x000
+[E][component:143]: canbus is marked FAILED: unspecified
+```
+
+That is the **SPI** signature: the MCP2515 does not answer, so the component
+never starts. It appears whether the module is absent, miswired or unpowered.
+
+A wired and working module removes that line entirely. What can still happen
+after that is `CAN frames` sitting at zero — the **bus** signature: the
+controller is alive and configured, but nothing decodes, which points at the bit
+rate or at CANH/CANL.
+
+Confirm the FAILED line is gone **before** going anywhere near the heat pump.
+Tested together at the pump the two produce the same visible symptom — nothing
+happens — and the sweep would be chasing the wrong variable.
 
 ---
 
