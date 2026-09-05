@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1020" width="760" height="1020" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="1020" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="980" fill="none" stroke="#A8B3BC"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">WIRING &#8212; PHASE 1</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Six jumpers, three bus wires &#183; do the two board modifications first &#183; nothing is powered yet</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <text x="50" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">D1 MINI</text>
+  <text x="470" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">MCP2515 MODULE &#183; J4</text>
+
+  <!-- D1 mini -->
+  <rect x="50" y="150" width="170" height="330" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="78" y="166" width="114" height="40" rx="2" fill="#E9ECEF" stroke="#A8B3BC"/>
+  <text x="135" y="191" font-size="10" fill="#5A6772" text-anchor="middle">ESP8266-12F</text>
+  <text x="135" y="464" font-size="10" fill="#8A959E" text-anchor="middle">USB-C</text>
+
+  <rect x="212" y="228" width="16" height="12" fill="#A3301F"/>
+  <text x="196" y="238" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">3V3</text>
+  <rect x="212" y="268" width="16" height="12" fill="#16212B"/>
+  <text x="196" y="278" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">G</text>
+  <rect x="212" y="316" width="16" height="12" fill="#0E6E7C"/>
+  <text x="196" y="326" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">D5</text>
+  <rect x="212" y="356" width="16" height="12" fill="#2E5F8A"/>
+  <text x="196" y="366" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">D7</text>
+  <rect x="212" y="396" width="16" height="12" fill="#9A6B18"/>
+  <text x="196" y="406" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">D6</text>
+  <rect x="212" y="436" width="16" height="12" fill="#7A2E6E"/>
+  <text x="196" y="446" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">D8</text>
+
+  <!-- module -->
+  <rect x="470" y="150" width="200" height="330" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="462" y="188" width="16" height="12" fill="#B4BCC3"/>
+  <text x="490" y="198" font-size="13" fill="#B4BCC3">INT</text>
+  <text x="524" y="198" font-size="10" fill="#8A959E">leave unconnected</text>
+  <rect x="462" y="316" width="16" height="12" fill="#0E6E7C"/>
+  <text x="490" y="326" font-size="13" font-weight="700" fill="#16212B">SCK</text>
+  <rect x="462" y="356" width="16" height="12" fill="#2E5F8A"/>
+  <text x="490" y="366" font-size="13" font-weight="700" fill="#16212B">SI</text>
+  <rect x="462" y="396" width="16" height="12" fill="#9A6B18"/>
+  <text x="490" y="406" font-size="13" font-weight="700" fill="#16212B">SO</text>
+  <rect x="462" y="436" width="16" height="12" fill="#7A2E6E"/>
+  <text x="490" y="446" font-size="13" font-weight="700" fill="#16212B">CS</text>
+  <rect x="462" y="268" width="16" height="12" fill="#16212B"/>
+  <text x="490" y="278" font-size="13" font-weight="700" fill="#16212B">GND</text>
+  <rect x="462" y="228" width="16" height="12" fill="#A3301F"/>
+  <text x="490" y="238" font-size="13" font-weight="700" fill="#16212B">VCC</text>
+  <text x="524" y="238" font-size="10" fill="#A3301F">3.3 V, not 5 V</text>
+
+  <!-- screw terminal -->
+  <rect x="600" y="300" width="60" height="90" rx="3" fill="#E9ECEF" stroke="#5A6772"/>
+  <circle cx="630" cy="324" r="10" fill="#FFFFFF" stroke="#5A6772"/>
+  <circle cx="630" cy="366" r="10" fill="#FFFFFF" stroke="#5A6772"/>
+  <text x="596" y="328" font-size="12" font-weight="700" fill="#16212B" text-anchor="end">H</text>
+  <text x="596" y="370" font-size="12" font-weight="700" fill="#16212B" text-anchor="end">L</text>
+
+  <!-- wires -->
+  <line x1="228" y1="234" x2="462" y2="234" stroke="#A3301F" stroke-width="2.5"/>
+  <line x1="228" y1="274" x2="462" y2="274" stroke="#16212B" stroke-width="2.5"/>
+  <line x1="228" y1="322" x2="462" y2="322" stroke="#0E6E7C" stroke-width="2.5"/>
+  <line x1="228" y1="362" x2="462" y2="362" stroke="#2E5F8A" stroke-width="2.5"/>
+  <line x1="228" y1="402" x2="462" y2="402" stroke="#9A6B18" stroke-width="2.5"/>
+  <line x1="228" y1="442" x2="462" y2="442" stroke="#7A2E6E" stroke-width="2.5"/>
+
+  <text x="345" y="228" font-size="10" fill="#8A959E" text-anchor="middle">power</text>
+  <text x="345" y="316" font-size="10" fill="#8A959E" text-anchor="middle">clock</text>
+  <text x="345" y="356" font-size="10" fill="#8A959E" text-anchor="middle">ESP &#8594; module</text>
+  <text x="345" y="396" font-size="10" fill="#8A959E" text-anchor="middle">module &#8594; ESP</text>
+  <text x="345" y="436" font-size="10" fill="#8A959E" text-anchor="middle">chip select</text>
+
+  <!-- bus wires -->
+  <line x1="640" y1="324" x2="710" y2="324" stroke="#16212B" stroke-width="2.5"/>
+  <line x1="640" y1="366" x2="710" y2="366" stroke="#16212B" stroke-width="2.5"/>
+  <path d="M470 274 H440 V520 H710" fill="none" stroke="#16212B" stroke-width="2.5"/>
+  <circle cx="470" cy="274" r="4" fill="#16212B"/>
+  <g font-size="11" font-weight="700" fill="#16212B">
+    <text x="716" y="318">CAN_H</text>
+    <text x="716" y="360">CAN_L</text>
+    <text x="716" y="514">GND</text>
+  </g>
+  <text x="446" y="540" font-size="10" fill="#A3301F">bus ground joins at J4 GND &#8212; the terminal has no ground pole</text>
+
+  <line x1="20" y1="566" x2="740" y2="566" stroke="#A8B3BC"/>
+
+  <!-- modifications -->
+  <text x="50" y="594" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">BEFORE ANY OF THE ABOVE &#8212; TWO CHANGES TO THE MODULE</text>
+
+  <rect x="50" y="610" width="660" height="60" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <rect x="50" y="610" width="6" height="60" fill="#A3301F"/>
+  <text x="74" y="632" font-size="12" font-weight="700" fill="#A3301F">1. PULL THE TERMINATION JUMPER</text>
+  <text x="74" y="652" font-size="11.5" fill="#16212B">Meter across the H and L screw posts: ~120 &#8486; with the cap on, open with it off.</text>
+  <text x="74" y="666" font-size="11.5" fill="#16212B">Pull caps until it reads open. No desoldering &#8212; both J1 and J3 carry caps.</text>
+
+  <rect x="50" y="684" width="660" height="74" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <rect x="50" y="684" width="6" height="74" fill="#A3301F"/>
+  <text x="74" y="706" font-size="12" font-weight="700" fill="#A3301F">2. LIFT TJA1050 PIN 1 (TXD) AND TIE IT TO VCC</text>
+  <text x="74" y="726" font-size="11.5" fill="#16212B">The only soldering. Optional if you trust <tspan font-weight="700">mode: LISTENONLY</tspan> alone &#8212; but it is what makes</text>
+  <text x="74" y="740" font-size="11.5" fill="#16212B">a bit-rate sweep harmless on a live bus. Find pin 1 by continuity, never by guessing:</text>
+  <text x="74" y="754" font-size="11.5" fill="#16212B">pin 7 beeps to the H post, and pin 1 is diagonally opposite it.</text>
+
+  <text x="50" y="794" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">CRYSTAL</text>
+  <text x="50" y="816" font-size="11.5" fill="#16212B">X1 on this board reads <tspan font-weight="700">8.000</tspan>, so <tspan font-weight="700">can_clock: 8MHZ</tspan> is already right. Read the can if you</text>
+  <text x="50" y="834" font-size="11.5" fill="#16212B">take a different module: 16 MHz configured as 8 gets the bit rate wrong by a factor of two.</text>
+
+  <rect x="50" y="860" width="660" height="122" fill="#16212B"/>
+  <text x="74" y="886" font-size="11" font-weight="700" fill="#7C8B99" letter-spacing="1">CHECK IN THIS ORDER</text>
+  <text x="74" y="908" font-size="11.5" fill="#E9ECEF">1. Continuity: <tspan fill="#FF9E8F" font-weight="700">3V3 and G must not beep to each other</tspan></text>
+  <text x="74" y="926" font-size="11.5" fill="#E9ECEF">2. H to L across the screw posts reads <tspan font-weight="700">open</tspan>, not 120 &#8486;</text>
+  <text x="74" y="944" font-size="11.5" fill="#E9ECEF">3. USB in &#8212; board boots and appears in ESPHome. If it will not boot, move CS off D8</text>
+  <text x="74" y="962" font-size="11.5" fill="#E9ECEF">4. <tspan font-weight="700">Only then</tspan> connect CAN_H, CAN_L and GND, and watch the CAN frames counter</text>
+</svg>

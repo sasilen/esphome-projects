@@ -366,6 +366,9 @@ CAN Pal's on-board 5 V generator makes it unnecessary.
 
 ## ESP ↔ MCP2515 module (single 3.3 V rail)
 
+Drawn out in [`wiring-phase1.svg`](wiring-phase1.svg), with the signal-level
+reasoning in [`schematic-phase1.svg`](schematic-phase1.svg).
+
 The module's VCC pin feeds the whole board, MCP2515 and TJA1050 alike. On the
 chosen solution that pin goes to **3.3 V and nothing else** — there is no second
 rail to wire, in either phase. The difference between the phases is only which

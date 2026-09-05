@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 900" width="760" height="900" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="900" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="860" fill="none" stroke="#A8B3BC"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">SCHEMATIC &#8212; PHASE 1, LISTEN ONLY</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Signal level &#183; every rail on this page is 3.3 V &#183; the node cannot transmit, by construction</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <text x="50" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">D1 MINI</text>
+  <text x="330" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">MCP2515 MODULE (V2139)</text>
+  <text x="646" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">WPC 07</text>
+
+  <!-- module outline -->
+  <rect x="296" y="146" width="330" height="404" fill="none" stroke="#A8B3BC" stroke-dasharray="5 4"/>
+
+  <!-- D1 mini -->
+  <rect x="50" y="160" width="150" height="300" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="74" y="176" width="102" height="38" rx="2" fill="#E9ECEF" stroke="#A8B3BC"/>
+  <text x="125" y="200" font-size="10" fill="#5A6772" text-anchor="middle">ESP8266</text>
+  <g font-size="12" font-weight="700" fill="#16212B" text-anchor="end">
+    <text x="192" y="248">3V3</text>
+    <text x="192" y="288">G</text>
+    <text x="192" y="332">D5</text>
+    <text x="192" y="368">D7</text>
+    <text x="192" y="404">D6</text>
+    <text x="192" y="440">D8</text>
+  </g>
+  <g font-size="9" fill="#8A959E" text-anchor="end">
+    <text x="192" y="344">SCK</text>
+    <text x="192" y="380">MOSI</text>
+    <text x="192" y="416">MISO</text>
+    <text x="192" y="452">CS</text>
+  </g>
+
+  <!-- MCP2515 -->
+  <rect x="330" y="196" width="140" height="250" rx="3" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="400" y="232" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">MCP2515</text>
+  <text x="400" y="248" font-size="10" fill="#5A6772" text-anchor="middle">controller</text>
+  <text x="400" y="430" font-size="9" fill="#8A959E" text-anchor="middle">2.7&#8211;5.5 V &#8212; in spec at 3.3</text>
+  <g font-size="10" fill="#16212B">
+    <text x="338" y="272">VDD</text>
+    <text x="338" y="300">GND</text>
+    <text x="338" y="332">SCK</text>
+    <text x="338" y="368">SI</text>
+    <text x="338" y="404">SO</text>
+    <text x="338" y="326">&#160;</text>
+  </g>
+  <text x="338" y="440" font-size="10" fill="#16212B">CS</text>
+  <g font-size="10" fill="#16212B" text-anchor="end">
+    <text x="462" y="290">TXCAN</text>
+    <text x="462" y="356">RXCAN</text>
+  </g>
+
+  <!-- TJA1050 -->
+  <rect x="502" y="264" width="96" height="150" rx="3" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="550" y="292" font-size="12" font-weight="700" fill="#16212B" text-anchor="middle">TJA1050</text>
+  <text x="550" y="306" font-size="10" fill="#5A6772" text-anchor="middle">transceiver</text>
+  <g font-size="10" fill="#16212B">
+    <text x="508" y="340">TXD</text>
+    <text x="508" y="376">RXD</text>
+  </g>
+  <g font-size="10" fill="#16212B" text-anchor="end">
+    <text x="592" y="340">CANH</text>
+    <text x="592" y="376">CANL</text>
+  </g>
+  <text x="550" y="404" font-size="9" fill="#A3301F" text-anchor="middle">under-volted</text>
+
+  <!-- power rail -->
+  <line x1="200" y1="244" x2="330" y2="244" stroke="#A3301F" stroke-width="2.5"/>
+  <path d="M262 244 V268 H330" fill="none" stroke="#A3301F" stroke-width="2.5"/>
+  <circle cx="262" cy="244" r="4" fill="#A3301F"/>
+  <path d="M262 244 V180 H550 V264" fill="none" stroke="#A3301F" stroke-width="2.5"/>
+  <text x="410" y="174" font-size="10" font-weight="700" fill="#A3301F">3.3 V &#8212; one rail, whole module</text>
+
+  <!-- ground -->
+  <line x1="200" y1="284" x2="330" y2="284" stroke="#16212B" stroke-width="2.5"/>
+  <path d="M250 284 V296 H330" fill="none" stroke="#16212B" stroke-width="2.5"/>
+  <circle cx="250" cy="284" r="4" fill="#16212B"/>
+  <path d="M250 284 V500 H660 V430" fill="none" stroke="#16212B" stroke-width="2.5"/>
+  <text x="404" y="516" font-size="10" font-weight="700" fill="#16212B">common ground: ESP, module, bus</text>
+
+  <!-- SPI -->
+  <line x1="200" y1="328" x2="330" y2="328" stroke="#0E6E7C" stroke-width="2.5"/>
+  <path d="M320 322 l10 6 l-10 6" fill="none" stroke="#0E6E7C" stroke-width="2"/>
+  <line x1="200" y1="364" x2="330" y2="364" stroke="#2E5F8A" stroke-width="2.5"/>
+  <path d="M320 358 l10 6 l-10 6" fill="none" stroke="#2E5F8A" stroke-width="2"/>
+  <line x1="200" y1="400" x2="330" y2="400" stroke="#9A6B18" stroke-width="2.5"/>
+  <path d="M210 394 l-10 6 l10 6" fill="none" stroke="#9A6B18" stroke-width="2"/>
+  <line x1="200" y1="436" x2="330" y2="436" stroke="#7A2E6E" stroke-width="2.5"/>
+  <path d="M320 430 l10 6 l-10 6" fill="none" stroke="#7A2E6E" stroke-width="2"/>
+
+  <!-- TXCAN cut -->
+  <line x1="470" y1="286" x2="486" y2="286" stroke="#B4BCC3" stroke-width="2.5"/>
+  <path d="M490 278 l14 16 M504 278 l-14 16" stroke="#A3301F" stroke-width="2.5"/>
+  <text x="478" y="266" font-size="10" font-weight="700" fill="#A3301F" text-anchor="middle">cut</text>
+
+  <!-- TXD tied high -->
+  <path d="M502 336 H484 V228 H550" fill="none" stroke="#A3301F" stroke-width="2.5"/>
+  <circle cx="550" cy="228" r="4" fill="#A3301F"/>
+  <text x="478" y="222" font-size="10" font-weight="700" fill="#A3301F" text-anchor="end">TXD &#8594; VCC</text>
+
+  <!-- RXD path kept -->
+  <line x1="470" y1="352" x2="502" y2="372" stroke="#0E6E7C" stroke-width="2.5"/>
+  <path d="M482 348 l-12 4 l6 10" fill="none" stroke="#0E6E7C" stroke-width="2"/>
+
+  <!-- terminator -->
+  <line x1="598" y1="336" x2="640" y2="336" stroke="#16212B" stroke-width="2"/>
+  <line x1="598" y1="372" x2="640" y2="372" stroke="#16212B" stroke-width="2"/>
+  <rect x="646" y="330" width="14" height="48" fill="none" stroke="#B4BCC3" stroke-width="2"/>
+  <text x="678" y="348" font-size="10" fill="#B4BCC3">120 &#8486;</text>
+  <line x1="653" y1="330" x2="653" y2="318" stroke="#B4BCC3" stroke-width="2"/>
+  <line x1="646" y1="312" x2="668" y2="304" stroke="#A3301F" stroke-width="2.5"/>
+  <text x="678" y="312" font-size="10" font-weight="700" fill="#A3301F">jumper pulled</text>
+
+  <!-- bus -->
+  <line x1="640" y1="336" x2="700" y2="336" stroke="#16212B" stroke-width="2.5"/>
+  <line x1="640" y1="372" x2="700" y2="372" stroke="#16212B" stroke-width="2.5"/>
+  <circle cx="640" cy="336" r="4" fill="#16212B"/>
+  <circle cx="640" cy="372" r="4" fill="#16212B"/>
+  <g font-size="11" font-weight="700" fill="#16212B">
+    <text x="686" y="330">CAN_H</text>
+    <text x="686" y="366">CAN_L</text>
+    <text x="668" y="424">GND</text>
+  </g>
+
+  <line x1="20" y1="560" x2="740" y2="560" stroke="#A8B3BC"/>
+
+  <!-- explanation -->
+  <text x="50" y="588" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">WHY IT LOOKS LIKE THIS</text>
+  <text x="50" y="612" font-size="11.5" fill="#16212B"><tspan font-weight="700">One rail.</tspan> The MCP2515 is in spec from 2.7 V, so the whole module runs at 3.3 V and every</text>
+  <text x="50" y="630" font-size="11.5" fill="#16212B">SPI line is safe for the ESP. At 5 V the module would drive 5 V into a 3.6 V-max GPIO.</text>
+  <text x="50" y="656" font-size="11.5" fill="#16212B"><tspan font-weight="700">The transceiver is under-volted on purpose.</tspan> A TJA1050 wants 4.75&#8211;5.25 V. At 3.3 V it still</text>
+  <text x="50" y="674" font-size="11.5" fill="#16212B">receives, but cannot drive the dominant bit &#8212; which is exactly the capability phase 1 must not have.</text>
+  <text x="50" y="700" font-size="11.5" fill="#16212B"><tspan font-weight="700">TXD tied to VCC</tspan> makes that guarantee physical rather than a config setting. TXD high = recessive,</text>
+  <text x="50" y="718" font-size="11.5" fill="#16212B">so no ACK and no error frames reach the bus whatever bit rate is compiled in. Sweeping is then free.</text>
+  <text x="50" y="744" font-size="11.5" fill="#16212B"><tspan font-weight="700">The 120 &#8486; comes out</tspan> because this node taps a bus that is already terminated at both ends.</text>
+  <text x="50" y="762" font-size="11.5" fill="#16212B">A third terminator drops the bus to roughly 40 &#8486; and disturbs the heat pump's own traffic.</text>
+
+  <rect x="50" y="790" width="660" height="72" fill="#16212B"/>
+  <text x="74" y="816" font-size="11" font-weight="700" fill="#7C8B99" letter-spacing="1">THE MCP2515 WILL GO ERROR-PASSIVE. THAT IS CORRECT.</text>
+  <text x="74" y="838" font-size="11.5" fill="#E9ECEF">Its transmissions are never acknowledged, because they never leave the chip.</text>
+  <text x="74" y="854" font-size="11.5" fill="#E9ECEF">That state is internal and never reaches the heat pump.</text>
+</svg>

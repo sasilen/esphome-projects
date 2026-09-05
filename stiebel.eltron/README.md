@@ -157,8 +157,15 @@ Full pin tables, the superseded two-rail plan and the grounding argument are in
 The CAN Pal is not needed yet. Phase 1 runs on one plain module, and that module
 becomes the permanent sniffer:
 
-1. **Prepare the module** — see [`mcp2515-module-prep.svg`](mcp2515-module-prep.svg),
-   with the board itself in [`mcp2515-module.jpg`](mcp2515-module.jpg).
+Three drawings cover this, and they answer different questions:
+[`mcp2515-module-prep.svg`](mcp2515-module-prep.svg) — what to change on the
+board; [`schematic-phase1.svg`](schematic-phase1.svg) — why the circuit is what
+it is; [`wiring-phase1.svg`](wiring-phase1.svg) — which pin goes where, and the
+order to check things in. The board itself is in
+[`mcp2515-module.jpg`](mcp2515-module.jpg).
+
+1. **Prepare the module** — pull the termination jumper, lift TJA1050 pin 1 and
+   tie it to VCC.
    Pull the termination jumper cap; measuring across the H and L screw posts tells
    you when it is out (~120 Ω → open). Then lift the TJA1050's pin 1 (TXD) and tie
    it to VCC. That pin lift is the only soldering here, and it is optional if you
