@@ -1350,6 +1350,48 @@ This is a bandage on a driver bug, not a fix. Clearing `EFLG` is the component's
 job, and if a later ESPHome does it, the watchdog becomes dead weight. Check the
 warning count before deciding it has: **a healthy node logs no restarts at all.**
 
+## Running an overnight capture
+
+The first capture lost 69 of its 113 minutes and nobody knew until it was
+analysed afterwards. A night is twelve hours of the same risk, so it is worth
+five minutes of checking first.
+
+**Verify before leaving it.** Watch the first few minutes after flashing:
+
+- `canbus is marked FAILED` must be absent — that is the SPI signature, and it
+  means the capture is worthless before it starts
+- `CAN frames` must be climbing
+- The new entities must populate. Return temperature, tank temperature and
+  `Element 0xFE07` all arrive within ten seconds; the compressor within twenty.
+  The two setpoints and the clock will not — see "The sensors" for why
+- No repeated `Restarting device`. One restart every two minutes means the
+  watchdog is firing, not that the bus is quiet
+
+**The log survives the watchdog.** In the first capture the node restarted twice
+and `esphome logs` reconnected and carried on both times, so restarts fragment
+the data but do not end the capture. Counting the warnings afterwards is how the
+stall rate gets measured:
+
+```sh
+grep -c "restarting to clear" wpc-night.log
+```
+
+**A quiet night is now diagnostic rather than ambiguous.** The bus polls itself
+every five seconds, so a gap of more than a minute is a stall or a lost log
+connection — never an idle machine. That was not true before the first capture,
+and it is what makes an unattended run worth doing at all.
+
+**Design the night, do not just leave it running.** The first capture caught one
+hot water cycle and no space heating, which is exactly the gap that 0xFE07's
+identification needs filled. In September the heating curve may well not call
+for heat at all overnight, in which case the night produces a second hot water
+cycle and answers nothing new.
+
+If the aim is to separate a source-side circuit from a heating-side one,
+**raise the room setpoint on the panel before leaving** so that a heating run
+certainly happens. It costs a little energy and it buys the one state the
+capture is missing.
+
 ## The two failure signatures, and why they must not be confused
 
 With the module unwired the boot log says:
