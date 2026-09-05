@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1040" width="760" height="1040" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="1040" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="1000" fill="none" stroke="#A8B3BC" stroke-width="1"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">KYTKENT&#196; &#8212; KOLVAUSVERSIO</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Aidon 7410 H1 &#183; RJ12 katkaistuna &#183; D1 mini "aidon" &#183; firmware jo flashattu</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <text x="50" y="130" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KAAPELIN JOHTIMET</text>
+  <text x="520" y="130" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">D1 MINI</text>
+
+  <rect x="50" y="170" width="200" height="264" fill="#FFFFFF" stroke="#A8B3BC"/>
+
+  <rect x="50" y="170" width="6" height="44" fill="#A3301F"/>
+  <text x="70" y="197" font-size="16" font-weight="700" fill="#16212B">1</text>
+  <text x="94" y="197" font-size="13" fill="#16212B">+5 V</text>
+  <text x="94" y="210" font-size="10" fill="#8A959E">sininen</text>
+  <line x1="50" y1="214" x2="250" y2="214" stroke="#DCE1E5"/>
+
+  <rect x="50" y="214" width="6" height="44" fill="#A3301F"/>
+  <text x="70" y="241" font-size="16" font-weight="700" fill="#16212B">2</text>
+  <text x="94" y="241" font-size="13" fill="#16212B">Tietopyynt&#246;</text>
+  <text x="94" y="254" font-size="10" fill="#8A959E">keltainen</text>
+  <line x1="50" y1="258" x2="250" y2="258" stroke="#DCE1E5"/>
+
+  <rect x="50" y="258" width="6" height="44" fill="#16212B"/>
+  <text x="70" y="285" font-size="16" font-weight="700" fill="#16212B">3</text>
+  <text x="94" y="285" font-size="13" fill="#16212B">GND</text>
+  <line x1="50" y1="302" x2="250" y2="302" stroke="#DCE1E5"/>
+
+  <rect x="50" y="302" width="6" height="44" fill="#C9D0D6"/>
+  <text x="70" y="329" font-size="16" font-weight="700" fill="#B4BCC3">4</text>
+  <text x="94" y="329" font-size="13" fill="#B4BCC3">katkaise + erist&#228;</text>
+  <line x1="50" y1="346" x2="250" y2="346" stroke="#DCE1E5"/>
+
+  <rect x="50" y="346" width="6" height="44" fill="#0E6E7C"/>
+  <text x="70" y="373" font-size="16" font-weight="700" fill="#16212B">5</text>
+  <text x="94" y="373" font-size="13" fill="#16212B">Data</text>
+  <line x1="50" y1="390" x2="250" y2="390" stroke="#DCE1E5"/>
+
+  <rect x="50" y="390" width="6" height="44" fill="#16212B"/>
+  <text x="70" y="417" font-size="16" font-weight="700" fill="#16212B">6</text>
+  <text x="94" y="417" font-size="13" fill="#16212B">GND</text>
+
+  <rect x="520" y="170" width="190" height="300" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="556" y="186" width="118" height="44" rx="2" fill="#E9ECEF" stroke="#A8B3BC"/>
+  <text x="615" y="213" font-size="10" fill="#5A6772" text-anchor="middle">ESP8266</text>
+  <text x="615" y="452" font-size="10" fill="#8A959E" text-anchor="middle">D7 = GPIO13</text>
+
+  <rect x="512" y="194" width="16" height="12" fill="#A3301F"/>
+  <text x="540" y="204" font-size="13" font-weight="700" fill="#16212B">5V</text>
+  <text x="576" y="204" font-size="10" fill="#A3301F">2 johdinta</text>
+  <rect x="512" y="282" width="16" height="12" fill="#16212B"/>
+  <text x="540" y="292" font-size="13" font-weight="700" fill="#16212B">G</text>
+  <text x="566" y="292" font-size="10" fill="#5A6772">2 johdinta</text>
+  <rect x="512" y="370" width="16" height="12" fill="#0E6E7C"/>
+  <text x="540" y="380" font-size="13" font-weight="700" fill="#16212B">D7</text>
+  <rect x="512" y="434" width="16" height="12" fill="#9A6B18"/>
+  <text x="540" y="444" font-size="13" font-weight="700" fill="#16212B">3V3</text>
+  <text x="576" y="444" font-size="10" fill="#8A959E">vain vastus</text>
+
+  <line x1="250" y1="200" x2="512" y2="200" stroke="#A3301F" stroke-width="2.5"/>
+  <path d="M250 244 H330 V200" fill="none" stroke="#A3301F" stroke-width="2.5"/>
+  <circle cx="330" cy="200" r="4" fill="#A3301F"/>
+
+  <line x1="250" y1="288" x2="512" y2="288" stroke="#16212B" stroke-width="2.5"/>
+  <path d="M250 420 H340 V288" fill="none" stroke="#16212B" stroke-width="2.5"/>
+  <circle cx="340" cy="288" r="4" fill="#16212B"/>
+
+  <line x1="250" y1="376" x2="512" y2="376" stroke="#0E6E7C" stroke-width="2.5"/>
+
+  <line x1="250" y1="332" x2="288" y2="332" stroke="#C9D0D6" stroke-width="2.5"/>
+  <path d="M292 326 l12 12 M304 326 l-12 12" stroke="#B4BCC3" stroke-width="2"/>
+
+  <line x1="400" y1="200" x2="400" y2="230" stroke="#A3301F" stroke-width="2"/>
+  <line x1="384" y1="230" x2="416" y2="230" stroke="#16212B" stroke-width="3"/>
+  <line x1="384" y1="242" x2="416" y2="242" stroke="#16212B" stroke-width="3"/>
+  <line x1="400" y1="242" x2="400" y2="288" stroke="#16212B" stroke-width="2"/>
+  <circle cx="400" cy="200" r="4" fill="#A3301F"/>
+  <circle cx="400" cy="288" r="4" fill="#16212B"/>
+  <text x="376" y="222" font-size="15" font-weight="700" fill="#A3301F" text-anchor="end">+</text>
+  <text x="376" y="256" font-size="15" font-weight="700" fill="#16212B" text-anchor="end">&#8722;</text>
+  <text x="424" y="240" font-size="11" font-weight="700" fill="#16212B">470 &#181;F / 25 V</text>
+
+  <line x1="460" y1="376" x2="460" y2="392" stroke="#0E6E7C" stroke-width="2"/>
+  <path d="M460 392 l-9 6 l18 8 l-18 8 l18 8 l-9 6" fill="none" stroke="#9A6B18" stroke-width="2"/>
+  <line x1="460" y1="428" x2="460" y2="440" stroke="#9A6B18" stroke-width="2"/>
+  <line x1="460" y1="440" x2="512" y2="440" stroke="#9A6B18" stroke-width="2"/>
+  <circle cx="460" cy="376" r="4" fill="#0E6E7C"/>
+  <text x="424" y="412" font-size="12" font-weight="700" fill="#9A6B18" text-anchor="end">1 k&#8486;</text>
+
+  <line x1="20" y1="500" x2="740" y2="500" stroke="#A8B3BC"/>
+
+  <rect x="50" y="522" width="660" height="64" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <rect x="50" y="522" width="6" height="64" fill="#A3301F"/>
+  <text x="74" y="546" font-size="12" font-weight="700" fill="#A3301F">KONDENSAATTORIN NAPAISUUS</text>
+  <text x="74" y="565" font-size="11.5" fill="#16212B">Raidalla merkitty puoli ja lyhyempi jalka = miinus &#8594; <tspan font-weight="700">G</tspan>.</text>
+  <text x="74" y="580" font-size="11.5" fill="#16212B">V&#228;&#228;rin p&#228;in se kuumenee ja voi revet&#228;.</text>
+
+  <text x="50" y="622" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">JUOTOSTEKNIIKKA</text>
+  <text x="50" y="644" font-size="11.5" fill="#16212B">Johtimet <tspan font-weight="700">reikien l&#228;pi</tspan> ylh&#228;&#228;lt&#228;, juotos alapuolelta &#8212; ne kantavat vedon.</text>
+  <text x="50" y="662" font-size="11.5" fill="#16212B">Vastus ja kondensaattori <tspan font-weight="700">padien p&#228;&#228;lle</tspan>, koska rei&#228;t ovat silloin t&#228;ynn&#228;.</text>
+  <text x="50" y="680" font-size="11.5" fill="#16212B">Kierr&#228; ja tinaa johdinparit yhdeksi nipuksi ennen reik&#228;&#228;n ty&#246;nt&#246;&#228;.</text>
+
+  <rect x="50" y="710" width="660" height="82" fill="#16212B"/>
+  <text x="74" y="736" font-size="11" font-weight="700" fill="#7C8B99" letter-spacing="1">TARKISTA T&#196;SS&#196; J&#196;RJESTYKSESS&#196;</text>
+  <text x="74" y="758" font-size="11.5" fill="#E9ECEF">1. Piip-mittaus: <tspan fill="#FF9E8F" font-weight="700">5V ja G eiv&#228;t saa piipata kesken&#228;&#228;n</tspan></text>
+  <text x="74" y="775" font-size="11.5" fill="#E9ECEF">2. USB kiinni &#8594; laite Online ESPHomessa</text>
+  <text x="74" y="785" font-size="10.5" fill="#7C8B99">    Vasta t&#228;m&#228;n j&#228;lkeen kuumaliima ja kutistesukka.</text>
+
+  <text x="50" y="828" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">WIFI ENNEN LOPULLISTA ASENNUSTA</text>
+  <text x="50" y="850" font-size="11.5" fill="#16212B">Vie levy varavirralla kaappiin, sulje luukku, lue RSSI HA:sta:</text>
+  <text x="70" y="872" font-size="11.5" fill="#16212B">&#8722;70 dBm tai parempi &#8594; hyv&#228;</text>
+  <text x="70" y="890" font-size="11.5" fill="#16212B">&#8722;70&#8230;&#8722;80 &#8594; toimii, katkoja tulee</text>
+  <text x="70" y="908" font-size="11.5" fill="#A3301F">alle &#8722;85 &#8594; siirr&#228; levy kaapin ulkopuolelle</text>
+
+  <line x1="20" y1="936" x2="740" y2="936" stroke="#A8B3BC"/>
+  <text x="50" y="964" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">MITTARIIN</text>
+  <text x="50" y="986" font-size="11.5" fill="#16212B">USB irti &#8594; pistoke mittariin &#8594; Logs auki. 10 s sis&#228;ll&#228; pit&#228;isi n&#228;ky&#228;:</text>
+  <text x="50" y="1006" font-size="11.5" font-weight="700" fill="#0E6E7C">/ADN9 ... &#183; PASS = YES</text>
+</svg>

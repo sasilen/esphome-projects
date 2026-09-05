@@ -1,0 +1,265 @@
+# Hirvirata — ESPHome-konfiguraatio
+# Wemos D1 mini + L298N + 12 V vaihdemoottori (200 rpm)
+#
+# Pinnit:  D1 = IN1 (PWM), D2 = IN2 (PWM), D5 = raja vasen, D6 = raja oikea
+# ENA/ENB-hyppyjohtimet jäävät L298N:ään paikoilleen.
+
+esphome:
+  name: hirvirata
+  friendly_name: Hirvirata
+
+esp8266:
+  board: d1_mini
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Hirvirata varayhteys"
+    password: !secret ap_password
+
+captive_portal:
+
+
+# ---------------------------------------------------------------- PWM-lähdöt
+# Molemmilla TÄYTYY olla sama taajuus — ESP8266:n ohjelmallinen PWM jakaa
+# saman ajastimen, ja eri taajuudet käyttäytyvät arvaamattomasti.
+
+output:
+  - platform: esp8266_pwm
+    id: pwm_in1
+    pin: D1
+    frequency: 1000 Hz
+  - platform: esp8266_pwm
+    id: pwm_in2
+    pin: D2
+    frequency: 1000 Hz
+
+
+# ------------------------------------------------------------------ Moottori
+# decay_mode: slow = jarruttaa pysähdyksessä. fast = rullaa vapaasti.
+
+fan:
+  - platform: hbridge
+    id: moottori
+    name: "Vaunu"
+    pin_a: pwm_in1
+    pin_b: pwm_in2
+    decay_mode: slow
+    speed_count: 100
+
+
+# ------------------------------------------------------------------- Säätimet
+
+number:
+  - platform: template
+    name: "Perusnopeus"
+    id: perusnopeus
+    optimistic: true
+    restore_value: true
+    initial_value: 60
+    min_value: 20          # nosta jos vaunu ei lähde liikkeelle
+    max_value: 100
+    step: 5
+    unit_of_measurement: "%"
+
+  - platform: template
+    name: "Ajoaika"
+    id: ajoaika
+    optimistic: true
+    restore_value: true
+    initial_value: 4
+    min_value: 0.5
+    max_value: 30
+    step: 0.5
+    unit_of_measurement: "s"
+
+
+# --------------------------------------------------------------- Rajakytkimet
+# Kytke kytkimen yhteinen napa maahan ja NC-kosketin (normaalisti kiinni)
+# GPIO:hon. Näin katkennut johto laukaisee pysäytyksen sen sijaan että
+# kytkin lakkaisi huomaamatta toimimasta.
+
+binary_sensor:
+  - platform: gpio
+    name: "Rajakytkin vasen"
+    pin:
+      number: D5
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on: 20ms
+    on_press:
+      - script.execute: seis
+
+  - platform: gpio
+    name: "Rajakytkin oikea"
+    pin:
+      number: D6
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on: 20ms
+    on_press:
+      - script.execute: seis
+
+
+button:
+  - platform: template
+    name: "Hätäseis"
+    on_press:
+      - script.execute: seis
+
+
+# ----------------------------------------------------------------- Nopeusarvio
+# Kerroin 0.39 on laskennallinen (37 mm efektiivinen hihnapyörän halkaisija,
+# 200 rpm). Kalibroi ajamalla tunnettu matka täydellä teholla sekuntikellolla.
+
+sensor:
+  - platform: template
+    name: "Vaunun nopeus"
+    unit_of_measurement: "m/s"
+    accuracy_decimals: 2
+    update_interval: 1s
+    lambda: |-
+      if (!id(moottori).state) return 0.0;
+      return (id(moottori).speed / 100.0) * 0.39;
+
+
+# ------------------------------------------------------------ Ohjelman valinta
+
+select:
+  - platform: template
+    name: "Ohjelma"
+    id: ohjelmavalinta
+    options: ["Seis", "Tasainen", "Satunnainen", "Kiihtyvä"]
+    initial_option: "Seis"
+    set_action:
+      - select.template.publish:
+          id: ohjelmavalinta
+          state: !lambda 'return x;'
+      - script.execute: seis
+      - delay: 300ms
+      - lambda: |-
+          if (x == "Tasainen")         id(ohjelma_tasainen).execute();
+          else if (x == "Satunnainen") id(ohjelma_satunnainen).execute();
+          else if (x == "Kiihtyvä")    id(ohjelma_kiihtyva).execute();
+
+
+# ------------------------------------------------------------------- Scriptit
+
+script:
+
+  # Apuscript: aja annetulla nopeudella ja suunnalla annetun ajan.
+  # Pehmeä käynnistys 50 % -> 75 % -> 100 % on PAKOLLINEN 2 A:n
+  # teholähteellä. Ilman sitä käynnistyspiikki notkauttaa 12 V:n ja
+  # buckin takana oleva ESP saattaa bootata kesken ajon.
+  - id: aja
+    mode: single
+    parameters:
+      nopeus: int
+      eteen: bool
+      kesto: int
+    then:
+      - repeat:
+          count: 3
+          then:
+            - lambda: |-
+                const int askel[3] = {50, 75, 100};
+                auto call = id(moottori).turn_on();
+                call.set_speed(nopeus * askel[iteration] / 100);
+                call.set_direction(eteen ? FanDirection::FORWARD
+                                         : FanDirection::REVERSE);
+                call.perform();
+            - delay: 100ms
+      - delay: !lambda 'return kesto > 300 ? kesto - 300 : 0;'
+
+  # Pysäytä kaikki. Uusi ohjelma -> lisää sille script.stop TÄNNE,
+  # muuten rajakytkin ei pysäytä sitä.
+  - id: seis
+    mode: single
+    then:
+      - script.stop: ohjelma_tasainen
+      - script.stop: ohjelma_satunnainen
+      - script.stop: ohjelma_kiihtyva
+      - script.stop: aja
+      - fan.turn_off: moottori
+
+  # 1) Tasainen edestakainen ajo
+  - id: ohjelma_tasainen
+    mode: restart
+    then:
+      - repeat:
+          count: 20
+          then:
+            - script.execute:
+                id: aja
+                nopeus: !lambda 'return (int) id(perusnopeus).state;'
+                eteen: true
+                kesto: !lambda 'return (int)(id(ajoaika).state * 1000);'
+            - script.wait: aja
+            - fan.turn_off: moottori
+            - delay: 3s
+            - script.execute:
+                id: aja
+                nopeus: !lambda 'return (int) id(perusnopeus).state;'
+                eteen: false
+                kesto: !lambda 'return (int)(id(ajoaika).state * 1000);'
+            - script.wait: aja
+            - fan.turn_off: moottori
+            - delay: 3s
+      - fan.turn_off: moottori
+
+  # 2) Satunnainen nopeus, suunta ja tauko
+  - id: ohjelma_satunnainen
+    mode: restart
+    then:
+      - while:
+          condition:
+            lambda: 'return true;'
+          then:
+            - script.execute:
+                id: aja
+                nopeus: !lambda 'return 35 + (rand() % 66);'
+                eteen: !lambda 'return (rand() % 2) == 0;'
+                kesto: !lambda 'return 800 + (rand() % 3500);'
+            - script.wait: aja
+            - fan.turn_off: moottori
+            - delay: !lambda 'return 500 + (rand() % 3000);'
+
+  # 3) Kiihtyvä eteen, hidastuva takaisin.
+  # Pysähdys ja tauko suunnanvaihdon välissä säästää vaihteistoa.
+  - id: ohjelma_kiihtyva
+    mode: restart
+    then:
+      - repeat:
+          count: 8
+          then:
+            - lambda: |-
+                auto call = id(moottori).turn_on();
+                call.set_speed(30 + iteration * 10);
+                call.set_direction(FanDirection::FORWARD);
+                call.perform();
+            - delay: 700ms
+      - fan.turn_off: moottori
+      - delay: 2s
+      - repeat:
+          count: 8
+          then:
+            - lambda: |-
+                auto call = id(moottori).turn_on();
+                call.set_speed(100 - iteration * 10);
+                call.set_direction(FanDirection::REVERSE);
+                call.perform();
+            - delay: 700ms
+      - fan.turn_off: moottori

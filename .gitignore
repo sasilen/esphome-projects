@@ -1,0 +1,62 @@
+# --- Salaisuudet -------------------------------------------------------------
+# secrets.yaml.example jää versionhallintaan, oikea secrets.yaml ei.
+secrets.yaml
+!secrets.yaml.example
+*.secret
+*.key
+*.pem
+
+# --- ESPHome -----------------------------------------------------------------
+.esphome/
+# ESPHome kirjoittaa käännöshakemistot tänne (build/, .pioenvs/, external_components/)
+
+# --- PlatformIO / Arduino ----------------------------------------------------
+.pio/
+.pioenvs/
+.piolibdeps/
+*.map
+
+# --- Ulkopuoliset työkopiot --------------------------------------------------
+upstream/
+vendor/
+
+# --- Käännösartefaktit -------------------------------------------------------
+*.o
+*.obj
+*.d
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.elf
+*.bin
+*.hex
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# --- Claude Code / työympäristö ----------------------------------------------
+# /workspace on tässä kontissa myös HOME, joten koko .claude-hakemisto
+# (credentials, keskusteluhistoria, istunnot) jää ulkopuolelle.
+.claude/
+.claude.json
+.claude.json.backup*
+.commandhistory/
+.mcp.json
+
+# --- Editorit ja käyttöjärjestelmä -------------------------------------------
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# --- Väliaikaiset ------------------------------------------------------------
+*.log
+*.bak
+*.tmp

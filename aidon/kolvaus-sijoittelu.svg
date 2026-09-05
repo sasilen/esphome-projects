@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 900" width="760" height="900" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="900" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="860" fill="none" stroke="#A8B3BC"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">KOLVAUS &#8212; SIJOITTELU</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">D1 mini yl&#228;puolelta &#183; USB-C vasemmalla &#183; sama asento kuin valokuvassasi</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <!-- labels -->
+  <text x="50" y="150" font-size="12" font-weight="700" fill="#A3301F">Sininen (1) + keltainen (2)</text>
+  <text x="50" y="167" font-size="10.5" fill="#8A959E">molemmat samaan reik&#228;&#228;n</text>
+  <line x1="120" y1="176" x2="222" y2="276" stroke="#A3301F" stroke-width="1.5"/>
+
+  <text x="430" y="150" font-size="12" font-weight="700" fill="#16212B">3. + 6. johdin</text>
+  <text x="430" y="167" font-size="10.5" fill="#8A959E">molemmat maat</text>
+  <line x1="425" y1="160" x2="298" y2="276" stroke="#16212B" stroke-width="1.5"/>
+
+  <!-- board -->
+  <rect x="170" y="345" width="38" height="42" rx="4" fill="#8A959E"/>
+  <text x="150" y="370" font-size="10" fill="#8A959E" text-anchor="end">USB-C</text>
+  <rect x="200" y="260" width="480" height="200" rx="10" fill="#1B6470" stroke="#16212B" stroke-width="1.5"/>
+
+  <!-- top pads -->
+  <circle cx="230" cy="285" r="12" fill="#E9ECEF" stroke="#A3301F" stroke-width="4"/>
+  <circle cx="290" cy="285" r="12" fill="#E9ECEF" stroke="#16212B" stroke-width="4"/>
+  <circle cx="350" cy="285" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="410" cy="285" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="470" cy="285" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="530" cy="285" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="590" cy="285" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="650" cy="285" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+
+  <text x="230" y="313" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">5V</text>
+  <text x="290" y="313" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">G</text>
+  <text x="350" y="313" font-size="10" fill="#9FB6BB" text-anchor="middle">D4</text>
+  <text x="410" y="313" font-size="10" fill="#9FB6BB" text-anchor="middle">D3</text>
+  <text x="470" y="313" font-size="10" fill="#9FB6BB" text-anchor="middle">D2</text>
+  <text x="530" y="313" font-size="10" fill="#9FB6BB" text-anchor="middle">D1</text>
+  <text x="590" y="313" font-size="10" fill="#9FB6BB" text-anchor="middle">RX</text>
+  <text x="650" y="313" font-size="10" fill="#9FB6BB" text-anchor="middle">TX</text>
+
+  <!-- bottom pads -->
+  <circle cx="230" cy="435" r="12" fill="#E9ECEF" stroke="#9A6B18" stroke-width="4"/>
+  <circle cx="290" cy="435" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="350" cy="435" r="12" fill="#E9ECEF" stroke="#0E6E7C" stroke-width="4"/>
+  <circle cx="410" cy="435" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="470" cy="435" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="530" cy="435" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="590" cy="435" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+  <circle cx="650" cy="435" r="9" fill="#0E4A54" stroke="#9FB6BB" stroke-width="2"/>
+
+  <text x="230" y="411" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">3V3</text>
+  <text x="290" y="411" font-size="10" fill="#9FB6BB" text-anchor="middle">D8</text>
+  <text x="350" y="411" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">D7</text>
+  <text x="410" y="411" font-size="10" fill="#9FB6BB" text-anchor="middle">D6</text>
+  <text x="470" y="411" font-size="10" fill="#9FB6BB" text-anchor="middle">D5</text>
+  <text x="530" y="411" font-size="10" fill="#9FB6BB" text-anchor="middle">D0</text>
+  <text x="590" y="411" font-size="10" fill="#9FB6BB" text-anchor="middle">A0</text>
+  <text x="650" y="411" font-size="10" fill="#9FB6BB" text-anchor="middle">RST</text>
+
+  <!-- capacitor -->
+  <line x1="230" y1="285" x2="243" y2="330" stroke="#8A959E" stroke-width="3"/>
+  <line x1="290" y1="285" x2="281" y2="330" stroke="#8A959E" stroke-width="3"/>
+  <circle cx="262" cy="358" r="30" fill="#D6DBDF" stroke="#16212B" stroke-width="2"/>
+  <path d="M 285 377 A 30 30 0 0 0 285 339 L 262 358 Z" fill="#5A6772"/>
+  <text x="286" y="363" font-size="16" font-weight="700" fill="#FFFFFF">&#8722;</text>
+  <text x="238" y="363" font-size="14" font-weight="700" fill="#16212B">+</text>
+  <text x="262" y="404" font-size="9.5" fill="#FFFFFF" text-anchor="middle">470&#181;F</text>
+
+  <!-- resistor -->
+  <line x1="230" y1="435" x2="258" y2="462" stroke="#8A959E" stroke-width="3"/>
+  <line x1="350" y1="435" x2="322" y2="462" stroke="#8A959E" stroke-width="3"/>
+  <rect x="255" y="455" width="70" height="22" rx="8" fill="#C8A96A" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="268" y="455" width="5" height="22" fill="#5A3A1A"/>
+  <rect x="280" y="455" width="5" height="22" fill="#16212B"/>
+  <rect x="292" y="455" width="5" height="22" fill="#A3301F"/>
+  <text x="345" y="472" font-size="11" font-weight="700" fill="#9A6B18">1 k&#8486;</text>
+
+  <!-- lower leaders -->
+  <line x1="350" y1="452" x2="430" y2="530" stroke="#0E6E7C" stroke-width="1.5"/>
+  <text x="436" y="536" font-size="12" font-weight="700" fill="#0E6E7C">5. johdin &#8594; D7</text>
+
+  <line x1="220" y1="448" x2="140" y2="530" stroke="#9A6B18" stroke-width="1.5"/>
+  <text x="60" y="548" font-size="11" font-weight="700" fill="#9A6B18">3V3: ei johdinta</text>
+  <text x="60" y="564" font-size="10.5" fill="#8A959E">vain vastuksen jalka</text>
+
+  <line x1="20" y1="600" x2="740" y2="600" stroke="#A8B3BC"/>
+
+  <rect x="50" y="622" width="660" height="64" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <rect x="50" y="622" width="6" height="64" fill="#A3301F"/>
+  <text x="74" y="646" font-size="12" font-weight="700" fill="#A3301F">KONDENSAATTORIN NAPAISUUS</text>
+  <text x="74" y="665" font-size="11.5" fill="#16212B">Tummalla merkitty puoli (raita kotelossa, lyhyempi jalka) menee G:hen.</text>
+  <text x="74" y="680" font-size="11.5" fill="#16212B">V&#228;&#228;rin p&#228;in kytkettyn&#228; se kuumenee ja voi revet&#228;.</text>
+
+  <text x="50" y="722" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">JUOTOSTEKNIIKKA</text>
+  <text x="50" y="744" font-size="11.5" fill="#16212B">Johtimet <tspan font-weight="700">reikien l&#228;pi</tspan> ylh&#228;&#228;lt&#228;, juota alapuolelta. Ne kantavat vedon.</text>
+  <text x="50" y="762" font-size="11.5" fill="#16212B">Vastus ja kondensaattori <tspan font-weight="700">padien p&#228;&#228;lle</tspan> yl&#228;puolelta &#8212; rei&#228;t ovat t&#228;ynn&#228;.</text>
+  <text x="50" y="780" font-size="11.5" fill="#16212B">Kierr&#228; ja tinaa johdinparit yhdeksi nipuksi ennen kuin ty&#246;nn&#228;t reik&#228;&#228;n.</text>
+
+  <text x="50" y="820" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">TARKISTUS ENNEN USB:T&#196;</text>
+  <text x="50" y="842" font-size="11.5" fill="#16212B">Piip-mittaus: <tspan font-weight="700">5V ja G eiv&#228;t saa piipata kesken&#228;&#228;n.</tspan> Jos piippaavat, etsi oikosulku</text>
+  <text x="50" y="860" font-size="11.5" fill="#16212B">ennen kuin kytket mit&#228;&#228;n &#8212; se voi vahingoittaa my&#246;s koneesi USB-porttia.</text>
+</svg>
