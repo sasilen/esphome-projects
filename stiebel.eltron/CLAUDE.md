@@ -1404,9 +1404,37 @@ never starting at all:
 21:55  both on
 ```
 
-Tank 49.8 → 47.1 °C across the whole of it. **That is space heating drawing
-down the tank**, on the heating side's own rhythm, and it is a mode the first
-capture never showed.
+Tank 49.8 → 47.1 °C across the whole of it. This file first read that as space
+heating drawing the tank down. **It is not, and the rates disprove it.**
+
+| Window | DHW tank | 0xFDF3 | 0xFDF5 |
+|---|---|---|---|
+| pumps on | −1.4 | −3.1 | −2.5 |
+| pumps off | −1.7 | **+13.4** | **+5.8** |
+| pumps on | −0.9 | −5.6 | −5.4 |
+| pumps off | −0.3 | **+9.3** | **+6.9** |
+| pumps on | −1.5 | −7.7 | −8.7 |
+
+°C per hour. **The DHW tank falls at the same rate whether the pumps run or
+not**, so nothing the pumps do touches it — that is standby loss and draw-off,
+not space heating. The machine has two circuits, one for the DHW tank and one
+for the floor's buffer, and this is the second one running while the first
+quietly cools.
+
+**0xFDF3, 0xFDF4 and 0xFDF5 all swing hard with the pumps** — down while
+circulating, sharply up when it stops. Three sensors in the circulating path,
+seeing the floor's cooler water while it moves and drifting up toward the
+machine's own warmth when it stands still.
+
+That rules something out. **None of the elements on this bus behaves like a
+buffer tank.** A buffer being drawn from would fall while the pumps run and then
+hold roughly flat when they stop; all three of these rebound instead, which is
+pipework, not storage. Either the buffer has no sensor reporting here, or the
+floor circuit is plumbed through the machine rather than through a tank the bus
+knows about.
+
+0xFE09 and 0xFE0A move by tenths through all of it, so they are outside this
+path entirely — source side or ambient.
 
 **It also closes the frost protection story.** 0xFE07 reads 0 whenever 0xFE1B is
 running and 5.6 °C whenever it is not — frost protection armed exactly when the
