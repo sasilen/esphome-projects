@@ -12,9 +12,10 @@ the log, and the addresses in use are known. What is left in phase 1 is naming
 the elements against the published table and turning them into Home Assistant
 sensors. Writing needs a transceiver that is chosen but not yet in hand.
 
-**Phase 1 needs no transmitter after all.** The bus polls itself at 91 frames a
-minute with no gap longer than five seconds, so a listen-only node sees every
-temperature the controller reads. That was the open question, and it is closed.
+**Phase 1 needs no transmitter after all.** The bus polls itself at over 200
+frames a minute with no gap longer than five seconds, so a listen-only node sees
+every temperature the controller reads. That was the open question, and it is
+closed.
 
 ## Why bother, when on/off control already exists
 

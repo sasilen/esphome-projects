@@ -441,7 +441,7 @@ bus.
 **That reasoning was sound and its conclusion was wrong.** No FEK or FE7 room
 control is installed, so this file concluded that nothing polls the bus on a
 schedule and that traffic always has to be provoked. The capture says otherwise:
-the bus carries **91 frames a minute, continuously**, and the longest gap
+the bus carries **over 200 frames a minute, continuously**, and the longest gap
 between two frames in two hours is 4.7 seconds. The manager polls the machine
 every five seconds whether anyone is looking or not.
 
@@ -722,7 +722,8 @@ Confirmed on this WPC 07 by capture, 2026-09-05:
   silent through the capture and has been removed from the configuration.
 - Addresses occupied: **0x100, 0x180, 0x301, 0x480, 0x601, 0x700**. Only
   **0x680** is free, and that is what phase 2 takes.
-- Bus load: **91 frames a minute**, sustained, with no gap longer than 4.7 s.
+- Bus load: **220-240 frames a minute**, sustained, with no gap longer than
+  4.7 s.
 - Listen-only mode initially — see below
 - 120 Ω termination only if located at the end of the CAN bus (this node is not)
 
@@ -831,9 +832,19 @@ keeping.
 
 ## The bus polls itself, and that decides the architecture
 
-**91 frames a minute, sustained, with no gap longer than 4.7 seconds.** Two
-independent polling loops run without anyone touching the machine: 0x480 asks
-0x700 every five seconds, and 0x100 asks 0x180 every ten.
+**Over 200 frames a minute, sustained, with no gap longer than 4.7 seconds.**
+Two independent polling loops run without anyone touching the machine: 0x480
+asks 0x700 every five seconds, and 0x100 asks 0x180 every ten.
+
+**An earlier figure of 91 a minute in this file was wrong**, and the mistake is
+worth keeping because it is easy to repeat: 10 380 frames over a 113-minute span
+is 92 a minute, but 69 of those minutes were a stalled receiver. Dividing by the
+live 44 minutes gives 236, and a later clean run measured 222 over its first two
+and a half minutes. **A rate averaged across an outage is not a rate.**
+
+The correction matters beyond arithmetic: the load on the ESP8266's loop and the
+risk of filling the MCP2515's two receive buffers both scale with the real
+figure, not the diluted one.
 
 **So phase 1 needs no transmitter.** A passive node sees flow temperature,
 return temperature and compressor state at the rate the manager itself reads
@@ -1143,6 +1154,40 @@ setpoints and curve parameters, which live in the named low range, not here.
 The first two are logged raw by the configuration, and the third is shown as a
 `+00XX` suffix. None of them would have been visible in a decoder that trusted
 the layout.
+
+### A second capture adds two more, and one of them is not corruption
+
+Two and a half minutes of a later run produced two frames the first capture
+never showed:
+
+```
+9A 00 FA FE 0A 00 87     from 0x700, command 10
+C9 00 7D                 from 0x704, command 9, three bytes
+```
+
+**The second cannot be a mangled payload.** Both the identifier and the length
+are covered by the CAN frame's own CRC, so a three-byte frame from 0x704 that
+the controller accepted is a three-byte frame from 0x704. **0x704 is a node that
+has never appeared before**, and a `dlc` of 3 is a telegram format this file has
+not described at all. Whatever else it is, it is real.
+
+That casts doubt on the reading of the first. `9A` is `92` with one bit flipped
+and it carried the same element and value as a legitimate response two seconds
+earlier, which is why corruption looked obvious. But commands 9 and 10 turning
+up within minutes of each other suggests **a class of commands above 7 that this
+capture simply has not seen enough of**, rather than two independent bit flips.
+
+The overnight capture decides it, and the test is cheap: a command that recurs on
+a schedule with sensible payloads is part of the protocol, while one that appears
+in isolated bursts near a stall is damage.
+
+```sh
+grep " raw dlc=" wpc-night.log | awk '{print $NF, $0}' | sort | uniq -c
+```
+
+Either way the raw fallback is what surfaced them. A decoder that indexed a
+command table by the nibble would have read past the end of it on the first
+frame.
 
 ---
 
