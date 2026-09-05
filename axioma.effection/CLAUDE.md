@@ -43,12 +43,37 @@ Meter ID varmistetaan myöhemmin vastaanotetusta Wireless M-Bus -telegrammista.
 
 ## Jo olemassa
 
-- ESP32 DevKitC (ESP32-WROOM-32U)
-- CC1101 868 MHz
+- ESP32 DevKitC (ESP32-WROOM-32U) — [kuva](esp32-devkitc-wroom32u.jpg)
+- CC1101 868 MHz — [kuva](cc1101-module.jpg)
 - 868 MHz SMA-antenni
 - ESP8266 (ei tarvita tähän projektiin)
 
-Lisälaitteita ei tarvita.
+## Levyt tunnistettuna
+
+**ESP32-WROOM-32U on oikeasti hyllyssä.** Moduulin päässä on u.FL-liitin ja
+FCC-merkintä päättyy `ESP32U`:hun. Levy on 38-nastainen DevKitC, micro-USB, ja
+USB-siltapiiri on QFN-kotelossa eli CP2102-luokkaa — **ei** sama CH340C kuin
+[pegasos.enerventin levyssä](../pegasos.enervent/esp32-devkit.jpg). Merkintä ei
+ollut luettavissa valokuvasta, joten varmista ajuri ennen ensimmäistä
+flashausta.
+
+**Antenni tuli setin mukana.** WROOM-32U:ssa ei ole printattua antennia lainkaan
+— se on koko variantin idea, ja ilman u.FL-antennia levyn WiFi olisi heikompi
+kuin tavallisen WROOM-32:n. DUBEUYEW-setissä tuli 2,4 GHz:n antenni ja
+u.FL-kaapeli, joten tämä on kunnossa eikä hankintoja tarvita.
+
+**Kiinnitä oikea antenni.** Levylle tulee kaksi: 2,4 GHz u.FL ESP32:n WiFille ja
+868 MHz SMA CC1101:lle. Molemmat ovat "se antenni", ja ne menevät sekaisin
+juuri siksi.
+
+**CC1101-moduulissa on 26 MHz:n kide**, mikä on odotettu arvo.
+
+**Antennikytkentä: pigtail tuli moduulin mukana.** Kuvatussa kulmassa ei näy
+SMA- eikä u.FL-liitintä, joten antenni kytkeytyy sen kautta. Tämä on siis
+kunnossa eikä sovitinta tarvita.
+
+Jos pigtail joskus katoaa, neljännesaallon lanka on 868 MHz:llä noin 8,2 cm ja
+kelpaa kokeiluihin ilman mitään liitintä.
 
 ---
 

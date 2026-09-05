@@ -33,9 +33,9 @@ entity discovery, and OTA firmware updates.
 
 **Required**
 
-- ESP32 development board
-- MAX485 (or equivalent) RS-485 ↔ TTL transceiver
-- RJ11 cable
+- ESP32 development board — in stock, see [`CLAUDE.md`](CLAUDE.md)
+- RS-485 ↔ TTL module — in stock, JZK with automatic direction control, 5 pcs
+- RJ11 cable — **not in stock**
 
 **Optional**
 
@@ -51,15 +51,19 @@ is running — plus more headroom for future sensors.
 
 ## Wiring
 
-| MAX485 | ESP32 |
+| RS-485 module | ESP32 |
 |---|---|
-| RO | RX (GPIO16) |
-| DI | TX (GPIO17) |
-| RE + DE | GPIO4 |
+| RXD | TX (GPIO17) |
+| TXD | RX (GPIO16) |
 | VCC | 3.3 V |
 | GND | GND |
 
-MAX485 A → Enervent A (D+), MAX485 B → Enervent B (D−). If communication fails on
+Four wires, not five: the boards in stock switch direction in hardware, so there
+is no DE/RE pin to drive and no `flow_control_pin` in the YAML. If the board you
+pick up does expose DE and RE, it is the older MAX485 type — see
+[`CLAUDE.md`](CLAUDE.md).
+
+Module A → Enervent A (D+), module B → Enervent B (D−). If communication fails on
 the first try, swap A and B — this is the cheapest thing to rule out.
 
 > **Do not assume the RJ11 pinout.** The connector may carry RS-485 A/B, ground

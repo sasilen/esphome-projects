@@ -25,12 +25,12 @@ kannalta, sano se suoraan.
 | Osa | Tiedot |
 |---|---|
 | Ohjain | Wemos D1 mini (ESP8266) tai mikä tahansa ESP32. Ks. "Ohjainvalinta" |
-| Moottoriajuri | ARCELI L298N -moduuli (5 kpl varastossa) |
+| Moottoriajuri | ARCELI L298N -moduuli, 5 kpl |
 | Moottori | 12 V vaihdemoottori, 200 rpm, ikkunanavaajatyyppi |
 | Hihnapyörä | 41 × 16 × 6 mm, alumiini, yksi ura, kiinteä 6 mm reikä |
 | Hihna | 5 mm PU-pyörähihna, päät hitsataan |
 | Teholähde | Newding 12 V / 2 A pistokemuuntaja, 5,5 × 2,1 mm jakki. **Rajatapaus** |
-| ESP:n virta | LM2596 buck 12 V → 5,0 V |
+| ESP:n virta | LM2596 buck 12 V → 5,0 V. **ADJ eli säädettävä** ([kuva](lm2596-module.jpg)) |
 | Vaunun rullat | U624ZZ, 4 × 13 × 7 mm, U-ura, 10 kpl. **Eivät** kelpaa hihnapyöräksi |
 
 ## Ohjainvalinta
@@ -134,6 +134,12 @@ kun Vss = 5 V).
   Sama YAML toimii BTS7960:ssä muuttumattomana.
 - **Älä syötä ESP32:ta L298N:n 5 V -lähdöstä.** Se on 78M05-lineaari­
   regulaattori ja WiFi-virtapiikit nollaavat ESP:n.
+- **Säädä LM2596:n lähtö ennen kuin ESP kytketään siihen.** Varaston moduuli on
+  ADJ-malli: lähtö riippuu monikierrostrimmerin asennosta, eikä pussista tuleva
+  asento ole 5 V vaan mitä sattuu. Kytke 12 V sisään, mittaa lähtö
+  yleismittarilla, säädä 5,0 V, ja vasta sitten kytke kuorma. Väärä asento
+  syöttää 12 V:n suoraan ESP:hen ja tuhoaa sen kerralla. Sama koskee jokaista
+  kertaa kun moduuli vaihtuu toiseen.
 - Yhteinen GND ESP:n, L298N:n ja teholähteen välillä on pakollinen.
 - **Teholähde 12 V / 2 A on rajatapaus.** Ajovirta 0,3–0,5 A riittää hyvin,
   mutta käynnistyspiikki on 3–5-kertainen eikä pistokemuuntajassa ole

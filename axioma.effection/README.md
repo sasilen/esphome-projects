@@ -40,11 +40,18 @@ Axioma Water Meter
 
 ## Rauta
 
-Kaikki löytyy jo varastosta, lisähankintoja ei tarvita:
+Kaikki löytyy varastosta, tätä projektia varten tilattuna:
 
-- ESP32 DevKitC (ESP32-WROOM-32U)
-- CC1101 868 MHz
-- 868 MHz SMA-antenni
+- **ESP32 DevKitC (ESP32-WROOM-32U)**, DUBEUYEW-setti — [kuva](esp32-devkitc-wroom32u.jpg).
+  Setissä tuli mukana 2,4 GHz:n antenni ja u.FL-kaapeli, mikä on tässä
+  välttämätöntä: -32U:ssa ei ole printattua antennia lainkaan
+- **CC1101 868 MHz**, Huerous — [kuva](cc1101-module.jpg), 26 MHz:n kide.
+  Pigtail antennille tuli mukana
+- **868 MHz omniantenni SMA-liittimellä, 2 kpl**, QWORK, taitettava
+
+Levylle tulee siis **kaksi eri antennia**: 2,4 GHz u.FL ESP32:n WiFille ja
+868 MHz SMA CC1101:lle. Eri taajuus, eri liitin, eri tarkoitus — ne on helppo
+sekoittaa keskenään juuri siksi että molemmat ovat "se antenni".
 
 ## Kytkentä
 

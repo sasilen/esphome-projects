@@ -23,13 +23,26 @@ Nämä ovat tekemättä ja voivat muuttaa komponenttivalintoja:
 | Osa | Tiedot |
 |---|---|
 | Ohjain | Wemos D1 mini (ESP8266), vaihtoehtoisesti mikä tahansa ESP32 |
-| Moottoriajuri | ARCELI L298N -moduuli (5 kpl varastossa) |
+| Moottoriajuri | ARCELI L298N -moduuli, 5 kpl |
 | Moottori | 12 V vaihdemoottori, 200 rpm, ikkunanavaajatyyppi |
 | Hihnapyörä | 41 × 16 × 6 mm, alumiini, yksi ura, kiinteä 6 mm reikä |
 | Hihna | 5 mm PU-pyörähihna, päät hitsataan |
 | Teholähde | Newding 12 V / 2 A pistokemuuntaja. **Rajatapaus** |
 | ESP:n virta | LM2596 buck 12 V → 5,0 V |
 | Vaunun rullat | U624ZZ, 4 × 13 × 7 mm, U-ura. **Eivät** kelpaa hihnapyöräksi |
+
+Taulukko kattaa vetolinjan, ei koko rataa. Muualla tässä dokumentissa
+vaaditaan lisäksi nämä, eikä niiden varastotilannetta ole kirjattu:
+
+| Osa | Miksi | Missä perusteltu |
+|---|---|---|
+| Rajakytkin ×2, NC-kosketin | **Pakollinen.** Ilman niitä moottori jää jumiin päätyyn | Turvallisuus |
+| Toinen 41 mm hihnapyörä | Kääntöpyöräksi. U624ZZ ei kelpaa | Mekaniikka |
+| 4 mm terästanko tai 3 mm teräsköysi + tuet | Vaunun kisko | Mekaniikka |
+| M4-pultit ja aluslevyt | Rullien akselit | Mekaniikka |
+| 2200 µF / 100 nF | Käynnistyspiikki ja kipinöinti | Tunnetut riskit |
+| Sulake 3 A | 12 V:n plussaan | Turvallisuus |
+| DC-jakki ruuviliittimillä 5,5 × 2,1 mm | Teholähteen pää ilman johdon katkaisua | Turvallisuus |
 
 ESP8266 ja ESP32 ovat molemmat kelvollisia — alusta vaikuttaa vain
 `output:`-blokkiin ja pinneihin, `fan:`, `script:` ja `select:` ovat identtiset.

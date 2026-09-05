@@ -17,13 +17,64 @@ Integrate an Enervent Pegasos Eco ECE ventilation unit with Home Assistant using
 
 ### Required
 
-- ESP32 development board (recommended over ESP8266)
-- MAX485 (or equivalent) RS485 ↔ TTL transceiver
-- RJ11 cable
+- ESP32 development board (recommended over ESP8266) — in stock
+- RS-485 ↔ TTL module — in stock: JZK, 5 pcs, automatic hardware flow control,
+  works at 3.3 V or 5 V. See the wiring section: it is not a plain MAX485
+  breakout and is wired differently
+- RJ11 cable — **not in stock, the one thing this project is waiting for**
 
 ### Optional
 
 - RJ11 breakout adapter (not required if you are willing to cut one end of an RJ11 cable)
+
+### The board in stock
+
+Three ESP32 boards are on the shelf: **two of this type** — photographed in
+[`esp32-devkit.jpg`](esp32-devkit.jpg) — and one DevKitC WROOM-32U that belongs
+to [`../axioma.effection/`](../axioma.effection/). Take one of the pair; the
+other stays spare. What the photo settles:
+
+- **30-pin DevKit layout**, 15 pins per side. Every pin in the wiring table below
+  is brought out on it.
+- **USB-C**, not micro-USB, and the USB bridge is a **CH340C** — so it is the
+  CH34x driver that has to be present on the flashing machine, not CP210x.
+- On-board **AMS1117-3.3** regulator, and a `VIN` pin, so 5 V may be fed in
+  directly instead of over USB.
+- The module carries a **printed PCB antenna**, i.e. plain WROOM-32. That is the
+  right board to take for this project: it needs no antenna part, and the u.FL
+  WROOM-32U on the shelf is spoken for by
+  [`../axioma.effection/`](../axioma.effection/).
+
+## Found in the same box: a GYBMEP sensor breakout
+
+Not part of the plan, and not needed for Modbus — recorded because it turned up
+with this project's parts. [`gybmep-sensor.jpg`](gybmep-sensor.jpg).
+
+Ordered as an **APKLVSR BME280 module, pack of two**, sold as the real BME280
+with humidity, 5 V tolerant, I²C. **Both are here and both look identical**, so
+the pair never got split across projects — which also means there is no second
+box to point at what they were bought for. No project in this repo has ever
+documented a use for them, and nothing in the git history does either. The
+purpose is simply not recorded.
+
+Two identical boards means one is spare whatever they end up doing.
+
+The purple `GYBMEP` breakout is the common Bosch BME280 / BMP280 board: a 662K
+(XC6206) 3.3 V regulator and level shifting on board, so it accepts 3–5 V, and
+the four-hole version is **I²C only** with the address fixed on the board —
+usually 0x76. Scan the bus rather than assume.
+
+**Confirm which sensor actually arrived.** The listing says BME280, but these
+purple boards are routinely shipped as BME280 while carrying a BMP280, which
+measures temperature and pressure but **not humidity** — the one reading that
+would make this module worth using here. Register 0xD0 settles it: 0x60 is a
+BME280, 0x58 a BMP280. ESPHome reports it at startup — `bme280_i2c` refuses to
+start against a BMP280, and `bmp280_i2c` is the component for that case.
+
+If it turns out to be a real BME280 it is worth something here: supply and
+extract air humidity is exactly the reading a ventilation unit's Modbus register
+map may not expose, and it rides on the same ESP32 over I²C without touching the
+RS-485 side. That is a later decision, not part of getting Modbus working.
 
 ## Why ESP32 instead of ESP8266?
 
@@ -57,17 +108,33 @@ Enervent Pegasos Eco ECE
  Home Assistant (Podman)
 ```
 
-## ESP32 ↔ MAX485 Wiring
+## ESP32 ↔ RS-485 module wiring
 
-Typical wiring:
+**The module in stock switches direction by itself.** Five JZK TTL↔RS-485
+boards were bought, described as having *automatic hardware flow control*: the
+driver enable is handled on the board from activity on the TX line, and no
+control pin is brought out to the MCU. That removes a wire, a GPIO and a line of
+YAML.
 
-| MAX485 | ESP32 |
-|--------|-------|
-| RO | RX (GPIO16) |
-| DI | TX (GPIO17) |
-| RE + DE | GPIO4 |
+| RS-485 module | ESP32 |
+|---------------|-------|
+| RXD | TX (GPIO17) |
+| TXD | RX (GPIO16) |
 | VCC | 3.3 V |
 | GND | GND |
+
+Note the crossover: the module's RXD takes what the ESP32 transmits.
+
+With this board there is **no `flow_control_pin`** in the ESPHome `uart:` block.
+Auto-direction boards derive their turnaround from the baud rate, so keep an eye
+on it if the unit turns out to run faster than the usual 9600 or 19200 — at
+Modbus RTU speeds it is a non-issue.
+
+**Check the board before wiring.** If the one you pick up has `DE` and `RE` pins
+brought out, it is the classic MAX485 breakout instead, and it needs the older
+scheme: tie RE and DE together to a GPIO (GPIO4 works) and declare that GPIO as
+`flow_control_pin`. Then the pin names are RO → RX and DI → TX rather than
+TXD/RXD.
 
 ## MAX485 ↔ Enervent
 

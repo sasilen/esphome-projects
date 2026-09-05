@@ -21,6 +21,95 @@ muuten mDNS ei toimi eikä OTA löydä levyjä.
 | [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | RS-485 / Modbus RTU (RJ11-huoltoliitin) | ESP32 + MAX485 | Suunnittelu |
 | [axioma.effection](axioma.effection/) | Axioma Effectio / Qalcosonic W1 -vesimittari | Wireless M-Bus 868,95 MHz T1 | ESP32 + CC1101 | Suunnittelu |
 
+## Levyt ja varasto
+
+Levyt ovat projektien kesken jaettu resurssi, ja riittävyys näkyy vasta kun
+kaikki lasketaan yhteen.
+
+| Levy | Käytössä | Varattu suunnitelmissa | Vapaana sen jälkeen |
+|---|---|---|---|
+| Wemos D1 mini (ESP8266-12F, CH340G, USB-C) | aidon, bestway.lay-z-spa | hirvirata, stiebel.eltron | **0** |
+| ESP32 | — | pegasos.enervent, axioma.effection | 1 |
+
+Kolme ESP32:ta ei ole kolme samanlaista, vaan 2 + 1:
+
+| Levy | Kpl | Tuntomerkit | Kenelle |
+|---|---|---|---|
+| [30-nastainen DevKit](pegasos.enervent/esp32-devkit.jpg) | 2 | USB-C, CH340C, printattu PCB-antenni | pegasos.enervent, ja yksi vapaana |
+| [38-nastainen DevKitC](axioma.effection/esp32-devkitc-wroom32u.jpg) | 1 | micro-USB, QFN-silta (CP2102-luokkaa), **WROOM-32U + u.FL** | axioma.effection |
+
+Ainoa vapaa ESP32 on siis 30-nastainen PCB-antennilevy. Huomaa myös että
+USB-siltapiiri vaihtuu levytyypin mukana, eli myös ajuri: CH34x vs. CP210x.
+D1 minit ovat CH340G ja USB-C, eli sama CH34x-ajuri kuin diymoren ESP32:issa.
+
+**Yksi asia kannattaa varmistaa D1 mineistä ennen ensimmäistä flashausta:**
+myynti-ilmoitus lupasi "4MBit Flash Memory". ESP8266-12F:ssä on käytännössä aina
+4 **MB** eli 32 Mbit, ja ESPHomen `board: d1_mini` olettaa juuri sen. Jos levyllä
+oikeasti olisi 512 kB, OTA ei mahtuisi. Kyse on lähes varmasti ilmoituksen
+kirjoitusvirheestä — todennettavissa käynnistyslokista tai `esptool flash_id`
+-komennolla.
+
+Minit menevät siis tasan eikä varalevyä jää, ESP32:ista jää yksi yli. Tämä on
+huomionarvoista siksi, että **aidon on ainoa projekti jossa ESP8266 ei ole
+makuasia**: HAN-portin virtabudjetti sulkee ESP32:n pois. Jos sen levy hajoaa,
+tilalle ei ole mitään.
+
+Jos varalevy halutaan, hirvirata on luonteva paikka vaihtaa ESP32:een — sen
+CLAUDE.md sanoo suoraan että kumpi tahansa käy, kun taas aidonilla ja
+stiebel.eltronilla on kirjattu peruste ESP8266:lle.
+
+Moduulit:
+
+- **MCP2515 + TJA1050**, 3 kpl (RUIZHI) → stiebel.eltron. Yksi omistetaan
+  pysyväksi snifferiksi (TXD nostettuna), joten työjuoksuun jää kaksi.
+- **L298N**, 5 kpl (ARCELI) → hirvirata.
+- **DC-DC-buck, säädettävä 3 A, 5 kpl** → hirvirata ja stiebel.eltron. Määrä
+  riittää molemmille kolmen jäädessä yli, eli aiempi huoli kilpailusta oli
+  aiheeton. Lähtöjännite on **asetettava mittarilla ennen kuormaa**.
+- **TTL ↔ RS-485 -moduuli, 5 kpl** (JZK, automaattinen suunnanvaihto) →
+  pegasos.enervent. **Ei ole tavallinen MAX485-kortti**: DE/RE-ohjausta ei ole,
+  joten kytkentä on neljä johdinta eikä viisi.
+- **LM2596** → hirvirata, ja stiebel.eltron jos virta otetaan lämpöpumpulta.
+  Varaston moduuli on **ADJ eli säädettävä**: lähtöjännite on asetettava
+  mittarilla ennen kuin kuorma kytketään.
+- **CC1101 868 MHz** ([kuva](axioma.effection/cc1101-module.jpg), 26 MHz:n kide)
+  ja **868 MHz omniantenni SMA:lla, 2 kpl** → axioma.effection. ESP32:n oma
+  2,4 GHz u.FL -antenni ja kaapeli tulivat DevKitC-setin mukana. Levylle tulee
+  siis kaksi eri antennia — älä sekoita niitä.
+- **BME280-anturikortti, 2 kpl** (APKLVSR,
+  [kuva](pegasos.enervent/gybmep-sensor.jpg)). Molemmat pegasoksen laatikossa,
+  samannäköisiä. Ei kuulu yhdenkään projektin suunnitelmaan eikä
+  käyttötarkoitusta ole kirjattu mihinkään. Onko piiri oikeasti BME280 vai
+  BMP280 on varmistamatta; ero on kosteusmittaus.
+**SN65HVD230:aa ei ole.** Se on ollut stiebel.eltronin osalistalla varastossa
+olevana ensimmäisestä commitista asti, mutta sitä ei ole tilaushistoriassa
+eikä laatikossa. Väite oli virheellinen, ja seuraus on että stiebelin vaihe 2
+tarvitsee ostetun lähetinvastaanottimen.
+
+**RS-485-moduuli ei korvaa sitä**, vaikka sekin on differentiaalinen pari.
+CAN vaatii että recessiivinen tila *päästetään irti* — siihen perustuu sekä
+arbitrointi että kuittaus. RS-485-ajuri on push-pull ja ohjaa molempia tiloja,
+ja näissä korteissa suunta vaihtuu vielä automaattisesti. Perustelu on
+[stiebel.eltronin CLAUDE.md:ssä](stiebel.eltron/CLAUDE.md).
+
+## Mitä puuttuu
+
+Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
+
+| Projekti | Puuttuu | Estääkö aloituksen |
+|---|---|---|
+| stiebel.eltron | 3,3 V:n CAN-lähetinvastaanotin vaiheeseen 2 (CAN Pal tai VP230) | Ei — vaihe 1 ei vaadi hankintoja |
+| axioma.effection | — kaikki tilattu ja hyllyssä | Este on AES-128-avain, ei osa |
+| pegasos.enervent | RJ11-kaapeli | Kyllä, mutta se on ainoa |
+| hirvirata | Rajakytkimet, kääntöpyörä, kisko, kondensaattorit, sulake, DC-jakki | Kyllä |
+| aidon | Schottky SS14/1N5819 ja 330 Ω — kovetukset jäivät tekemättä | Ei, laite on käytössä |
+| bestway.lay-z-spa | — | — |
+
+Yksi asia joka ei näy yksittäisen projektin listalta: **D1 mineissä ei ole
+varaa.** Ks. levytaulukko yllä — neljästä kaksi on käytössä ja kaksi varattu.
+Oheismoduuleista sen sijaan on yltäkylläisesti: bucke­ja, RS-485-kortteja ja
+L298N:iä on viisi kutakin.
+
 ### aidon — ensimmäinen valmis
 
 Kolmen vaiheen teho, virta ja jännite Home Assistantissa 10 sekunnin
@@ -51,7 +140,9 @@ Jokainen projekti on oma hakemistonsa:
 ├── BUILDLOG.md            rakennuskertomus (vain rakennetuissa projekteissa)
 ├── <projekti>.yaml        ESPHome-konfiguraatio (jos olemassa)
 ├── secrets.yaml.example   mallipohja salaisuuksille
-└── *.svg                  kytkentäkuvat
+├── *.svg                  kytkentäkuvat
+└── *.jpg                  valokuvat osista. Pienennä ja **poista metadata**
+                           ennen committia — kamera tallentaa GPS-koordinaatit
 ```
 
 Dokumentit vastaavat kolmeen eri kysymykseen, ja aikamuoto kertoo mihin mikäkin
