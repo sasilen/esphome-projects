@@ -149,6 +149,12 @@ without trouble.
 and a pin change — `esp8266:` → `esp32:`, and the SPI pins to the VSPI defaults
 (SCK 18, MISO 19, MOSI 23, CS 5). Nothing else in the configuration changes.
 
+The board it would land on is the spare 30-pin DevKit (USB-C, CH340C, PCB
+antenna) — see [`../pegasos.enervent/esp32-devkit.jpg`](../pegasos.enervent/esp32-devkit.jpg).
+All four of those pins are brought out on it. The WROOM-32U on the shelf is not
+available: it belongs to axioma.effection, and it is the wrong tool here anyway
+since it needs an external antenna this project has no use for.
+
 ## Does the D1 Mini cope with phase 2 — writing?
 
 Writing is not where the ESP8266 is weak. The MCP2515 does bit timing,
@@ -189,7 +195,73 @@ The following components are **not needed** for this project:
 
 - CC1101 868 MHz radio module
 - 868 MHz antennas
-- SN65HVD230 (belonged to the rejected esp32_can route)
+
+The **SN65HVD230** used to be listed here as surplus from the rejected
+`esp32_can` route. That was a mistake — see below. It may remove the only
+purchase this project has.
+
+## The CAN Pal may not be needed at all
+
+The CAN Pal was chosen for one headline reason: the TJA1051T/3 wants a 5 V
+supply, and the board generates it from 3.3 V so that no second rail is needed.
+That reasoning solves a problem **created by picking a 5 V transceiver in the
+first place.**
+
+The `SN65HVD230` already in the parts box is a **native 3.3 V CAN transceiver**.
+It needs no 5 V, no rail generation and no level shifting; its logic side is
+3.3 V by design. It was bought for the `esp32_can` route, but its function —
+turn 3.3 V TX/RX into differential CAN — is exactly the function the CAN Pal was
+going to buy.
+
+Wiring is unchanged from the CAN Pal plan: lift MCP2515 pin 2 (RXCAN) to the
+transceiver's RXD, MCP2515 pin 1 (TXCAN) to its TXD.
+
+**It does not exist.** The SN65HVD230 was carried in this file as an already-owned
+part from the first commit onward, but it is in no order history and it is not in
+the parts box. The claim was wrong. **Phase 2 therefore needs a transceiver
+bought.**
+
+**If one is ever found, the question would be: breakout board or bare SO8 chip?**
+A module (the common blue VP230 board with VCC / GND / CANH / CANL / RXD / TXD)
+is a drop-in and the CAN Pal purchase disappears. A bare chip needs a carrier,
+and then buying the CAN Pal is the lesser work. **Photograph it before ordering
+anything.**
+
+If it is a module, two details differ from the CAN Pal:
+
+- **Termination.** VP230 boards usually carry 120 Ω, often soldered rather than
+  on a jumper. It has to go — same reasoning as everywhere else in this file.
+  The CAN Pal has a switch for it; this one may need desoldering.
+- **The Rs pin (8).** Tie it to GND for high-speed mode, or to GND through
+  10–100 kΩ for slope control. At 20 kbps slope limiting is a genuine benefit for
+  EMC, and it is an option the CAN Pal does not offer.
+
+Mixing a 3.3 V transceiver onto a bus whose other nodes are 5 V TJA1050s is
+normal practice — CAN is differential and the levels interoperate.
+
+**It does not have to be the Adafruit board.** Any 3.3 V CAN transceiver breakout
+does the job: an SN65HVD230 / VP230 board, a TJA1051T/3 breakout, an MCP2562FD.
+Two requirements only — the logic side must accept 3.3 V, and any on-board 120 Ω
+must be removable or switchable. The CAN Pal is simply the one that was already
+researched.
+
+## An RS-485 module cannot stand in for the CAN transceiver
+
+The JZK TTL↔RS-485 boards in stock look like an obvious substitute: differential
+pair, same wiring, and the bus even runs at a serial-ish bit rate. **They will
+not work, and the reason is not voltage but arbitration.**
+
+- A CAN transceiver drives the dominant state actively and **releases the bus for
+  the recessive state.** That is what lets several nodes talk at once and lets the
+  loser back off. An RS-485 driver is push-pull: it drives both states, so two
+  nodes disagreeing fight each other instead of arbitrating.
+- CAN acknowledges every frame by having *other* nodes pull the bus dominant
+  inside the ACK slot. A node that cannot receive and be overridden mid-frame
+  cannot participate.
+- These particular boards switch direction automatically from TX activity, which
+  removes any possibility of holding the driver in the state CAN needs.
+
+The differential pair is a coincidence of physical layer, not compatibility.
 
 ---
 
@@ -324,17 +396,21 @@ is a strapping pin too, but high is the level it wants, so CS is safe there.)
 
 ## MCP2515 ↔ Heat Pump
 
-| MCP2515 | Heat Pump |
-|----------|-----------|
-| CANH | CAN_H |
-| CANL | CAN_L |
-| GND | GND |
+| MCP2515 module | Heat Pump |
+|----------------|-----------|
+| screw terminal H | CAN_H |
+| screw terminal L | CAN_L |
+| J4 GND | GND |
 
-**Remove the module's on-board 120 Ω terminator** (usually soldered on, sometimes
-on a jumper). The Stiebel bus is already terminated at both ends; a third 120 Ω
-drops the impedance to roughly 60 Ω and can break the heat pump's own traffic.
-The loose 120 Ω resistor in the parts box stays in the box — this node is a tap,
-not a bus end.
+**The screw terminal has two poles only, H and L** — there is no ground pole on
+it, so the bus ground reference joins at the J4 GND pin together with the ESP.
+See [`mcp2515-module-prep.svg`](mcp2515-module-prep.svg).
+
+**Disconnect the module's on-board 120 Ω terminator.** On this board it is a
+jumper cap, so this needs no desoldering at all. The Stiebel bus is already
+terminated at both ends; a third 120 Ω drops the impedance to roughly 60 Ω and
+can break the heat pump's own traffic. The loose 120 Ω resistor in the parts box
+stays in the box — this node is a tap, not a bus end.
 
 Twisted pair for CANH/CANL. At 20 kbps the bus tolerates hundreds of metres and
 long stubs, so cable lengths are not a concern here.
@@ -365,11 +441,16 @@ Expected configuration for Stiebel Eltron WPC series:
 - Listen-only mode initially — see below
 - 120 Ω termination only if located at the end of the CAN bus (this node is not)
 
-## Check the crystal
+## The crystal: 8 MHz, confirmed
 
-These modules ship with either an 8 MHz or a 16 MHz crystal. ESPHome defaults to
-8 MHz, so a 16 MHz module with no `clock:` line gets the bit rate wrong by a
-factor of two and nothing works. Read the marking on the can.
+These modules ship with either an 8 MHz or a 16 MHz crystal, and a 16 MHz module
+configured as 8 MHz gets the bit rate wrong by a factor of two.
+
+**The module in hand is marked `8.000` — 8 MHz.** That matches ESPHome's default
+and the `can_clock: 8MHZ` substitution, so nothing needs changing. The board is
+silkscreened V2139; see [`mcp2515-module.jpg`](mcp2515-module.jpg) for the board
+itself and [`mcp2515-module-prep.svg`](mcp2515-module-prep.svg) for what to do to
+it. Check the marking again if a different one of the three modules gets used.
 
 ## Why listen-only actually matters
 
@@ -390,11 +471,18 @@ driving the dominant bit — which is precisely what listening does not need.
 
 **Two things must be handled for this test:**
 
-1. **Remove the module's 120 Ω.** In this test the module's *own* transceiver and
-   terminals are in use, so its terminator sits across the live bus. Three
-   terminators give ~40 Ω, below what the transceivers are specified to drive, and
-   that can disturb the heat pump's own traffic. (In the final CAN Pal wiring the
-   module's bus side is unused and the resistor can stay.)
+1. **Disconnect the module's 120 Ω — by pulling a jumper cap, not by
+   desoldering.** On this board (V2139) R2 is marked `121` = 120 Ω and the
+   termination is switched by a cap; both J1 and J3 are fitted. In this test the
+   module's *own* transceiver and terminals are in use, so its terminator would
+   sit across the live bus. Three terminators give ~40 Ω, below what the
+   transceivers are specified to drive, and that can disturb the heat pump's own
+   traffic. (In the final CAN Pal wiring the module's bus side is unused and the
+   terminator is harmless.)
+
+   **Verify by measurement rather than by guessing which cap is which:** meter
+   across the H and L screw posts, pull caps until it reads open instead of
+   ~120 Ω.
 
 2. **Enforce listen-only in hardware.** ESPHome's mcp2515 component may not expose
    listen-only mode. Rather than depend on it, **lift the TJA1050's pin 1 (TXD) and
@@ -414,6 +502,13 @@ frames appear.
 
 The phase 1 sniffer is [`stiebel.eltron.yaml`](stiebel.eltron.yaml). It reads
 and logs; it writes nothing, and it is not the phase 2 configuration.
+
+`board: d1_mini` assumes 4 MB of flash, which is what an ESP8266-12F carries.
+The boards in stock are ESP8266-12F with CH340G over USB-C, so the flashing
+machine wants the CH34x driver and a USB-C cable. Confirm the flash size from the
+first boot log — the listing said "4MBit", which would be 512 kB and too small
+for OTA. It is near-certainly a wording error, but this is the project that finds
+out first.
 
 **The two unknowns are `substitutions:` at the top of the file** — crystal and
 bit rate. Both are one-line edits followed by a re-flash, because ESPHome fixes
@@ -504,12 +599,19 @@ No MQTT broker is required.
 
 ## Still Needed
 
-- **Adafruit CAN Pal #5708** (TJA1051T/3 breakout) × 1
-- PESD1CAN or NUP2105L (SOT-23) — only if the CAN Pal has no bus protection
-- LM2596 or similar buck, if power is taken from the heat pump
+Nothing for phase 1. For phase 2, one transceiver.
 
-Do **not** order until the bit rate is measured — it decides whether the MCP2515 is
-needed at all (see Notes). The CAN Pal is useful either way; nothing else is.
+- **A 3.3 V CAN transceiver breakout** × 1 — Adafruit CAN Pal #5708, or an
+  SN65HVD230 / VP230 board, or any equivalent. The SN65HVD230 this file used to
+  claim was in stock does not exist, so this is a real purchase. Order it when
+  phase 1 has confirmed the bit rate, not before.
+- PESD1CAN or NUP2105L (SOT-23) — only if the chosen transceiver board carries no
+  bus protection
+- LM2596 or similar buck, if power is taken from the heat pump. Note that
+  hirvirata also wants one; the stock count is not recorded anywhere.
+
+Nothing is needed for phase 1 at all. Do **not** order until the bit rate is
+measured and the SN65HVD230 has been looked at.
 
 ## Optional
 
@@ -544,8 +646,10 @@ expose rates below 25 kbps.
 The option therefore reopens if ESPHome ever adds them. Until then: MCP2515, which
 does 20 kbps unconditionally.
 
-Consequence: **no SN65HVD230 needed** — that part belonged to this route only, and
-the SMD rework on the MCP2515 module is unavoidable.
+Consequence: the SMD rework on the MCP2515 module is unavoidable. But **the
+SN65HVD230 does not become surplus** — see "The CAN Pal may not be needed at
+all". It was bought for this route, and it is still a 3.3 V CAN transceiver on
+the shelf.
 
 Cheap way to re-test after an ESPHome upgrade — needs no hardware, just validation:
 

@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1010" width="760" height="1010" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="1010" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="970" fill="none" stroke="#A8B3BC"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">MCP2515 MODULE &#8212; PHASE 1 PREP</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Board marked V2139 &#183; top view, pin header on the left &#183; drawn from the module in hand</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <!-- ============================================ board -->
+  <rect x="90" y="140" width="580" height="400" rx="6" fill="#1E4A63" stroke="#12303F"/>
+
+  <circle cx="117" cy="170" r="13" fill="#E9ECEF" stroke="#12303F"/>
+  <circle cx="629" cy="170" r="13" fill="#E9ECEF" stroke="#12303F"/>
+  <circle cx="117" cy="512" r="13" fill="#E9ECEF" stroke="#12303F"/>
+
+  <!-- J4 pin header -->
+  <rect x="101" y="192" width="35" height="248" fill="#E8C33A" stroke="#A8891F"/>
+  <g stroke="#A8891F">
+    <line x1="101" y1="228" x2="136" y2="228"/>
+    <line x1="101" y1="264" x2="136" y2="264"/>
+    <line x1="101" y1="300" x2="136" y2="300"/>
+    <line x1="101" y1="336" x2="136" y2="336"/>
+    <line x1="101" y1="372" x2="136" y2="372"/>
+    <line x1="101" y1="408" x2="136" y2="408"/>
+  </g>
+  <g font-size="12" fill="#DCE6EC">
+    <text x="145" y="215">INT</text>
+    <text x="145" y="251">SCK</text>
+    <text x="145" y="287">SI</text>
+    <text x="145" y="323">SO</text>
+    <text x="145" y="359">CS</text>
+    <text x="145" y="395">GND</text>
+    <text x="145" y="431">VCC</text>
+  </g>
+  <text x="145" y="180" font-size="12" fill="#8FB0C2">J4</text>
+
+  <!-- U2 MCP2515 -->
+  <rect x="229" y="212" width="116" height="168" rx="3" fill="#1A1A1A" stroke="#000"/>
+  <g stroke="#B9C6CF" stroke-width="3">
+    <line x1="220" y1="221" x2="229" y2="221"/><line x1="220" y1="240" x2="229" y2="240"/>
+    <line x1="220" y1="259" x2="229" y2="259"/><line x1="220" y1="278" x2="229" y2="278"/>
+    <line x1="220" y1="297" x2="229" y2="297"/><line x1="220" y1="316" x2="229" y2="316"/>
+    <line x1="220" y1="335" x2="229" y2="335"/><line x1="220" y1="354" x2="229" y2="354"/>
+    <line x1="220" y1="373" x2="229" y2="373"/>
+    <line x1="345" y1="221" x2="354" y2="221"/><line x1="345" y1="240" x2="354" y2="240"/>
+    <line x1="345" y1="259" x2="354" y2="259"/><line x1="345" y1="278" x2="354" y2="278"/>
+    <line x1="345" y1="297" x2="354" y2="297"/><line x1="345" y1="316" x2="354" y2="316"/>
+    <line x1="345" y1="335" x2="354" y2="335"/><line x1="345" y1="354" x2="354" y2="354"/>
+    <line x1="345" y1="373" x2="354" y2="373"/>
+  </g>
+  <text x="287" y="300" font-size="12" fill="#C9B896" text-anchor="middle">MCP2515</text>
+  <text x="287" y="200" font-size="12" fill="#8FB0C2" text-anchor="middle">U2</text>
+
+  <!-- X1 crystal -->
+  <rect x="403" y="192" width="47" height="140" rx="23" fill="#9AA5AD" stroke="#5A6772"/>
+  <text x="426" y="268" font-size="12" fill="#16212B" text-anchor="middle" transform="rotate(-90 426 268)">8.000</text>
+  <text x="426" y="180" font-size="12" fill="#8FB0C2" text-anchor="middle">X1</text>
+
+  <text x="554" y="200" font-size="11" fill="#8FB0C2">V2139</text>
+
+  <!-- H / L + J3 -->
+  <text x="500" y="278" font-size="14" fill="#DCE6EC">H</text>
+  <rect x="508" y="292" width="34" height="68" fill="#E8C33A" stroke="#A8891F"/>
+  <line x1="508" y1="326" x2="542" y2="326" stroke="#A8891F"/>
+  <text x="480" y="336" font-size="11" fill="#8FB0C2">J3</text>
+  <text x="500" y="392" font-size="14" fill="#DCE6EC">L</text>
+
+  <!-- screw terminal -->
+  <rect x="566" y="260" width="104" height="140" rx="4" fill="#2E7CA8" stroke="#12303F"/>
+  <circle cx="618" cy="295" r="15" fill="#1B4257"/>
+  <circle cx="618" cy="365" r="15" fill="#1B4257"/>
+  <line x1="590" y1="330" x2="646" y2="330" stroke="#12303F" stroke-width="3"/>
+
+  <!-- U1 TJA1050 -->
+  <rect x="409" y="372" width="64" height="80" rx="3" fill="#1A1A1A" stroke="#000"/>
+  <g stroke="#B9C6CF" stroke-width="3">
+    <line x1="400" y1="386" x2="409" y2="386"/><line x1="400" y1="406" x2="409" y2="406"/>
+    <line x1="400" y1="426" x2="409" y2="426"/><line x1="400" y1="446" x2="409" y2="446"/>
+    <line x1="473" y1="386" x2="482" y2="386"/><line x1="473" y1="406" x2="482" y2="406"/>
+    <line x1="473" y1="426" x2="482" y2="426"/><line x1="473" y1="446" x2="482" y2="446"/>
+  </g>
+  <text x="441" y="418" font-size="10" fill="#C9B896" text-anchor="middle">TJA</text>
+  <text x="441" y="432" font-size="10" fill="#C9B896" text-anchor="middle">1050</text>
+  <text x="441" y="366" font-size="11" fill="#8FB0C2" text-anchor="middle">U1</text>
+
+  <!-- R2 + J1 -->
+  <rect x="438" y="484" width="36" height="16" fill="#B9C6CF" stroke="#5A6772"/>
+  <text x="456" y="497" font-size="10" fill="#16212B" text-anchor="middle">121</text>
+  <text x="410" y="497" font-size="11" fill="#8FB0C2">R2</text>
+  <rect x="508" y="474" width="46" height="46" fill="#E8C33A" stroke="#A8891F"/>
+  <line x1="531" y1="474" x2="531" y2="520" stroke="#A8891F"/>
+  <text x="562" y="503" font-size="11" fill="#8FB0C2">J1</text>
+  <text x="330" y="497" font-size="11" fill="#8FB0C2">POW</text>
+  <circle cx="368" cy="491" r="7" fill="#C0392B"/>
+
+  <!-- callout markers -->
+  <circle cx="426" cy="150" r="13" fill="#16212B"/>
+  <text x="426" y="155" font-size="13" font-weight="700" fill="#E9ECEF" text-anchor="middle">1</text>
+  <line x1="426" y1="163" x2="426" y2="190" stroke="#16212B" stroke-width="2"/>
+
+  <circle cx="600" cy="470" r="13" fill="#16212B"/>
+  <text x="600" y="475" font-size="13" font-weight="700" fill="#E9ECEF" text-anchor="middle">2</text>
+  <line x1="590" y1="478" x2="556" y2="494" stroke="#16212B" stroke-width="2"/>
+  <line x1="596" y1="459" x2="546" y2="360" stroke="#16212B" stroke-width="2" stroke-dasharray="3 3"/>
+
+  <circle cx="352" cy="440" r="13" fill="#16212B"/>
+  <text x="352" y="445" font-size="13" font-weight="700" fill="#E9ECEF" text-anchor="middle">3</text>
+  <line x1="365" y1="437" x2="400" y2="412" stroke="#16212B" stroke-width="2"/>
+
+  <!-- ============================================ callouts -->
+  <line x1="20" y1="570" x2="740" y2="570" stroke="#A8B3BC"/>
+
+  <circle cx="52" cy="596" r="11" fill="#16212B"/>
+  <text x="52" y="601" font-size="12" font-weight="700" fill="#E9ECEF" text-anchor="middle">1</text>
+  <text x="76" y="594" font-size="13" font-weight="700" fill="#16212B">X1 reads 8.000 &#8212; the crystal is 8 MHz.</text>
+  <text x="76" y="613" font-size="12" fill="#3D4B57">One unknown gone. can_clock: 8MHZ in stiebel.eltron.yaml is already correct.</text>
+
+  <circle cx="52" cy="646" r="11" fill="#16212B"/>
+  <text x="52" y="651" font-size="12" font-weight="700" fill="#E9ECEF" text-anchor="middle">2</text>
+  <text x="76" y="644" font-size="13" font-weight="700" fill="#16212B">Termination is a jumper cap, not a soldered resistor.</text>
+  <text x="76" y="663" font-size="12" fill="#3D4B57">R2 is marked 121 = 120 &#937;. Both J1 and J3 carry caps. Pull &#8212; do not desolder.</text>
+  <text x="76" y="681" font-size="12" fill="#3D4B57">Verify with a meter across the H and L screw posts: ~120 &#937; with the cap on,</text>
+  <text x="76" y="699" font-size="12" fill="#3D4B57">open with it off. Keep pulling until it reads open. This node is a tap, not a bus end.</text>
+
+  <circle cx="52" cy="732" r="11" fill="#16212B"/>
+  <text x="52" y="737" font-size="12" font-weight="700" fill="#E9ECEF" text-anchor="middle">3</text>
+  <text x="76" y="730" font-size="13" font-weight="700" fill="#16212B">U1 TJA1050 pin 1 = TXD. Lift it, tie it to VCC.</text>
+  <text x="76" y="749" font-size="12" fill="#3D4B57">The only soldering in phase 1, and only if you want listen-only enforced in hardware.</text>
+  <text x="76" y="767" font-size="12" fill="#3D4B57">Skip it if `esphome config` accepts mode: LISTENONLY and you trust that alone.</text>
+
+  <!-- SO8 inset -->
+  <rect x="40" y="790" width="330" height="180" fill="#DDE3E8" stroke="#A8B3BC"/>
+  <text x="56" y="812" font-size="12" font-weight="700" fill="#16212B">FIND PIN 1 BEFORE TOUCHING IT</text>
+
+  <rect x="150" y="828" width="70" height="112" rx="3" fill="#1A1A1A"/>
+  <circle cx="162" cy="840" r="4" fill="#8C8C8C"/>
+  <g stroke="#5A6772" stroke-width="2">
+    <line x1="138" y1="844" x2="150" y2="844"/><line x1="138" y1="872" x2="150" y2="872"/>
+    <line x1="138" y1="900" x2="150" y2="900"/><line x1="138" y1="928" x2="150" y2="928"/>
+    <line x1="220" y1="844" x2="232" y2="844"/><line x1="220" y1="872" x2="232" y2="872"/>
+    <line x1="220" y1="900" x2="232" y2="900"/><line x1="220" y1="928" x2="232" y2="928"/>
+  </g>
+  <g font-size="10" fill="#16212B" text-anchor="end">
+    <text x="134" y="848">1 TXD</text>
+    <text x="134" y="876">2 GND</text>
+    <text x="134" y="904">3 VCC</text>
+    <text x="134" y="932">4 RXD</text>
+  </g>
+  <g font-size="10" fill="#16212B">
+    <text x="236" y="848">8 S</text>
+    <text x="236" y="876">7 CANH</text>
+    <text x="236" y="904">6 CANL</text>
+    <text x="236" y="932">5 Vref</text>
+  </g>
+  <text x="56" y="962" font-size="11" fill="#3D4B57">Pin 7 beeps to the H post. Pin 1 is diagonally opposite it.</text>
+
+  <!-- wiring table -->
+  <rect x="390" y="790" width="330" height="180" fill="#DDE3E8" stroke="#A8B3BC"/>
+  <text x="406" y="812" font-size="12" font-weight="700" fill="#16212B">J4 &#8594; WEMOS D1 MINI</text>
+  <g font-size="12" fill="#16212B">
+    <text x="406" y="836">VCC</text><text x="500" y="836">3V3</text>
+    <text x="406" y="856">GND</text><text x="500" y="856">G</text>
+    <text x="406" y="876">CS</text><text x="500" y="876">D8</text>
+    <text x="406" y="896">SCK</text><text x="500" y="896">D5</text>
+    <text x="406" y="916">SI</text><text x="500" y="916">D7</text>
+    <text x="406" y="936">SO</text><text x="500" y="936">D6</text>
+  </g>
+  <text x="560" y="836" font-size="11" fill="#3D4B57">whole board</text>
+  <text x="560" y="850" font-size="11" fill="#3D4B57">on one rail</text>
+  <text x="560" y="876" font-size="11" fill="#3D4B57">strapping pin</text>
+  <text x="406" y="962" font-size="11" fill="#3D4B57">INT unconnected. Terminal is H and L only &#8212; bus GND</text>
+  <text x="406" y="976" font-size="11" fill="#3D4B57">joins at J4 GND.</text>
+</svg>

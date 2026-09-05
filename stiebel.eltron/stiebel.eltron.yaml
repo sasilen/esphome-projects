@@ -15,8 +15,9 @@
 # at boot and a floating CS line can hold it high.
 
 substitutions:
-  # Read the marking on the crystal can. Wrong value = wrong bit rate by a
-  # factor of two and nothing decodes.
+  # Confirmed from the module in hand: X1 is marked 8.000, so 8 MHz. Re-check
+  # the marking if a different module is used — a 16 MHz board configured as
+  # 8 MHz gets the bit rate wrong by a factor of two and nothing decodes.
   can_clock: "8MHZ"
 
   # Expected, not yet measured. Sweep 20KBPS -> 25KBPS -> 50KBPS until frames

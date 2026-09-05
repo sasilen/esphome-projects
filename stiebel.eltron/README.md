@@ -66,20 +66,46 @@ Stiebel WPC 07
 - MCP2515 modules with TJA1050 transceiver (3 pcs — one is allowed to die)
 - 120 Ω resistors — **not used**, this node taps an already-terminated bus
 
-**Still needed**
+**Still needed — nothing for phase 1**
 
-- **Adafruit CAN Pal #5708** (TJA1051T/3 breakout) × 1
-- PESD1CAN / NUP2105L TVS — only if the CAN Pal carries no bus protection
-- LM2596 buck, if power is taken from the heat pump
+- **A 3.3 V CAN transceiver breakout** for phase 2: Adafruit CAN Pal #5708, an
+  SN65HVD230 / VP230 board, or equivalent. The requirements are only that the
+  logic side takes 3.3 V and that any on-board 120 Ω can be removed.
+- PESD1CAN / NUP2105L TVS — only if the transceiver board carries no protection
+- LM2596 buck, if power is taken from the heat pump — five are in stock
 
-Do **not** order until the bit rate is measured. The CAN Pal is useful either way;
-nothing else is.
+The RS-485 modules in stock are **not** a substitute; see [`CLAUDE.md`](CLAUDE.md)
+for why. Do **not** order until the bit rate is measured.
 
 The ESP32 was here for its built-in CAN controller, and that route is rejected
 (see below). What is left is RAM headroom — Stiebel's element lists run to
 hundreds of parameters, and 50–100 HA entities would get tight on an ESP8266.
 That is a phase 2 question. The ESP32 does **not** avoid the level-shifting
 work: it is a 3.3 V part too.
+
+## What the MCP2515 module actually provides
+
+Two chips on one board, and they play different roles:
+
+- **MCP2515 — the CAN controller.** Bit timing, arbitration, acknowledgement,
+  error handling, filters, buffers. It talks SPI to the ESP. This is the part
+  that makes the project possible at all: neither ESP has a usable CAN controller
+  here, since ESPHome refuses 20 kbps on the ESP32's built-in one. **Nothing
+  replaces it, and it is not the problem.**
+- **TJA1050 — the transceiver.** Turns the controller's logic-level TX/RX into
+  the differential bus. It works, but it wants 4.75–5.25 V.
+
+So the module is not short of a transceiver. The mismatch is that the two chips
+want different supply voltages once a 3.3 V MCU is involved, and only the
+transceiver half is affected:
+
+| Phase | What is needed | Cost |
+|---|---|---|
+| 1, listen only | The module alone, whole board at 3.3 V. The under-volted TJA1050 still receives, and nothing is ever transmitted | nothing |
+| 2, transmit | A transceiver that drives the bus from 3.3 V. The MCP2515 stays; only its bus side moves to the new part | one small board |
+
+Three modules therefore cover three controllers. The phase 2 purchase replaces a
+job the on-board TJA1050 cannot do at 3.3 V, not the module.
 
 ## The one modification that matters
 
@@ -110,9 +136,10 @@ Full pin tables, the superseded two-rail plan and the grounding argument are in
 ## Three things that will bite you
 
 1. **Check the crystal.** These modules ship with either an 8 MHz or a 16 MHz
-   crystal. ESPHome defaults to 8 MHz, so a 16 MHz module with no `clock:` line
-   gets the bit rate wrong by a factor of two and nothing works. Read the marking
-   on the can.
+   crystal, and a 16 MHz board configured as 8 MHz gets the bit rate wrong by a
+   factor of two. The module photographed for
+   [`mcp2515-module-prep.svg`](mcp2515-module-prep.svg) reads `8.000`, so this
+   one is settled — but read the can on whichever board you actually use.
 2. **Listen-only is not optional.** A CAN node in normal mode acknowledges frames
    and emits error frames even if it never sends anything of its own — with the
    wrong bit rate it actively disturbs the heat pump's bus. If the installed
@@ -130,12 +157,17 @@ Full pin tables, the superseded two-rail plan and the grounding argument are in
 The CAN Pal is not needed yet. Phase 1 runs on one plain module, and that module
 becomes the permanent sniffer:
 
-1. **Prepare the module.** Remove its 120 Ω. Lift the TJA1050's pin 1 (TXD) and
-   tie it to VCC. Read the crystal marking while the board is in your hand.
-2. **Wire it at 3.3 V** — the whole module, single rail. Pin table in
+1. **Prepare the module** — see [`mcp2515-module-prep.svg`](mcp2515-module-prep.svg),
+   with the board itself in [`mcp2515-module.jpg`](mcp2515-module.jpg).
+   Pull the termination jumper cap; measuring across the H and L screw posts tells
+   you when it is out (~120 Ω → open). Then lift the TJA1050's pin 1 (TXD) and tie
+   it to VCC. That pin lift is the only soldering here, and it is optional if you
+   trust `mode: LISTENONLY` on its own.
+2. **The crystal is already known: 8 MHz**, so the `substitutions:` block in
+   [`stiebel.eltron.yaml`](stiebel.eltron.yaml) needs no edit. Check the marking
+   anyway if you grab a different module from the box.
+3. **Wire it at 3.3 V** — the whole module, single rail. Pin table in
    [`CLAUDE.md`](CLAUDE.md).
-3. **Set the crystal** in the `substitutions:` block of
-   [`stiebel.eltron.yaml`](stiebel.eltron.yaml) to match what you read.
 4. **Flash and check it boots** before going anywhere near the heat pump.
 
 ```sh
