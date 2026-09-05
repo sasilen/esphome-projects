@@ -1437,9 +1437,11 @@ configuration did not expect.
 
 Read requests are excluded: they carry no value, they are 44 % of all traffic,
 and a new element's *response* is logged anyway, which is where the data is.
-0xFE4C is claimed without an entity because it answered 18 in all 683 samples —
-claimed rather than ignored, so that if it ever moves it reads as a known
-element behaving oddly rather than as a surprise.
+0xFE4C answered 18 in all 683 samples, so it gets neither an entity nor 683 log
+lines — but claiming it silently would mean never learning that it moved, which
+is the one thing about it worth knowing. It is claimed while it repeats and
+released to the unclaimed path the moment it does not, which costs one line per
+distinct value ever seen.
 
 What is left is genuinely worth reading: the manager's four commanded outputs,
 0x06AF and 0x1388 and 0x080E, the 0x011A responses, and every system frame.

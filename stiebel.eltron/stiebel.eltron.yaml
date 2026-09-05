@@ -261,12 +261,20 @@ canbus:
                     // and check the heat pump's own display first.
                     id(elem_fe07).publish_state((int16_t) value);
                     break;
-                  // Claimed but not published: 0xFE4C answered 18 in all 683
-                  // samples of the reference capture. An entity for a constant
-                  // is noise, and so are 683 log lines saying so — but it is
-                  // claimed rather than ignored, so that if it ever moves it
-                  // is a known element behaving oddly rather than a surprise.
-                  case 0xFE4C: break;
+                  // 0xFE4C answered 18 in all 683 samples of the reference
+                  // capture. An entity for a constant is noise and so are 683
+                  // log lines saying so — but claiming it silently would mean
+                  // never learning that it moved, which is the one thing about
+                  // it worth knowing. So: claimed while it repeats, released
+                  // to the unclaimed-log path the moment it does not.
+                  case 0xFE4C: {
+                    static uint16_t last_fe4c = 0xFFFF;
+                    if (value != last_fe4c) {
+                      last_fe4c = value;
+                      handled = false;
+                    }
+                    break;
+                  }
                   default: handled = false;
                 }
               } else if ((cmd == 0 || cmd == 2) && can_id == 0x480) {
