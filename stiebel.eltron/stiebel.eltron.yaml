@@ -50,6 +50,15 @@ ota:
   - platform: esphome
     password: !secret ota_password
 
+# The watchdog restarts this node every 20 s while the MCP2515 is misbehaving,
+# and on the default one-minute boot_is_good_after that is indistinguishable
+# from a boot loop: ten restarts and the node comes up in safe mode, without
+# the canbus component, without saying anything anyone would notice. Fifteen
+# seconds is below the watchdog's own window, so a node that is merely being
+# restarted always counts as having booted successfully.
+safe_mode:
+  boot_is_good_after: 15s
+
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
@@ -160,9 +169,19 @@ canbus:
               if (!ext && (x[5] || x[6]))
                 snprintf(tail, sizeof(tail), " +%02X%02X", x[5], x[6]);
 
-              ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X%s%s",
-                       (unsigned) can_id, (unsigned) receiver, CMD[cmd],
-                       ext ? "ex" : "e", element, val, tail);
+              // Off by default, and the reason is measured: logging every
+              // frame is ~4 lines a second serialised and encrypted over the
+              // API, and the node was stalling after 26-77 seconds of it. The
+              // entity publishes below carry the data that is actually wanted
+              // overnight, and they cost a fraction of this. Turn the switch
+              // on in Home Assistant for a minute when raw frames are needed.
+              //
+              // The raw fallback above is NOT gated — those are rare and they
+              // are how 0x704 and the command-10 frames were found at all.
+              if (id(log_frames).state)
+                ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X%s%s",
+                         (unsigned) can_id, (unsigned) receiver, CMD[cmd],
+                         ext ? "ex" : "e", element, val, tail);
 
               // ---- publish the named elements ---------------------------
               // Dispatch on sender AND element. The same index means
@@ -198,6 +217,13 @@ canbus:
                     // percentage instead.
                     id(compressor).publish_state(value > 50);
                     break;
+                  // 0xFE1B is the command whose consequence 0xFE07 measures,
+                  // so identifying one needs the other visible. 0xFE1C is
+                  // here because it modulates (0, 12, 100) and is the only
+                  // other output that moves. Raw, unnamed, diagnostic — the
+                  // same rule as 0xFE07.
+                  case 0xFE1B: id(elem_fe1b).publish_state((int16_t) value); break;
+                  case 0xFE1C: id(elem_fe1c).publish_state((int16_t) value); break;
                   case 0xFE07:
                     // Published raw, and named after nothing, because it is
                     // not identified. What is known: 0xFE1B commands it and
@@ -321,16 +347,24 @@ globals:
 # distribution has two peaks and no middle, so the threshold can sit almost
 # anywhere between them.
 #
-# Two minutes: a 25x margin over the worst natural gap, and it turns a stall
-# from 35 minutes of lost capture into two. That matters, because in that
-# capture the node was stalled for 69 of its 113 minutes.
+# Two minutes was the second guess, and it was still far too long. A later run
+# stalled after 26 to 77 seconds of operation rather than once in half an hour,
+# so the window cost more than the fault did: 150 seconds dead for every 26
+# alive. **The watchdog window has to be shorter than the fault is frequent**,
+# and the fault turned out to be much more frequent than the first capture
+# suggested.
 #
-# Restarting every two minutes would not trip safe mode either — the default
-# boot_is_good_after is one minute, so an uptime of two resets the boot loop
-# counter each time. The capture's own log confirms it.
+# Twenty seconds still leaves a fourfold margin over the worst natural gap of
+# 4.7 s, which is the only number here that has not moved.
+#
+# Restarting this often *would* trip safe mode on the defaults, and that is the
+# trap this comment exists for: boot_is_good_after is one minute, so a node
+# that runs 26 seconds and restarts never resets the boot loop counter, and
+# after ten of those it boots into safe mode with no CAN at all — quietly, for
+# the rest of the night. Hence the safe_mode block above.
 
 interval:
-  - interval: 1min
+  - interval: 10s
     then:
       - lambda: |-
           if (id(frame_count) == id(last_seen_count)) {
@@ -345,7 +379,7 @@ interval:
           then:
             - logger.log:
                 level: WARN
-                format: "No frames for 2 min - restarting to clear the MCP2515 overflow latch"
+                format: "No frames for 20 s - restarting to clear the MCP2515 overflow latch"
             - button.press: restart_button
 
 button:
@@ -447,6 +481,32 @@ sensor:
     accuracy_decimals: 0
     entity_category: diagnostic
     update_interval: never
+
+  - platform: template
+    id: elem_fe1b
+    name: "Element 0xFE1B"
+    state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+  - platform: template
+    id: elem_fe1c
+    name: "Element 0xFE1C"
+    state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+
+switch:
+  # Per-frame logging, off at every boot. See the frame handler for why.
+  - platform: template
+    id: log_frames
+    name: "Log every frame"
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    entity_category: config
 
 
 binary_sensor:

@@ -1282,8 +1282,9 @@ several re-flashes.
 
 ## The sensors, and why they are publish-only
 
-Nine entities: seven for the elements the element list named, two more from
-0x700 that it does not reach. **Not yet validated or flashed** — the reasoning
+Eleven entities and a switch: seven for the elements the element list named,
+four more from 0x700 that it does not reach, and `Log every frame` to turn
+per-frame logging back on when raw frames are wanted. **Not yet validated or flashed** — the reasoning
 below is checked against the capture, not against a running node.
 
 Every one of them is `update_interval: never` with no lambda: the frame handler
@@ -1326,6 +1327,12 @@ goes — see "The compressor, found by elimination":
 |---|---|---|---|
 | Compressor | 0x700 | 0xFE1D | binary, on above 50 |
 | Element 0xFE07 | 0x700 | 0xFE07 | raw integer, diagnostic |
+| Element 0xFE1B | 0x700 | 0xFE1B | raw integer, diagnostic |
+| Element 0xFE1C | 0x700 | 0xFE1C | raw integer, diagnostic |
+
+0xFE1B is here because it is the command whose consequence 0xFE07 measures,
+and identifying either needs both visible. 0xFE1C modulates between 0, 12 and
+100 and is the only other output that moves at all.
 
 `Compressor` is binary because 0 and 100 are the only commands in the capture.
 If an intermediate value ever appears, this wants to become a percentage.
@@ -1370,6 +1377,43 @@ Two mitigations are in the configuration:
 - **A watchdog restarts the node** if the frame counter has not moved for two
   minutes, and logs a warning when it does. There is also a `Restart` button
   exposed in Home Assistant for the manual case.
+
+### The window has been wrong twice, and for the same reason
+
+Thirty minutes was a guess. Two minutes was measured — against a capture that
+turned out not to be representative. A later run stalled **after 26 to 77
+seconds of operation**, not once in half an hour, and the arithmetic inverted:
+150 seconds dead for every 26 alive, about 70 % lost.
+
+**The lesson is the rule, not the number: the window has to be shorter than the
+fault is frequent.** Both earlier values were set from how long a stall lasted
+rather than from how often one arrives, and only the second of those is under
+this configuration's control. Twenty seconds keeps a fourfold margin over the
+worst natural gap of 4.7 s, which is the one figure here that has never moved.
+
+**Frequent restarts bring their own trap.** `boot_is_good_after` defaults to one
+minute, so a node that runs 26 seconds and restarts never resets the boot loop
+counter — after ten of those it comes up in **safe mode, with no canbus
+component at all**, silently, for the rest of the night. The configuration now
+sets it to 15 s, below the watchdog's own window, so a node that is merely being
+restarted always counts as having booted.
+
+**The cause is still unknown, and this run argues against the earlier theory.**
+The first capture blamed a slow loop filling both receive buffers, on the
+evidence of `receive buffer overrun` bursts and seven `canbus took a long time`
+warnings. The later run produced **neither**, and stalled far sooner. Whatever
+wedges the receiver, it is not visibly starving the loop.
+
+What did change is what the node is asked to do: nine entities, and the same
+per-frame logging. **Per-frame logging is now off by default** — four log lines
+a second, serialised and encrypted over the API, is the largest thing in the
+loop and the easiest to remove, and the data an overnight run actually needs
+travels as entity publishes instead. A `Log every frame` switch turns it back on
+for a minute when raw frames are wanted. The raw-hex fallback is never gated:
+those frames are rare and they are the whole reason 0x704 was ever seen.
+
+If the stalls stop, the logging load was the cause and the first theory was
+right after all. If they continue at the same rate, it never was.
 
 ### It is not a one-off, and the first window was far too long
 
@@ -1521,7 +1565,7 @@ is left:
   and heating curve control depends on it.
 - **Explain 0x100.** It is not in the published address table, yet it is one of
   the two busiest talkers on this machine.
-- **Validate and flash the sensors.** Nine entities are written and checked
+- **Validate and flash the sensors.** Eleven entities are written and checked
   against the capture on a host compiler, but not against ESPHome's schema and
   not on the node. Check the flash and RAM figures while doing it — the sniffer
   alone was 45.2 % and 40.0 %.
