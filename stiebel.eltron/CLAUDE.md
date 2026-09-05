@@ -1089,16 +1089,44 @@ and cannot see.
 
 ### The electric element is a third lever, and it is about speed, not efficiency
 
-The machine has a second heat generator and it has done real work:
+**This file briefly claimed the electric element had delivered twelve megawatt
+hours. It had not, and conservation of energy is what caught it.**
 
-```
-WAERMEERTRAG_2WE_WW_SUM_MWH   = 9    to hot water
-WAERMEERTRAG_2WE_HEIZ_SUM_MWH = 3    to heating
-```
+The 2WE counters read `WAERMEERTRAG_2WE_WW_SUM_MWH = 9` and
+`..._HEIZ_SUM_MWH = 3`, which looked like a heavily used immersion heater. Set
+that against the rest of the same menu walk:
 
-Twelve megawatt hours over the machine's life is not an accident — it runs
-routinely. But `NHZ_ANZAHL_STUFEN` at 0x05A0 answers with the 0x8000 sentinel,
-so how it is configured is not visible from the elements seen so far.
+| | |
+|---|---|
+| Electricity in, hot water | 522 kWh + 7 MWh = **7.52 MWh** |
+| Heat out, hot water | 961 kWh + 18 MWh = **18.96 MWh** |
+| Implied COP | 2.5, entirely plausible |
+
+**An electric element is COP 1.** Delivering 9 MWh of heat would take 9 MWh of
+electricity — more than the machine drew for hot water in total, heat pump
+included. The claim is arithmetically impossible, and
+`WAERMEERTRAG_2WE_WW_TAG_KWH = 893` — 893 kWh in a single day — is absurd on its
+own terms.
+
+So **those indices do not mean what the table says on this machine**, and the
+element is off, exactly as the installation's owner said. Jürg Müller's list
+warns in its own header that not every index is correct; this is what that looks
+like from the inside.
+
+**The habit worth keeping from this: check a table's claim against a
+conservation law before believing it.** The element list has been right about
+temperatures all evening, which made it easy to trust here — but a temperature
+has nothing to contradict, while an energy has a budget it must fit inside.
+
+`NHZ_ANZAHL_STUFEN` at 0x05A0 answering with the 0x8000 sentinel now reads as
+corroboration rather than a puzzle: no stages configured, because there is
+nothing configured to run.
+
+**Which changes the answer to "can the boost be forced?"** If the element is
+disabled in configuration, a bus write would first have to re-enable it — a
+different and larger decision than triggering a boost, and one somebody made
+deliberately. If it is off at the breaker, no write will do anything at all.
+**Establish which before spending any effort on the elements below.**
 
 **Candidates for forcing it, none confirmed on this machine:**
 
