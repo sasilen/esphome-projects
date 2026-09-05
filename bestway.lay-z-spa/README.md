@@ -1,5 +1,7 @@
 # Bestway Lay-Z-SPA → Home Assistant
 
+> **Yleiskuva ja käyttöönotto.** Tällä projektilla ei ole `CLAUDE.md`:tä — tekniset yksityiskohdat ovat upstreamin omassa dokumentaatiossa, ks. Linkit.
+
 Poreammeen ohjaus ja seuranta Home Assistantista ESP8266:lla, joka asettuu pumpun
 ja sen näyttöpaneelin väliin. Lämpötila, pumppu, lämmitin, kuplat ja ajastimet
 näkyvät ja ohjautuvat HA:sta.

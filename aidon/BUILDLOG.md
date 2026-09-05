@@ -1,5 +1,10 @@
 # Aidon 7410:n HAN-portista Home Assistantiin — nolla euroa ja yksi ilta
 
+> **Rakennuskertomus, elokuu 2026.** Kirjoitettu kerran eikä päivitetä: tämä on
+> tilannekuva siitä hetkestä, myös siltä osin kuin se on sittemmin vanhentunut.
+> Nykytila on [README:ssä](README.md), tekniset perustelut
+> [`CLAUDE.md`](CLAUDE.md):ssä.
+
 Porvoon Sähköverkko vaihtoi mittarin. Uudessa Aidonissa on HAN-portti, ja siitä saa reaaliaikaisen kulutustiedon ulos ilman pilvipalveluita. Tässä on koko projekti alusta loppuun: mitä tilattiin, mitä juotettiin, mikä meni pieleen ja mitä lopputuloksesta näkee.
 
 Lopputulos: kolmen vaiheen teho, virta ja jännite Home Assistantissa kymmenen sekunnin päivitysvälillä. Kustannus **nolla euroa** — kaikki osat löytyivät laatikosta. Uutena ostettuna Wemos-levy olisi noin 3 €, ja koko osalista jäisi alle viiteen.

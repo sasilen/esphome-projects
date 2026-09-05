@@ -1,5 +1,7 @@
 # Enervent Pegasos Eco ECE → Home Assistant (ESPHome) Integration Notes
 
+> **Technical reference: current state and reasoning.** Overview: [README.md](README.md).
+
 ## Goal
 
 Integrate an Enervent Pegasos Eco ECE ventilation unit with Home Assistant using a local ESPHome bridge over RS-485/Modbus.

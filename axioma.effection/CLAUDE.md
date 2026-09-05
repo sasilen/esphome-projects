@@ -1,5 +1,7 @@
 # Axioma Effectio (Qalcosonic W1) → Home Assistant (ESPHome + CC1101)
 
+> **Tekninen viitedokumentti: nykytila ja perustelut.** Yleiskuva: [README.md](README.md).
+
 ## Tavoite
 
 Lukea **Axioma Effectio / Qalcosonic W1** -vesimittaria suoraan Home Assistantiin käyttäen:

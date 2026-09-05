@@ -1,5 +1,7 @@
 # Axioma Effectio (Qalcosonic W1) → Home Assistant
 
+> **Yleiskuva ja rakennusohje.** Perustelut, testikonfiguraatio ja mitatut arvot: [`CLAUDE.md`](CLAUDE.md).
+
 Vesimittarin lukeminen langattomasti Home Assistantiin ESP32:lla ja CC1101-radiolla.
 Mittari lähettää Wireless M-Bus -telegrammin 868,95 MHz:llä noin 16 sekunnin
 välein; ESP32 vastaanottaa sen ja välittää ESPHomen natiivi-APIlla. Ei MQTT:tä.

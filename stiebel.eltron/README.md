@@ -1,5 +1,7 @@
 # Stiebel Eltron WPC 07 → Home Assistant (CAN bus)
 
+> **Overview and build guide.** Full wiring tables and reasoning: [`CLAUDE.md`](CLAUDE.md).
+
 Read the heat pump's operating data over its CAN bus and — in phase 2 — write the
 parameters the WPM exposes, straight from Home Assistant via ESPHome. No MQTT.
 

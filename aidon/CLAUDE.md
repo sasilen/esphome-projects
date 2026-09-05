@@ -1,13 +1,18 @@
 # Aidon 7410 HAN-portti → Home Assistant (ESPHome)
 
+> **Tekninen viitedokumentti: nykytila ja perustelut.** Yleiskuva ja
+> rakennusohje: [README.md](README.md). Rakennuskertomus:
+> [`BUILDLOG.md`](BUILDLOG.md) — se on jäädytetty
+> elokuun 2026 tilanteeseen, tämä tiedosto pidetään ajan tasalla.
+
 ## Tila
 
-**Valmis ja tuotannossa.** Toisin kuin muut tämän hakemiston projektit, tämä ei ole
+**Valmis ja tuotannossa.** Toisin kuin useimmat repon projektit, tämä ei ole
 suunnitelma vaan toimiva asennus. Kolmen vaiheen teho, virta ja jännite näkyvät
 Home Assistantissa 10 sekunnin päivitysvälillä.
 
 Koko rakennuskertomus — aktivointi, johdinkartoitus, juotos, flashaus ja
-vianetsintä — on tiedostossa `aidon-han-esphome-blogi.md`. Tämä tiedosto on
+vianetsintä — on tiedostossa `BUILDLOG.md`. Tämä tiedosto on
 tiivistelmä ja avointen asioiden lista.
 
 ---
@@ -129,7 +134,8 @@ Flash 46,8 %, RAM 53,3 %.
 
 # Kuormanohjaus: mikä on jo olemassa
 
-Blogitekstin lopun "sillä ei vain ole vielä mitään ohjattavaa" on vanhentunut.
+BUILDLOGin lopun "sillä ei vain ole vielä mitään ohjattavaa" on vanhentunut —
+se oli totta elokuussa 2026 eikä sitä korjata sinne.
 
 Maalämpöpumpun **EVU-estokosketin on kytketty ja toiminnassa**: 230 V, ohjataan
 Shelly-releellä, näkyy Home Assistantissa switch-entiteettinä ("MLP EVU").

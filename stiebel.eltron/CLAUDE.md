@@ -1,5 +1,7 @@
 # Stiebel Eltron WPC 07 → Home Assistant (CAN bus, without MQTT)
 
+> **Technical reference: current state and reasoning.** Overview: [README.md](README.md).
+
 ## Goal
 
 Connect a Stiebel Eltron WPC 07 heat pump directly to Home Assistant using CAN bus and ESPHome, **without MQTT**.

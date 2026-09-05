@@ -1,5 +1,7 @@
 # CLAUDE.md — Hirvirata (ESPHome)
 
+> **Tekninen viitedokumentti: nykytila ja perustelut.** Yleiskuva: [README.md](README.md).
+
 Liikkuva maalitaulurata ilmakivääri- ja pienoisradalle. ESP8266 ohjaa
 vaihdemoottoria H-siltaohjaimen kautta; hihna vetää vaunua kiskolla
 edestakaisin eri nopeuksilla ja ohjelmilla. Kotiautomaatio-integraatio

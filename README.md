@@ -26,7 +26,7 @@ muuten mDNS ei toimi eikä OTA löydä levyjä.
 Kolmen vaiheen teho, virta ja jännite Home Assistantissa 10 sekunnin
 päivitysvälillä. Kustannus nolla euroa. Koko rakennuskertomus aktivoinnista
 juotokseen ja vianetsintään on tiedostossa
-[`aidon/aidon-han-esphome-blogi.md`](aidon/aidon-han-esphome-blogi.md).
+[`aidon/BUILDLOG.md`](aidon/BUILDLOG.md).
 
 Kaksi asiaa jotka kannattaa tietää ennen kuin aloittaa vastaavan:
 
@@ -42,23 +42,31 @@ heikko, ja heikko signaali nostaa virrankulutusta juuri kun ollaan portin
 
 ## Hakemiston rakenne
 
-Jokainen projekti on oma hakemistonsa, jossa on `CLAUDE.md`:
-suunnitteludokumentti, joka kattaa tavoitteen, raudan, kytkennän, väyläasetukset
-ja jäljellä olevat tehtävät. Se on projektin ensisijainen dokumentti — lue se
-ennen kuin kosket YAMLiin.
+Jokainen projekti on oma hakemistonsa:
 
 ```
 <projekti>/
 ├── README.md              yleiskuva: tila, rauta, kytkentä, seuraavat askeleet
-├── CLAUDE.md              suunnittelu- ja kytkentädokumentti, täydet perustelut
+├── CLAUDE.md              tekninen viitedokumentti, täydet perustelut
+├── BUILDLOG.md            rakennuskertomus (vain rakennetuissa projekteissa)
 ├── <projekti>.yaml        ESPHome-konfiguraatio (jos olemassa)
 ├── secrets.yaml.example   mallipohja salaisuuksille
-└── *.svg / *.md           kytkentäkuvat, muistiinpanot
+└── *.svg                  kytkentäkuvat
 ```
 
-Jokaisessa projektissa on oma `README.md`, joka riittää yleiskuvaan.
-`CLAUDE.md` on sen takana oleva täysi dokumentti: mitatut arvot, hylätyt
-vaihtoehdot ja perustelut sille miksi kytkentä on juuri sellainen.
+Dokumentit vastaavat kolmeen eri kysymykseen, ja aikamuoto kertoo mihin mikäkin
+teksti kuuluu:
+
+| Tiedosto | Kysymys | Aikamuoto |
+|---|---|---|
+| `README.md` | Mikä tämä on, ja kannattaako minun tehdä tämä? | preesens, käskymuoto |
+| `CLAUDE.md` | Miten se on rakennettu ja miksi juuri näin? | preesens, toteava |
+| `BUILDLOG.md` | Miten tähän päädyttiin? | imperfekti, minämuoto |
+
+`BUILDLOG.md` on **päivätty tilannekuva jota ei päivitetä** — myös siltä osin kuin
+se vanhenee. Nykytila on aina README:ssä ja CLAUDE.md:ssä. Toistaiseksi
+buildlog on vain [aidonilla](aidon/BUILDLOG.md).
+
 Poikkeus on `bestway.lay-z-spa`, jolla ei ole `CLAUDE.md`:tä lainkaan — sen
 tekniset yksityiskohdat ovat upstreamin omassa dokumentaatiossa.
 
