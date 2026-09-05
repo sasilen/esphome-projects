@@ -862,6 +862,34 @@ the log at all: it stays at zero on a wrong rate and climbs steadily on a
 correct one. That is worth an entity of its own during a sweep that may take
 several re-flashes.
 
+## The silent stall: an overflow flag that never clears
+
+**Observed 2026-09-05.** Frames arrived normally, the counter reached 269, and
+then reception stopped permanently. The node stayed online, the log stayed clean,
+`canbus` was not marked failed, and working the heat pump's panel produced
+nothing. A restart brought traffic straight back.
+
+The cause is the MCP2515's receive path. When both receive buffers fill, the chip
+sets an overflow flag in `EFLG` — and if the driver never clears it, the buffer
+stays marked full and **no further frame is ever accepted**. The earlier burst of
+`receive buffer overrun` messages was the warning; the stall is what follows.
+
+What makes it dangerous is that it is invisible. A stalled node and a genuinely
+quiet bus look identical, and this installation has no room control, so quiet
+stretches are plausible. During an overnight capture the difference matters:
+one is a night of data, the other is a night of nothing.
+
+Two mitigations are in the configuration:
+
+- **Keep the loop quick**, which is why `logger` runs at INFO rather than DEBUG.
+  Overruns are what set the flag in the first place.
+- **A watchdog restarts the node** if the frame counter has not moved for 30
+  minutes, and logs a warning when it does. There is also a `Restart` button
+  exposed in Home Assistant for the manual case.
+
+The 30-minute window is a guess until the bus's real idle rhythm is known. If it
+starts restarting a healthy node, lengthen it — do not remove it.
+
 ## The two failure signatures, and why they must not be confused
 
 With the module unwired the boot log says:

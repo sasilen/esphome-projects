@@ -126,6 +126,56 @@ globals:
     restore_value: false
     initial_value: "0"
 
+  # Watchdog state. See "the silent stall" below.
+  - id: last_seen_count
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: quiet_checks
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+
+
+# ------------------------------------------------------------------ Watchdog
+# The MCP2515 latches an overflow flag when both receive buffers fill, and
+# reception then stops for good until the chip is reset — the node stays online,
+# the log stays clean, and no frames ever arrive again. Observed on 2026-09-05
+# after a burst of "receive buffer overrun" messages.
+#
+# A stalled node is indistinguishable from a quiet bus by eye, which is what
+# makes it dangerous during an overnight capture. So: if the counter has not
+# moved for half an hour, restart and say so in the log.
+#
+# The 30 minutes is a guess until the bus's real idle behaviour is known. This
+# installation has no room control, so genuinely quiet stretches are possible —
+# if the log fills with restarts, lengthen the window rather than remove it.
+
+interval:
+  - interval: 5min
+    then:
+      - lambda: |-
+          if (id(frame_count) == id(last_seen_count)) {
+            id(quiet_checks) += 1;
+          } else {
+            id(quiet_checks) = 0;
+            id(last_seen_count) = id(frame_count);
+          }
+      - if:
+          condition:
+            lambda: "return id(quiet_checks) >= 6;"
+          then:
+            - logger.log:
+                level: WARN
+                format: "No frames for 30 min - restarting to clear a possible MCP2515 overflow latch"
+            - button.press: restart_button
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: restart_button
+    entity_category: diagnostic
+
 sensor:
   - platform: template
     name: "CAN frames"
