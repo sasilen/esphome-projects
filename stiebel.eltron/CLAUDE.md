@@ -1541,6 +1541,19 @@ rather than from how often one arrives, and only the second of those is under
 this configuration's control. Twenty seconds keeps a fourfold margin over the
 worst natural gap of 4.7 s, which is the one figure here that has never moved.
 
+**Both changes were measured, and they fixed different things.** With per-frame
+logging off the node ran **22 minutes** before its first stall instead of 26 to
+77 seconds, and the tightened window cost **41 seconds** to recover instead of
+150:
+
+| | Between stalls | Lost per stall | Alive |
+|---|---|---|---|
+| Full logging, 2 min window | 26–77 s | 150 s | ~30 % |
+| Logging off, 20 s window | 22 min | 41 s | ~97 % |
+
+The lighter loop is what made stalls rare; the shorter window is what made them
+cheap. Neither alone would have done it.
+
 **Frequent restarts bring their own trap.** `boot_is_good_after` defaults to one
 minute, so a node that runs 26 seconds and restarts never resets the boot loop
 counter — after ten of those it comes up in **safe mode, with no canbus
