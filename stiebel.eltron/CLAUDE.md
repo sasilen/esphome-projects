@@ -1906,7 +1906,41 @@ The CC1101 radio modules and 868 MHz antennas are unrelated to the CAN bus inter
 
 ESP32 would provide more processing power, but the ESP8266 is sufficient for CAN bus monitoring via MCP2515.
 
-## Rejected: ESP32 built-in CAN (esp32_can) — tested, does not work
+## Rejected: ESP32 built-in CAN (esp32_can) — and the rejection now needs re-testing
+
+**A working project runs this exact bus on stock `esp32_can` at 20 kbps.**
+[Oggy512/ESP32-THZ504-Controller](https://github.com/Oggy512/ESP32-THZ504-Controller)
+drives a Tecalor THZ 504 — same Elster protocol, same 20 kbps — with:
+
+```yaml
+canbus:
+  - platform: esp32_can
+    bit_rate: 20kbps
+```
+
+No `external_components`, no patched fork: its `esphome: includes:` pulls in C++
+headers only, so the CAN layer is ESPHome's own. The rejection below was tested
+on **2026.7.4** and the installed version is now **2026.8.2**, which is exactly
+the upgrade the note said would reopen the question.
+
+**If it validates, the whole MCP2515 goes away** — and with it the SPI wiring,
+the pin lift, the crystal question, and the receive-stall bug that has cost this
+project more time than everything else combined. The stall is an MCP2515 driver
+problem; the ESP32's TWAI controller does not have it. The transceiver would be
+the SN65HVD230 already chosen for phase 2, which is also the part that project
+uses.
+
+The re-test costs nothing and needs no hardware:
+
+```sh
+podman exec esphome esphome config /config/cantest.yaml
+```
+
+**Do that before ordering or soldering anything for phase 2.** Everything below
+this line was true on 2026.7.4 and is kept because the reasoning still holds if
+the re-test fails.
+
+### The original finding, on ESPHome 2026.7.4
 
 The ESP32's built-in TWAI controller would have dropped the MCP2515, the SPI
 wiring and the level-shifting problem in one go. It cannot be used here.
