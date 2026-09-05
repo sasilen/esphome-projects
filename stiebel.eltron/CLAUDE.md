@@ -1412,8 +1412,37 @@ travels as entity publishes instead. A `Log every frame` switch turns it back on
 for a minute when raw frames are wanted. The raw-hex fallback is never gated:
 those frames are rare and they are the whole reason 0x704 was ever seen.
 
-If the stalls stop, the logging load was the cause and the first theory was
-right after all. If they continue at the same rate, it never was.
+**The stalls stopped.** Five minutes, 29 counter samples, not one of them
+static, 221 frames a minute and a single boot line. The previous firmware had
+never managed 77 seconds. So the logging load was the cause and the first
+capture's explanation was right after all — the missing `overrun` warnings
+argued against it and were wrong.
+
+### Silence and blindness are not the same thing
+
+Turning per-frame logging off hid every element that has no entity, which on the
+one night designed to catch a heating cycle is exactly backwards: **a new state
+is where new registers appear.** The handler therefore tracks whether any branch
+claimed a frame, and logs the ones nothing claimed.
+
+That inverts what the log is for. It stops being a transcript and becomes an
+exception report — the frames worth a human's attention are the ones this
+configuration did not expect.
+
+| | Lines per minute |
+|---|---|
+| Every frame, which stalled the node | 236 |
+| Entity publishes alone | ~42 |
+| Unclaimed frames only | **21** |
+
+Read requests are excluded: they carry no value, they are 44 % of all traffic,
+and a new element's *response* is logged anyway, which is where the data is.
+0xFE4C is claimed without an entity because it answered 18 in all 683 samples —
+claimed rather than ignored, so that if it ever moves it reads as a known
+element behaving oddly rather than as a surprise.
+
+What is left is genuinely worth reading: the manager's four commanded outputs,
+0x06AF and 0x1388 and 0x080E, the 0x011A responses, and every system frame.
 
 ### It is not a one-off, and the first window was far too long
 

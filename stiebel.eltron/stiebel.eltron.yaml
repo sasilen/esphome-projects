@@ -180,43 +180,42 @@ canbus:
               if (!ext && (x[5] || x[6]))
                 snprintf(tail, sizeof(tail), " +%02X%02X", x[5], x[6]);
 
-              // Off by default, and the reason is measured: logging every
-              // frame is ~4 lines a second serialised and encrypted over the
-              // API, and the node was stalling after 26-77 seconds of it. The
-              // entity publishes below carry the data that is actually wanted
-              // overnight, and they cost a fraction of this. Turn the switch
-              // on in Home Assistant for a minute when raw frames are needed.
-              //
-              // The raw fallback above is NOT gated — those are rare and they
-              // are how 0x704 and the command-10 frames were found at all.
-              if (id(log_frames).state)
-                ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X%s%s",
-                         (unsigned) can_id, (unsigned) receiver, CMD[cmd],
-                         ext ? "ex" : "e", element, val, tail);
-
               // ---- publish the named elements ---------------------------
               // Dispatch on sender AND element. The same index means
               // different things on different devices, which is the main
               // lesson of matching the capture against the element list:
               // 0xFDF4 from 0x700 is a return temperature, and the list's
               // name for that index is something else entirely.
+              //
+              // `handled` is what keeps the log honest once per-frame logging
+              // is off. Every branch below sets it, and anything that reaches
+              // the end without being claimed gets logged instead — so an
+              // element this configuration has never seen cannot be dropped
+              // silently. That matters most on exactly the night this is
+              // being run: a heating cycle is a state the capture never
+              // contained, and a new state is where new registers appear.
+              bool handled = false;
 
               if (cmd == 2 && can_id == 0x180) {
                 // et_dec_val: tenths, signed, negatives are legal
                 const float t = (int16_t) value / 10.0f;
+                handled = true;
                 switch (element) {
                   case 0x0003: id(dhw_setpoint).publish_state(t); break;
                   case 0x000C: id(outdoor_temp).publish_state(t); break;
                   case 0x000E: id(dhw_temp).publish_state(t);     break;
                   case 0x0016: id(return_temp).publish_state(t);  break;
+                  default: handled = false;
                 }
               } else if (cmd == 2 && can_id == 0x301 && element == 0x0004) {
                 id(flow_setpoint).publish_state((int16_t) value / 10.0f);
+                handled = true;
               } else if (cmd == 2 && can_id == 0x700) {
                 // Neither of these is in the element list, so both are named
                 // from behaviour and neither gets a scaling it has not
                 // earned. The list's tenths apply to et_dec_val elements;
                 // an element with no entry has no type either.
+                handled = true;
                 switch (element) {
                   case 0xFE1D:
                     // The compressor. The manager commands 0 or 100 and the
@@ -262,6 +261,13 @@ canbus:
                     // and check the heat pump's own display first.
                     id(elem_fe07).publish_state((int16_t) value);
                     break;
+                  // Claimed but not published: 0xFE4C answered 18 in all 683
+                  // samples of the reference capture. An entity for a constant
+                  // is noise, and so are 683 log lines saying so — but it is
+                  // claimed rather than ignored, so that if it ever moves it
+                  // is a known element behaving oddly rather than a surprise.
+                  case 0xFE4C: break;
+                  default: handled = false;
                 }
               } else if ((cmd == 0 || cmd == 2) && can_id == 0x480) {
                 // The clock and the mode are et_little_endian: the number is
@@ -269,6 +275,7 @@ canbus:
                 // well as responses here — the manager writes the minute
                 // every 60 s and is only asked for the date now and then.
                 const uint8_t n = value >> 8;
+                handled = true;
                 switch (element) {
                   case 0x0112: {
                     static const char *const MODE[6] = {
@@ -302,8 +309,29 @@ canbus:
                       id(pump_clock).publish_state(stamp);
                     }
                     break;
+                  default: handled = false;
                 }
               }
+
+              // Log the unclaimed. Per-frame logging is off by default
+              // because ~4 lines a second over the encrypted API was stalling
+              // the receiver, but silence and blindness are not the same
+              // thing: a frame no branch above claimed is precisely the one
+              // worth a line, because it is either an element this
+              // configuration has never met or a known one arriving from an
+              // unexpected node.
+              //
+              // Read requests are excluded — they carry no value, they are
+              // 44 % of all traffic, and a new element's *response* is logged
+              // anyway, which is where the data is.
+              //
+              // In the reference capture this fires for about 19 frames a
+              // minute against 221 total, so the cost is a fifth of a line a
+              // second. The switch forces every frame instead.
+              if (id(log_frames).state || (!handled && cmd != 1))
+                ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X%s%s",
+                         (unsigned) can_id, (unsigned) receiver, CMD[cmd],
+                         ext ? "ex" : "e", element, val, tail);
 
 spi:
   clk_pin: D5
