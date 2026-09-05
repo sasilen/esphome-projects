@@ -35,7 +35,7 @@
   <rect x="74" y="332" width="172" height="34" fill="#FFF0EE" stroke="#A3301F"/>
   <text x="86" y="354" font-size="13" font-weight="700" fill="#A3301F">4</text>
   <text x="112" y="354" font-size="13" font-weight="700" fill="#A3301F">+12V</text>
-  <text x="160" y="354" font-size="11" fill="#A3301F">bus supply</text>
+  <text x="160" y="354" font-size="11" fill="#A3301F">measures 17.4 V</text>
 
   <!-- node -->
   <rect x="470" y="150" width="230" height="230" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
@@ -72,10 +72,10 @@
   <rect x="50" y="500" width="660" height="128" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
   <rect x="50" y="500" width="6" height="128" fill="#A3301F"/>
   <text x="74" y="524" font-size="12" font-weight="700" fill="#A3301F">VERIFY BEFORE CONNECTING &#8212; THREE MEASUREMENTS</text>
-  <text x="74" y="548" font-size="11.5" fill="#16212B"><tspan font-weight="700">1. Pump powered down.</tspan> Pins 1 to 2 read about <tspan font-weight="700">60 &#8486;</tspan> &#8212; two 120 &#8486; terminators in parallel.</text>
-  <text x="74" y="566" font-size="11.5" fill="#16212B">No other pair reads that. This confirms the pair independently of the legend.</text>
-  <text x="74" y="588" font-size="11.5" fill="#16212B"><tspan font-weight="700">2. Pin 3 to chassis earth</tspan> reads 0 &#8486;, which is what makes it the ground rather than an assumption.</text>
-  <text x="74" y="610" font-size="11.5" fill="#16212B"><tspan font-weight="700">3. Pump powered up.</tspan> Pins 1 and 2 sit near <tspan font-weight="700">2.5 V</tspan> to pin 3 at idle. Pin 4 shows a steady <tspan font-weight="700">+12 V</tspan>.</text>
+  <text x="74" y="548" font-size="11.5" fill="#16212B"><tspan font-weight="700">1. Pump powered down.</tspan> Measured here: pins 1 to 2 read <tspan font-weight="700">150 &#8486;</tspan> &#8212; so there is <tspan font-weight="700">no 120 &#8486; terminator</tspan></text>
+  <text x="74" y="566" font-size="11.5" fill="#16212B">on this bus. A parallel combination can never exceed its smallest member. Add none at this end either.</text>
+  <text x="74" y="588" font-size="11.5" fill="#16212B"><tspan font-weight="700">2. Do not expect pin 3 to reach chassis earth.</tspan> The supply is a floating SELV rail; no continuity is normal.</text>
+  <text x="74" y="610" font-size="11.5" fill="#16212B"><tspan font-weight="700">3. Pump powered up.</tspan> Measured here: pins 1 and 2 at a steady <tspan font-weight="700">2.5 V</tspan>, pin 4 at <tspan font-weight="700">17.4 V</tspan> &#8212; not the 12 V printed.</text>
 
   <text x="50" y="662" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">THEN, IN THIS ORDER</text>
   <text x="50" y="684" font-size="11.5" fill="#16212B">Power the node from anything <tspan font-weight="700">without an earth pin</tspan> for the first test &#8212; a battery pack or an</text>

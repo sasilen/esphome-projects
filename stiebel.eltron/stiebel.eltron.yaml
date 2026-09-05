@@ -35,7 +35,12 @@ esp8266:
   board: d1_mini
 
 logger:
-  level: DEBUG
+  # INFO, not DEBUG. At DEBUG the canbus and mcp2515 components log every frame
+  # themselves, on top of the on_frame handler below — and on a busy bus that is
+  # slow enough to fill the MCP2515's two receive buffers, which then reports
+  # "receive buffer overrun" and drops frames. INFO keeps our own capture lines
+  # and drops the duplicates.
+  level: INFO
 
 api:
   encryption:

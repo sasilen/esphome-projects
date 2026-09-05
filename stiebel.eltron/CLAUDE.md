@@ -81,11 +81,52 @@ back to it.
 - **The frame carries a command code** distinguishing write (0), read (1),
   response (2), acknowledge (3), write acknowledge (4), write response (5),
   system (6), system response (7), and large telegrams (0x20 / 0x21).
-- **Community configurations address the pump as `3100` to read and `3000` to
-  write** — the receiver 0x180 shifted right by three (0x30) with the command
-  code in the low nibble. This is consistent with the scheme above, but the exact
-  byte layout is **taken on trust until a capture confirms it**; do not encode it
-  from this file alone.
+- **The byte layout is confirmed by capture.** It was taken on trust from
+  community configurations until 2026-09-05; a live capture then matched it
+  exactly:
+
+  ```
+  0x480 → E1 00 FA FE 4C 00 00      read request
+  0x700 → 92 00 FA FE 4C 00 12      response, value 0x0012
+  ```
+
+  `0xE1` is `0xE0 | 1`: the high nibbles are the receiver shifted right by three
+  (`0xE0 << 3` = 0x700) and the low nibble is the command, 1 = read. `0x92` is
+  `0x90 | 2` — receiver 0x480, command 2 = response. `FA` marks an extended
+  element index in the next two bytes, and the last two carry the value. So the
+  WPM at 0x480 polls device 0x700 for element 0xFE4C and is answered 18.
+
+- **Both index forms occur, and the capture shows when each is used.** Elements
+  below 0x100 go straight into byte 2 with the value in bytes 3–4; larger ones
+  use the `FA` marker and shift everything along:
+
+  ```
+  0x100 → 31 00 0C 00 00 00 00      short form, read element 0x0C
+  0x180 → 22 00 0C 00 93 00 00      response, value 0x0093
+  0x480 → E1 00 FA FE 4C 00 00      extended form, read element 0xFE4C
+  0x700 → 92 00 FA FE 4C 00 12      response, value 0x0012
+  ```
+
+- **A write was caught live**, which is the operation phase 2 has to imitate:
+
+  ```
+  0x480 → E0 00 FA FE 1B 00 64      command 0 = write, element 0xFE1B := 100
+  0x700 → 92 00 FA FE 1B 00 64      response echoes the value
+  ```
+
+  `0xE0` is the same receiver 0x700 with command nibble 0. So writing is not
+  something this project has to invent — the WPM does it on this bus already, and
+  the frame to copy is on record.
+
+- **Addresses observed so far: 0x100, 0x180, 0x480, 0x700.** Matching the scheme,
+  that is a comfort panel polling the boiler, and the manager talking to an
+  external device. **Neither 0x680 nor 0x301 has ever appeared**, so both remain
+  free for this node's own identity in phase 2.
+
+- Values look like tenths: element 0x0E answers 0x01F2 = 498, element 0x16
+  answers 0x0112 = 274, element 0x0C answers 0x0093 = 147. As °C those are 49.8,
+  27.4 and 14.7 — plausible flow, return and source temperatures, and the scaling
+  to check first against the element list.
 
 ## Implementations worth reading before writing any of our own
 
@@ -320,7 +361,7 @@ The diagram carries an explicit pin legend next to the connector:
 | 1 | `1 = H` | CAN high |
 | 2 | `2 = L` | CAN low |
 | 3 | `3 =` (symbol, not text) | reference / ground **by elimination** |
-| 4 | `4 = +12V` | bus supply |
+| 4 | `4 = +12V` | bus supply — **measures 17.4 V**, see below |
 
 The same three-signal group appears elsewhere in the diagram as `H`, `L`, `“+”`,
 which is how Stiebel labels this bus throughout. It is the FE7/FEK room-control
@@ -328,15 +369,93 @@ bus: four wires, of which two are the CAN pair.
 
 **Two things follow.**
 
-**The bus carries +12 V, and that settles the power question.** A permanent
+**The bus carries a supply, and that settles the power question.** A permanent
 install can take the ESP's supply from pin 4 through the LM2596, giving one
 common ground reference and no loop — which is exactly what the grounding
 section below asks for. It also means pin 4 must never reach the transceiver.
 
-**Pin 3 is inferred, not read.** Its label is a symbol the text extraction could
-not recover, and ground is the only remaining function. Confirm it with the meter
-before connecting: pin 3 should read 0 Ω to chassis/protective earth, and the
-60 Ω check between pins 1 and 2 should agree with the legend.
+**Measured, not 12 V: pin 4 sits at 17.4 V.** The legend says `+12V`; the rail is
+evidently unregulated and rises above nominal at light load. Consequences: the
+LM2596 handles it comfortably (its input range starts at 3.2 V and runs to 46 V),
+but its output must be set to 5.0 V *before* anything is connected, because a
+mis-set trimmer now delivers 17.4 V into the ESP rather than 12. And the figure
+to design against is the measured one, not the printed one.
+
+**Pins 1 and 2 measure a steady 2.5 V** to the reference, which is the CAN
+recessive level and confirms the pair independently of the legend.
+
+**And it says the bus was idle at that moment.** A meter averages: under traffic
+CAN_H reads a little above 2.5 V and CAN_L a little below. Exactly 2.5 V on both
+means nothing was moving.
+
+That sets a trap for the next step, because **a quiet bus and a wrong bit rate
+produce the same reading — a frame counter at zero.** Sweeping 20 → 25 → 50 kbps
+against a silent bus proves nothing and can discard the correct rate.
+
+**Provoke traffic instead of waiting for it.** Work the heat pump's own control
+panel: navigating menus makes the display talk to the controller over this same
+bus.
+
+**This installation has no FEK or FE7 room control.** Nothing polls the bus on a
+schedule, which is exactly why both lines sat at a flat 2.5 V. Traffic therefore
+has to be provoked, and a zero counter means nothing unless the panel was being
+worked at the time.
+
+It also hands phase 2 a likely answer to a question left open elsewhere in this
+file: with no room control installed, **address 0x301 is probably free** for the
+node's own bus identity. Confirm it from the capture rather than assuming it.
+
+### The connector takes pushed-in wire, not screws
+
+X27 is a spring terminal. It accepts **solid conductor**, stripped 8–10 mm and
+inserted bare, or stranded wire with a bootlace ferrule crimped on.
+
+**Never tin the end.** Solder cold-flows under the constant pressure of a clamp:
+the contact force bleeds away over months, resistance climbs, and the result is
+an intermittent joint that is nearly impossible to find later. This holds for
+screw terminals equally. Tinning also solves a problem solid wire does not have —
+it exists to keep strands together, and a solid conductor is already one piece of
+copper.
+
+A length of Cat5e is the convenient source: **installation cable** has solid
+conductors and the pairs are already twisted — take one pair for H and L, and a
+third conductor for ground. Check which kind is at hand, because Cat5e comes
+both ways: the stiff in-wall cable is solid and goes in bare, while a flexible
+patch cord is stranded and needs a ferrule. If a single conductor feels too thin
+for the clamp, fold the stripped end double into a hairpin rather than reaching
+for solder.
+
+**If the wire will not push in, use the release slot.** These terminals have a
+second opening beside the conductor hole: press a small flat screwdriver into it
+and the spring opens, letting the wire enter without having to force the clamp
+apart by itself. Only stiff solid conductor can be pushed in directly — anything
+softer needs the slot, and that is what it is there for.
+
+Tug each wire gently after inserting. A spring terminal either holds or it does
+not, and it tells you immediately.
+
+**Pin 3 is confirmed as the reference — but not by continuity to earth.** Its
+label is a symbol the text extraction could not recover, so it was inferred at
+first. What confirms it is that every other reading makes sense against it: pins
+1 and 2 sit at 2.5 V to pin 3, and pin 4 at 17.4 V to pin 3.
+
+**It has no continuity to the chassis, and that is normal.** The bus supply is a
+floating SELV rail, deliberately not bonded to protective earth. An earlier
+version of this file suggested checking pin 3 against the frame and expecting
+0 Ω — that test is wrong for an isolated supply, and following it would have led
+to rejecting the correct pin.
+
+**There is no terminator on this bus.** Measured de-energised, H to L reads
+**150 Ω**. A 120 Ω terminator anywhere in parallel would make that impossible,
+since a parallel combination never exceeds its smallest member. The community
+claim that the heat pump terminates the bus itself does **not** hold for this
+machine. Worth reversing the probes to check: if the reading changes with
+polarity it is a semiconductor path inside the transceiver rather than a resistor.
+
+That does not block anything — 20 kbps over a short stub tolerates an
+unterminated bus. And if traffic turns out to be unreliable, the fix costs
+nothing: the module's own 120 Ω (R2) is present on the board and merely
+disconnected, so it is a jumper away rather than a soldering job.
 
 Note that an earlier search result claiming `X72` is the CAN connector on WPC
 models is **wrong for this machine** — in this diagram X72 sits on board A5 among
@@ -347,9 +466,10 @@ the relays K5–K7. Checking it against the actual document is what caught that.
   WPL 13 E service connector as pin 3 = CAN-H, pin 5 = CAN-L, pin 7 = GND — and
   warns in the same breath that other models use a completely different connector
   and pinout. **WPC is a different series. Do not transfer these numbers.**
-- The same source confirms two things this file already assumed: the bus runs at
-  **20 kbps**, and **the heat pump terminates it itself**, so nothing needs adding
-  at our end.
+- The same source states the bus runs at **20 kbps** and that the heat pump
+  terminates it itself. The bit rate still stands as the expectation; **the
+  termination claim does not survive measurement on this machine** — see above,
+  H to L reads 150 Ω de-energised.
 
 ### Identifying the pair with a meter, before trusting any pinout
 
@@ -395,9 +515,11 @@ matter here:
 
 - **Integrated 5 V generator** — makes the transceiver's 5 V from 3.3 V on board.
   The entire two-rail problem disappears: feed it 3.3 V and nothing else.
-- **Switchable termination** — 60 Ω + 60 Ω split, 120 Ω across the bus.
-  **Switch it OFF.** This node taps an already-terminated bus. Single most
-  important setting on the board.
+- **Switchable termination** — 60 Ω + 60 Ω split, 120 Ω across the bus. Start
+  with it **OFF**, but the reason has changed: this bus turned out to carry no
+  terminator at all, so the question is open rather than settled. If traffic
+  proves unreliable, switching it on is the first thing to try — a single 120 Ω
+  is a lighter load than the 60 Ω transceivers are designed to drive.
 - 3.5 mm terminal block for CANH / CANL / GND.
 - Logic level 3.3–5 V, so it accepts the MCP2515 running at 3.3 V directly.
 
@@ -524,11 +646,16 @@ supply voltage into the transceiver.
 
 # CAN Bus Settings
 
-Expected configuration for Stiebel Eltron WPC series:
+Confirmed on this WPC 07 by capture, 2026-09-05:
 
-- Bitrate: **20 kbps** — documented for the Elster protocol family (see Prior
-  art), still to be confirmed on this unit before transmitting
-- 11-bit standard identifiers
+- Bitrate: **20 kbps**. No sweep was needed — the first configured value was
+  right, and frames appeared as soon as the bus was connected.
+- **11-bit standard identifiers**, as documented. The extended-id trigger in the
+  configuration has stayed silent and can go.
+- Addresses seen so far: **0x480** (manager / WPM) and **0x700** (external
+  device). Neither 0x680 nor 0x301 has appeared, which matters for phase 2:
+  both are candidates for this node's own identity, and 0x301 is the more
+  likely free one since no room control is installed.
 - Listen-only mode initially — see below
 - 120 Ω termination only if located at the end of the CAN bus (this node is not)
 
@@ -762,7 +889,8 @@ No MQTT broker is required.
 - ✅ ESP8266 Wemos D1 Mini
 - ✅ MCP2515 + TJA1050
 - ✅ Dupont wires
-- ✅ 120 Ω resistor (not needed — this node taps an already-terminated bus)
+- ✅ 120 Ω resistor (not used at first — the bus measured 150 Ω, i.e. unterminated,
+  so termination is an open question rather than a settled no)
 
 ## Still Needed
 

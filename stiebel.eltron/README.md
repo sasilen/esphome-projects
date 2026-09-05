@@ -65,7 +65,9 @@ Stiebel WPC 07
   ESP32-D0WD-V3 rev v3.1)
 - MCP2515 modules with TJA1050 transceiver (3 pcs — one in use, two spare against
   a botched pin lift in phase 2)
-- 120 Ω resistors — **not used**, this node taps an already-terminated bus
+- 120 Ω resistors — not used at first. The bus measured 150 Ω de-energised, so it
+  carries **no terminator**; start without one and reconsider only if traffic is
+  unreliable
 
 **Still needed — nothing for phase 1**
 
