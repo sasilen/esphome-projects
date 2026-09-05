@@ -49,6 +49,17 @@ api:
 ota:
   - platform: esphome
     password: !secret ota_password
+    # Hold the watchdog off during an upload. A 20 s window is shorter than an
+    # ESP8266 OTA takes, so a node that is stalled — which is exactly when it
+    # most needs a new firmware — would otherwise reboot in the middle of every
+    # attempt and could never be updated. Tightening the watchdog created this;
+    # the flag removes it.
+    on_begin:
+      then:
+        - lambda: "id(ota_running) = true;"
+    on_error:
+      then:
+        - lambda: "id(ota_running) = false;"
 
 # The watchdog restarts this node every 20 s while the MCP2515 is misbehaving,
 # and on the default one-minute boot_is_good_after that is indistinguishable
@@ -305,6 +316,11 @@ globals:
     type: uint8_t
     restore_value: false
     initial_value: "0"
+  # Set while an OTA upload is running; see the ota: block.
+  - id: ota_running
+    type: bool
+    restore_value: false
+    initial_value: "false"
 
   # The heat pump's own clock, assembled from five elements that arrive
   # separately. clk_month stays 0 until a date has actually been seen, which
@@ -367,6 +383,7 @@ interval:
   - interval: 10s
     then:
       - lambda: |-
+          if (id(ota_running)) { id(quiet_checks) = 0; return; }
           if (id(frame_count) == id(last_seen_count)) {
             id(quiet_checks) += 1;
           } else {
