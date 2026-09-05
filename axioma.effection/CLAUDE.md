@@ -1,6 +1,6 @@
 # Axioma Effectio (Qalcosonic W1) → Home Assistant (ESPHome + CC1101)
 
-> **Tekninen viitedokumentti: nykytila ja perustelut.** Yleiskuva: [README.md](README.md).
+> **Tekninen viitedokumentti: miten rakennettu ja miksi näin.** Yleiskuva: [README.md](README.md).
 
 ## Tavoite
 

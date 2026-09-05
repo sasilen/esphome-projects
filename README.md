@@ -64,7 +64,7 @@ teksti kuuluu:
 | `BUILDLOG.md` | Miten tähän päädyttiin? | imperfekti, minämuoto |
 
 `BUILDLOG.md` on **päivätty tilannekuva jota ei päivitetä** — myös siltä osin kuin
-se vanhenee. Nykytila on aina README:ssä ja CLAUDE.md:ssä. Toistaiseksi
+se vanhenee. Miten asiat nyt ovat, sen kertovat README ja CLAUDE.md. Toistaiseksi
 buildlog on vain [aidonilla](aidon/BUILDLOG.md).
 
 Poikkeus on `bestway.lay-z-spa`, jolla ei ole `CLAUDE.md`:tä lainkaan — sen
