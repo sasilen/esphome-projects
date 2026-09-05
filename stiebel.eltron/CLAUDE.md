@@ -255,7 +255,9 @@ turn 3.3 V TX/RX into differential CAN — is exactly the function the CAN Pal w
 going to buy.
 
 Wiring is unchanged from the CAN Pal plan: lift MCP2515 pin 2 (RXCAN) to the
-transceiver's RXD, MCP2515 pin 1 (TXCAN) to its TXD.
+transceiver's RXD, MCP2515 pin 1 (TXCAN) to its TXD. Drawn out in
+[`phase2-transceiver.svg`](phase2-transceiver.svg), together with the
+configuration changes that go with it.
 
 **It does not exist.** The SN65HVD230 was carried in this file as an already-owned
 part from the first commit onward, but it is in no order history and it is not in
@@ -280,17 +282,55 @@ If it is a module, two details differ from the CAN Pal:
 Mixing a 3.3 V transceiver onto a bus whose other nodes are 5 V TJA1050s is
 normal practice — CAN is differential and the levels interoperate.
 
-**It does not have to be the Adafruit board.** Any 3.3 V CAN transceiver breakout
-does the job: an SN65HVD230 / VP230 board, a TJA1051T/3 breakout, an MCP2562FD.
-Two requirements only — the logic side must accept 3.3 V, and any on-board 120 Ω
-must be removable or switchable. The CAN Pal is simply the one that was already
-researched.
+**Buy the SN65HVD230, not the CAN Pal.** The Adafruit board costs around €20; the
+blue VP230 module does the same job for €2–4, often in packs of three. Both of the
+CAN Pal's selling points have lost their value here:
 
-**The one upgrade worth paying for is isolation.** An ISO1050-class or otherwise
-isolated CAN board breaks the ground loop between the heat pump and the ESP
-outright, which is the failure mode this file worries about most (see Grounding
-and power). A few euros over a plain VP230, and the only place in this project
-where more money buys real reliability rather than convenience.
+- Its **on-board 5 V generator** solves a problem that only exists with a 5 V
+  transceiver. The SN65HVD230 is a native 3.3 V part and needs no 5 V at all.
+- Its **switchable termination** mattered while the bus was assumed to be
+  terminated already. It is not — so a soldered 120 Ω on the cheaper board is no
+  longer a drawback, and might even be wanted as the bus's only terminator.
+
+Two things to check on a VP230 when it arrives: the **Rs pin (8)** wants a
+connection to ground, directly or through 10–100 kΩ for slope limiting, which at
+20 kbps is a free EMC improvement; and the **120 Ω** is usually soldered rather
+than switchable, so decide before installing rather than after.
+
+### The board chosen
+
+The bare six-pad breakout — `3V3, GND, CTX, CRX, CANH, CANL` in one row, headers
+supplied loose, two resistors marked **R1** and **R2**. Three of them cost what a
+single Waveshare-branded board does, and the Waveshare turned out to be the same
+design with a screw terminal added and its 120 Ω soldered just the same.
+
+**No screw terminal, and that is fine.** Solder the bus wires straight into the
+CANH and CANL holes; 0.75 mm² solid is about the diameter a 2.54 mm hole takes,
+and a soldered joint outlasts a screw clamp in a permanent install anyway. Fit
+the supplied header on the logic side only, so the SPI-side jumpers stay
+serviceable while the bus side stays fixed.
+
+On arrival, read the two resistors. **R2 sits between CANH and CANL** and should
+be marked `121` — that is the 120 Ω terminator, and on this unterminated bus
+leaving it in place is probably right. **R1** is the Rs slope-control resistor;
+its value decides whether the transceiver runs in high-speed or slope-limited
+mode.
+
+Three boards also means the phase 2 pin lift on the MCP2515 stops being the
+nervous operation it would be with one.
+
+**Isolation was considered and is not needed here.** The argument for an
+ISO1050-class board was the ground loop created by plugging USB into the ESP
+while it sits on the bus. Two findings remove it: the bus reference is a floating
+SELV rail, so a Class II supply creates no loop by itself, and this node is
+debugged entirely over WiFi — ESPHome serves logs through the API and updates
+over OTA, with safe mode as the recovery path. The one situation that would need
+serial access is a board that will not boot, and that means carrying it to the
+bench, off the bus.
+
+What remains is transient coupling from a cabinet that switches compressor
+contactors, and a **TVS diode covers that at a fraction of the cost**. Buy the
+plain transceiver and the TVS.
 
 ## Would a single all-in-one board have been the better buy?
 
@@ -632,15 +672,31 @@ long stubs, so cable lengths are not a concern here.
 
 ## Grounding and power
 
-This is what decides reliability in a permanent install. If the Stiebel connector
-carries a supply voltage (the FE7/FEK room-controller bus normally does), **take
-the ESP's power from there via the LM2596**. That gives a single ground reference
-and no ground loop. An ESP powered from a laptop USB port while connected to the
-heat pump bus is exactly the arrangement where loop currents run through the CAN
-conductors.
+This section was written expecting the bus reference to be tied to earth, which
+would have made taking power from the bus the only clean option. **Measurement
+changed the picture:** X27 pin 3 has no continuity to the chassis, so the supply
+is a floating SELV rail.
 
-Measure the connector voltages before connecting anything, and do not feed bus
-supply voltage into the transceiver.
+That has a pleasant consequence. **A Class II supply — an ordinary phone charger
+— is electrically just as isolated as the LM2596 route**, because neither end is
+referenced to earth and there is no second path for a loop. The remaining risk is
+not the power supply at all: it is **plugging a USB cable into the ESP while it
+is on the bus**, which is what happens whenever the node is debugged from a
+mains-earthed laptop. That is an argument for an isolated transceiver, not for
+where the 5 V comes from.
+
+So the LM2596 route is now optional rather than required, and it carries two
+costs of its own:
+
+- **It loads the pump's own supply.** That rail feeds the FE7/FEK and is sized
+  for it. An ESP8266 averages ~80 mA and peaks far higher on WiFi transmit; check
+  the rail holds up before trusting it.
+- **A fault in our node reaches the heat pump.** If bus power is used, put a small
+  inline fuse or polyfuse in the +17.4 V feed so that a short in the buck or the
+  ESP cannot disturb the pump's electronics.
+
+Either way: measure the connector voltages before connecting anything, and never
+feed bus supply voltage into the transceiver.
 
 ---
 

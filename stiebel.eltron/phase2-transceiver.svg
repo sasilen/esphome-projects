@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 940" width="760" height="940" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="940" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="900" fill="none" stroke="#A8B3BC"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">PHASE 2 &#8212; SWAPPING THE TRANSCEIVER</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">One lifted pin and two wires &#183; the controller and the SPI side do not change at all</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <text x="40" y="128" font-size="11" font-weight="700" fill="#8A959E" letter-spacing="1">UNCHANGED</text>
+  <text x="196" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">MCP2515 MODULE</text>
+  <text x="500" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">VP230</text>
+  <text x="676" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">BUS</text>
+
+  <!-- D1 mini, greyed -->
+  <rect x="40" y="150" width="110" height="280" rx="4" fill="#F3F5F7" stroke="#B4BCC3" stroke-width="1.5"/>
+  <text x="95" y="180" font-size="12" font-weight="700" fill="#8A959E" text-anchor="middle">D1 mini</text>
+  <g font-size="10" fill="#8A959E" text-anchor="middle">
+    <text x="95" y="212">3V3</text>
+    <text x="95" y="232">G</text>
+    <text x="95" y="252">D8 CS</text>
+    <text x="95" y="272">D5 SCK</text>
+    <text x="95" y="292">D7 SI</text>
+    <text x="95" y="312">D6 SO</text>
+  </g>
+  <text x="95" y="352" font-size="10" fill="#8A959E" text-anchor="middle">six jumpers</text>
+  <text x="95" y="366" font-size="10" fill="#8A959E" text-anchor="middle">as in phase 1</text>
+  <g stroke="#C9D0D6" stroke-width="2">
+    <line x1="150" y1="212" x2="200" y2="212"/><line x1="150" y1="232" x2="200" y2="232"/>
+    <line x1="150" y1="252" x2="200" y2="252"/><line x1="150" y1="272" x2="200" y2="272"/>
+    <line x1="150" y1="292" x2="200" y2="292"/><line x1="150" y1="312" x2="200" y2="312"/>
+  </g>
+
+  <!-- MCP2515 module -->
+  <rect x="200" y="150" width="250" height="310" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="228" y="186" width="120" height="200" rx="3" fill="#FFFFFF" stroke="#16212B"/>
+  <text x="288" y="214" font-size="12" font-weight="700" fill="#16212B" text-anchor="middle">MCP2515</text>
+  <text x="288" y="230" font-size="10" fill="#5A6772" text-anchor="middle">unchanged</text>
+  <text x="234" y="272" font-size="10" fill="#16212B">1 TXCAN</text>
+  <text x="234" y="308" font-size="10" fill="#16212B">2 RXCAN</text>
+
+  <!-- TJA1050 greyed out -->
+  <rect x="368" y="300" width="66" height="86" rx="3" fill="#F3F5F7" stroke="#B4BCC3"/>
+  <text x="401" y="336" font-size="10" fill="#8A959E" text-anchor="middle">TJA</text>
+  <text x="401" y="350" font-size="10" fill="#8A959E" text-anchor="middle">1050</text>
+  <text x="401" y="400" font-size="9.5" fill="#8A959E" text-anchor="middle">stays fitted,</text>
+  <text x="401" y="412" font-size="9.5" fill="#8A959E" text-anchor="middle">bus side unused</text>
+
+  <!-- lifted pin 2 -->
+  <line x1="288" y1="304" x2="330" y2="304" stroke="#B4BCC3" stroke-width="2"/>
+  <path d="M334 296 l14 16 M348 296 l-14 16" stroke="#A3301F" stroke-width="2.5"/>
+  <text x="341" y="286" font-size="10" font-weight="700" fill="#A3301F" text-anchor="middle">lift</text>
+
+  <!-- tapped pin 1 -->
+  <line x1="288" y1="268" x2="368" y2="268" stroke="#B4BCC3" stroke-width="2"/>
+  <circle cx="330" cy="268" r="4" fill="#0E6E7C"/>
+  <text x="330" y="256" font-size="10" font-weight="700" fill="#0E6E7C" text-anchor="middle">tap</text>
+
+  <!-- VP230 -->
+  <rect x="510" y="180" width="130" height="250" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="575" y="206" font-size="12" font-weight="700" fill="#16212B" text-anchor="middle">VP230</text>
+  <text x="575" y="220" font-size="10" fill="#5A6772" text-anchor="middle">SN65HVD230</text>
+  <g font-size="11" fill="#16212B">
+    <text x="520" y="252">3V3</text>
+    <text x="520" y="284">GND</text>
+    <text x="520" y="316">CTX</text>
+    <text x="520" y="348">CRX</text>
+  </g>
+  <g font-size="11" fill="#16212B" text-anchor="end">
+    <text x="632" y="316">CANH</text>
+    <text x="632" y="348">CANL</text>
+  </g>
+  <rect x="596" y="228" width="30" height="14" fill="#E9ECEF" stroke="#A8B3BC"/>
+  <text x="611" y="240" font-size="9" fill="#5A6772" text-anchor="middle">R2</text>
+  <text x="611" y="258" font-size="9" fill="#5A6772" text-anchor="middle">120 &#8486;?</text>
+
+  <!-- new wires -->
+  <path d="M330 268 V150 H480 V310 H510" fill="none" stroke="#0E6E7C" stroke-width="2.5"/>
+  <path d="M348 304 H492 V342 H510" fill="none" stroke="#A3301F" stroke-width="2.5"/>
+  <path d="M212 212 V140 H466 V246 H510" fill="none" stroke="#9A6B18" stroke-width="2.5"/>
+  <path d="M212 232 V470 H492 V278 H510" fill="none" stroke="#16212B" stroke-width="2.5"/>
+
+  <text x="470" y="300" font-size="10" font-weight="700" fill="#0E6E7C" text-anchor="end">TXCAN</text>
+  <text x="484" y="336" font-size="10" font-weight="700" fill="#A3301F" text-anchor="end">RXCAN</text>
+
+  <!-- bus -->
+  <line x1="640" y1="316" x2="700" y2="316" stroke="#16212B" stroke-width="2.5"/>
+  <line x1="640" y1="348" x2="700" y2="348" stroke="#16212B" stroke-width="2.5"/>
+  <text x="706" y="312" font-size="10" font-weight="700" fill="#16212B">X27.1</text>
+  <text x="706" y="344" font-size="10" font-weight="700" fill="#16212B">X27.2</text>
+
+  <line x1="20" y1="490" x2="740" y2="490" stroke="#A8B3BC"/>
+
+  <text x="50" y="518" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">THE ONLY REWORK</text>
+  <text x="50" y="540" font-size="11.5" fill="#16212B"><tspan font-weight="700">Lift MCP2515 pin 2 (RXCAN)</tspan> and run it to the VP230's CRX. Without this the on-board</text>
+  <text x="50" y="558" font-size="11.5" fill="#16212B">TJA1050's RXD output and the VP230's CRX output drive the same node, and two outputs fight.</text>
+  <text x="50" y="580" font-size="11.5" fill="#16212B"><tspan font-weight="700">Pin 1 (TXCAN) is only tapped</tspan>, not lifted &#8212; TJA1050's TXD is a high-impedance input and does</text>
+  <text x="50" y="598" font-size="11.5" fill="#16212B">not interfere. Outputs must not collide; inputs may share freely.</text>
+  <text x="50" y="620" font-size="11.5" fill="#16212B">Power the VP230 from the module's own <tspan font-weight="700">3V3 and GND</tspan>. Everything stays on one 3.3 V rail.</text>
+
+  <rect x="50" y="648" width="660" height="96" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <rect x="50" y="648" width="6" height="96" fill="#A3301F"/>
+  <text x="74" y="672" font-size="12" font-weight="700" fill="#A3301F">BENCH FIRST, HEAT PUMP SECOND</text>
+  <text x="74" y="694" font-size="11.5" fill="#16212B">Build a two-node bus on the desk: two modified modules, 120 &#8486; at each end, nothing connected</text>
+  <text x="74" y="712" font-size="11.5" fill="#16212B">to the pump. Prove a frame leaves one and arrives at the other <tspan font-weight="700">before</tspan> joining a live system as</text>
+  <text x="74" y="730" font-size="11.5" fill="#16212B">an active participant. This is the one place the loose 120 &#8486; resistors get used.</text>
+
+  <text x="50" y="778" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">CONFIGURATION CHANGES THAT GO WITH IT</text>
+  <text x="50" y="800" font-size="11.5" fill="#16212B"><tspan font-weight="700">mode: LISTENONLY</tspan> comes out. The node now acknowledges frames, which is the whole point &#8212;</text>
+  <text x="50" y="818" font-size="11.5" fill="#16212B">and also the reason the bit rate must be right before this line changes.</text>
+  <text x="50" y="840" font-size="11.5" fill="#16212B"><tspan font-weight="700">can_id</tspan> stops being a placeholder and becomes the node's bus identity. The capture has never</text>
+  <text x="50" y="858" font-size="11.5" fill="#16212B">shown <tspan font-weight="700">0x680</tspan> or <tspan font-weight="700">0x301</tspan>, so both look free; 0x301 is the room control this installation does not have.</text>
+  <text x="50" y="880" font-size="11.5" fill="#16212B">Writes need rate limiting and a self-clearing offset &#8212; see CLAUDE.md before sending anything.</text>
+</svg>

@@ -71,9 +71,10 @@ Stiebel WPC 07
 
 **Still needed — nothing for phase 1**
 
-- **A 3.3 V CAN transceiver breakout** for phase 2: Adafruit CAN Pal #5708, an
-  SN65HVD230 / VP230 board, or equivalent. The requirements are only that the
-  logic side takes 3.3 V and that any on-board 120 Ω can be removed.
+- **An SN65HVD230 (VP230) module** for phase 2, €2–4. Not the Adafruit CAN Pal at
+  €20: its 5 V generator solves a problem a native 3.3 V transceiver does not
+  have, and its switchable termination stopped mattering once the bus measured
+  unterminated. See [`CLAUDE.md`](CLAUDE.md).
 - PESD1CAN / NUP2105L TVS — only if the transceiver board carries no protection
 - LM2596 buck, if power is taken from the heat pump — five are in stock
 
