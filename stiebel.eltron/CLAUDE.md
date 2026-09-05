@@ -944,9 +944,32 @@ the lever the solar-surplus idea wants.
 
 ### And it found the feedback side
 
-- **0x480 / 0x0074 `EVU_SPERRE_AKTIV` = 1.** The EVU block as the machine sees
-  it. Worth cross-checking against the Shelly's state, because that pins down
-  the polarity of both at once.
+- **0x480 / 0x0074 `EVU_SPERRE_AKTIV`, and its polarity is settled.** Two
+  readings against a known Shelly state did it:
+
+  ```
+  19:41:27   480>100 resp  e=0074 = 1      Shelly permitting
+  19:53:18   480>100 wr    e=0074 = 0      Shelly off, i.e. blocking
+  ```
+
+  **1 means permitted and 0 means blocked**, so the element tracks the contact,
+  not the block — despite a name that reads the other way round. That is the
+  same inversion the Shelly itself has, which this repo already warns about, and
+  it would have been an easy way to build an automation that does exactly the
+  opposite of what it says.
+
+  **The manager writes this rather than waiting to be asked.** The change
+  arrived as a command 0 to the panel seconds after the relay moved, so EVU
+  state is observable passively and needs no polling — which matters, because
+  polling means transmitting and phase 1 does not.
+
+  One loose thread: that write carried `+0001` in the short form's spare bytes,
+  where the value itself was 0 and the previous value had been 1. Tempting to
+  read as "what it changed from", but the same spare bytes on 0x000E carry
+  numbers no previous reading explains, so it stays unexplained.
+
+  0x1388 jumped from 0 to 8246 (0x2036) four seconds later, having been 0 in
+  every earlier sample. Coincident with the block, and worth watching.
 - **Energy counters, daily and cumulative, split by heating and hot water**:
   `WAERMEERTRAG_*` for heat delivered and `EL_AUFNAHMELEISTUNG_*` for electricity
   taken. Those two together are a measured COP, which is a better argument for
