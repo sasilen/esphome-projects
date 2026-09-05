@@ -42,7 +42,7 @@ venv/
 # --- Claude Code / työympäristö ----------------------------------------------
 # /workspace on tässä kontissa myös HOME, joten koko .claude-hakemisto
 # (credentials, keskusteluhistoria, istunnot) jää ulkopuolelle.
-.claude/
+.claude/*
 .claude.json
 .claude.json.backup*
 .commandhistory/
@@ -60,3 +60,4 @@ Thumbs.db
 *.log
 *.bak
 *.tmp
+!.claude/skills
