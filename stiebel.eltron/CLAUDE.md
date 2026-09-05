@@ -869,17 +869,45 @@ Counted as sender, over 10 380 frames:
 and phase 2 takes it. **0x301 is occupied** — the earlier guess that it was free
 because no FEK is installed was wrong, and 0x601 writing to it is the proof.
 
-**A second address table, from elsewhere, names 0x301 outright: `Heizkreis 1`.**
-It also lists 0x302 as the second heating circuit, 0x401–0x404 as sensors in the
-display, and 0x69E–0x6A2 as displays. That corroborates the one thing we saw
-from 0x301 — a `VORLAUFSOLLTEMP` of 25.0, which is precisely a heating circuit's
-flow setpoint.
+**A list from a WPF 10 — same protocol family, different model — names four of
+these six:**
 
-**Treat the rest of it as a different machine's map, not this one's.** It has no
-entry for 0x100, 0x480, 0x601 or 0x700 — four of the five addresses that
-actually carry traffic here — and this installation's panel sits at 0x100 rather
-than anywhere near its display range. Two rows corroborate; the rest does not
-transfer.
+| | WPF 10 says | Seen here |
+|---|---|---|
+| 0x180 | Kessel | ✓ answers the panel's temperature polls |
+| 0x301 | **Heizkreis 1** | ✓ answered a `VORLAUFSOLLTEMP` of 25.0 |
+| 0x302 | Heizkreis 2 | not present |
+| 0x480 | Manager | ✓ polls 0x700, serves the clock |
+| 0x601 | **Mischermodul** | ✓ **holds the heating curve** |
+
+**0x601 being the mixer module is the row that matters**, because 0x010E
+`HEIZKURVE` lives there and that is what phase 2 exists to write. A curve
+belonging to a mixer module is the natural arrangement — the module is what
+mixes to a flow temperature, so the curve deciding that temperature is its
+parameter. This file had inferred "mixer" from the 0x600–0x603 block in Jürg
+Müller's scheme; a real machine's own list now says it outright.
+
+`Heizkreis 1` at 0x301 lands the same way: the one thing that address ever
+answered was a heating circuit's flow setpoint.
+
+The same source lists 0x401–0x404 as sensors in the display and 0x69E–0x6A2 as
+displays, neither of which appears here.
+
+**The two it does not name are the two busiest on this bus.** Neither 0x100 nor
+0x700 is on the WPF 10, and between them they carry most of the traffic.
+
+0x700's role is legible from behaviour even so. The manager polls it every five
+seconds for flow and return temperatures and writes it four commanded outputs
+including the compressor — **which is exactly what bullitt186's `HEIZMODUL` does
+at 0x500 on a different machine.** So 0x700 is very likely this model's heat
+pump module, at an address the family does not standardise. That also explains
+the element list's blind spot: the 0xFDxx and 0xFExx signals belong to a
+compressor module, and the published table is oriented to `KESSEL` and
+`MANAGER`.
+
+0x100 behaves like a display — polling the boiler for temperatures, asking the
+manager for the date and time — but matches no display address in any list to
+hand.
 
 It does carry one caution for phase 2. Displays living at 0x69E–0x6A2 sit close
 to the 0x680 this node intends to take. 0x680 stayed silent through every
