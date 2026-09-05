@@ -909,6 +909,38 @@ compressor module, and the published table is oriented to `KESSEL` and
 manager for the date and time — but matches no display address in any list to
 hand.
 
+### There are no separate boxes: this is one cabinet talking to itself
+
+**This installation has no room controllers of any kind.** The only things
+attached are an outdoor sensor and the heat pump's own panel. So none of these
+addresses is a device on a wire — they are **functions inside the WPC's own
+controller, each given a bus identity.**
+
+That resolves what looked like a contradiction all evening. This file recorded
+that no FEK or FE7 room control is installed, and then found 0x601 holding
+`RAUMSOLLTEMP_TAG`, `RAUMSOLLTEMP_NACHT` and the heating curve — parameters a
+room control unit would own. Both are true: the *parameters* exist because a
+heating circuit needs them, and the machine serves them from a logical endpoint
+whether or not any physical controller is present to display them.
+
+It also explains why the addresses here match no other machine's list. A WPC 07
+is a compact unit, and what other installations spread across separate modules
+this one implements internally: manager at 0x480, heat pump module at 0x700,
+panel at 0x100, tank at 0x180, heating circuit at 0x301, circuit parameters at
+0x601. The bus is an internal backplane, not a field bus.
+
+**Two consequences worth carrying into phase 2.**
+
+Writing the curve to 0x601 is not addressing a separate box — it is addressing
+the machine's own controller through the identity it answers on. The captured
+frame works regardless, which is the point of having captured it rather than
+reasoned about it.
+
+And with no room sensor anywhere, `RAUMSOLLTEMP_TAG` at 26.0 is not a
+temperature anyone is trying to reach. It is the curve's parallel shift, which
+is precisely the lever the solar-surplus idea wants — and it is safe to move in
+a way a real room target would not be.
+
 It does carry one caution for phase 2. Displays living at 0x69E–0x6A2 sit close
 to the 0x680 this node intends to take. 0x680 stayed silent through every
 capture on this machine, so the choice stands — but the address scheme is
