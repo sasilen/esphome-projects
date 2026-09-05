@@ -1367,6 +1367,30 @@ five minutes of checking first.
 - No repeated `Restarting device`. One restart every two minutes means the
   watchdog is firing, not that the bus is quiet
 
+**One API client, and count them before starting.** The ESP8266 does not carry
+three encrypted API connections, and the failure looks nothing like a resource
+problem:
+
+```
+Successfully connected to wpc-can @ 192.168.1.41 in 0.009s
+Can't connect to ESPHome API: The connection dropped immediately after
+encrypted hello; Try enabling encryption on the device or turning off
+encryption on the client (EncryptionHelloAPIError)
+```
+
+The message points at encryption and the key is fine — the same client with the
+same key worked minutes earlier, and a wrong key fails every time rather than
+suddenly. Three things hold connections open, and all three are easy to forget:
+a **log tab open in the ESPHome dashboard**, an **earlier `esphome logs` still
+running** (`pgrep -af "esphome logs"`), and **Home Assistant's own ESPHome
+integration**.
+
+**Home Assistant is not needed for a capture night**, which resolves the
+contention rather than working around it. Entity values travel in the log stream
+as `[S][sensor]` lines, so one detached log process carries both the raw frames
+and the decoded entities — and it is the one connection the node comfortably
+holds.
+
 **The log survives the watchdog.** In the first capture the node restarted twice
 and `esphome logs` reconnected and carried on both times, so restarts fragment
 the data but do not end the capture. Counting the warnings afterwards is how the
