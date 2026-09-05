@@ -63,7 +63,8 @@ Stiebel WPC 07
 - ESP8266 Wemos D1 Mini — the chosen board
 - ESP32, several boards — reserve for phase 2 (the measured one is
   ESP32-D0WD-V3 rev v3.1)
-- MCP2515 modules with TJA1050 transceiver (3 pcs — one is allowed to die)
+- MCP2515 modules with TJA1050 transceiver (3 pcs — one in use, two spare against
+  a botched pin lift in phase 2)
 - 120 Ω resistors — **not used**, this node taps an already-terminated bus
 
 **Still needed — nothing for phase 1**
@@ -261,8 +262,8 @@ podman exec esphome esphome config /config/cantest.yaml
 
 **Phase 1 — read**
 
-- Locate CAN_H, CAN_L and GND on the WPC 07 (control board preferred, service
-  RJ12 if the bus is exposed there)
+- Connect at **X27 on board A2** — 1 = H, 2 = L, 3 = ground, 4 = +12 V. Verify
+  with the meter first; see [`bus-connection.svg`](bus-connection.svg)
 - Verify the bit rate — stay listen-only until confirmed
 - Capture frames, map identifiers and element indices against the published
   element list

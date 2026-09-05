@@ -245,6 +245,29 @@ Two requirements only — the logic side must accept 3.3 V, and any on-board 120
 must be removable or switchable. The CAN Pal is simply the one that was already
 researched.
 
+**The one upgrade worth paying for is isolation.** An ISO1050-class or otherwise
+isolated CAN board breaks the ground loop between the heat pump and the ESP
+outright, which is the failure mode this file worries about most (see Grounding
+and power). A few euros over a plain VP230, and the only place in this project
+where more money buys real reliability rather than convenience.
+
+## Would a single all-in-one board have been the better buy?
+
+Boards exist that carry an ESP32 and a CAN transceiver together — Waveshare
+ESP32-S3-RS485-CAN, LilyGO T-CAN485 and similar. No SPI wiring, no level
+shifting, no crystal to read, no termination jumper to hunt. As hardware they are
+plainly tidier than an MCP2515 module and a D1 mini.
+
+**They would not have solved this project's actual blocker.** All of them use the
+ESP32's built-in TWAI controller, and ESPHome's `esp32_can` refuses bit rates
+below 25 kbps. Stiebel runs at 20. The nicer board would have hit exactly the
+wall already documented at the end of this file, and the way out would have been
+an external component instead of ESPHome's own.
+
+That is the shape of the trade: **the MCP2515 looks more primitive, but ESPHome
+supports it at 20 kbps natively.** The simpler hardware would have moved the
+complexity into software, where it is harder to see and harder to hand over.
+
 ## An RS-485 module cannot stand in for the CAN transceiver
 
 The JZK TTL↔RS-485 boards in stock look like an obvious substitute: differential
@@ -280,6 +303,67 @@ Required signals:
 - CAN_H
 - CAN_L
 - GND
+
+### The tap point: X27 on board A2
+
+Drawn out in [`bus-connection.svg`](bus-connection.svg). The source is the wiring
+diagram in Stiebel's own **WPC 04–13 cool Operation and Installation** manual,
+which is not kept in this repo — manufacturer documentation is linked at source,
+not copied, and `.gitignore` keeps stray PDFs out. Fetch it from the Stiebel
+[document portal](https://www.stiebel-eltron.com/) or ManualsLib and keep the
+working copy outside the repo.
+
+The diagram carries an explicit pin legend next to the connector:
+
+| X27 pin | Legend | Use |
+|---|---|---|
+| 1 | `1 = H` | CAN high |
+| 2 | `2 = L` | CAN low |
+| 3 | `3 =` (symbol, not text) | reference / ground **by elimination** |
+| 4 | `4 = +12V` | bus supply |
+
+The same three-signal group appears elsewhere in the diagram as `H`, `L`, `“+”`,
+which is how Stiebel labels this bus throughout. It is the FE7/FEK room-control
+bus: four wires, of which two are the CAN pair.
+
+**Two things follow.**
+
+**The bus carries +12 V, and that settles the power question.** A permanent
+install can take the ESP's supply from pin 4 through the LM2596, giving one
+common ground reference and no loop — which is exactly what the grounding
+section below asks for. It also means pin 4 must never reach the transceiver.
+
+**Pin 3 is inferred, not read.** Its label is a symbol the text extraction could
+not recover, and ground is the only remaining function. Confirm it with the meter
+before connecting: pin 3 should read 0 Ω to chassis/protective earth, and the
+60 Ω check between pins 1 and 2 should agree with the legend.
+
+Note that an earlier search result claiming `X72` is the CAN connector on WPC
+models is **wrong for this machine** — in this diagram X72 sits on board A5 among
+the relays K5–K7. Checking it against the actual document is what caught that.
+
+- **A worked example from a different family**, for comparison only:
+  [bullitt186](https://github.com/bullitt186/ha-stiebel-control) documents the
+  WPL 13 E service connector as pin 3 = CAN-H, pin 5 = CAN-L, pin 7 = GND — and
+  warns in the same breath that other models use a completely different connector
+  and pinout. **WPC is a different series. Do not transfer these numbers.**
+- The same source confirms two things this file already assumed: the bus runs at
+  **20 kbps**, and **the heat pump terminates it itself**, so nothing needs adding
+  at our end.
+
+### Identifying the pair with a meter, before trusting any pinout
+
+This works on an unknown connector and does not depend on the manual:
+
+1. **Power the heat pump down.** Between CAN_H and CAN_L you should read roughly
+   **60 Ω** — two 120 Ω terminators in parallel. No other pair on the connector
+   reads that. This alone identifies the pair.
+2. **Power it back up and measure to GND.** Idle, both lines sit near **2.5 V**.
+   Under traffic CAN_H rises and CAN_L falls symmetrically around that point.
+3. **A supply pin shows a steady DC voltage** to GND, typically well above 5 V.
+   Find it and stay away from it — it must never reach the transceiver.
+
+Only after 1 and 2 agree with each other is the pair identified. Then connect.
 
 ### Option B
 
@@ -356,7 +440,11 @@ bypass its transceiver with the CAN Pal.**
   TJA1050's TXD is a high-impedance input and does not interfere.
 
 Lifting one SOIC-18 pin is less work than swapping an SO8 chip, and needs no hot
-air. Having three modules still helps: one is allowed to die.
+air. Having three modules still helps — but note what the spares are actually
+for. No module is consumed: phase 1 uses one unmodified, and phase 2 lifts a
+single pin on that same board, which is a modification rather than damage. The
+two spares are insurance against tearing a pad or cooking the chip during that
+one operation, not a planned casualty.
 
 Superseded plan (kept for reasoning): the two-rail modification — cut MCP2515 VDD
 from the 5 V rail, replace TJA1050 with TJA1051T/3, VIO to 3.3 V. Correct, but the
@@ -525,11 +613,18 @@ driving the dominant bit — which is precisely what listening does not need.
    the cost of getting it wrong is a destroyed transceiver. The node then physically
    cannot drive the bus: no ACK, no error frames, whatever bit rate is configured.
 
-   Dedicate one of the three modules as the permanent sniffer this way. The MCP2515
-   will go error-passive because its transmissions are never acknowledged — that is
-   internal to the chip and never reaches the bus.
+   Dedicating one module as a permanently crippled sniffer was the plan while this
+   modification looked mandatory. **It is not needed.** `mode: LISTENONLY` compiles,
+   so no module gets cut, and the same board carries straight through to phase 2 —
+   where the rework is on the *controller* side anyway: lift MCP2515 pin 2 (RXCAN)
+   to the new transceiver, tap pin 1 (TXCAN) to its TX, and leave the on-board
+   TJA1050 unused. The MCP2515 is never replaced; only the bus-facing half is.
 
-With TXD lifted, sweeping bit rates is risk-free. Try 20 → 25 → 50 kbps until
+   If the lift is done anyway as a belt-and-braces measure, expect the MCP2515 to go
+   error-passive: its transmissions are never acknowledged. That is internal to the
+   chip and never reaches the bus.
+
+Sweeping bit rates is risk-free in listen-only mode. Try 20 → 25 → 50 kbps until
 frames appear.
 
 ---
@@ -604,6 +699,10 @@ rate or at CANH/CANL.
 Confirm the FAILED line is gone **before** going anywhere near the heat pump.
 Tested together at the pump the two produce the same visible symptom — nothing
 happens — and the sweep would be chasing the wrong variable.
+
+**Passed on the bench:** with the six jumpers in place the FAILED line
+disappears and only `config standard id=0x000` remains. SPI is proven, so any
+silence on the bus from here on belongs to the bus side.
 
 ---
 

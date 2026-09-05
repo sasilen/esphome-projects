@@ -20,6 +20,11 @@ secrets.yaml
 upstream/
 vendor/
 
+# --- Valmistajien manuaalit --------------------------------------------------
+# Kolmannen osapuolen dokumentteihin linkitetään lähteessään, niitä ei kopioida
+# tänne. Työkopion voi pitää paikallisesti.
+*.pdf
+
 # --- Käännösartefaktit -------------------------------------------------------
 *.o
 *.obj
