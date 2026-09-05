@@ -1019,6 +1019,22 @@ from 0x480 to 0x700 are answered in the same millisecond, which is where the
 machine's pattern with that module, not with this one.** For 0x601 the pattern
 is write, then read back on your own schedule and check.
 
+A second write settled it beyond doubt. Restoring the curve to 0.23 was
+confirmed **1.46 s** later, against 6.1 s the first time — and the confirmation
+arrived in a batch with 0x0008 and 0x4EA7, which is the panel's routine sweep of
+the whole 0x601 group:
+
+```
+19:56:09.092   100>601 wr   ex=010E = 23
+19:56:10.258   601>100 resp  e=0008 = 230       the panel's poll group,
+19:56:10.553   601>100 resp ex=4EA7 = -28672    not an answer to anything
+19:56:10.553   601>100 resp ex=010E = 23
+```
+
+**The varying delay is the proof.** An acknowledgement has a fixed latency; a
+poll that happens to come round does not. Where in the cycle the write lands is
+all that differs.
+
 Phase 2 therefore cannot treat silence as failure. A curve write that produces
 no response is normal; the only way to know it took is to ask.
 
