@@ -911,6 +911,68 @@ The element list has a name for exactly this: all six carry type
 independently and agree, which is the strongest evidence in this file that the
 decode is right end to end.
 
+## Walking the panel menus is the single most productive thing to do
+
+Six minutes of browsing every menu on the heat pump's own display produced **82
+distinct (sender, element) pairs, 75 of them named by the element list.** Two
+hours of passive listening produced about twenty.
+
+The reason is structural. The panel polls a handful of elements continuously and
+reads the rest **only when a human is looking at them**, so a menu walk turns a
+passive sniffer into a survey of everything the machine is willing to talk
+about. It costs nothing, needs no code, and is repeatable whenever the map has a
+hole in it.
+
+### It found what phase 2 exists to write
+
+| Device | Element | Name | Type | Value |
+|---|---|---|---|---|
+| **0x601** | **0x010E** | **`HEIZKURVE`** | cent | **0.23** |
+| 0x601 | 0x0005 | `RAUMSOLLTEMP_I` | dec | 26.0 |
+| 0x601 | 0x0008 | `RAUMSOLLTEMP_NACHT` | dec | 23.0 |
+| 0x180 | 0x0013 | `EINSTELL_SPEICHERSOLLTEMP` | dec | 55.0 |
+| 0x180 | 0x0A06 | `EINSTELL_SPEICHERSOLLTEMP2` | dec | 50.0 |
+| 0x180 | 0xFDB4 | `SOMMERBETRIEB` | little_bool | off |
+
+**The heating curve is the whole point of this project**, and it now has an
+address, an index, a type and a current value. It lives on 0x601 — the mixer
+module — not on the manager, which is not where this file would have guessed.
+
+`RAUMSOLLTEMP_I` at 26.0 is not a room temperature anyone is targeting: with no
+room sensor installed these act as the curve's parallel shift, which is exactly
+the lever the solar-surplus idea wants.
+
+### And it found the feedback side
+
+- **0x480 / 0x0074 `EVU_SPERRE_AKTIV` = 1.** The EVU block as the machine sees
+  it. Worth cross-checking against the Shelly's state, because that pins down
+  the polarity of both at once.
+- **Energy counters, daily and cumulative, split by heating and hot water**:
+  `WAERMEERTRAG_*` for heat delivered and `EL_AUFNAHMELEISTUNG_*` for electricity
+  taken. Those two together are a measured COP, which is a better argument for
+  or against any control strategy than anything this file currently reasons
+  from.
+- `LZ_VERD_1_*` compressor run hours, `MASCHINENDRUCK`, `QUELLE_IST` at 4.2.
+
+### 0x8000, 0x9000 and 0x8080 are "not present", not values
+
+They turn up 26 times across the survey and they decode as absurdities —
+`BIVALENZALTERNATIVTEMPERATUR` at −2867.2 °C, `VERFLUESSIGER_TEMP` at −3276.8.
+**They are sentinels for an unconfigured or absent parameter**, and any sensor
+built on an element that can return them needs to drop them rather than publish
+them. 0x8080 is the same thing for `et_time_domain`, where the list's own code
+already tests for it.
+
+### What is still missing: a write
+
+The panel was browsed, not edited, so every one of these arrived as a response
+to a read. **Phase 2 needs to see one of these parameters actually written**,
+and getting that is a thirty-second job: change the heating curve or a room
+setpoint by one step on the panel with the capture running. The frame that
+appears is the exact frame phase 2 has to imitate, for the exact parameter it
+wants to control — which is a much shorter step than generalising from the
+manager writing 0xFE1D to a module.
+
 ## Naming the elements: the table covers half this bus
 
 Matched against Jürg Müller's element list. `juerg5524.ch` did not answer over
