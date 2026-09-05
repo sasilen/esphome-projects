@@ -1054,6 +1054,52 @@ The element list has a name for exactly this: all six carry type
 independently and agree, which is the strongest evidence in this file that the
 decode is right end to end.
 
+## The room thermostats cap the curve, and that weakens the plan
+
+**The floor loops have their own room sensors, and they act alone.** They
+throttle flow to hold setpoints nobody else knows — not the heat pump, not the
+bus, not Home Assistant. The machine runs open loop: curve plus outdoor
+temperature gives a flow temperature, and the rooms help themselves to as much
+of it as their valves allow.
+
+That undercuts the reasoning this project was started on. The README argues that
+raising the curve on solar surplus **stores energy in the building mass**,
+proportionally, and that this beats SG Ready's blunt "force on". The mechanism
+does not survive contact with thermostatic valves:
+
+- raise the curve → flow temperature rises
+- rooms approach their own setpoints → valves throttle
+- **heat into the building is limited by the valves, not by the curve**
+
+The storable surplus is bounded by whatever slack the thermostats happen to
+allow — the gap between where each room sits and where its own dial is set — and
+**nothing on the CAN bus can widen that gap.** Turning the curve up further does
+not help once the valves have closed.
+
+**The DHW tank has no such limiter, and that changes which lever to build
+first.** `EINSTELL_SPEICHERSOLLTEMP` at 0x180 raises a setpoint with real
+storage behind it and nothing throttling in between: a tank taken from 50 °C to
+55 °C absorbs surplus and gives it back as hot water that would otherwise have
+been made later at a worse time. That is the clean, effective sink, and it was
+the secondary target in the original plan rather than the primary one.
+
+**So phase 2's ranking should invert.** DHW setpoint first, because it works.
+Curve second, because it is capped by hardware this project does not control
+and cannot see.
+
+### And the counters found tonight can settle it
+
+This does not have to stay an argument. `WAERMEERTRAG_*` and
+`EL_AUFNAHMELEISTUNG_*`, split by heating and hot water, came out of the menu
+walk. **Raise the curve by a step on a mild day and watch whether heating energy
+delivered actually rises**, and by how much against the electricity taken. If it
+barely moves, the valves are absorbing the change and the argument above is
+right. If it rises cleanly, the thermostats have more slack than expected and
+the original plan stands.
+
+That is a day's measurement with entities that already exist, and it should be
+run before any control logic is written against the curve.
+
 ## Walking the panel menus is the single most productive thing to do
 
 Six minutes of browsing every menu on the heat pump's own display produced **82
