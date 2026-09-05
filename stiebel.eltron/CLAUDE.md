@@ -1375,6 +1375,49 @@ and is withdrawn.
 0xFE1C, 0xFE1D, 0xFE1E and 0xFE4C.** 0xFE1D remains the compressor by behaviour,
 which no table contradicts.
 
+### 0xFE1B and 0xFE1C separate once the hydraulics are known
+
+The tank is charged by the heat pump and the floor heating draws from that same
+tank, through the tank's pump plus a separate small circulation pump. Two pumps,
+and the capture commands exactly two outputs besides the compressor.
+
+They are not interchangeable, and one table separates them:
+
+| | Tank charge, compressor on | Floor circulation, compressor off |
+|---|---|---|
+| **0xFE1C** | **100** | **100** |
+| **0xFE1B** | **0** | **100** |
+
+**0xFE1C runs in both modes and 0xFE1B only in circulation.** Against the
+plumbing that makes 0xFE1C the tank's own pump — needed whether heat is going in
+or coming out — and 0xFE1B the separate circulation pump, which belongs to the
+floor side alone.
+
+An evening of idle running shows the pair cycling together with the compressor
+never starting at all:
+
+```
+19:37  both on    54 min
+20:31  both off   20 min
+20:51  both on    44 min
+21:35  both off   20 min
+21:55  both on
+```
+
+Tank 49.8 → 47.1 °C across the whole of it. **That is space heating drawing
+down the tank**, on the heating side's own rhythm, and it is a mode the first
+capture never showed.
+
+**It also closes the frost protection story.** 0xFE07 reads 0 whenever 0xFE1B is
+running and 5.6 °C whenever it is not — frost protection armed exactly when the
+floor circuit is standing still, which is exactly when a floor loop can freeze.
+The anti-correlation that took a whole evening to characterise turns out to be
+the plainest thing on the bus once the pipework is known.
+
+**A prediction the night can test.** When the tank falls far enough to trigger a
+charge, 0xFE1C should go to 100 alongside the compressor while 0xFE1B stays at
+0. If both come on together, the split above is wrong.
+
 kr0ner also refines two names this file took from elsewhere: 0x010E is
 `STEIGUNG_HK1`, the slope for heating circuit 1 rather than a generic heating
 curve, and 0x0005 is `RAUMSOLLTEMP_TAG`. Both are the same parameters under more
