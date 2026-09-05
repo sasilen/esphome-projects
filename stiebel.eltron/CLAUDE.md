@@ -863,11 +863,29 @@ Counted as sender, over 10 380 frames:
 | 0x100 | 868 | **not in the table** | polls 0x180, asks 0x480 for the time |
 | 0x180 | 792 | boiler / heat pump | answers 0x100 |
 | 0x601 | 8 | mixer module | writes to 0x301 every seven minutes |
-| 0x301 | 1 | control module | answered 0x100 once |
+| 0x301 | 1 | **heating circuit 1** | answered 0x100 once |
 
 **0x680 never appears**, so the PC/ComfortSoft address is free on this machine
 and phase 2 takes it. **0x301 is occupied** — the earlier guess that it was free
 because no FEK is installed was wrong, and 0x601 writing to it is the proof.
+
+**A second address table, from elsewhere, names 0x301 outright: `Heizkreis 1`.**
+It also lists 0x302 as the second heating circuit, 0x401–0x404 as sensors in the
+display, and 0x69E–0x6A2 as displays. That corroborates the one thing we saw
+from 0x301 — a `VORLAUFSOLLTEMP` of 25.0, which is precisely a heating circuit's
+flow setpoint.
+
+**Treat the rest of it as a different machine's map, not this one's.** It has no
+entry for 0x100, 0x480, 0x601 or 0x700 — four of the five addresses that
+actually carry traffic here — and this installation's panel sits at 0x100 rather
+than anywhere near its display range. Two rows corroborate; the rest does not
+transfer.
+
+It does carry one warning for phase 2 all the same. Displays living at
+0x69E–0x6A2 sit close to the 0x680 this node intends to take. 0x680 stayed
+silent through every capture on this machine, so the choice stands — but the
+address scheme is evidently not universal, and that is worth knowing before
+trusting it anywhere else.
 
 **0x100 is the open question.** It is not in the published address table, yet it
 is the third busiest node here. Its behaviour — polling the boiler for
