@@ -1,7 +1,7 @@
 # Stiebel Eltron WPC 07 — phase 1 CAN sniffer
 #
-# Listen-only. This node never drives the bus: it exists to confirm the bit rate
-# and to capture frames for mapping against the element lists.
+# Listen-only. This node never drives the bus: it confirmed the bit rate, and it
+# now captures frames, decoded, for mapping against the element lists.
 #
 # Hardware for this phase (see CLAUDE.md, "Phase 1: sniffing before the final
 # circuit"): the plain MCP2515 + TJA1050 module run entirely at 3.3 V.
@@ -22,9 +22,9 @@ substitutions:
   # 8 MHz gets the bit rate wrong by a factor of two and nothing decodes.
   can_clock: "8MHZ"
 
-  # Expected, not yet measured. Sweep 20KBPS -> 25KBPS -> 50KBPS until frames
-  # appear in the log. Safe to sweep only because the node is listen-only in
-  # software and TXD is lifted in hardware.
+  # Measured on this machine, no sweep needed: frames appeared at the first
+  # configured value. Kept as a substitution because the rate is fixed at
+  # compile time — changing it is an edit and a re-flash, never a runtime knob.
   can_bit_rate: "20KBPS"
 
 esphome:
@@ -64,8 +64,10 @@ captive_portal:
 # mode: LISTENONLY is the whole point of this phase — a node in NORMAL mode
 # acknowledges frames and emits error frames even when it sends nothing of its
 # own, and with the wrong bit rate that disturbs the heat pump's own traffic.
-# If validation rejects `mode:`, the installed ESPHome is too old to expose it;
-# that is a safe failure, and the lifted TXD still covers it in hardware.
+# It compiles on the installed ESPHome, so nothing was lifted in hardware. If a
+# future upgrade ever rejects `mode:`, that is a safe failure — but it also
+# removes the only thing keeping this node passive, so lift the TJA1050's pin 1
+# before flashing rather than after.
 #
 # can_id is the transmit identifier. Nothing is ever transmitted here, but the
 # schema requires it.
@@ -81,34 +83,86 @@ canbus:
 
     on_frame:
       # can_id_mask 0x000 matches every identifier — this is a sniffer, not a
-      # filter. The Elster protocol is documented as 11-bit standard ids; the
-      # extended trigger below is here to prove that, and can go once it has
-      # stayed silent through a capture.
+      # filter. The extended-id trigger that used to sit beside this one is
+      # gone: it existed to prove the protocol really is 11-bit standard ids,
+      # it stayed silent through the first capture, and that is proof enough.
       - can_id: 0x000
         can_id_mask: 0x000
         use_extended_id: false
         then:
           - lambda: |-
-              // Fixed buffer, no std::string: this runs once per frame and the
-              // ESP8266 heap does not want per-frame allocations.
+              // Decode into the log rather than dumping hex, because the byte
+              // layout is now confirmed by capture (CLAUDE.md, "Prior art"):
+              //
+              //   byte 0  receiver's high bits (>> 3) in the high nibble,
+              //           command in the low nibble
+              //   byte 1  receiver's low 7 bits — nonzero only for a
+              //           sub-addressed node such as 0x301
+              //   byte 2  element index, or 0xFA meaning "index in bytes 3-4"
+              //
+              // Reading a capture then needs no mental arithmetic, which is
+              // the whole job of the next step: matching element indices
+              // against the published element list.
+              //
+              // Fixed buffers, no std::string: this runs once per frame and
+              // the ESP8266 heap does not want per-frame allocations.
               id(frame_count) += 1;
-              char line[25] = {0};
-              for (size_t i = 0; i < x.size() && i < 8; i++)
-                sprintf(line + i * 3, "%02X ", x[i]);
-              ESP_LOGI("can", "std id=0x%03X dlc=%u  %s",
-                       (unsigned) can_id, (unsigned) x.size(), line);
 
-      - can_id: 0x000
-        can_id_mask: 0x000
-        use_extended_id: true
-        then:
-          - lambda: |-
-              id(frame_count) += 1;
-              char line[25] = {0};
-              for (size_t i = 0; i < x.size() && i < 8; i++)
-                sprintf(line + i * 3, "%02X ", x[i]);
-              ESP_LOGI("can", "ext id=0x%08X dlc=%u  %s",
-                       (unsigned) can_id, (unsigned) x.size(), line);
+              const uint8_t n = x.size();
+              const uint8_t cmd = n >= 1 ? (x[0] & 0x0F) : 0xFF;
+
+              // Shape check before decoding, and the bounds come from the
+              // capture rather than from optimism:
+              //
+              //   n != 7      not an Elster telegram at all
+              //   cmd > 5     system frames (6, 7) do not use this layout —
+              //               their byte 1 carries 0x79, which is no address,
+              //               so decoding a receiver from it invents nodes
+              //   x[2] > 0xFA the only defined marker is 0xFA. A frame with
+              //               0xFB there appeared twice, seconds before a
+              //               receive stall, and decoded to nonsense
+              //
+              // Everything excluded is logged raw. A decoder that mis-decodes
+              // silently is worse than no decoder — raw hex in the log is how
+              // these three cases were found in the first place.
+              if (n != 7 || cmd > 5 || x[2] > 0xFA) {
+                char raw[25] = {0};
+                for (uint8_t i = 0; i < n && i < 8; i++)
+                  sprintf(raw + i * 3, "%02X ", x[i]);
+                ESP_LOGI("can", "%03X raw dlc=%u  %s",
+                         (unsigned) can_id, (unsigned) n, raw);
+                return;
+              }
+
+              static const char *const CMD[6] = {
+                  "wr", "rd", "resp", "ack", "wack", "wres"};
+
+              const uint16_t receiver =
+                  ((uint16_t) (x[0] & 0xF0) << 3) | (x[1] & 0x7F);
+              const bool ext = x[2] == 0xFA;
+              const uint16_t element =
+                  ext ? ((uint16_t) x[3] << 8 | x[4]) : x[2];
+              const uint16_t value = ext ? ((uint16_t) x[5] << 8 | x[6])
+                                         : ((uint16_t) x[3] << 8 | x[4]);
+
+              // A read request's value bytes are padding, so printing them
+              // would invent data that is not on the bus.
+              char val[24] = {0};
+              if (cmd != 1)
+                snprintf(val, sizeof(val), " = %d (0x%04X)",
+                         (int) (int16_t) value, value);
+
+              // The short form leaves bytes 5-6 outside the documented
+              // layout, and they are not always zero: 45 frames in a two-hour
+              // capture carried a small value in byte 6, unexplained. Show
+              // them rather than drop them.
+              char tail[16] = {0};
+              if (!ext && (x[5] || x[6]))
+                snprintf(tail, sizeof(tail), " +%02X%02X", x[5], x[6]);
+
+              ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X%s%s",
+                       (unsigned) can_id, (unsigned) receiver, CMD[cmd],
+                       ext ? "ex" : "e", element, val, tail);
 
 spi:
   clk_pin: D5
@@ -145,14 +199,24 @@ globals:
 #
 # A stalled node is indistinguishable from a quiet bus by eye, which is what
 # makes it dangerous during an overnight capture. So: if the counter has not
-# moved for half an hour, restart and say so in the log.
+# moved, restart and say so in the log.
 #
-# The 30 minutes is a guess until the bus's real idle behaviour is known. This
-# installation has no room control, so genuinely quiet stretches are possible —
-# if the log fills with restarts, lengthen the window rather than remove it.
+# The window was 30 minutes while the bus's rhythm was unknown. A two-hour
+# capture measured it, and the answer is blunt: the longest gap between frames
+# is 4.7 s, both stalls lasted 2070 s, and there is nothing in between. The
+# distribution has two peaks and no middle, so the threshold can sit almost
+# anywhere between them.
+#
+# Two minutes: a 25x margin over the worst natural gap, and it turns a stall
+# from 35 minutes of lost capture into two. That matters, because in that
+# capture the node was stalled for 69 of its 113 minutes.
+#
+# Restarting every two minutes would not trip safe mode either — the default
+# boot_is_good_after is one minute, so an uptime of two resets the boot loop
+# counter each time. The capture's own log confirms it.
 
 interval:
-  - interval: 5min
+  - interval: 1min
     then:
       - lambda: |-
           if (id(frame_count) == id(last_seen_count)) {
@@ -163,11 +227,11 @@ interval:
           }
       - if:
           condition:
-            lambda: "return id(quiet_checks) >= 6;"
+            lambda: "return id(quiet_checks) >= 2;"
           then:
             - logger.log:
                 level: WARN
-                format: "No frames for 30 min - restarting to clear a possible MCP2515 overflow latch"
+                format: "No frames for 2 min - restarting to clear the MCP2515 overflow latch"
             - button.press: restart_button
 
 button:

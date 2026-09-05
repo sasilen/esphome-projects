@@ -118,10 +118,12 @@ back to it.
   something this project has to invent — the WPM does it on this bus already, and
   the frame to copy is on record.
 
-- **Addresses observed so far: 0x100, 0x180, 0x480, 0x700.** Matching the scheme,
-  that is a comfort panel polling the boiler, and the manager talking to an
-  external device. **Neither 0x680 nor 0x301 has ever appeared**, so both remain
-  free for this node's own identity in phase 2.
+- **Six addresses are occupied: 0x100, 0x180, 0x301, 0x480, 0x601, 0x700.**
+  Matching the scheme, that is a comfort panel polling the boiler, the manager
+  talking to an external device, and a mixer module talking to a control
+  module. **0x680 is the only listed address that never appears** in two hours
+  of capture, so it is the candidate for this node's own identity in phase 2.
+  See "What a two-hour capture contains" for how each was seen.
 
 - Values look like tenths: element 0x0E answers 0x01F2 = 498, element 0x16
   answers 0x0112 = 274, element 0x0C answers 0x0093 = 147. As °C those are 49.8,
@@ -149,12 +151,12 @@ Per repo convention none of this is copied here; it is linked at the source.
 
 - **Phase 1 stops being decoding and becomes identification.** Capture, then
   match identifiers and element indices against the published table.
-- **0x680 is not automatically free.** It is the PC/ComfortSoft address, and it
-  is what the earlier draft config here used. Users in the community thread
-  report it not working for them — an installed ISG or service tool may already
-  occupy it, and two nodes sharing an identifier corrupts arbitration. The phase 1
-  capture must therefore also answer *which addresses are already in use on this
-  bus* before phase 2 picks one.
+- **0x680 was not automatically free, and the capture is what settled it.** It
+  is the PC/ComfortSoft address, and users in the community thread report it not
+  working for them — an installed ISG or service tool may already occupy it, and
+  two nodes sharing an identifier corrupts arbitration. On this machine it never
+  appeared in two hours, so it is free here. That is a property of this
+  installation, not of the protocol.
 - **The ESP32's built-in TWAI does run this bus at 20 kbps** — bullitt186 uses
   exactly that. This supports the reading already recorded at the end of this
   file: the 25 kbps floor is ESPHome's `esp32_can` component, not the silicon.
@@ -436,14 +438,24 @@ against a silent bus proves nothing and can discard the correct rate.
 panel: navigating menus makes the display talk to the controller over this same
 bus.
 
-**This installation has no FEK or FE7 room control.** Nothing polls the bus on a
-schedule, which is exactly why both lines sat at a flat 2.5 V. Traffic therefore
-has to be provoked, and a zero counter means nothing unless the panel was being
-worked at the time.
+**That reasoning was sound and its conclusion was wrong.** No FEK or FE7 room
+control is installed, so this file concluded that nothing polls the bus on a
+schedule and that traffic always has to be provoked. The capture says otherwise:
+the bus carries **91 frames a minute, continuously**, and the longest gap
+between two frames in two hours is 4.7 seconds. The manager polls the machine
+every five seconds whether anyone is looking or not.
 
-It also hands phase 2 a likely answer to a question left open elsewhere in this
-file: with no room control installed, **address 0x301 is probably free** for the
-node's own bus identity. Confirm it from the capture rather than assuming it.
+So the flat 2.5 V reading meant something narrower than it seemed. A meter
+averaging a differential pair that is recessive most of the time reads 2.5 V on
+both lines regardless — at 20 kbps a seven-byte frame occupies a few
+milliseconds, and the duty cycle simply does not move a multimeter. The
+measurement never was evidence about traffic.
+
+**Two conclusions that rested on it are withdrawn.** Provoking traffic from the
+panel is unnecessary; a zero frame counter means a wrong bit rate or bad wiring
+and nothing else. And **address 0x301 is not free** — 0x601 writes to it and it
+answers 0x100, so a control module of some kind is installed even if it is not
+an FEK. Phase 2 takes 0x680.
 
 ### The connector takes pushed-in wire, not screws
 
@@ -706,12 +718,11 @@ Confirmed on this WPC 07 by capture, 2026-09-05:
 
 - Bitrate: **20 kbps**. No sweep was needed — the first configured value was
   right, and frames appeared as soon as the bus was connected.
-- **11-bit standard identifiers**, as documented. The extended-id trigger in the
-  configuration has stayed silent and can go.
-- Addresses seen so far: **0x480** (manager / WPM) and **0x700** (external
-  device). Neither 0x680 nor 0x301 has appeared, which matters for phase 2:
-  both are candidates for this node's own identity, and 0x301 is the more
-  likely free one since no room control is installed.
+- **11-bit standard identifiers**, as documented. The extended-id trigger stayed
+  silent through the capture and has been removed from the configuration.
+- Addresses occupied: **0x100, 0x180, 0x301, 0x480, 0x601, 0x700**. Only
+  **0x680** is free, and that is what phase 2 takes.
+- Bus load: **91 frames a minute**, sustained, with no gap longer than 4.7 s.
 - Listen-only mode initially — see below
 - 120 Ω termination only if located at the end of the CAN bus (this node is not)
 
@@ -812,6 +823,139 @@ frames appear.
 
 ---
 
+# What a two-hour capture contains
+
+Captured 2026-09-05, 16:02–17:56, 10 380 frames. The log itself is not in the
+repo — `.gitignore` keeps `*.log` out, and the findings below are the part worth
+keeping.
+
+## The bus polls itself, and that decides the architecture
+
+**91 frames a minute, sustained, with no gap longer than 4.7 seconds.** Two
+independent polling loops run without anyone touching the machine: 0x480 asks
+0x700 every five seconds, and 0x100 asks 0x180 every ten.
+
+**So phase 1 needs no transmitter.** A passive node sees flow temperature,
+return temperature and compressor state at the rate the manager itself reads
+them, which is far faster than any sensible Home Assistant update interval.
+Writing stays a phase 2 problem, and it stays a problem about *control*, not
+about reading.
+
+## The address census
+
+Counted as sender, over 10 380 frames:
+
+| Address | Frames | Role in the scheme | What it does here |
+|---|---|---|---|
+| 0x480 | 4562 | manager (WPM) | polls 0x700, serves the clock to 0x100 |
+| 0x700 | 4149 | external device | answers the manager's five-second poll |
+| 0x100 | 868 | **not in the table** | polls 0x180, asks 0x480 for the time |
+| 0x180 | 792 | boiler / heat pump | answers 0x100 |
+| 0x601 | 8 | mixer module | writes to 0x301 every seven minutes |
+| 0x301 | 1 | control module | answered 0x100 once |
+
+**0x680 never appears**, so the PC/ComfortSoft address is free on this machine
+and phase 2 takes it. **0x301 is occupied** — the earlier guess that it was free
+because no FEK is installed was wrong, and 0x601 writing to it is the proof.
+
+**0x100 is the open question.** It is not in the published address table, yet it
+is the third busiest node here. Its behaviour — polling the boiler for
+temperatures and asking the manager for the date and time — is exactly what a
+display would do.
+
+## The clock group, decoded end to end
+
+Six elements the manager serves to 0x100 identify themselves without any element
+list at all, because their values can be checked against a calendar:
+
+| Element | Value | Reading |
+|---|---|---|
+| 0x0122 | 5 | day |
+| 0x0123 | 9 | month |
+| 0x0124 | 26 | year |
+| 0x0125 | 18 | hour |
+| 0x0126 | 0–59 | **minute** |
+| 0x0112 | 2 | unexplained |
+
+The minute is not inferred: 0x0126 rises by exactly one every sixty seconds
+across the whole capture and rolls 59 → 0, with the hour written in the same
+breath. That is a clock, and it confirms the byte layout, the command nibble and
+the element indexing all at once against something already known.
+
+**Two things fall out of it.**
+
+**The heat pump's clock is eleven minutes fast.** It rolled to 18:00 while the
+capture clock read 17:49:05, and the offset is the same at every sample. Worth
+correcting on the panel — it shifts every time-of-day function in the machine,
+including any tariff window.
+
+**Some elements are byte-sized.** Every value in this group is a multiple of
+256: the number sits in byte 5 and byte 6 is padding. Read as a 16-bit word the
+hour reads 4608 rather than 18. The decoder cannot tell from a single frame,
+so it prints the raw hex alongside — but when mapping, **a value that is always
+a multiple of 256 is a byte, not a scaled integer.**
+
+## Elements polled regularly — the mapping shortlist
+
+Values are shown as tenths, which is the scaling the whole capture is consistent
+with. Names are deliberately absent: that is what the element list is for.
+
+| Answered by | Element | Range | Every | Distinct |
+|---|---|---|---|---|
+| 0x700 | 0xFDF3 | 27.8 – 53.7 | 5 s | 109 |
+| 0x700 | 0xFDF4 | 0.0 – 54.3 | 5 s | 106 |
+| 0x700 | 0xFDF5 | 26.2 – 54.0 | 5 s | 87 |
+| 0x700 | 0xFE07 | 0.0 – 5.9 | 4 s | 11 |
+| 0x700 | 0xFE09 | 13.9 – 15.9 | 10 s | 8 |
+| 0x700 | 0xFE0A | 13.4 – 13.6 | 5 s | 3 |
+| 0x700 | 0xFE4C | 1.8 | 5 s | 1 |
+| 0x180 | 0x000C | 15.3 | 10 s | 1 |
+| 0x180 | 0x000E | 47.5 – 50.5 | 10 s | 17 |
+| 0x180 | 0x0016 | 24.1 – 54.4 | 10 s | 93 |
+
+The three 0xFDFx elements moving together over a 26-degree span, at five-second
+resolution, are the obvious first candidates for flow, return and source.
+
+## The four elements the manager writes
+
+These matter more than the reads, because **phase 2 has to imitate exactly this
+traffic** and the frames are on record:
+
+| Element | Values written | Every |
+|---|---|---|
+| 0xFE1B | 0, 100 | 20 s |
+| 0xFE1C | 0, 12, 100 | 20 s |
+| 0xFE1D | 0, 100 | 10 s |
+| 0xFE1E | 0, 3, 4, 6, 7, 15 | 20 s |
+
+0/100 reads as a percentage or an on/off actuator; 0xFE1E's small distinct set
+looks like a bitfield. Each write is answered by 0x700 echoing the value, so the
+**write-then-verify pattern is the machine's own**, and phase 2 should copy it
+rather than write blind.
+
+## Three anomalies, all visible because the log falls back to raw hex
+
+- **System frames do not use the request/response layout.** All 48 of them are
+  `?? ?? FE 01 00 00 ??`, and 21 carry 0x79 in byte 1 — where a receiver's low
+  bits belong. 0x79 is no address, and decoding it produces nodes that do not
+  exist: 0x179, 0x379, 0x579. Everywhere else in the capture byte 1 is 0x00,
+  the single exception being 0x601 legitimately addressing 0x301. The bursts
+  come round every seven minutes.
+- **Two frames carried 0xFB where the index marker belongs.** Both arrived in
+  the same millisecond, seconds before a receive stall, and 0xFA → 0xFB is one
+  bit. They are almost certainly corruption from the overflow rather than a
+  second marker.
+- **The short form's bytes 5–6 are not always zero.** 45 frames carry a small
+  number in byte 6 — 44 of them 0x180 answering element 0x000E, one answering
+  0x0003. The values are 1, 2, 3, 4, 6, 0x18 and 0x61, byte 5 is always zero,
+  and none of it is in the documented layout.
+
+The first two are logged raw by the configuration, and the third is shown as a
+`+00XX` suffix. None of them would have been visible in a decoder that trusted
+the layout.
+
+---
+
 # ESPHome Configuration
 
 The phase 1 sniffer is [`stiebel.eltron.yaml`](stiebel.eltron.yaml). It reads
@@ -851,11 +995,50 @@ nothing is transmitted, but the schema requires the key. It is not a bus
 identity; that decision belongs to phase 2 and to the FEK/ISG behaviour it has
 to mirror.
 
-**Two `on_frame:` triggers, both with `can_id_mask: 0x000`.** A zero mask
-matches every identifier — this is a sniffer, so filtering is the opposite of
-what is wanted. The protocol is documented as 11-bit standard identifiers, so
-the extended trigger exists only to prove that on the first capture; delete it
-once it has stayed silent.
+**One `on_frame:` trigger, with `can_id_mask: 0x000`.** A zero mask matches
+every identifier — this is a sniffer, so filtering is the opposite of what is
+wanted. The second trigger that used to sit beside it watched for extended
+identifiers; it stayed silent through the first capture, which is the proof it
+existed to produce, so it is gone.
+
+## The log decodes, it does not dump hex
+
+The byte layout is confirmed (see "Prior art"), so the handler applies it rather
+than printing raw bytes. Reading a capture then needs no mental arithmetic,
+which matters because the next step is matching hundreds of element indices
+against a published table.
+
+```
+100>180 rd    e=000C
+180>100 resp  e=000C = 147 (0x0093)
+480>700 rd   ex=FE4C
+700>480 resp ex=FE4C = 18 (0x0012)
+480>700 wr   ex=FE1B = 100 (0x0064)
+```
+
+Sender is the CAN identifier; receiver is decoded from bytes 0 and 1, so a
+sub-addressed node appears as `301` rather than `300`. `e=` marks an element
+index taken straight from byte 2 and `ex=` one behind the `FA` marker — the
+distinction is kept visible because it is a protocol fact worth watching, not an
+implementation detail. Values print signed, since temperatures below zero are
+expected, with the raw hex beside them so nothing is lost to a scaling guess.
+
+Three decisions keep the decoder honest rather than merely convenient:
+
+- **A read request prints no value.** Its last bytes are padding, and showing
+  them would put numbers in the log that were never on the bus.
+- **The short form's spare bytes 5–6 are shown if they are ever non-zero**, as a
+  `+ABCD` suffix. Every captured frame had them at zero; if that assumption is
+  wrong somewhere, the log says so instead of dropping the bytes.
+- **Anything that does not fit the shape falls back to raw hex** — a length
+  other than 7, or a command nibble above 7, which is where the large-telegram
+  commands 0x20/0x21 would land. A decoder that mis-decodes silently is worse
+  than no decoder.
+
+The logic was run against every frame recorded in this file before flashing, on
+a host compiler, including the negative value, the sub-address and both
+fallbacks. That checks the arithmetic; it does not check ESPHome's schema, which
+still needs a validate.
 
 **The `CAN frames` counter** answers "is the bit rate right?" without reading
 the log at all: it stays at zero on a wrong rate and climbs steadily on a
@@ -875,20 +1058,40 @@ stays marked full and **no further frame is ever accepted**. The earlier burst o
 `receive buffer overrun` messages was the warning; the stall is what follows.
 
 What makes it dangerous is that it is invisible. A stalled node and a genuinely
-quiet bus look identical, and this installation has no room control, so quiet
-stretches are plausible. During an overnight capture the difference matters:
-one is a night of data, the other is a night of nothing.
+quiet bus look identical from the outside. During an overnight capture the
+difference matters: one is a night of data, the other is a night of nothing.
 
 Two mitigations are in the configuration:
 
 - **Keep the loop quick**, which is why `logger` runs at INFO rather than DEBUG.
   Overruns are what set the flag in the first place.
-- **A watchdog restarts the node** if the frame counter has not moved for 30
+- **A watchdog restarts the node** if the frame counter has not moved for two
   minutes, and logs a warning when it does. There is also a `Restart` button
   exposed in Home Assistant for the manual case.
 
-The 30-minute window is a guess until the bus's real idle rhythm is known. If it
-starts restarting a healthy node, lengthen it — do not remove it.
+### It is not a one-off, and the first window was far too long
+
+The two-hour capture stalled **twice**, and the watchdog recovered it both
+times. It worked exactly as designed and still lost most of the capture: the
+node was dead for **69 of its 113 minutes**, because each stall cost the full
+30-minute window plus the reboot.
+
+The same capture measured what the window should be. Gaps between frames fall
+into two groups with nothing between them:
+
+| Gap | Count | What it is |
+|---|---|---|
+| ≤ 4.7 s | every other gap | the bus's normal rhythm |
+| 2069 s, 2076 s | 2 | the watchdog's own 30-minute window plus reboot |
+
+**Two minutes** therefore sits 25× above the worst healthy gap and cuts a
+stall's cost from 35 minutes to two. Restarting that often does not trip safe
+mode either — `boot_is_good_after` defaults to one minute, so a two-minute
+uptime resets the boot loop counter, which the capture's log confirms it did.
+
+This is a bandage on a driver bug, not a fix. Clearing `EFLG` is the component's
+job, and if a later ESPHome does it, the watchdog becomes dead weight. Check the
+warning count before deciding it has: **a healthy node logs no restarts at all.**
 
 ## The two failure signatures, and why they must not be confused
 
@@ -933,15 +1136,22 @@ No MQTT broker is required.
 
 ## Phase 1 — read
 
-- Locate CAN_H, CAN_L and GND on the WPC 07.
-- Verify the CAN bitrate (expected 20 kbps) — stay listen-only until confirmed.
-- Capture CAN frames.
-- Map identifiers and element indices against Jürg Müller's element list (see
-  Prior art).
-- Record which addresses are already occupied on this bus — phase 2 needs one
-  that is free, and 0x680 may not be.
-- Create ESPHome sensors.
-- Expose entities directly to Home Assistant.
+Done: the tap point (X27 on board A2), the bit rate, the byte layout, a
+two-hour capture, the address census, and the discovery that the bus polls
+itself. **Phase 1 can be finished passively** — the node never has to transmit
+to see the numbers it wants, which was the open question and is now closed.
+
+What is left:
+
+- **Map the element indices against Jürg Müller's element list.** The capture
+  hands over about seventy of them with their value ranges and poll intervals;
+  see "What a two-hour capture contains". This is table lookup, not decoding.
+- **Explain 0x100.** It is not in the published address table, yet it is one of
+  the two busiest talkers on this machine.
+- Create ESPHome sensors for the elements that are polled regularly, and expose
+  them to Home Assistant.
+- **Re-capture once the watchdog window is two minutes**, to confirm the stall
+  rate against a capture that is not two-thirds dead.
 
 ## Phase 2 — write
 

@@ -5,10 +5,16 @@
 Read the heat pump's operating data over its CAN bus and — in phase 2 — write the
 parameters the WPM exposes, straight from Home Assistant via ESPHome. No MQTT.
 
-**Status: planning.** Most of the hardware is on hand, one part is still to be
-ordered, and nothing has been connected to the bus yet. The phase 1 sniffer
-configuration [`stiebel.eltron.yaml`](stiebel.eltron.yaml) is written but has
-not been flashed or validated against a real ESPHome install.
+**Status: phase 1 works, phase 2 waits for one part.** The sniffer
+[`stiebel.eltron.yaml`](stiebel.eltron.yaml) is flashed and sitting on the bus
+at X27. The bit rate is confirmed at 20 kbps, frames are captured and decoded in
+the log, and the addresses in use are known. What is left in phase 1 is naming
+the elements against the published table and turning them into Home Assistant
+sensors. Writing needs a transceiver that is chosen but not yet in hand.
+
+**Phase 1 needs no transmitter after all.** The bus polls itself at 91 frames a
+minute with no gap longer than five seconds, so a listen-only node sees every
+temperature the controller reads. That was the open question, and it is closed.
 
 ## Why bother, when on/off control already exists
 
@@ -28,15 +34,17 @@ it.
 | CAN parameter writes | continuous | curve and setpoint shifting, solar surplus |
 | CAN reads | feedback | closes the loop on both of the above |
 
-Writing is not blind reverse engineering: the FEK/FE7 room controller and the ISG
-already write setpoints over this same bus, so mirroring what an existing
-participant writes is a much smaller step than inventing traffic.
+Writing is not blind reverse engineering. **The capture caught the machine
+writing to itself** — the manager writes four elements to another node on a
+fixed cycle and reads each value back to confirm it. Those frames are recorded
+byte for byte, so phase 2 imitates traffic that already exists rather than
+inventing any.
 
 And it has been done before. This is the **Elster/Kromschröder CAN protocol**,
 reverse engineered years ago and published as an element list of thousands of
-signals, with working ESPHome configurations that both read and write. Read
-[`CLAUDE.md`](CLAUDE.md) before capturing anything — phase 1 is matching a
-capture against a known table, not decoding from scratch.
+signals, with working ESPHome configurations that both read and write. What is
+left of phase 1 is matching a capture against that table, not decoding from
+scratch.
 
 > Polarity of the existing Shelly is counter-intuitive — **relay ON = pump runs**.
 > See [`../aidon/`](../aidon/) before writing automations against it.
@@ -45,9 +53,11 @@ capture against a known table, not decoding from scratch.
 
 ```
 Stiebel WPC 07
-        │  Elster protocol, 20 kbps, 11-bit ids (documented, not yet measured)
+        │  Elster protocol, 20 kbps, 11-bit ids — measured, not assumed
         ▼
-  MCP2515 + Adafruit CAN Pal (TJA1051T/3)
+  MCP2515 + TJA1050        phase 1, listening: the module as it ships
+        │                  phase 2, writing: swap the bus side for an
+        │                  SN65HVD230 and lift one MCP2515 pin
         │  SPI, all 3.3 V
         ▼
   ESP8266 (Wemos D1 mini)
@@ -71,15 +81,15 @@ Stiebel WPC 07
 
 **Still needed — nothing for phase 1**
 
-- **An SN65HVD230 (VP230) module** for phase 2, €2–4. Not the Adafruit CAN Pal at
-  €20: its 5 V generator solves a problem a native 3.3 V transceiver does not
-  have, and its switchable termination stopped mattering once the bus measured
-  unterminated. See [`CLAUDE.md`](CLAUDE.md).
+- **An SN65HVD230 (VP230) breakout** for phase 2, €2–4, chosen and not yet in
+  hand. Not the Adafruit CAN Pal at €20: its 5 V generator solves a problem a
+  native 3.3 V transceiver does not have, and its switchable termination stopped
+  mattering once the bus measured unterminated. See [`CLAUDE.md`](CLAUDE.md).
 - PESD1CAN / NUP2105L TVS — only if the transceiver board carries no protection
 - LM2596 buck, if power is taken from the heat pump — five are in stock
 
 The RS-485 modules in stock are **not** a substitute; see [`CLAUDE.md`](CLAUDE.md)
-for why. Do **not** order until the bit rate is measured.
+for why.
 
 The ESP32 was here for its built-in CAN controller, and that route is rejected
 (see below). What is left is RAM headroom — Stiebel's element lists run to
@@ -108,6 +118,10 @@ transceiver half is affected:
 | 1, listen only | The module alone, whole board at 3.3 V. The under-volted TJA1050 still receives, and nothing is ever transmitted | nothing |
 | 2, transmit | A transceiver that drives the bus from 3.3 V. The MCP2515 stays; only its bus side moves to the new part | one small board |
 
+Phase 1 confirmed the first row in practice: the under-volted TJA1050 receives a
+live bus for hours on end. The stalls that did occur are the MCP2515 driver's
+doing, not the transceiver's — see [`CLAUDE.md`](CLAUDE.md).
+
 Three modules therefore cover three controllers. The phase 2 purchase replaces a
 job the on-board TJA1050 cannot do at 3.3 V, not the module.
 
@@ -118,26 +132,32 @@ The common MCP2515 + TJA1050 module is a 5 V design, because the TJA1050 needs
 module's outputs drive 0/5 V into a 3.6 V-max GPIO, and at VDD = 5 V the MCP2515's
 input threshold is 3.5 V, above what the MCU can output.
 
-**The solution: run the whole module at 3.3 V and bypass its transceiver with the
-CAN Pal**, which generates its own 5 V on board. SPI is then entirely 3.3 V and no
-level shifter is needed anywhere.
+**The solution: run the whole module at 3.3 V and bypass its transceiver with a
+native 3.3 V one.** SPI is then entirely 3.3 V, and so is the bus side, so no
+level shifter and no second rail is needed anywhere.
+
+For phase 1 this costs nothing at all — the under-volted TJA1050 receives
+perfectly well, and a listening node never has to drive a dominant bit. The
+rework below belongs to phase 2, when the SN65HVD230 arrives:
 
 - Module VCC → 3.3 V (MCP2515 is in spec at 2.7–5.5 V)
 - The on-board TJA1050 ends up under-volted and unused — its CANH/CANL terminals
   and its 120 Ω stay unconnected, so **neither needs removing**
-- **Lift MCP2515 pin 2 (RXCAN)** and wire it to the CAN Pal's RX. This is the only
-  mandatory rework — without it the TJA1050's RXD and the CAN Pal's RX fight over
-  the same node
-- MCP2515 pin 1 (TXCAN) → CAN Pal TX, tapped on the existing net
+- **Lift MCP2515 pin 2 (RXCAN)** and wire it to the new transceiver's RXD. This
+  is the only mandatory rework — behind pin 2 is an output, and without the lift
+  the TJA1050's RXD and the SN65HVD230's fight over the same node
+- MCP2515 pin 1 (TXCAN) → the new transceiver's TXD, tapped on the existing net.
+  Behind pin 1 is an input, so tapping is enough
 
-On the CAN Pal itself, **switch termination OFF**. Single most important setting
-on the board: this node is a tap, not a bus end, and a third 120 Ω drops the bus
-to roughly 60 Ω.
+Drawn out in [`phase2-transceiver.svg`](phase2-transceiver.svg). Note that the
+new board's own 120 Ω is soldered rather than switchable, and on this
+unterminated bus that is probably wanted rather than a nuisance — the opposite
+of the advice that applied while the pump was assumed to terminate the bus.
 
 Full pin tables, the superseded two-rail plan and the grounding argument are in
 [`CLAUDE.md`](CLAUDE.md).
 
-## Three things that will bite you
+## Four things that will bite you
 
 1. **Check the crystal.** These modules ship with either an 8 MHz or a 16 MHz
    crystal, and a 16 MHz board configured as 8 MHz gets the bit rate wrong by a
@@ -150,16 +170,24 @@ Full pin tables, the superseded two-rail plan and the grounding argument are in
    ESPHome version does not expose listen-only on `mcp2515`, enforce it in
    hardware: lift the TJA1050's pin 1 (TXD) and tie it to VCC. The node then
    physically cannot drive the bus, and sweeping bit rates becomes risk-free.
-3. **Grounding decides reliability.** If the Stiebel connector carries a supply
-   voltage (the FE7/FEK bus normally does), take the ESP's power from there via
-   the LM2596 — one ground reference, no loop. An ESP on laptop USB while
-   connected to the heat pump bus is exactly the arrangement where loop currents
-   run through the CAN conductors.
+3. **Grounding is less of a trap than it looks, but check before you assume it.**
+   X27 pin 4 does carry a supply — 17.4 V, not the 12 V the legend promises — and
+   pin 3 has no continuity to the chassis, so the rail is floating SELV. That
+   means an ordinary Class II charger is as isolated as taking power from the
+   pump through an LM2596, and the real risk is narrower: **plugging USB into the
+   ESP while it sits on the bus**, from a mains-earthed laptop. Debug over WiFi
+   and the question does not arise. See [`CLAUDE.md`](CLAUDE.md).
+4. **The receiver stops silently.** The MCP2515 latches an overflow flag that the
+   driver never clears, and reception then ends for good with the node still
+   online and the log still clean. It happened twice in a two-hour capture. A
+   watchdog in the configuration restarts the node after two minutes without a
+   frame; do not remove it without checking the warning count first.
 
 ## First run — the sniffer
 
-The CAN Pal is not needed yet. Phase 1 runs on one plain module, and that module
-becomes the permanent sniffer:
+This is what was done, and what to repeat if the node is ever rebuilt. Phase 1
+runs on one plain module, unmodified, and that module becomes the permanent
+sniffer.
 
 Three drawings cover this, and they answer different questions:
 [`mcp2515-module-prep.svg`](mcp2515-module-prep.svg) — what to change on the
@@ -169,15 +197,12 @@ order to check things in. The board itself is in
 [`mcp2515-module.jpg`](mcp2515-module.jpg).
 
 1. **Prepare the module — there is nothing to do.** Termination is already out of
-   circuit on the module measured for these drawings: H to L reads 49 kΩ. And
+   circuit on the module measured for these drawings: across the H and L screw
+   posts it reads 49 kΩ, three orders of magnitude away from a terminator. And
    `mode: LISTENONLY` compiles on the installed ESPHome, so listen-only is
-   enforced in software and the TJA1050 pin 1 lift is optional. **Phase 1 needs
-   no soldering.** Repeat the 49 kΩ measurement if you use one of the other two
-   modules.
-   Pull the termination jumper cap; measuring across the H and L screw posts tells
-   you when it is out (~120 Ω → open). Then lift the TJA1050's pin 1 (TXD) and tie
-   it to VCC. That pin lift is the only soldering here, and it is optional if you
-   trust `mode: LISTENONLY` on its own.
+   enforced in software and the TJA1050 pin 1 lift is unnecessary. **Phase 1
+   needs no soldering.** Repeat the 49 kΩ measurement if you use one of the other
+   two modules — a reading near 120 Ω means R2 is hard-wired and has to come off.
 2. **The crystal is already known: 8 MHz**, so the `substitutions:` block in
    [`stiebel.eltron.yaml`](stiebel.eltron.yaml) needs no edit. Check the marking
    anyway if you grab a different module from the box.
@@ -228,20 +253,24 @@ Use the plain or `factory` binary, not `-ota.bin`. Drop to `--baud 57600` if the
 connection breaks. `Hash of data verified` means it took.
 
 **Only the first flash needs USB.** After that the board is on WiFi and
-`Install → Wirelessly` reaches it, which matters here because bit-rate sweeping
-means several re-flashes.
+`Install → Wirelessly` reaches it — which is how every change since has gone on,
+and why no isolated transceiver is needed: the node is never tethered to a
+laptop while it sits on the bus.
 
-Two things differ from the aidon build: there is no wizard to generate the API
+One thing differs from the aidon build: there is no wizard to generate the API
 key, so make one yourself with `openssl rand -base64 32` and put it in
-`secrets.yaml`; and the machine doing the USB write needs the **CH34x driver**,
-since these D1 minis carry a CH340G over USB-C.
+`secrets.yaml`. **No CH34x driver was needed** — the listing claimed a CH340G,
+but the board that was flashed carries an FT232R, which `ftdi_sio` already
+covers and which resets into the bootloader on its own.
 
 5. **Connect CANH, CANL and GND** to the bus and watch the `CAN frames` counter.
    Zero means the bit rate is wrong: edit `can_bit_rate`, re-flash, try again.
-   20 → 25 → 50 kbps. The rate is compile-time, so each step is a re-flash.
+   The rate is compile-time, so each step is a re-flash.
 
-Once frames appear, capture a long log and start mapping identifiers against the
-element lists.
+No sweep was needed in the end — 20 kbps was right at the first attempt and
+frames appeared as soon as the bus was connected. A zero counter here means the
+bit rate or the wiring and nothing else: the bus is never quiet for more than
+five seconds.
 
 ## Rejected: the ESP32's built-in CAN
 
@@ -263,16 +292,17 @@ podman exec esphome esphome config /config/cantest.yaml
 
 ## Remaining tasks
 
-**Phase 1 — read**
+**Phase 1 — read.** Connected at X27 on board A2, bit rate confirmed, protocol
+decoded, addresses censused. Left to do:
 
-- Connect at **X27 on board A2** — 1 = H, 2 = L, 3 = ground, 4 = +12 V. Verify
-  with the meter first; see [`bus-connection.svg`](bus-connection.svg)
-- Verify the bit rate — stay listen-only until confirmed
-- Capture frames, map identifiers and element indices against the published
-  element list
-- **Note which addresses are already in use** — 0x680 is the PC address and may
-  be taken. Phase 2 needs a free one
-- Create ESPHome sensors and expose them to Home Assistant
+- Name the elements: match the indices in the capture against the published
+  element list. About seventy of them, with their value ranges and poll
+  intervals, are tabulated in [`CLAUDE.md`](CLAUDE.md)
+- Work out what **0x100** is — it is one of the busiest nodes on this bus and it
+  is not in the published address table
+- Create ESPHome sensors for the regularly polled elements and expose them to
+  Home Assistant
+- Re-capture now that the watchdog window is two minutes rather than thirty
 
 **Phase 2 — write**
 
@@ -282,7 +312,12 @@ podman exec esphome esphome config /config/cantest.yaml
   120 Ω resistors get used.
 - Identify the writable elements: heating curve slope, room setpoint
   (comfort/ECO), DHW setpoint, operating mode
-- Give the node a bus identity — address the WPM the way an FEK or ISG does
+- **Take 0x680 as the node's bus identity.** It is the only address in the
+  published table that never appeared in two hours of capture. 0x301 is *not*
+  free — a mixer module writes to it
+- **Copy the machine's own write-then-verify pattern.** The manager writes four
+  elements to 0x700 on a fixed cycle and reads each value back; those frames are
+  on record in [`CLAUDE.md`](CLAUDE.md), so phase 2 imitates rather than invents
 - **Rate-limit the writes.** If the WPM persists these parameters, writing every
   few seconds is an EEPROM wear problem. Write on change only, with a deadband and
   a minimum interval.
