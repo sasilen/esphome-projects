@@ -1,9 +1,8 @@
 # Aidon 7410 HAN-portti → Home Assistant (ESPHome)
 
-> **Tekninen viitedokumentti: miten rakennettu ja miksi näin.** Yleiskuva ja
-> rakennusohje: [README.md](README.md). Rakennuskertomus:
-> [`BUILDLOG.md`](BUILDLOG.md) — se on jäädytetty elokuun 2026 tilanteeseen,
-> tämä tiedosto pidetään ajan tasalla.
+> **Tekniset tiedot ja perustelut.** Yleiskuva: [README.md](README.md).
+> Rakennuskertomus: [`BUILDLOG.md`](BUILDLOG.md) — se on jäädytetty elokuun 2026
+> tilanteeseen, tämä tiedosto pidetään ajan tasalla.
 
 ## Tila
 

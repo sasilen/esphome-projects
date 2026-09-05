@@ -1,6 +1,6 @@
 # Enervent Pegasos Eco ECE → Home Assistant (ESPHome) Integration Notes
 
-> **Technical reference: current state and reasoning.** Overview: [README.md](README.md).
+> **Technical details and reasoning.** Overview: [README.md](README.md).
 
 ## Goal
 

@@ -1,8 +1,7 @@
 # Aidon 7410 HAN-portti → Home Assistant
 
-> **Yleiskuva ja rakennusohje.** Perustelut ja mitatut arvot:
-> [`CLAUDE.md`](CLAUDE.md). Miten tähän päädyttiin:
-> [`BUILDLOG.md`](BUILDLOG.md).
+> **Yleiskuva.** Tekniset tiedot ja perustelut: [`CLAUDE.md`](CLAUDE.md).
+> Rakennuskertomus: [`BUILDLOG.md`](BUILDLOG.md).
 
 Reaaliaikainen sähkönkulutus Aidon 7410 -mittarin HAN-portista Home Assistantiin
 Wemos D1 minillä ja ESPHomella. Ei pilvipalvelua, ei MQTT:tä — pelkkä ESPHomen

@@ -1,6 +1,6 @@
 # Stiebel Eltron WPC 07 → Home Assistant (CAN bus, without MQTT)
 
-> **Technical reference: current state and reasoning.** Overview: [README.md](README.md).
+> **Technical details and reasoning.** Overview: [README.md](README.md).
 
 ## Goal
 

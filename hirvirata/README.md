@@ -1,6 +1,6 @@
 # Hirvirata
 
-> **Yleiskuva ja rakennusohje.** Perustelut, riskit ja mitoitus: [`CLAUDE.md`](CLAUDE.md).
+> **Yleiskuva.** Tekniset tiedot ja perustelut: [`CLAUDE.md`](CLAUDE.md).
 
 Liikkuva maalitaulurata ilmakivääri- ja pienoisradalle. ESP8266 ohjaa 12 V
 vaihdemoottoria H-siltaohjaimen kautta; hihna vetää vaunua kiskolla edestakaisin

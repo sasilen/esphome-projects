@@ -46,8 +46,8 @@ Jokainen projekti on oma hakemistonsa:
 
 ```
 <projekti>/
-├── README.md              yleiskuva: tila, rauta, kytkentä, seuraavat askeleet
-├── CLAUDE.md              tekninen viitedokumentti, täydet perustelut
+├── README.md              yleiskuva
+├── CLAUDE.md              tekniset tiedot ja perustelut
 ├── BUILDLOG.md            rakennuskertomus (vain rakennetuissa projekteissa)
 ├── <projekti>.yaml        ESPHome-konfiguraatio (jos olemassa)
 ├── secrets.yaml.example   mallipohja salaisuuksille
@@ -57,11 +57,14 @@ Jokainen projekti on oma hakemistonsa:
 Dokumentit vastaavat kolmeen eri kysymykseen, ja aikamuoto kertoo mihin mikäkin
 teksti kuuluu:
 
-| Tiedosto | Kysymys | Aikamuoto |
-|---|---|---|
-| `README.md` | Mikä tämä on, ja kannattaako minun tehdä tämä? | preesens, käskymuoto |
-| `CLAUDE.md` | Miten se on rakennettu ja miksi juuri näin? | preesens, toteava |
-| `BUILDLOG.md` | Miten tähän päädyttiin? | imperfekti, minämuoto |
+| Tiedosto | Nimitys | Kysymys | Aikamuoto |
+|---|---|---|---|
+| `README.md` | Yleiskuva | Mikä tämä on, ja kannattaako minun tehdä tämä? | preesens, käskymuoto |
+| `CLAUDE.md` | Tekniset tiedot ja perustelut | Miten se on rakennettu ja miksi juuri näin? | preesens, toteava |
+| `BUILDLOG.md` | Rakennuskertomus | Miten tähän päädyttiin? | imperfekti, minämuoto |
+
+Näitä nimityksiä käytetään kaikkialla samoina, jotta samalle tiedostolle ei
+synny kahta eri nimeä eri paikkoihin.
 
 `BUILDLOG.md` on **päivätty tilannekuva jota ei päivitetä** — myös siltä osin kuin
 se vanhenee. Miten asiat nyt ovat, sen kertovat README ja CLAUDE.md. Toistaiseksi

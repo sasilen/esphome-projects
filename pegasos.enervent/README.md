@@ -1,6 +1,6 @@
 # Enervent Pegasos Eco ECE → Home Assistant
 
-> **Overview and build guide.** Reasoning and measured values: [`CLAUDE.md`](CLAUDE.md).
+> **Overview.** Technical details and reasoning: [`CLAUDE.md`](CLAUDE.md).
 
 Local monitoring and control of an Enervent Pegasos Eco ECE ventilation unit over
 RS-485/Modbus RTU, bridged to Home Assistant by an ESP32 running ESPHome. No cloud
