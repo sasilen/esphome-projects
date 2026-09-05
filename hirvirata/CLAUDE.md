@@ -7,8 +7,6 @@ vaihdemoottoria H-siltaohjaimen kautta; hihna vetää vaunua kiskolla
 edestakaisin eri nopeuksilla ja ohjelmilla. Kotiautomaatio-integraatio
 Home Assistantiin ESPHome-APIn yli.
 
-Käyttäjä kommunikoi suomeksi. Vastaa suomeksi, myös koodikommenteissa.
-
 ## Projektin tila
 
 Suunnitteluvaihe. YAML-luonnos on olemassa, rautaa ei ole vielä koottu.

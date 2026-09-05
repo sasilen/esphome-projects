@@ -80,6 +80,9 @@ Toistaiseksi buildlog on vain [aidonilla](aidon/BUILDLOG.md).
 Poikkeus on `bestway.lay-z-spa`, jolla ei ole `CLAUDE.md`:tä lainkaan — sen
 tekniset yksityiskohdat ovat upstreamin omassa dokumentaatiossa.
 
+Repon juuressa on lisäksi oma [`CLAUDE.md`](CLAUDE.md), johon nämä konventiot on
+koottu tiiviisti.
+
 ## Salaisuudet
 
 `secrets.yaml` **ei ole versionhallinnassa** eikä sitä lisätä sinne — juurihakemiston
