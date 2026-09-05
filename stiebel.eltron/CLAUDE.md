@@ -1266,6 +1266,57 @@ commanding 0xFE1B *to* 100 is what stops it. That fits a blocking or diverting
 output better than a run command, and it is the reason this is not being named
 yet.
 
+### 0xFE07 is named after all, and the panel advice was misdirected
+
+[kr0ner/OneESP32ToRuleThemAll](https://github.com/kr0ner/OneESP32ToRuleThemAll)
+carries a property table that reaches into the range Jürg Müller's list stops
+short of, and it names three of the four unknowns on this bus:
+
+```cpp
+PROPERTY(VORLAUFISTTEMP,   0xfdf3, Type::et_dec_val);
+PROPERTY(RUECKLAUFISTTEMP, 0xfdf4, Type::et_dec_val);
+PROPERTY(FROSTSCHUTZ,      0xfe07, Type::et_dec_val);
+```
+
+**0xFDF4 is the return temperature — which this file had already proved from
+the capture alone**, by correlating it against `RUECKLAUFISTTEMP` at 0x180 to a
+median absolute difference of 0.0 K. A published table now says the same. That
+is the strongest validation the correlation method has had, and it means the
+same method can be trusted on the elements no table covers.
+
+**0xFDF3 is the flow temperature**, which fits its measured behaviour exactly:
+it tracked the return within about 5 K throughout, which is what a flow and a
+return do.
+
+**0xFE07 is `FROSTSCHUTZ`, in tenths — so 5.1 to 5.9 °C.** And that means the
+advice this file gave after the panel search came up empty was wrong in a way
+worth recording. The tenths reading *was* right; what was wrong was expecting a
+frost protection limit to appear on the display at all. Telling the user to look
+for "56 rather than 5.6" doubled down on the wrong half of the problem — the
+scaling was never the issue, the assumption that an internal protection value is
+a displayed measurement was.
+
+**The behaviour still deserves a second look.** A protection limit that ramps
+down through 0.7 °C, overshoots to 5.9 and jitters by a tenth every few seconds
+is not obviously a static setpoint, and it steps from 5.6 to 5.2 when the
+compressor runs. A computed limit tracking a filtered temperature would do all
+of that, so the name and the dynamics can be reconciled — but the earlier
+reading of "something with mass in it, so a pump or a flow" was over-confident
+and is withdrawn.
+
+**Still unnamed by any of the four sources: 0xFDF5, 0xFE09, 0xFE0A, 0xFE1B,
+0xFE1C, 0xFE1D, 0xFE1E and 0xFE4C.** 0xFE1D remains the compressor by behaviour,
+which no table contradicts.
+
+kr0ner also refines two names this file took from elsewhere: 0x010E is
+`STEIGUNG_HK1`, the slope for heating circuit 1 rather than a generic heating
+curve, and 0x0005 is `RAUMSOLLTEMP_TAG`. Both are the same parameters under more
+precise names.
+
+**Pending config change**, not worth a re-flash mid-capture: `Element 0xFE07`
+should become a temperature in tenths named for frost protection, and
+`Element 0xFDF3` a flow temperature. The raw values are in the log either way.
+
 ### The panel was checked, and nothing reads 5.6 or 5.2
 
 That was worth doing and it removes something — but note what it removes. **The
