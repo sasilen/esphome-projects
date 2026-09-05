@@ -4,9 +4,11 @@
 # and to capture frames for mapping against the element lists.
 #
 # Hardware for this phase (see CLAUDE.md, "Phase 1: sniffing before the final
-# circuit"): the plain MCP2515 + TJA1050 module run entirely at 3.3 V, its
-# on-board 120 Ohm removed, and the TJA1050's pin 1 (TXD) lifted and tied to VCC.
-# The CAN Pal is not needed until the write phase.
+# circuit"): the plain MCP2515 + TJA1050 module run entirely at 3.3 V.
+# Measured on this module: H to L reads 49 kOhm, so the on-board 120 Ohm is
+# already out of circuit and needs no work. TJA1050 pin 1 (TXD) lifted and tied
+# to VCC is the remaining option, and only if `mode: LISTENONLY` below is
+# rejected by the installed ESPHome. A transceiver purchase belongs to phase 2.
 #
 # Wemos D1 mini pins (hardware SPI):
 #   D5 = SCK, D6 = SO (MISO), D7 = SI (MOSI), D8 = CS

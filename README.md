@@ -177,8 +177,8 @@ koottu tiiviisti.
 ## Salaisuudet
 
 `secrets.yaml` **ei ole versionhallinnassa** eikä sitä lisätä sinne — juurihakemiston
-`.gitignore` estää sen. Jokaisessa projektissa on `secrets.yaml.example`, josta
-kopio:
+`.gitignore` estää sen. Jokaisella projektilla jolla on ESPHome-konfiguraatio on
+`secrets.yaml.example`, josta kopio:
 
 ```sh
 cd hirvirata

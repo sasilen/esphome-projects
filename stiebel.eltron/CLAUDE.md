@@ -474,22 +474,55 @@ driving the dominant bit — which is precisely what listening does not need.
 
 **Two things must be handled for this test:**
 
-1. **Disconnect the module's 120 Ω — by pulling a jumper cap, not by
-   desoldering.** On this board (V2139) R2 is marked `121` = 120 Ω and the
-   termination is switched by a cap; both J1 and J3 are fitted. In this test the
+1. **The 120 Ω is already out of circuit on this board — nothing to do.**
+   Measured across the H and L screw posts: **49 kΩ**, three orders of magnitude
+   away from a terminator. R2 is marked `121` = 120 Ω and it is on the board, but
+   neither J1 nor J3 is shorted, so it never reaches the bus. The photograph
+   looked like fitted jumper caps; it was wrong, and the meter settled it.
+
+   Keep the reasoning below anyway, because it decides what to do with the *next*
+   module — the other two are unmeasured. In this test the
    module's *own* transceiver and terminals are in use, so its terminator would
    sit across the live bus. Three terminators give ~40 Ω, below what the
    transceivers are specified to drive, and that can disturb the heat pump's own
    traffic. (In the final CAN Pal wiring the module's bus side is unused and the
    terminator is harmless.)
 
-   **Verify by measurement rather than by guessing which cap is which:** meter
-   across the H and L screw posts, pull caps until it reads open instead of
-   ~120 Ω.
+   **The decisive measurement is across the H and L screw posts, not across the
+   jumpers.** Open or high → the terminator is not in circuit and there is
+   nothing to do. Still ~120 Ω with both jumpers open → R2 is hard-wired and has
+   to come off with an iron.
+
+   **A worry that is now closed.** If one of those jumpers had been the link
+   between the transceiver's CANH/CANL and the screw terminal, leaving it open
+   would mean no bus connection at all — and the symptom would be zero frames,
+   indistinguishable from a wrong bit rate. **Measured: TJA1050 pin 6 to the L
+   post reads 0 Ω.** The terminal is wired straight to the transceiver, no jumper
+   sits in that path, and a silent bus later will genuinely be about bit rate or
+   wiring rather than a link that was never made.
 
 2. **Enforce listen-only in hardware.** ESPHome's mcp2515 component may not expose
    listen-only mode. Rather than depend on it, **lift the TJA1050's pin 1 (TXD) and
-   tie it to the module's VCC** (TXD high = recessive). The node then physically
+   tie it to the module's VCC** (TXD high = recessive).
+
+   **Pin 1 is the top pin of U1's left-hand row** — the side away from the screw
+   terminal, identified on the board and ringed in
+   [`mcp2515-module-prep.svg`](mcp2515-module-prep.svg). That is consistent with
+   the rest of the package: with pin 1 there, the terminal side carries 8, 7, 6, 5
+   downwards, putting CANH (7) at the H post and CANL (6) at L.
+
+   **Confirmed on the board, from three directions:** pin 6 reads 0 Ω to the L
+   post, pin 2 to the module's GND and pin 3 to VCC. The orientation is measured,
+   not inferred, so pin 1 can be lifted without further checking.
+
+   The procedure, for the next module. Board unpowered,
+   continuity mode. Pin 7 beeps to the H post and pin 6 to the L post — copper
+   traces, so under an ohm and unchanged when the probes are swapped, which is
+   what separates them from the junction paths that make everything else read
+   finite. Pin 8 is then the neighbour of pin 7 at the corner, and pin 1 sits
+   directly across the package from pin 8. Confirm before touching it: pin 2 must
+   beep to the module's GND pin and pin 3 to VCC. Three independent checks, and
+   the cost of getting it wrong is a destroyed transceiver. The node then physically
    cannot drive the bus: no ACK, no error frames, whatever bit rate is configured.
 
    Dedicate one of the three modules as the permanent sniffer this way. The MCP2515

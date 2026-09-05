@@ -91,6 +91,11 @@ bittiaikaan verrattuna. 10 kΩ olisi ollut rajatapaus.
 
 Komponentti: **psvanstrom/esphome-p1reader**, `protocol: ascii`.
 
+Tunnukset `!secret`-viittauksina, ks. [`secrets.yaml.example`](secrets.yaml.example).
+Myös **AP-varayhteyden salasana** kuuluu sinne — se jäi alun perin kirjoitetuksi
+arvoksi konfiguraatioon, koska se tuntuu laitteen omalta asetukselta eikä verkon
+tunnukselta. AP:n nimi sen sijaan saa jäädä näkyviin.
+
 ```yaml
 esp8266:
   board: d1_mini

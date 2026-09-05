@@ -82,6 +82,12 @@
   <text x="441" y="418" font-size="10" fill="#C9B896" text-anchor="middle">TJA</text>
   <text x="441" y="432" font-size="10" fill="#C9B896" text-anchor="middle">1050</text>
   <text x="441" y="366" font-size="11" fill="#8FB0C2" text-anchor="middle">U1</text>
+  <circle cx="418" cy="381" r="3.5" fill="#8C8C8C"/>
+  <circle cx="400" cy="386" r="7" fill="none" stroke="#C0392B" stroke-width="2.5"/>
+  <text x="386" y="378" font-size="11" font-weight="700" fill="#C0392B" text-anchor="end">1 TXD</text>
+  <text x="486" y="390" font-size="10" fill="#DCE6EC">8</text>
+  <text x="486" y="410" font-size="10" fill="#DCE6EC">7 &#8594; H</text>
+  <text x="486" y="430" font-size="10" fill="#DCE6EC">6 &#8594; L</text>
 
   <!-- R2 + J1 -->
   <rect x="438" y="484" width="36" height="16" fill="#B9C6CF" stroke="#5A6772"/>
@@ -103,9 +109,9 @@
   <line x1="590" y1="478" x2="556" y2="494" stroke="#16212B" stroke-width="2"/>
   <line x1="596" y1="459" x2="546" y2="360" stroke="#16212B" stroke-width="2" stroke-dasharray="3 3"/>
 
-  <circle cx="352" cy="440" r="13" fill="#16212B"/>
-  <text x="352" y="445" font-size="13" font-weight="700" fill="#E9ECEF" text-anchor="middle">3</text>
-  <line x1="365" y1="437" x2="400" y2="412" stroke="#16212B" stroke-width="2"/>
+  <circle cx="348" cy="442" r="13" fill="#16212B"/>
+  <text x="348" y="447" font-size="13" font-weight="700" fill="#E9ECEF" text-anchor="middle">3</text>
+  <line x1="358" y1="433" x2="392" y2="391" stroke="#16212B" stroke-width="2"/>
 
   <!-- ============================================ callouts -->
   <line x1="20" y1="570" x2="740" y2="570" stroke="#A8B3BC"/>
@@ -124,12 +130,12 @@
 
   <circle cx="52" cy="732" r="11" fill="#16212B"/>
   <text x="52" y="737" font-size="12" font-weight="700" fill="#E9ECEF" text-anchor="middle">3</text>
-  <text x="76" y="730" font-size="13" font-weight="700" fill="#16212B">U1 TJA1050 pin 1 = TXD. Lift it, tie it to VCC.</text>
+  <text x="76" y="730" font-size="13" font-weight="700" fill="#16212B">U1 TJA1050 pin 1 = TXD, ringed above. Lift it, tie it to VCC.</text>
   <text x="76" y="749" font-size="12" fill="#3D4B57">The only soldering in phase 1, and only if you want listen-only enforced in hardware.</text>
   <text x="76" y="767" font-size="12" fill="#3D4B57">Skip it if `esphome config` accepts mode: LISTENONLY and you trust that alone.</text>
 
   <!-- SO8 inset -->
-  <rect x="40" y="790" width="330" height="180" fill="#DDE3E8" stroke="#A8B3BC"/>
+  <rect x="40" y="790" width="330" height="192" fill="#DDE3E8" stroke="#A8B3BC"/>
   <text x="56" y="812" font-size="12" font-weight="700" fill="#16212B">FIND PIN 1 BEFORE TOUCHING IT</text>
 
   <rect x="150" y="828" width="70" height="112" rx="3" fill="#1A1A1A"/>
@@ -152,10 +158,11 @@
     <text x="236" y="904">6 CANL</text>
     <text x="236" y="932">5 Vref</text>
   </g>
-  <text x="56" y="962" font-size="11" fill="#3D4B57">Pin 7 beeps to the H post. Pin 1 is diagonally opposite it.</text>
+  <text x="56" y="958" font-size="10" fill="#3D4B57">Pin 7 beeps to the H post. Pin 8 is its neighbour</text>
+  <text x="56" y="972" font-size="10" fill="#3D4B57">at the corner; pin 1 is directly opposite pin 8.</text>
 
   <!-- wiring table -->
-  <rect x="390" y="790" width="330" height="180" fill="#DDE3E8" stroke="#A8B3BC"/>
+  <rect x="390" y="790" width="330" height="192" fill="#DDE3E8" stroke="#A8B3BC"/>
   <text x="406" y="812" font-size="12" font-weight="700" fill="#16212B">J4 &#8594; WEMOS D1 MINI</text>
   <g font-size="12" fill="#16212B">
     <text x="406" y="836">VCC</text><text x="500" y="836">3V3</text>

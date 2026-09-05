@@ -56,8 +56,15 @@ Projektihakemisto on `valmistaja.malli` pienellä (`stiebel.eltron`,
 ## Salaisuudet
 
 `secrets.yaml` ei mene koskaan versionhallintaan — `.gitignore` estää sen.
-Jokaisessa projektissa on `secrets.yaml.example`. YAMLissa käytetään aina
-`!secret`-viittauksia, ei kirjoitettuja arvoja.
+Jokaisella ESPHome-konfiguraation omaavalla projektilla on `secrets.yaml.example`
+(aidon, hirvirata, stiebel.eltron). Suunnitteluvaiheen projektit saavat omansa
+samalla kun YAML syntyy; `bestway.lay-z-spa` ei ole ESPHome-projekti eikä
+kuulu tämän piiriin.
+
+YAMLissa käytetään aina `!secret`-viittauksia, ei kirjoitettuja arvoja.
+**Tämä koskee myös AP-varayhteyden salasanaa** — se unohtuu helposti, koska se
+tuntuu laitteen omalta asetukselta eikä verkon tunnukselta. AP:n *nimi* sen
+sijaan ei ole salaisuus: se lähetetään ilmaan.
 
 ## Ulkopuolinen koodi
 

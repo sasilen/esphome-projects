@@ -87,16 +87,16 @@
 
   <rect x="50" y="610" width="660" height="60" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
   <rect x="50" y="610" width="6" height="60" fill="#A3301F"/>
-  <text x="74" y="632" font-size="12" font-weight="700" fill="#A3301F">1. PULL THE TERMINATION JUMPER</text>
-  <text x="74" y="652" font-size="11.5" fill="#16212B">Meter across the H and L screw posts: ~120 &#8486; with the cap on, open with it off.</text>
-  <text x="74" y="666" font-size="11.5" fill="#16212B">Pull caps until it reads open. No desoldering &#8212; both J1 and J3 carry caps.</text>
+  <text x="74" y="632" font-size="12" font-weight="700" fill="#5A6772">1. TERMINATION &#8212; DONE, NOTHING TO DO</text>
+  <text x="74" y="652" font-size="11.5" fill="#16212B">Measured H to L on this board: <tspan font-weight="700">49 k&#8486;</tspan>. The 120 &#8486; is not in circuit, and neither</text>
+  <text x="74" y="666" font-size="11.5" fill="#16212B">J1 nor J3 is shorted. Repeat the measurement on the other two modules before use.</text>
 
   <rect x="50" y="684" width="660" height="74" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
   <rect x="50" y="684" width="6" height="74" fill="#A3301F"/>
   <text x="74" y="706" font-size="12" font-weight="700" fill="#A3301F">2. LIFT TJA1050 PIN 1 (TXD) AND TIE IT TO VCC</text>
   <text x="74" y="726" font-size="11.5" fill="#16212B">The only soldering. Optional if you trust <tspan font-weight="700">mode: LISTENONLY</tspan> alone &#8212; but it is what makes</text>
   <text x="74" y="740" font-size="11.5" fill="#16212B">a bit-rate sweep harmless on a live bus. Find pin 1 by continuity, never by guessing:</text>
-  <text x="74" y="754" font-size="11.5" fill="#16212B">pin 7 beeps to the H post, and pin 1 is diagonally opposite it.</text>
+  <text x="74" y="754" font-size="11.5" fill="#16212B">pin 7 beeps to the H post, pin 8 is its neighbour at the corner, and pin 1 is opposite pin 8.</text>
 
   <text x="50" y="794" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">CRYSTAL</text>
   <text x="50" y="816" font-size="11.5" fill="#16212B">X1 on this board reads <tspan font-weight="700">8.000</tspan>, so <tspan font-weight="700">can_clock: 8MHZ</tspan> is already right. Read the can if you</text>

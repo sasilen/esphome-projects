@@ -164,8 +164,10 @@ it is; [`wiring-phase1.svg`](wiring-phase1.svg) — which pin goes where, and th
 order to check things in. The board itself is in
 [`mcp2515-module.jpg`](mcp2515-module.jpg).
 
-1. **Prepare the module** — pull the termination jumper, lift TJA1050 pin 1 and
-   tie it to VCC.
+1. **Prepare the module.** Termination needs no work on the module measured for
+   these drawings — H to L reads 49 kΩ, so the 120 Ω never reaches the bus.
+   Repeat that measurement if you use one of the other two. The one remaining
+   step is to lift TJA1050 pin 1 and tie it to VCC.
    Pull the termination jumper cap; measuring across the H and L screw posts tells
    you when it is out (~120 Ω → open). Then lift the TJA1050's pin 1 (TXD) and tie
    it to VCC. That pin lift is the only soldering here, and it is optional if you
@@ -177,13 +179,48 @@ order to check things in. The board itself is in
    [`CLAUDE.md`](CLAUDE.md).
 4. **Flash and check it boots** before going anywhere near the heat pump.
 
+ESPHome runs in its own container on the Home Assistant host, and the board is
+plugged into a different machine. That splits the first flash in two, exactly as
+it did for [`../aidon/`](../aidon/BUILDLOG.md) — compile there, write here. The
+work happens in the **ESPHome dashboard**, not on a command line:
+
+1. **New Device** → name it `wpc-can`. Choose the **empty configuration** if the
+   dialog offers one; otherwise run the wizard, pick ESP8266, and **Skip** the
+   install offer. *Import from file* is cleaner still, but only works when the
+   YAML is already in the host's `/config`. The board does not need to be
+   connected, and it does not need to be on this machine.
+2. **Edit** the device and replace the wizard's file with this project's YAML.
+   The wizard writes a literal `api:` key; move it to secrets as
+   `api_encryption_key` so the file matches what is in the repo. The dashboard
+   has a secrets editor in its menu.
+3. **Validate.** If the device menu offers *Validate*, use it. Otherwise
+   **Install → Manual download** — configuration errors appear before compilation
+   starts, so a rejected `mode:` shows up immediately either way.
+4. The same **Manual download** produces the binary once compilation succeeds.
+
+Note that the dashboard names the file after the device, so on the host it will
+be `wpc-can.yaml` while the repo keeps `stiebel.eltron.yaml` to match its
+directory. Same content, two naming conventions.
+
+Then take the downloaded binary to the machine holding the board and write it
+over USB, either from `web.esphome.io` in a Chromium-based browser, or with
+esptool:
+
 ```sh
-cd stiebel.eltron
-cp secrets.yaml.example secrets.yaml
-$EDITOR secrets.yaml
-esphome run  stiebel.eltron.yaml
-esphome logs stiebel.eltron.yaml
+sudo esptool --port /dev/ttyUSB0 --baud 115200 write_flash 0x0 firmware.bin
 ```
+
+Use the plain or `factory` binary, not `-ota.bin`. Drop to `--baud 57600` if the
+connection breaks. `Hash of data verified` means it took.
+
+**Only the first flash needs USB.** After that the board is on WiFi and
+`Install → Wirelessly` reaches it, which matters here because bit-rate sweeping
+means several re-flashes.
+
+Two things differ from the aidon build: there is no wizard to generate the API
+key, so make one yourself with `openssl rand -base64 32` and put it in
+`secrets.yaml`; and the machine doing the USB write needs the **CH34x driver**,
+since these D1 minis carry a CH340G over USB-C.
 
 5. **Connect CANH, CANL and GND** to the bus and watch the `CAN frames` counter.
    Zero means the bit rate is wrong: edit `can_bit_rate`, re-flash, try again.
