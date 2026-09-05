@@ -881,11 +881,41 @@ actually carry traffic here — and this installation's panel sits at 0x100 rath
 than anywhere near its display range. Two rows corroborate; the rest does not
 transfer.
 
-It does carry one warning for phase 2 all the same. Displays living at
-0x69E–0x6A2 sit close to the 0x680 this node intends to take. 0x680 stayed
-silent through every capture on this machine, so the choice stands — but the
-address scheme is evidently not universal, and that is worth knowing before
-trusting it anywhere else.
+It does carry one caution for phase 2. Displays living at 0x69E–0x6A2 sit close
+to the 0x680 this node intends to take. 0x680 stayed silent through every
+capture on this machine, so the choice stands — but the address scheme is
+evidently not universal, and that is worth knowing before trusting it elsewhere.
+
+### bullitt186's implementation confirms three things independently
+
+[ha-stiebel-control](https://github.com/bullitt186/ha-stiebel-control) is a
+working node on this same protocol, and reading its `docs/ARCHITECTURE.md` and
+`archive/README.md` settles questions this file had answered only from capture:
+
+- **Its ESP32 transmits as `PC`, CAN id 0x680** — the same address phase 2
+  intends to take, arrived at independently. A choice made here by elimination
+  turns out to be the convention.
+- **The byte-0 encoding is confirmed by working code.** Its `CanMember` table
+  gives read and write id pairs of `{0x31, 0x00}` and `{0x30, 0x00}` for
+  `KESSEL` at 0x180, `{0x91, 0x00}` / `{0x90, 0x00}` for `MANAGER` at 0x480, and
+  `{0xA1, 0x00}` / `{0xA0, 0x00}` for `HEIZMODUL` at 0x500. Every one is the
+  receiver shifted right by three with the command in the low nibble, which is
+  exactly what this file derived from the capture. **The decode was right, and
+  now it is right for a reason other than our own arithmetic.**
+- **Its list of universal signals matches what the menu walk found**: date and
+  time, EVU lock, operating mode, energy counters. Those are the elements every
+  Elster machine carries, which is why they were the ones the element list named
+  cleanly and the 0xFDxx range was not.
+
+**And one thing not to copy from it.** Its archived version used **0x700** as
+the ESP client's own address. On this bus 0x700 is a busy participant answering
+the manager every five seconds, so taking it here would collide head-on. The
+current version's 0x680 is the one to follow.
+
+A detail that follows for phase 2: with this node at 0x680, **responses
+addressed to it will carry `0xD2` in byte 0** — 0x680 shifted right by three is
+0xD0, plus command 2. That is the pattern to filter on once the node starts
+asking questions of its own.
 
 **0x100 is the open question.** It is not in the published address table, yet it
 is the third busiest node here. Its behaviour — polling the boiler for
