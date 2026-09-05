@@ -67,8 +67,15 @@ Näitä nimityksiä käytetään kaikkialla samoina, jotta samalle tiedostolle e
 synny kahta eri nimeä eri paikkoihin.
 
 `BUILDLOG.md` on **päivätty tilannekuva jota ei päivitetä** — myös siltä osin kuin
-se vanhenee. Miten asiat nyt ovat, sen kertovat README ja CLAUDE.md. Toistaiseksi
-buildlog on vain [aidonilla](aidon/BUILDLOG.md).
+se vanhenee. Miten asiat nyt ovat, sen kertovat README ja CLAUDE.md.
+
+**Kun projekti valmistuu, sille kirjoitetaan BUILDLOG.** Se on kertomus siitä
+miten rakennettiin: mitä tilattiin, mitä juotettiin, mikä meni pieleen ja mitä
+tekisi toisin. Umpikujat ja väärät oletukset kuuluvat sinne — ne ovat tekstin
+arvokkainta antia eivätkä mahdu mihinkään muualle. Kirjoita se pian valmistumisen
+jälkeen, kun yksityiskohdat ovat vielä muistissa, ja päivää se.
+
+Toistaiseksi buildlog on vain [aidonilla](aidon/BUILDLOG.md).
 
 Poikkeus on `bestway.lay-z-spa`, jolla ei ole `CLAUDE.md`:tä lainkaan — sen
 tekniset yksityiskohdat ovat upstreamin omassa dokumentaatiossa.
