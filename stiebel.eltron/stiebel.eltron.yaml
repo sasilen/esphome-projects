@@ -758,6 +758,15 @@ sensor:
   # No unit and no device class on purpose: 0xFE07 is not in the element list,
   # so nothing is known about its scaling and the raw integer is the only
   # honest thing to publish. Rename it the day it is identified.
+  #
+  # **Deliberately not median-filtered**, unlike the three 0x700 temperatures
+  # that get the same five-second traffic and the same stress artefacts. This
+  # one published 1584 once against a lifetime range of 0 and 51-58, so it has
+  # the problem — but its *transitions* are the open evidence about what it is:
+  # it coasts down through 7 to 0, overshoots to 59 on the way up, and steps
+  # from 56 to 52 when the compressor loads. A median of three would blunt
+  # exactly the shape that has to be watched, to clean up one sample that is
+  # obvious in the log anyway. Filter it the day it is named, not before.
   - platform: template
     id: elem_fe07
     name: "Element 0xFE07"
@@ -884,6 +893,23 @@ sensor:
     accuracy_decimals: 1
     entity_category: diagnostic
     update_interval: never
+    # A single 0.0 °C landed here between two 26 °C readings during the panel
+    # walk, and the sentinel guard cannot catch it: 0x0000 is a legal value,
+    # just not a possible one for heating water at 26 °C. Zero such samples in
+    # eleven hours of clean running and three in 47 minutes of walking, all
+    # inside the window bracketed by two watchdog restarts — so it is receiver
+    # stress, not the bus, and it only appears in the mode that causes it.
+    #
+    # A median of three removes an isolated spike completely and invents no
+    # threshold, which a range check would have to. These arrive every five
+    # seconds, so the cost is about ten seconds of lag on a heating flow
+    # temperature — nothing depends on that. send_every must be set: the
+    # default is 5, which would also drop the update rate to once every 25 s.
+    filters:
+      - median:
+          window_size: 3
+          send_every: 1
+          send_first_at: 1
 
   # Both are flow temperatures, and both are the *module's* reading — the one
   # that keeps arriving every five seconds whether or not anyone is at the
@@ -899,6 +925,23 @@ sensor:
     accuracy_decimals: 1
     entity_category: diagnostic
     update_interval: never
+    # A single 0.0 °C landed here between two 26 °C readings during the panel
+    # walk, and the sentinel guard cannot catch it: 0x0000 is a legal value,
+    # just not a possible one for heating water at 26 °C. Zero such samples in
+    # eleven hours of clean running and three in 47 minutes of walking, all
+    # inside the window bracketed by two watchdog restarts — so it is receiver
+    # stress, not the bus, and it only appears in the mode that causes it.
+    #
+    # A median of three removes an isolated spike completely and invents no
+    # threshold, which a range check would have to. These arrive every five
+    # seconds, so the cost is about ten seconds of lag on a heating flow
+    # temperature — nothing depends on that. send_every must be set: the
+    # default is 5, which would also drop the update rate to once every 25 s.
+    filters:
+      - median:
+          window_size: 3
+          send_every: 1
+          send_first_at: 1
 
   - platform: template
     id: flow_temp_nhz_mod
@@ -909,6 +952,23 @@ sensor:
     accuracy_decimals: 1
     entity_category: diagnostic
     update_interval: never
+    # A single 0.0 °C landed here between two 26 °C readings during the panel
+    # walk, and the sentinel guard cannot catch it: 0x0000 is a legal value,
+    # just not a possible one for heating water at 26 °C. Zero such samples in
+    # eleven hours of clean running and three in 47 minutes of walking, all
+    # inside the window bracketed by two watchdog restarts — so it is receiver
+    # stress, not the bus, and it only appears in the mode that causes it.
+    #
+    # A median of three removes an isolated spike completely and invents no
+    # threshold, which a range check would have to. These arrive every five
+    # seconds, so the cost is about ten seconds of lag on a heating flow
+    # temperature — nothing depends on that. send_every must be set: the
+    # default is 5, which would also drop the update rate to once every 25 s.
+    filters:
+      - median:
+          window_size: 3
+          send_every: 1
+          send_first_at: 1
 
   # The second handle on 0xFE07: it steps within seconds of it, so it is a
   # temperature in the circuit 0xFE1B stops.

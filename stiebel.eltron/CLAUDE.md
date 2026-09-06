@@ -1964,6 +1964,55 @@ g++ -std=gnu++17 -Wall -Wextra -o replay replay.cpp && ./replay
 - **`0x4E5E`'s bits.** The compressor was idle for the whole walk and the
   status word only changes on transition. Naming bits 4 to 7 needs a walk while
   the machine is running.
+- **`0x01D5` was asked of 0x180 once, at 07:32:52, and never answered.** The
+  only element in the capture that a node declined to respond to at all.
+
+### Walking the menus costs data, and the price is now measured
+
+The walk tripped the overflow watchdog **twice**, at 07:40:15 and 07:42:39 —
+against once in eleven hours of ordinary running. Both times the node was back
+in 16 seconds and `boot_is_good_after: 15s` marked the boot good, so safe mode
+was never in play, and **`RESTORE_DEFAULT_OFF` did the job it was added for**:
+read logging survived both restarts and the walk continued. `ALWAYS_OFF` would
+have switched it off silently in the middle.
+
+It also produced the first bad *values* this project has seen. Three samples,
+all inside the walk:
+
+```
+07:34:52  Element 0xFDF5               0.0 °C     between two 26 °C readings
+07:41:17  Return temperature (module)  0.0 °C
+07:43:57  Element 0xFE07               1584       lifetime range is 0 and 51-58
+```
+
+| | Samples | Implausible |
+|---|---|---|
+| Overnight, reads off, 11 h | 14 079 | **0** |
+| Walk, reads on, 47 min | 1 584 | **3** |
+
+Two of the three fall between the two restarts. **This is receiver stress, not
+the bus** — the same pattern as the `0xFB` frames of the first capture, which
+also arrived seconds from a stall. It is a third class of bad data after the
+corrupted identifier and the sentinel, and the only one that reaches a named
+entity, so the three fast 0x700 temperatures now carry `median: window_size: 3`.
+0xFE07 deliberately does not: its transition shape is the open evidence about
+what it is, and a median would blunt exactly that.
+
+**The obvious optimisation does not work, and the numbers are here so it is not
+proposed again.** 79 % of read requests (912 of 1153) are the manager's own
+five-second poll of 0x700, for elements this configuration already handles —
+pure noise, and suppressing them looks free. Modelled against the capture:
+
+```
+peak     28 lines/s → 23 lines/s
+average  3.44/s     → 2.91/s
+```
+
+Not enough, and the reason is structural: the manager's poll is spread evenly
+across the whole walk, while the bursts that stall the receiver are the panel's
+own — opening a screen dumps twenty-odd frames in one second, and logging those
+is the entire point. **A menu walk cannot be logged without the bursts.** The
+watchdog absorbing them is the design working, not failing.
 
 ## Three anomalies, all visible because the log falls back to raw hex
 
