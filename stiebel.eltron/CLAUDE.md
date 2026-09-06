@@ -188,8 +188,20 @@ Per repo convention none of this is copied here; it is linked at the source.
 
 ## Available
 
-- **ESP8266 Wemos D1 Mini (NodeMCU)** — chosen MCU
-- ESP32, several boards — reserve, see below. The one measured is ESP32-D0WD-V3 rev v3.1.
+- **ESP8266 Wemos D1 Mini (NodeMCU)** — chosen MCU, and **one spare is on the
+  shelf**. That matters more here than anywhere else in this repo: phase 1 is
+  the only system in it that is actually running, and an overnight capture that
+  dies to a failed board is a night lost to a swap that would otherwise take a
+  minute. The spare is shared with [`../hirvirata/`](../hirvirata/), which keeps
+  it as a documented fallback — first come, first served.
+- ESP32, three boards, **all allocated and none of them usable here.** They are
+  D0WD-V3 (the one measured is rev v3.1), and ESPHome refuses 20 kbps on exactly
+  that variant — see the end of this file. Two 30-pin DevKits went to
+  [`../pegasos.enervent/`](../pegasos.enervent/) and
+  [`../axioma.effection/`](../axioma.effection/); the WROOM-32U went to
+  [`../hirvirata/`](../hirvirata/), where its external antenna earns its keep.
+  **A board for the TWAI route has to be bought**, and it has to be a C3, C6 or
+  S3.
 - MCP2515 CAN bus modules with TJA1050 transceiver (3 pcs)
 - Dupont jumper wires
 - Various resistors (including 120 Ω — not used, see Wiring)
@@ -211,11 +223,15 @@ without trouble.
 and a pin change — `esp8266:` → `esp32:`, and the SPI pins to the VSPI defaults
 (SCK 18, MISO 19, MOSI 23, CS 5). Nothing else in the configuration changes.
 
-The board it would land on is the spare 30-pin DevKit (USB-C, CH340C, PCB
-antenna) — see [`../pegasos.enervent/esp32-devkit.jpg`](../pegasos.enervent/esp32-devkit.jpg).
-All four of those pins are brought out on it. The WROOM-32U on the shelf is not
-available: it belongs to axioma.effection, and it is the wrong tool here anyway
-since it needs an external antenna this project has no use for.
+**There is no longer a board on the shelf for it to land on.** This paragraph
+used to name the spare 30-pin DevKit; that board went to
+[`../axioma.effection/`](../axioma.effection/) and the WROOM-32U to
+[`../hirvirata/`](../hirvirata/), so all three ESP32s are allocated. The pins
+would still be right — all four are brought out on a 30-pin DevKit
+([`../pegasos.enervent/esp32-devkit.jpg`](../pegasos.enervent/esp32-devkit.jpg)) —
+but a RAM-driven move now means buying, and if a board is being bought anyway it
+should be a C3 rather than another D0WD-V3, because that also opens the TWAI
+route and deletes the MCP2515.
 
 ## Does the D1 Mini cope with phase 2 — writing?
 

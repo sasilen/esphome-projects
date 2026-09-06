@@ -24,7 +24,7 @@ kannalta, sano se suoraan.
 
 | Osa | Tiedot |
 |---|---|
-| Ohjain | Wemos D1 mini (ESP8266) tai mikä tahansa ESP32. Ks. "Ohjainvalinta" |
+| Ohjain | ESP32 DevKitC (WROOM-32U) + u.FL-antenni. Varalla D1 mini. Ks. "Ohjainvalinta" |
 | Moottoriajuri | ARCELI L298N -moduuli, 5 kpl |
 | Moottori | 12 V vaihdemoottori, 200 rpm, ikkunanavaajatyyppi |
 | Hihnapyörä | 41 × 16 × 6 mm, alumiini, yksi ura, kiinteä 6 mm reikä |
@@ -35,16 +35,44 @@ kannalta, sano se suoraan.
 
 ## Ohjainvalinta
 
-Kumpi tahansa käy. Alusta vaikuttaa vain `output:`-blokkiin ja pinneihin —
-`fan:`, `script:` ja `select:` ovat identtiset.
+Alusta vaikuttaa vain `output:`-blokkiin ja pinneihin — `fan:`, `script:` ja
+`select:` ovat identtiset, joten valinta ei ole lukittu ohjelmistoon.
 
-**Wemos D1 mini (ESP8266)** on ensisijainen. PWM on ohjelmallinen
-(`esp8266_pwm`, ajastinkeskeytys), mutta 1 kHz:llä moottorinohjauksessa
-jitteri on merkityksetön. Molemmilla PWM-lähdöillä **täytyy** olla sama
-taajuus — ne jakavat saman ajastimen.
+**Valittu: hyllyn ESP32 DevKitC (WROOM-32U), u.FL-ulkoantennilla.** Perustelu ei
+ole PWM eikä muisti vaan **antennin sijainti**, ja se tulee kahdesta tähän
+tiedostoon jo kirjatusta ongelmasta:
 
-**ESP32** (WROOM, WROVER, C3, S2, S3) käyttää LEDC-hardware-PWM:ää. Ei
-välttämätön parannus tähän käyttöön, mutta ei myöskään haittaa.
+> Kipinöinti häiritsee WiFiä.
+
+> WiFi-virtapiikit nollaavat ESP:n.
+
+Printtiantenni on kiinni levyssä, ja levy on ohjausrasiassa moottoriajurin ja
+harjamoottorin johtojen vieressä. **u.FL-antennin saa ulos rasiasta ja kauas
+häiriölähteestä**, mikä on juuri se mitä kipinöivä moottori vaatii. Ulkokäyttö
+vahvistaa saman: suljetun kotelon sisällä printtiantenni menettää tehoa,
+läpivientiantenni ei.
+
+WROOM-32U:ssa ei ole printattua antennia lainkaan, joten ulkoinen antenni on sen
+pakko eikä lisävaruste — mikä tekee siitä hyödyttömän kaikkialla muualla tässä
+repossa ja oikean juuri tässä. Levy oli varattuna
+[axiomalle](../axioma.effection/), jossa perustelu ei kestänyt tarkastelua:
+wM-Bus on radio, joten siellä vastaanottimen paikan valitsee itse.
+
+Kulutus ei ole tässä vasta-argumentti. ESP32 ottaa enemmän kuin ESP8266, mutta
+laite ei ole päällä jatkuvasti eikä ota virtaa mistään mitatusta budjetista —
+teholähde on oma 12 V / 2 A.
+
+**Wemos D1 mini (ESP8266) on dokumentoitu pakotie, ja levy on hyllyssä.** Sen
+pinnitaulukko on alla valmiina. Jos WROOM-32U:n antennisetistä puuttuu
+SMA-läpivienti tai sen varmistamaton siltapiiri ei flashaudu, rakennat
+alkuperäisen speksin mukaan koskematta dokumentaatioon — ja menetät vain sen
+antenniedun jonka takia toinen levy valittiin. PWM on siinä ohjelmallinen (`esp8266_pwm`,
+ajastinkeskeytys), mutta 1 kHz:llä moottorinohjauksessa jitteri on
+merkityksetön. Molemmilla PWM-lähdöillä **täytyy** olla sama taajuus — ne
+jakavat saman ajastimen.
+
+**Kaikki ESP32-variantit** (WROOM, WROVER, C3, S2, S3) käyttävät LEDC-hardware-
+PWM:ää. Ei välttämätön parannus tähän käyttöön, mutta ei myöskään haittaa.
 
 ## Pinnijärjestys
 

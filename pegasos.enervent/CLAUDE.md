@@ -30,9 +30,15 @@ Integrate an Enervent Pegasos Eco ECE ventilation unit with Home Assistant using
 ### The board in stock
 
 Three ESP32 boards are on the shelf: **two of this type** — photographed in
-[`esp32-devkit.jpg`](esp32-devkit.jpg) — and one DevKitC WROOM-32U that belongs
-to [`../axioma.effection/`](../axioma.effection/). Take one of the pair; the
-other stays spare. What the photo settles:
+[`esp32-devkit.jpg`](esp32-devkit.jpg) — and one DevKitC WROOM-32U. Take one of
+the pair. **The other is no longer spare**: it went to
+[`../axioma.effection/`](../axioma.effection/), which had been holding the
+WROOM-32U on an antenna argument that did not survive scrutiny. The WROOM-32U
+went to [`../hirvirata/`](../hirvirata/) instead, where an external antenna
+earns its keep — the enclosure is outdoors and a brushed motor sparks next to
+it. All three boards are now allocated.
+
+What the photo settles:
 
 - **30-pin DevKit layout**, 15 pins per side. Every pin in the wiring table below
   is brought out on it.
@@ -41,9 +47,8 @@ other stays spare. What the photo settles:
 - On-board **AMS1117-3.3** regulator, and a `VIN` pin, so 5 V may be fed in
   directly instead of over USB.
 - The module carries a **printed PCB antenna**, i.e. plain WROOM-32. That is the
-  right board to take for this project: it needs no antenna part, and the u.FL
-  WROOM-32U on the shelf is spoken for by
-  [`../axioma.effection/`](../axioma.effection/).
+  right board to take for this project: it needs no antenna part, and a
+  ventilation unit sits indoors where a PCB antenna is enough.
 
 ## Found in the same box: a GYBMEP sensor breakout
 

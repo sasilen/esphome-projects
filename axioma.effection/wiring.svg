@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 880" width="760" height="880" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="880" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="840" fill="none" stroke="#A8B3BC"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">KYTKENT&#196;</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Seitsem&#228;n hyppylankaa &#183; yksi antenni &#183; CC1101 kest&#228;&#228; vain 3,3 V</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <text x="60" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">ESP32 DEVKIT &#183; 30 NASTAA</text>
+  <text x="520" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">CC1101 868 MHz</text>
+
+  <!-- ESP32 DevKit -->
+  <rect x="60" y="150" width="180" height="430" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="88" y="166" width="124" height="46" rx="2" fill="#E9ECEF" stroke="#A8B3BC"/>
+  <text x="150" y="188" font-size="10" fill="#5A6772" text-anchor="middle">WROOM-32</text>
+  <text x="150" y="203" font-size="9" fill="#8A959E" text-anchor="middle">printtiantenni</text>
+  <text x="150" y="562" font-size="10" fill="#8A959E" text-anchor="middle">USB-C &#183; CH340C</text>
+
+  <!-- CC1101 -->
+  <rect x="520" y="150" width="160" height="430" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="558" y="166" width="84" height="40" rx="2" fill="#E9ECEF" stroke="#A8B3BC"/>
+  <text x="600" y="191" font-size="10" fill="#5A6772" text-anchor="middle">26 MHz</text>
+  <text x="600" y="562" font-size="10" fill="#8A959E" text-anchor="middle">pigtail &#8594; SMA</text>
+
+  <!-- antenna -->
+  <line x1="680" y1="300" x2="716" y2="300" stroke="#16212B" stroke-width="1.5"/>
+  <line x1="716" y1="300" x2="716" y2="240" stroke="#16212B" stroke-width="1.5"/>
+  <line x1="708" y1="248" x2="716" y2="240" stroke="#16212B" stroke-width="1.5"/>
+  <line x1="724" y1="248" x2="716" y2="240" stroke="#16212B" stroke-width="1.5"/>
+  <text x="716" y="228" font-size="9" fill="#5A6772" text-anchor="middle">868 MHz</text>
+
+  <!-- 3V3 -->
+  <rect x="232" y="194" width="16" height="12" fill="#A3301F"/>
+  <rect x="512" y="194" width="16" height="12" fill="#A3301F"/>
+  <line x1="248" y1="200" x2="512" y2="200" stroke="#A3301F" stroke-width="2"/>
+  <text x="216" y="204" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">3V3</text>
+  <text x="544" y="204" font-size="13" font-weight="700" fill="#16212B">VCC</text>
+
+  <!-- GND -->
+  <rect x="232" y="239" width="16" height="12" fill="#16212B"/>
+  <rect x="512" y="239" width="16" height="12" fill="#16212B"/>
+  <line x1="248" y1="245" x2="512" y2="245" stroke="#16212B" stroke-width="2"/>
+  <text x="216" y="249" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GND</text>
+  <text x="544" y="249" font-size="13" font-weight="700" fill="#16212B">GND</text>
+
+  <!-- SCK -->
+  <rect x="232" y="294" width="16" height="12" fill="#0E6E7C"/>
+  <rect x="512" y="294" width="16" height="12" fill="#0E6E7C"/>
+  <line x1="248" y1="300" x2="512" y2="300" stroke="#0E6E7C" stroke-width="2"/>
+  <text x="216" y="304" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO18</text>
+  <text x="544" y="304" font-size="13" font-weight="700" fill="#16212B">SCK</text>
+
+  <!-- MOSI -->
+  <rect x="232" y="339" width="16" height="12" fill="#2E5F8A"/>
+  <rect x="512" y="339" width="16" height="12" fill="#2E5F8A"/>
+  <line x1="248" y1="345" x2="512" y2="345" stroke="#2E5F8A" stroke-width="2"/>
+  <text x="216" y="349" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO23</text>
+  <text x="544" y="349" font-size="13" font-weight="700" fill="#16212B">SI</text>
+  <text x="588" y="349" font-size="10" fill="#8A959E">MOSI</text>
+
+  <!-- MISO -->
+  <rect x="232" y="384" width="16" height="12" fill="#9A6B18"/>
+  <rect x="512" y="384" width="16" height="12" fill="#9A6B18"/>
+  <line x1="248" y1="390" x2="512" y2="390" stroke="#9A6B18" stroke-width="2"/>
+  <text x="216" y="394" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO19</text>
+  <text x="544" y="394" font-size="13" font-weight="700" fill="#16212B">SO</text>
+  <text x="588" y="394" font-size="10" fill="#8A959E">MISO</text>
+
+  <!-- CS -->
+  <rect x="232" y="429" width="16" height="12" fill="#6B4A8A"/>
+  <rect x="512" y="429" width="16" height="12" fill="#6B4A8A"/>
+  <line x1="248" y1="435" x2="512" y2="435" stroke="#6B4A8A" stroke-width="2"/>
+  <text x="216" y="439" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO5</text>
+  <text x="544" y="439" font-size="13" font-weight="700" fill="#16212B">CSN</text>
+  <text x="150" y="459" font-size="9" fill="#A3301F" text-anchor="middle">strapping &#8212; haluaa HIGH, CS lep&#228;&#228; HIGH</text>
+
+  <!-- GDO0 -->
+  <rect x="232" y="474" width="16" height="12" fill="#3F7A3F"/>
+  <rect x="512" y="474" width="16" height="12" fill="#3F7A3F"/>
+  <line x1="248" y1="480" x2="512" y2="480" stroke="#3F7A3F" stroke-width="2"/>
+  <text x="216" y="484" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO4</text>
+  <text x="544" y="484" font-size="13" font-weight="700" fill="#16212B">GDO0</text>
+  <text x="588" y="484" font-size="10" fill="#8A959E">irq_pin</text>
+
+  <!-- GDO2, not wired -->
+  <rect x="512" y="519" width="16" height="12" fill="none" stroke="#A8B3BC"/>
+  <line x1="512" y1="525" x2="440" y2="525" stroke="#A8B3BC" stroke-width="2" stroke-dasharray="4 4"/>
+  <line x1="452" y1="517" x2="440" y2="533" stroke="#A3301F" stroke-width="2"/>
+  <line x1="440" y1="517" x2="452" y2="533" stroke="#A3301F" stroke-width="2"/>
+  <text x="544" y="529" font-size="13" font-weight="700" fill="#8A959E">GDO2</text>
+  <text x="428" y="529" font-size="10" fill="#A3301F" text-anchor="end">&#196;L&#196; KYTKE</text>
+
+  <line x1="20" y1="612" x2="740" y2="612" stroke="#A8B3BC"/>
+
+  <text x="40" y="642" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KOLME ASIAA JOTKA RIKKOVAT T&#196;M&#196;N</text>
+
+  <text x="40" y="672" font-size="12" fill="#16212B">1.  <tspan font-weight="700">5 V tappaa CC1101:n.</tspan>  Se on 3,3 V:n piiri ilman toleranssia. Ota j&#228;nnite 3V3-nastasta,</text>
+  <text x="40" y="690" font-size="12" fill="#16212B">    ei VIN- eik&#228; 5V-nastasta.</text>
+
+  <text x="40" y="720" font-size="12" fill="#16212B">2.  <tspan font-weight="700">GDO2 j&#228;&#228; kytkem&#228;tt&#228;.</tspan>  Nykyinen komponentti tarvitsee yhden keskeytyslinjan, ja se on</text>
+  <text x="40" y="738" font-size="12" fill="#16212B">    GDO0. Vanha kytkent&#228;taulukko vei GDO2:n GPIO2:een &#8212; <tspan fill="#A3301F">se on strapping-nasta</tspan>, ja siihen</text>
+  <text x="40" y="756" font-size="12" fill="#16212B">    ajava l&#228;ht&#246; est&#228;&#228; k&#228;ynnistyksen. Se on t&#228;m&#228;n projektin kirjattu boot-loop-syy.</text>
+
+  <text x="40" y="786" font-size="12" fill="#16212B">3.  <tspan font-weight="700">Moduulien silkkipainatus vaihtelee.</tspan>  Lue oman moduulin nastat &#228;l&#228;k&#228; luota t&#228;h&#228;n</text>
+  <text x="40" y="804" font-size="12" fill="#16212B">    kuvaan &#8212; j&#228;rjestys on eri valmistajilla eri.</text>
+
+  <text x="40" y="836" font-size="10" fill="#8A959E">Antenneja on yksi: 868 MHz CC1101:lle. DevKitin WiFi on printtiantennissa eik&#228; vaadi osaa.</text>
+</svg>

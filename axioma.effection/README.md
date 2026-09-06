@@ -49,31 +49,47 @@ Axioma Water Meter
 
 Kaikki löytyy varastosta, tätä projektia varten tilattuna:
 
-- **ESP32 DevKitC (ESP32-WROOM-32U)**, DUBEUYEW-setti — [kuva](esp32-devkitc-wroom32u.jpg).
-  Setissä tuli mukana 2,4 GHz:n antenni ja u.FL-kaapeli, mikä on tässä
-  välttämätöntä: -32U:ssa ei ole printattua antennia lainkaan
+- **ESP32 DevKit, 30-nastainen** — sama levy kuin
+  [`../pegasos.enervent/esp32-devkit.jpg`](../pegasos.enervent/esp32-devkit.jpg).
+  Printtiantenni, USB-C, CH340C-siltapiiri. Hyllyssä on kaksi tätä; pegasos
+  ottaa toisen
 - **CC1101 868 MHz**, Huerous — [kuva](cc1101-module.jpg), 26 MHz:n kide.
   Pigtail antennille tuli mukana
 - **868 MHz omniantenni SMA-liittimellä, 2 kpl**, QWORK, taitettava
 
-Levylle tulee siis **kaksi eri antennia**: 2,4 GHz u.FL ESP32:n WiFille ja
-868 MHz SMA CC1101:lle. Eri taajuus, eri liitin, eri tarkoitus — ne on helppo
-sekoittaa keskenään juuri siksi että molemmat ovat "se antenni".
+**Antenneja tulee yksi: 868 MHz CC1101:lle.** DevKitin WiFi on moduulin
+printtiantennissa eikä vaadi osaa.
+
+Hyllyn WROOM-32U ([kuva](esp32-devkitc-wroom32u.jpg)) oli tässä pitkään
+varattuna, ja se olisi tuonut mukanaan toisen antennin — 2,4 GHz u.FL WiFille —
+jonka voi sekoittaa 868 MHz:n SMA-antenniin juuri siksi että molemmat ovat "se
+antenni". Se levy meni [hirviradalle](../hirvirata/), jossa ulkoantenni on aito
+etu: siellä ohjausrasia on ulkona ja harjamoottorin kipinöinti häiritsee WiFiä,
+joten antenni kannattaa saada ulos kotelosta ja kauas häiriölähteestä. Täällä
+vastaavaa tarvetta ei ole — **wM-Bus on radio, joten vastaanottimen
+sijoituspaikan valitset itse**, ja se valitaan sieltä mistä WiFi kuuluu.
 
 ## Kytkentä
 
-| CC1101 | ESP32 |
-|---|---|
-| VCC | 3.3V |
-| GND | GND |
-| SI (MOSI) | GPIO23 |
-| SO (MISO) | GPIO19 |
-| SCK | GPIO18 |
-| CSN | GPIO5 |
-| GDO0 | GPIO4 |
-| GDO2 | GPIO2 |
+Piirretty auki: [`wiring.svg`](wiring.svg).
+
+| CC1101 | ESP32 | |
+|---|---|---|
+| VCC | 3.3V | **ei 5V eikä VIN** |
+| GND | GND | |
+| SI (MOSI) | GPIO23 | |
+| SO (MISO) | GPIO19 | |
+| SCK | GPIO18 | |
+| CSN | GPIO5 | strapping-nasta, mutta haluaa HIGH:n ja CS lepää HIGH:ssa |
+| GDO0 | GPIO4 | `irq_pin` |
+| GDO2 | — | **jätä kytkemättä** |
 
 **CC1101 toimii vain 3,3 voltilla — älä koskaan käytä 5 V:a.**
+
+**GDO2 jää kytkemättä.** Nykyinen komponentti tarvitsee yhden keskeytyslinjan ja
+se on GDO0. Vanha taulukko vei GDO2:n GPIO2:een, joka on **strapping-nasta** —
+siihen ajava lähtö estää käynnistyksen, ja se on tämän projektin
+vianetsintätaulukossa kirjattu boot-loop-syy.
 
 Moduulien pinnijärjestys vaihtelee; tarkista oman moduulin silkkipainatus äläkä
 luota yleiseen kaavioon.
@@ -117,7 +133,7 @@ radion toimivuuden voi silti todentaa ennen avaimen saapumista.
 | Oire | Tarkista |
 |---|---|
 | Ei dataa | Antenni kiinni, 868 MHz antenni, SPI-kytkennät, 3,3 V, GPIO-määritykset |
-| Boot-loop | GDO0 tai CS väärässä pinnissä |
+| Boot-loop | GDO0 tai CS väärässä pinnissä — tai johto kiinni GPIO2:ssa |
 | Huono vastaanotto | Antenni liian lähellä metallia, etäisyys, antennin laatu |
 
 Ensimmäistä telegrammia voi joutua odottamaan hetken — lähetysväli on noin

@@ -83,7 +83,12 @@ wmbus_radio:
   cs_pin: GPIO5
   # Vanha kytkentätaulukko määrittää sekä GDO0:n (GPIO4) että GDO2:n (GPIO2).
   # Nykyinen komponentti tarvitsee vain yhden keskeytyslinjan, ja se on GDO0.
-  # GPIO2 jää vapaaksi — johdon voi jättää paikalleen, se ei häiritse.
+  #
+  # **Irrota GDO2:n johto, älä jätä sitä paikalleen.** Tässä luki aiemmin että
+  # sen voi jättää koska se ei häiritse. GPIO2 on strapping-nasta: se haluaa
+  # LOW:n tai kellumisen nollauksessa, ja GDO2 on CC1101:n lähtö. Jos se ajaa
+  # nastaa ylös käynnistyksen aikana, levy ei tule normaalitilaan — ja tämän
+  # projektin vianetsintä listaa juuri sen boot-loopin syyksi.
   irq_pin: GPIO4
   frequency: 868.95MHz
 

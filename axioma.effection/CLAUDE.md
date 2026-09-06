@@ -43,28 +43,49 @@ Meter ID varmistetaan myöhemmin vastaanotetusta Wireless M-Bus -telegrammista.
 
 ## Jo olemassa
 
-- ESP32 DevKitC (ESP32-WROOM-32U) — [kuva](esp32-devkitc-wroom32u.jpg)
+- ESP32 DevKit, 30-nastainen — [kuva](../pegasos.enervent/esp32-devkit.jpg)
 - CC1101 868 MHz — [kuva](cc1101-module.jpg)
 - 868 MHz SMA-antenni
 - ESP8266 (ei tarvita tähän projektiin)
 
-## Levyt tunnistettuna
+## Levy vaihtui, ja perustelu on antenni
 
-**ESP32-WROOM-32U on oikeasti hyllyssä.** Moduulin päässä on u.FL-liitin ja
-FCC-merkintä päättyy `ESP32U`:hun. Levy on 38-nastainen DevKitC, micro-USB, ja
-USB-siltapiiri on QFN-kotelossa eli CP2102-luokkaa — **ei** sama CH340C kuin
-[pegasos.enerventin levyssä](../pegasos.enervent/esp32-devkit.jpg). Merkintä ei
-ollut luettavissa valokuvasta, joten varmista ajuri ennen ensimmäistä
-flashausta.
+Tämä projekti oli varannut hyllyn **WROOM-32U:n** — 38-nastainen DevKitC,
+micro-USB, u.FL-liitin ([kuva](esp32-devkitc-wroom32u.jpg)). Varaus purettiin.
 
-**Antenni tuli setin mukana.** WROOM-32U:ssa ei ole printattua antennia lainkaan
-— se on koko variantin idea, ja ilman u.FL-antennia levyn WiFi olisi heikompi
-kuin tavallisen WROOM-32:n. DUBEUYEW-setissä tuli 2,4 GHz:n antenni ja
-u.FL-kaapeli, joten tämä on kunnossa eikä hankintoja tarvita.
+**Perustelu oli väärä.** Ulkoantennia pidettiin täällä etuna sillä oletuksella
+että vesimittari on ahtaassa metallikaapissa. Sitä ei ole missään mitattu eikä
+kirjattu — ja ennen kaikkea **wM-Bus on radio**: mittari lähettää 868 MHz:llä ja
+CC1101 kuulee sen kantaman sisältä mistä tahansa. Vastaanottimen sijoituspaikka
+on siis vapaa muuttuja, ja se valitaan sieltä missä WiFi kuuluu. Aidonissa
+vastaava pakko on aito, koska se levy on fyysisesti kiinni mittarin portissa;
+täällä ei ole.
 
-**Kiinnitä oikea antenni.** Levylle tulee kaksi: 2,4 GHz u.FL ESP32:n WiFille ja
-868 MHz SMA CC1101:lle. Molemmat ovat "se antenni", ja ne menevät sekaisin
-juuri siksi.
+**Eikä u.FL ole lisäominaisuus.** WROOM-32U:ssa ei ole printattua antennia
+lainkaan — ulkoinen antenni on sen pakko, ei bonus. Ilman sitä levyn WiFi olisi
+heikompi kuin tavallisen WROOM-32:n.
+
+Levy meni [hirviradalle](../hirvirata/), jossa etu on aito: ohjausrasia on ulkona
+ja harjamoottorin kipinöinti häiritsee WiFiä, joten antenni kannattaa saada ulos
+kotelosta ja kauas häiriölähteestä.
+
+**Tilalle tuli tavallinen 30-nastainen DevKit**, jota on hyllyssä kaksi ja josta
+pegasos ottaa toisen. Se on tähän parempi joka kohdassa jolla on merkitystä:
+
+| | WROOM-32U | 30-nast. DevKit |
+|---|---|---|
+| Antenni | u.FL — **pakko** kiinnittää | printattu |
+| USB | micro | USB-C |
+| Siltapiiri | CP2102-luokkaa, **merkintä lukematta** | CH340C, luettu levyltä |
+| Nastat | 38 | 30 — tämä tarvitsee 5 |
+
+Se poistaa myös ajurikysymyksen, joka oli tässä tiedostossa avoimena: CH340C on
+tunnistettu levyltä eikä arvattu valokuvasta.
+
+**Ja antenneja on enää yksi.** Aiemmin tässä varoitettiin että levylle tulee
+kaksi — 2,4 GHz u.FL WiFille ja 868 MHz SMA CC1101:lle — ja että ne menevät
+sekaisin juuri siksi että molemmat ovat "se antenni". Printtiantennilla sitä
+ansaa ei ole olemassa.
 
 **CC1101-moduulissa on 26 MHz:n kide**, mikä on odotettu arvo.
 
@@ -99,22 +120,42 @@ Ei MQTT:tä.
 
 # ESP32 ↔ CC1101 kytkentä
 
-| CC1101 | ESP32 |
-|---------|-------|
-| VCC | 3.3V |
-| GND | GND |
-| SI (MOSI) | GPIO23 |
-| SO (MISO) | GPIO19 |
-| SCK | GPIO18 |
-| CSN | GPIO5 |
-| GDO0 | GPIO4 |
-| GDO2 | GPIO2 |
+Piirretty auki: [`wiring.svg`](wiring.svg).
+
+| CC1101 | ESP32 | |
+|---------|-------|---|
+| VCC | 3.3V | |
+| GND | GND | |
+| SI (MOSI) | GPIO23 | |
+| SO (MISO) | GPIO19 | |
+| SCK | GPIO18 | |
+| CSN | GPIO5 | strapping |
+| GDO0 | GPIO4 | `irq_pin` |
+| GDO2 | — | **ei kytketä** |
 
 ## Huomio
 
 CC1101 toimii vain 3.3 voltilla.
 
 Älä koskaan käytä 5V.
+
+## Strapping-nastat, ja miksi vain toinen niistä on ongelma
+
+Piiri lukee tietyt GPIO:t **nollauksen hetkellä** päättääkseen käynnistystilan.
+Sen jälkeen ne ovat tavallisia nastoja, joten strapping-nastan saa käyttää —
+kunhan mikään ei pidä sitä väärässä tasossa juuri silloin. Tavallisen ESP32:n
+strapping-nastat ovat **GPIO0, 2, 5, 12 ja 15**, ja tämä kytkentä osuu kahteen.
+
+**GPIO5 on turvallinen.** Se haluaa HIGH:n käynnistyksessä, ja CS lepää
+HIGH:ssa. Sama päättely on kirjattu
+[stiebelissä](../stiebel.eltron/CLAUDE.md) saman piirin osalta.
+
+**GPIO2 ei ole, ja siksi GDO2 jää kytkemättä.** Se haluaa LOW:n tai kellumisen,
+ja GDO2 on CC1101:n **lähtö** — jos se ajaa nastaa ylös nollauksen aikana, levy
+ei käynnisty normaalitilaan. Skeemamuutos poisti GDO2:n käytöstä ilman että
+kukaan tavoitteli tätä, mutta **johtoa ei silti pidä jättää paikalleen**: tämän
+tiedoston oma vianetsintä listaa boot-loopin syyksi nimenomaan väärässä nastassa
+olevan GDO-linjan.
 
 ---
 

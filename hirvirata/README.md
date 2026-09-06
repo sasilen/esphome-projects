@@ -27,7 +27,7 @@ Nämä ovat tekemättä ja voivat muuttaa komponenttivalintoja:
 
 | Osa | Tiedot |
 |---|---|
-| Ohjain | Wemos D1 mini (ESP8266), vaihtoehtoisesti mikä tahansa ESP32 |
+| Ohjain | ESP32 DevKitC (WROOM-32U) + u.FL-antenni. Varalla D1 mini |
 | Moottoriajuri | ARCELI L298N -moduuli, 5 kpl |
 | Moottori | 12 V vaihdemoottori, 200 rpm, ikkunanavaajatyyppi |
 | Hihnapyörä | 41 × 16 × 6 mm, alumiini, yksi ura, kiinteä 6 mm reikä, **ura 3–5 mm hihnalle** |
@@ -62,10 +62,14 @@ Kaksi riviä on poistunut ja se kannattaa tietää, jottei niitä osteta vahingo
 akselit ovat M5 eivätkä M4. U624ZZ-urarullat on ostettu ennen kiskon vaihtoa ja
 ne jäävät varastoon.
 
-ESP8266 ja ESP32 ovat molemmat kelvollisia — alusta vaikuttaa vain
-`output:`-blokkiin ja pinneihin, `fan:`, `script:` ja `select:` ovat identtiset.
-D1 minin ohjelmallinen PWM riittää 1 kHz:llä moottorinohjaukseen, mutta
-**molemmilla PWM-lähdöillä täytyy olla sama taajuus** — ne jakavat saman ajastimen.
+**Ohjaimeksi valittiin hyllyn ESP32 DevKitC ulkoantennilla.** Syy on antenni,
+ei suorituskyky: rasia on ulkona ja harjamoottori kipinöi sen sisällä, joten
+antenni kannattaa saada ulos kotelosta. Perustelu on
+[`CLAUDE.md`](CLAUDE.md):ssä. D1 mini kelpaa yhä ja sen pinnit ovat alla —
+alusta vaikuttaa vain `output:`-blokkiin ja pinneihin, `fan:`, `script:` ja
+`select:` ovat identtiset. D1 minin ohjelmallinen PWM riittää 1 kHz:llä
+moottorinohjaukseen, mutta **molemmilla PWM-lähdöillä täytyy olla sama
+taajuus** — ne jakavat saman ajastimen.
 
 ## Pinnijärjestys
 
@@ -79,7 +83,7 @@ Lyöty lukkoon.
 | D6 | 12 | Rajakytkin oikea (INPUT_PULLUP, inverted) |
 
 Vältä D3 (GPIO0), D4 (GPIO2) ja D8 (GPIO15) — käynnistysvastukset. D0 (GPIO16) ei
-tue PWM:ää eikä sisäistä pullupia. ESP32-vaihtoehdon pinnit ovat
+tue PWM:ää eikä sisäistä pullupia. **Valitun ESP32:n** pinnit ovat
 [`CLAUDE.md`](CLAUDE.md):ssä.
 
 PWM menee **IN-tuloihin, ei ENA:han** — ENA/ENB-hyppyjohtimet jäävät paikoilleen.
