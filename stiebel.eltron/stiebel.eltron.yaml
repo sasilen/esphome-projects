@@ -371,14 +371,29 @@ canbus:
               // configuration has never met or a known one arriving from an
               // unexpected node.
               //
-              // Read requests are excluded — they carry no value, they are
-              // 44 % of all traffic, and a new element's *response* is logged
-              // anyway, which is where the data is.
+              // Read requests are excluded by default — they carry no value,
+              // they are 44 % of all traffic, and a new element's *response*
+              // is logged anyway, which is where the data is.
               //
               // In the reference capture this fires for about 19 frames a
               // minute against 221 total, so the cost is a fifth of a line a
               // second. The switch forces every frame instead.
-              if (id(log_frames).state || (!handled && cmd != 1))
+              //
+              // `log_reads` is the middle setting, and it exists for walking
+              // the panel's menus. On a screen the panel *asks* for each
+              // value it shows, so the read request names the element even
+              // when the answer is a sentinel, arrives while the receiver is
+              // busy, or belongs to a node this file has never decoded. That
+              // mapping — screen to element — is the whole point of a walk,
+              // and it is the one thing the response alone cannot give.
+              //
+              // Prefer it over `log_frames` for that job. Every element found
+              // so far came through the unclaimed path with reads switched
+              // off, so full per-frame logging adds handled traffic and its
+              // stall risk for very little: it doubles the rate to catch the
+              // frames this configuration already understands.
+              if (id(log_frames).state ||
+                  (!handled && (cmd != 1 || id(log_reads).state)))
                 ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X%s%s",
                          (unsigned) can_id, (unsigned) receiver, CMD[cmd],
                          ext ? "ex" : "e", element, val, tail);
@@ -678,6 +693,17 @@ switch:
   - platform: template
     id: log_frames
     name: "Log every frame"
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    entity_category: config
+
+  # The menu-walk switch: adds unclaimed read requests to the log, so a
+  # screen's elements are named by what the panel asks for and not only by
+  # what answers. Off at boot like the other one — a walk is a session, not a
+  # setting, and leaving it on costs about one line a second forever.
+  - platform: template
+    id: log_reads
+    name: "Log read requests"
     optimistic: true
     restore_mode: ALWAYS_OFF
     entity_category: config
