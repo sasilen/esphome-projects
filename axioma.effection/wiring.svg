@@ -13,7 +13,8 @@
   <rect x="88" y="166" width="124" height="46" rx="2" fill="#E9ECEF" stroke="#A8B3BC"/>
   <text x="150" y="188" font-size="10" fill="#5A6772" text-anchor="middle">WROOM-32</text>
   <text x="150" y="203" font-size="9" fill="#8A959E" text-anchor="middle">printtiantenni</text>
-  <text x="150" y="562" font-size="10" fill="#8A959E" text-anchor="middle">USB-C &#183; CH340C</text>
+  <text x="150" y="548" font-size="10" fill="#8A959E" text-anchor="middle">CH340C</text>
+  <text x="150" y="566" font-size="9" fill="#5A6772" text-anchor="middle">kaikki 7 samassa rivissa</text>
 
   <rect x="520" y="150" width="160" height="430" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
   <rect x="558" y="166" width="84" height="40" rx="2" fill="#E9ECEF" stroke="#A8B3BC"/>
@@ -42,24 +43,28 @@
   <rect x="512" y="294" width="16" height="12" fill="#0E6E7C"/>
   <line x1="248" y1="300" x2="512" y2="300" stroke="#0E6E7C" stroke-width="2"/>
   <text x="216" y="304" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO18</text>
+  <text x="216" y="317" font-size="9" fill="#5A6772" text-anchor="end">levyssa D18</text>
   <text x="544" y="304" font-size="13" font-weight="700" fill="#16212B">SCK</text>
 
   <rect x="232" y="339" width="16" height="12" fill="#2E5F8A"/>
   <rect x="512" y="339" width="16" height="12" fill="#2E5F8A"/>
   <line x1="248" y1="345" x2="512" y2="345" stroke="#2E5F8A" stroke-width="2"/>
   <text x="216" y="349" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO23</text>
+  <text x="216" y="362" font-size="9" fill="#5A6772" text-anchor="end">levyssa D23</text>
   <text x="544" y="349" font-size="13" font-weight="700" fill="#16212B">MOSI</text>
 
   <rect x="232" y="384" width="16" height="12" fill="#9A6B18"/>
   <rect x="512" y="384" width="16" height="12" fill="#9A6B18"/>
   <line x1="248" y1="390" x2="512" y2="390" stroke="#9A6B18" stroke-width="2"/>
   <text x="216" y="394" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO19</text>
+  <text x="216" y="407" font-size="9" fill="#5A6772" text-anchor="end">levyssa D19</text>
   <text x="544" y="394" font-size="13" font-weight="700" fill="#16212B">MISO</text>
 
   <rect x="232" y="429" width="16" height="12" fill="#6B4A8A"/>
   <rect x="512" y="429" width="16" height="12" fill="#6B4A8A"/>
   <line x1="248" y1="435" x2="512" y2="435" stroke="#6B4A8A" stroke-width="2"/>
   <text x="216" y="439" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO5</text>
+  <text x="216" y="452" font-size="9" fill="#5A6772" text-anchor="end">levyssa D5</text>
   <text x="544" y="439" font-size="13" font-weight="700" fill="#16212B">CSN</text>
   <text x="150" y="459" font-size="9" fill="#A3301F" text-anchor="middle">strapping &#8212; haluaa HIGH, CS lep&#228;&#228; HIGH</text>
 
@@ -67,6 +72,7 @@
   <rect x="512" y="474" width="16" height="12" fill="#3F7A3F"/>
   <line x1="248" y1="480" x2="512" y2="480" stroke="#3F7A3F" stroke-width="2"/>
   <text x="216" y="484" font-size="13" font-weight="700" fill="#16212B" text-anchor="end">GPIO4</text>
+  <text x="216" y="497" font-size="9" fill="#5A6772" text-anchor="end">levyssa D4</text>
   <text x="544" y="484" font-size="13" font-weight="700" fill="#16212B">GDO0</text>
   <text x="588" y="484" font-size="10" fill="#8A959E">irq_pin</text>
 

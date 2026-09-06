@@ -165,6 +165,32 @@ CC1101 toimii vain 3.3 voltilla.
 
 Älä koskaan käytä 5V.
 
+## DevKitissä D-numero on GPIO-numero
+
+Levyn silkkipainatus ei sano `GPIO18` vaan `D18`, ja **se on sama nasta.**
+Ylärivi lukee kokonaisuudessaan:
+
+```
+3V3  GND  D15  D2  D4  D16  D17  D5  D18  D19  D21  RX0  TX0  D22  D23
+```
+
+**Tämä on eri kuin Wemos D1 minissä**, ja siinä on ansa jota tässä repossa on
+kaksi levytyyppiä: D1 minissä `D5` on **GPIO14** eikä numeroilla ole mitään
+yhteyttä toisiinsa. ESP32-DevKitissä `D`-etuliite on pelkkä etuliite. Kuka
+tahansa joka siirtyy levystä toiseen tekee tämän virheen kerran.
+
+| YAML | Levyn merkintä |
+|---|---|
+| `clk_pin: GPIO18` | `D18` |
+| `mosi_pin: GPIO23` | `D23` |
+| `miso_pin: GPIO19` | `D19` |
+| `cs_pin: GPIO5` | `D5` |
+| `irq_pin: GPIO4` | `D4` |
+
+**Kaikki seitsemän lankaa menevät samaan riviin.** 3V3 ja GND ovat sen kaksi
+ensimmäistä, D23 reunimmainen — alariviin ei tarvitse koskea lainkaan, mikä
+helpottaa sekä juottamista että kotelointia.
+
 ## Moduulissa ei ole nastamerkintöjä kummallakaan puolella
 
 Levy on pieni neliö, silkkipainatuksena vain `CC11010 868MHz Module`. Kahdeksan

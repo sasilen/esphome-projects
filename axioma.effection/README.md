@@ -75,16 +75,20 @@ että **kide on ylöspäin** ja teksti `CC11010 868MHz Module` lukee vasemmassa
 reunassa pystyssä — silloin kahdeksan reikää ovat oikealla ja järjestys on
 ylhäältä alas tämä:
 
-| # | CC1101 | ESP32 | |
-|---|---|---|---|
-| 1 | CSN | GPIO5 | strapping-nasta, mutta haluaa HIGH:n ja CS lepää HIGH:ssa |
-| 2 | GDO0 | GPIO4 | `irq_pin` |
-| 3 | GDO2 | — | **jätä kytkemättä** |
-| 4 | MISO | GPIO19 | |
-| 5 | SCK | GPIO18 | |
-| 6 | MOSI | GPIO23 | |
-| 7 | GND | GND | |
-| 8 | VCC | 3.3V | **ei 5V eikä VIN** |
+| # | CC1101 | ESP32 | Levyssä | |
+|---|---|---|---|---|
+| 1 | CSN | GPIO5 | `D5` | strapping, mutta haluaa HIGH:n ja CS lepää HIGH:ssa |
+| 2 | GDO0 | GPIO4 | `D4` | `irq_pin` |
+| 3 | GDO2 | — | — | **jätä kytkemättä** |
+| 4 | MISO | GPIO19 | `D19` | |
+| 5 | SCK | GPIO18 | `D18` | |
+| 6 | MOSI | GPIO23 | `D23` | |
+| 7 | GND | GND | `GND` | |
+| 8 | VCC | 3.3V | `3V3` | **ei 5V eikä VIN** |
+
+**DevKitissä `D`-numero on GPIO-numero** — `D18` on GPIO18. Wemosissa vastaava
+ei päde: siellä `D5` on GPIO14. Kaikki seitsemän lankaa menevät DevKitin
+ylempään riviin, alariviin ei tarvitse koskea.
 
 Vasemmassa reunassa **GND — ANT — GND**; keskimmäinen on antenni.
 
