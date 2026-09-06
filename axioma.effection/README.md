@@ -6,8 +6,15 @@ Vesimittarin lukeminen langattomasti Home Assistantiin ESP32:lla ja CC1101-radio
 Mittari lähettää Wireless M-Bus -telegrammin 868,95 MHz:llä noin 16 sekunnin
 välein; ESP32 vastaanottaa sen ja välittää ESPHomen natiivi-APIlla. Ei MQTT:tä.
 
-**Tila: suunnitteluvaihe.** Rauta on laatikossa mutta kytkemättä, eikä
-testikonfiguraatiota ole vielä ajettu.
+**Tila: suunnitteluvaihe, konfiguraatio valmis.**
+[`axioma.effection.yaml`](axioma.effection.yaml) on olemassa ja ajettavissa;
+rauta on laatikossa mutta kytkemättä.
+
+Konfiguraatio on tarkoituksella **pelkkä kuuntelija**. Se ei osaa lukea mittarin
+arvoja eikä yritäkään — se todentaa radion, kytkennät, taajuuden ja kuuluvuuden,
+ja kaikki neljä näkyvät yhdestä lokirivistä. Sensorilohko on tiedostossa
+kommentoituna ja odottaa kahta asiaa: Meter ID:tä lokista ja AES-avainta
+vesilaitokselta.
 
 ## Mittari
 
@@ -73,9 +80,18 @@ luota yleiseen kaavioon.
 
 ## ESPHome
 
-Komponentti: [SzczepanLeon/esphome-components](https://github.com/SzczepanLeon/esphome-components),
-`wmbus`-platform. Testikonfiguraatio ja lopullinen sensorilohko ovat
-[`CLAUDE.md`](CLAUDE.md):ssä.
+Komponentti: [SzczepanLeon/esphome-components](https://github.com/SzczepanLeon/esphome-components).
+
+**Komponentin skeema on muuttunut** sen jälkeen kun tämän projektin
+muistiinpanot kirjoitettiin. `CLAUDE.md`:n testikonfiguraatio kuvaa vanhaa
+muotoa: yksi `wmbus:`-lohko joka sisälsi SPI-pinnit ja erilliset `gdo0`/`gdo2`.
+Nykyinen käyttää ESPHomen omaa `spi:`-komponenttia ja `wmbus_radio:`-lohkoa
+jossa on yksi `irq_pin`. Ajettava versio on YAML-tiedostossa, ja **lähde on
+kiinnitetty versiohaaraan eikä `@main`:iin** — juuri tämä skeemamuutos on
+esimerkki siitä mitä liikkuva viittaus tekee.
+
+Jos käännös valittaa tuntemattomasta avaimesta, tarkista komponentin README ja
+vaihda haara. `esphome config` kertoo sen sekunnissa eikä vaadi rautaa.
 
 Kun radio toimii, loggeriin ilmestyy rivi tyyliin:
 

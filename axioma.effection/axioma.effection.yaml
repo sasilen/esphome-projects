@@ -1,0 +1,119 @@
+# Axioma Effectio (Qalcosonic W1) — vaihe 1: kuuntele ennen kuin tulkitset
+#
+# Tämä konfiguraatio ei osaa lukea mittarin arvoja eikä yritäkään. Se todentaa
+# neljä asiaa yhdellä kertaa: radio toimii, SPI-kytkennät ovat oikein, taajuus
+# on oikein, ja mittari kuuluu vastaanottimeen. Kaikki neljä näkyvät yhdestä
+# lokirivistä:
+#
+#   Received T1 A frame from 12345678 RSSI -70
+#
+# Se rivi tulee myös silloin kun telegrammi on salattu, eli **AES-avainta ei
+# tarvita tähän vaiheeseen.** Avainpyyntö kannattaa laittaa liikkeelle silti
+# heti, koska siihen menee kalenteriaikaa — ja kun se saapuu, jäljelle jää yksi
+# sensorilohko, ei uutta selvitystyötä.
+#
+# Mittari lähettää noin 16 sekunnin välein, joten ensimmäistä telegrammia voi
+# joutua odottamaan hetken. Älä tulkitse hiljaisuutta viaksi ennen kuin olet
+# odottanut pari minuuttia.
+
+substitutions:
+  # Mittarin sarjanumero tyyppikilvestä. Tämä on **oletus**, ei tieto: Meter ID
+  # varmistetaan vastaanotetusta telegrammista, ja vasta silloin sen saa uskoa.
+  # Jos lokissa näkyy eri numero, lokki on oikeassa.
+  meter_id: "12345678"
+
+esphome:
+  name: vesimittari
+  friendly_name: Vesimittari
+
+esp32:
+  board: esp32dev
+
+logger:
+  # DEBUG, ei VERY_VERBOSE. Telegrammi tulee kerran 16 sekunnissa, joten tässä
+  # ei ole samaa kuormaongelmaa kuin CAN-väylällä — mutta VERY_VERBOSE tulostaa
+  # myös SPI-liikenteen, ja se hukuttaa juuri sen yhden rivin jota tässä
+  # vaiheessa etsitään.
+  level: DEBUG
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    # AP:n nimi lähetetään ilmaan eikä ole salaisuus. Salasana on.
+    ssid: "Vesimittari fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+
+# ------------------------------------------------------------------- Radio
+# Komponentin skeema on muuttunut sen jälkeen kun tämän projektin muistiinpanot
+# kirjoitettiin. Vanha muoto oli yksi `wmbus:`-lohko joka sisälsi SPI-pinnit ja
+# erilliset gdo0/gdo2 -pinnit; nykyinen käyttää ESPHomen omaa `spi:`-komponenttia
+# ja `wmbus_radio:`-lohkoa jossa on yksi `irq_pin`.
+#
+# **Lähde on kiinnitetty versioon, ei `@main`:iin.** Liikkuva viittaus tarkoittaa
+# että käännös voi muuttua ilman että tässä repossa muuttuu mitään, ja juuri se
+# skeemamuutos on esimerkki siitä mitä silloin tapahtuu.
+#
+# Jos käännös valittaa tuntemattomasta avaimesta, tarkista komponentin oma
+# README ja vaihda haara — `esphome config` kertoo sen sekunnissa eikä vaadi
+# rautaa.
+
+external_components:
+  - source: github://SzczepanLeon/esphome-components@version_4
+    components: [wmbus_radio, wmbus_meter]
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+
+wmbus_radio:
+  radio_type: CC1101
+  cs_pin: GPIO5
+  # Vanha kytkentätaulukko määrittää sekä GDO0:n (GPIO4) että GDO2:n (GPIO2).
+  # Nykyinen komponentti tarvitsee vain yhden keskeytyslinjan, ja se on GDO0.
+  # GPIO2 jää vapaaksi — johdon voi jättää paikalleen, se ei häiritse.
+  irq_pin: GPIO4
+  frequency: 868.95MHz
+
+
+# --------------------------------------------------------------- Mittari
+# Tämä lohko on tarkoituksella kommentoituna. Se odottaa kahta asiaa, ja
+# molemmat tulevat vasta kun radio on todettu toimivaksi:
+#
+#   1. Meter ID lokista — ei tyyppikilvestä
+#   2. AES-128-avain vesilaitokselta
+#
+# Poista kommentit vasta kun molemmat ovat tiedossa. Sitä ennen tämä lohko
+# tuottaisi entiteettejä jotka eivät koskaan täyty, ja tässä repossa on jo
+# kirjattu mitä ikuisesti tuntemattomat entiteetit maksavat.
+#
+# wmbus_meter:
+#   - id: vesi
+#     meter_id: ${meter_id}
+#     type: axioma
+#     key: !secret meter_key
+#     sensors:
+#       - name: "Vesimittari"
+#         field: total_m3
+#         unit_of_measurement: "m³"
+#         device_class: water
+#         state_class: total_increasing
+#         accuracy_decimals: 3
+#       - name: "Veden lämpötila"
+#         field: temperature_c
+#         unit_of_measurement: "°C"
+#         device_class: temperature
+#         state_class: measurement
+#         accuracy_decimals: 1
