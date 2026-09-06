@@ -1268,6 +1268,11 @@ built on an element that can return them needs to drop them rather than publish
 them. 0x8080 is the same thing for `et_time_domain`, where the list's own code
 already tests for it.
 
+**The panel says what 0x9000 means, and it is narrower than "absent".** On all
+three screens where a sentinel-answering element is displayed the machine
+prints `POIS` — the function is switched off. See "The panel walk" below; the
+guard is the same either way, but a sentinel in the log is not a fault report.
+
 ### The write, captured
 
 Nudging the curve one step on the panel produced it:
@@ -1764,6 +1769,157 @@ every frame of the capture but two; both of those read 8246, and both fall
 inside the twenty minutes someone was browsing the panel. Whatever it carries is a consequence of the
 panel being touched, which makes it a menu-walk target rather than a background
 one.
+
+## The panel walk, and why it beats the element list
+
+Six minutes of opening screens on the machine's own panel named **27 elements
+to the digit**. That is more than two hours of passive capture produced, and it
+is a better class of evidence than anything in this file so far: the element
+list is a table someone else wrote about a family of machines, while a
+photographed screen is this machine stating what it believes a number means.
+
+**The method is cheap and worth repeating whenever something is unknown.**
+
+1. Turn on `Log read requests`. On a screen the panel *asks* for every value it
+   shows, and the request names the element even when the answer never arrives.
+   The walk logged **771 read requests across 85 distinct elements**; the
+   overnight capture, with reads suppressed, had seen 85 elements in total.
+2. Photograph each screen. A phone stamps `exif:DateTimeOriginal` in local time
+   while naming the file in UTC — the EXIF is what to trust, and it lines up
+   with the ESPHome log to the second.
+3. Intersect. For each photo take the frames between it and the next, and look
+   for an element whose value matches a number on the screen and which is not
+   also responding while a different screen is up.
+
+Five of the fifteen screens are kept here as the evidence for the tables below
+— stripped and resized by the pipeline in the repo's CLAUDE.md, because a phone
+photograph carries GPS to a few metres and this repo is public:
+
+| | |
+|---|---|
+| [`panel-info-heating.jpg`](panel-info-heating.jpg) | names 0x02CA, 0x06A0, 0x06A1 |
+| [`panel-info-reheat.jpg`](panel-info-reheat.jpg) | the sentinel printed as POIS |
+| [`panel-info-heat-quantity.jpg`](panel-info-heat-quantity.jpg) | the totals that turn out to be computed |
+| [`panel-info-running-hours.jpg`](panel-info-running-hours.jpg) | five hour counters, all exact |
+| [`panel-settings-heating-circuit-1.jpg`](panel-settings-heating-circuit-1.jpg) | the curve, which is what phase 2 is for |
+
+Ambiguity is real and shows up as two elements holding the same value. It is
+resolved by finding a screen that shows one of them alone: `0x01AC` and
+`0x01AD` both read −19.0, and the settings screen for the reheat asks only
+`0x01AC`, which names it and leaves `0x01AD` to the other row by elimination.
+
+### What the walk named
+
+**Settings — the parameters phase 2 exists to write.** The first three are the
+mixer module's, and **0x601 had no branch in the configuration at all** before
+this: it answers nothing unless a screen asks it, so eleven hours of capture
+never saw a single one of them.
+
+| Element | From | Panel | Value |
+|---|---|---|---|
+| `0x0005` | 0x601 | MUKAV-LÄMPÖTILA | 26.0 °C |
+| `0x0008` | 0x601 | ECO-LÄMPÖTILA | 23.0 °C |
+| `0x010E` | 0x601 | LÄMMITYSKÄYRÄN NOUSU | 0.23 — the curve, `et_cent_val` confirmed |
+| `0x0013` | 0x180 | LV MUKAV-LÄMPÖTILA | 55.0 °C |
+| `0x0A06` | 0x180 | LV ECO-LÄMPÖTILA | 50.0 °C |
+| `0x0028` | 0x180 | MAX PALUUVIRT LÄMPÖT | 50.0 °C |
+| `0x01E8` | 0x180 | MAX MENOVIRT LÄMPÖT | 60.0 °C |
+| `0x0A00` | 0x180 | JÄÄTYMISESTO | 4.0 °C |
+| `0x068F` | 0x180 | PUSKURIKÄYTTÖ | PÄÄLLÄ (1) |
+
+**Measurements.** `0x06A1` is the one that closes a gap: the return
+temperature has been readable from two independent nodes since the first
+capture, and **the flow temperature from none**.
+
+| Element | Panel | Value |
+|---|---|---|
+| `0x06A1` | MENOVIRT TOSILÄMPÖT WP | 26.3 °C — flow, heat pump |
+| `0x06A0` | MENOVIRT TOSILÄMPÖT NHZ | 26.5 °C — flow, reheat |
+| `0x02CA` | TOSILÄMPÖT HK 1 | 25.4 °C |
+| `0x01D4` | LÄHTEEN LÄMPÖT | 10.3 °C — brine |
+| `0x01B0` | LÄHTEEN LÄMP MIN | −9.0 °C |
+| `0x0675` | LÄHDEPAINE | 0.41 bar — **hundredths** |
+| `0x0265` | KUUMAKAASULÄMPÖT | 25.4 °C |
+| `0x0268` | PAINE KORKEAP | 10.7 bar — **tenths** |
+| `0x07A5` | PAINE ALAPAINE | 10.3 bar — tenths |
+
+**Two pressure scalings on one machine**, and only the panel separates them:
+107 reads 10.7 bar and 41 reads 0.41 bar. From the numbers alone there is no
+way to tell which is which, and a single scaling would be wrong by a factor of
+ten somewhere.
+
+**Running hours**, all five exact, all from 0x180: `0x07FC` = 2215 h compressor
+heating, `0x0802` = 3530 h compressor DHW, `0x0259` = 134 h reheat stage 1,
+`0x025A` = 132 h stage 2, `0x0805` = 5922 h both.
+
+**Reheat switching**, and the pair that needed the elimination argument:
+`0x01AC` KYTKENTÄLÄMPÖT HZG −19.0, `0x01AE` KÄYTTÖRAJA HZG POIS, `0x01AD`
+KYTKENTÄLÄMPÖT WW −19.0, `0x01AF` KÄYTTÖRAJA WW POIS.
+
+### The sentinel means POIS, which is not what this file said
+
+The 0x9000 sentinel appears on three different screens — KÄYTTÖRAJA HZG,
+KÄYTTÖRAJA WW, MINIMILÄMPÖTILA — and on every one of them **the panel prints
+`POIS`**. It marks a function that is deliberately switched off, not a sensor
+that is missing or a parameter that was never configured.
+
+The practical difference is in diagnosis. "Not present" invites looking for a
+detached sensor; the machine means the feature is off, and the place to change
+it is the same screen. The guard in the YAML is unaffected — either way the
+value must never reach a sensor — but a sentinel in the log is **not evidence
+of a fault**.
+
+### The panel's totals are computed, and the bus does not send them
+
+Every energy counter arrives in pieces: a stored base as an MWh word and a kWh
+word, plus a separate day counter. **The screen shows their sum**, and the bus
+never sends that number.
+
+```
+0x0930/31 = 822 / 86  →  86 822 + 27  =  86.849 MWh   ✓ on screen
+0x092C/2D = 969 / 18  →  18 969 +  3  =  18.972 MWh   ✓
+0x091C/1D = 525 /  7  →   7 525 +  1  =   7.526 MWh   ✓
+0x0920/21 = 135 / 18  →  18 135 +  6  =  18.141 MWh   ✓
+```
+
+Four counters, each to the kilowatt-hour. A configuration that published the
+base alone would disagree with the machine's own display by up to a day's
+production — small, plausible, and exactly the kind of discrepancy that gets
+chased as a bug in the wrong place. So the handler assembles the same sum.
+
+**The parts arrive in no fixed order**, which is a trap worth naming because
+this file fell into it. The obvious implementation publishes on the MWh word,
+reasoning that it comes last in ascending element order. On the very walk that
+identified these elements `0x0921` arrived seven frames *before* `0x0920`, and
+the total came out 135 kWh short. Each counter now marks which parts it has and
+publishes only on a complete set.
+
+**That bug was caught by replay, not by reading.** The decoded log carries
+sender, command, element and value, which is everything needed to rebuild the
+original seven bytes; 1669 frames reconstructed from the walk and pushed
+through the handler on a host compiler reproduce **27 of the 27 values legible
+on the photographs**, which is what makes the remaining two — `0x0022` and
+`0x0263`, both reading 30 — legitimately open rather than merely unchecked.
+
+```sh
+g++ -std=gnu++17 -Wall -Wextra -o replay replay.cpp && ./replay
+```
+
+### Still open after the walk
+
+- **`0x0022` and `0x0263` both read 30.** One is LÄMMINVESIK HYSTER 3.0 K, the
+  other WW KORJAUS 3.0 °C. They answered together on every screen that asked
+  for either, so nothing in this walk separates them. Changing one on the panel
+  would.
+- **`0xFDF7` = 263 from 0x700**, the same reading as `0x06A1`'s 26.3 °C flow
+  temperature. Very likely the flow as the module reports it — the twin of what
+  `0xFDF4` already does for the return — but it appeared exactly once and one
+  sample names nothing.
+- **The `POIS` rows on the two PERUSASETUS screens.** Too many candidates
+  answering 0 or a sentinel, and several rows reading POIS at once.
+- **`0x4E5E`'s bits.** The compressor was idle for the whole walk and the
+  status word only changes on transition. Naming bits 4 to 7 needs a walk while
+  the machine is running.
 
 ## Three anomalies, all visible because the log falls back to raw hex
 
