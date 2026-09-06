@@ -430,9 +430,9 @@ canbus:
                   // same five-second cycle, in the same 26-54 range, are
                   // temperatures on tenths too. 0xFE07 has no such sibling and
                   // stays raw.
-                  case 0xFDF3: id(elem_fdf3).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFDF3: id(flow_temp_mod).publish_state((int16_t) value / 10.0f); break;
                   case 0xFDF4: id(return_temp_mod).publish_state((int16_t) value / 10.0f); break;
-                  case 0xFDF5: id(elem_fdf5).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFDF5: id(flow_temp_nhz_mod).publish_state((int16_t) value / 10.0f); break;
                   case 0xFE09: id(elem_fe09).publish_state((int16_t) value / 10.0f); break;
                   case 0xFE0A: id(elem_fe0a).publish_state((int16_t) value / 10.0f); break;
                   case 0xFE07:
@@ -841,8 +841,8 @@ sensor:
   # 0x06A1 is the flow temperature the panel labels WP, and it is the one
   # quantity this configuration was missing: the return has been readable all
   # along from two independent nodes, the flow from neither.
-  - {platform: template, id: flow_temp_hp, name: "Flow temperature (heat pump)", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
-  - {platform: template, id: flow_temp_nhz, name: "Flow temperature (reheat)", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: flow_temp_hp, name: "Flow temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: flow_temp_nhz, name: "Flow temperature reheat", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
   - {platform: template, id: room_temp_hc1, name: "Room temperature HC1", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
   - {platform: template, id: source_temp, name: "Source temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
   - {platform: template, id: source_temp_min, name: "Source temperature minimum", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
@@ -885,11 +885,14 @@ sensor:
     entity_category: diagnostic
     update_interval: never
 
-  # Unidentified, but temperatures — see the frame handler for why the tenths
-  # are earned here and not on 0xFE07.
+  # Both are flow temperatures, and both are the *module's* reading — the one
+  # that keeps arriving every five seconds whether or not anyone is at the
+  # panel. Same relationship the return already has: 0x0016 from 0x180 needs a
+  # panel, 0xFDF4 from 0x700 does not. Prefer these two for anything that has
+  # to work at three in the morning.
   - platform: template
-    id: elem_fdf3
-    name: "Element 0xFDF3"
+    id: flow_temp_mod
+    name: "Flow temperature (module)"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -898,8 +901,8 @@ sensor:
     update_interval: never
 
   - platform: template
-    id: elem_fdf5
-    name: "Element 0xFDF5"
+    id: flow_temp_nhz_mod
+    name: "Flow temperature reheat (module)"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"

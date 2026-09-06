@@ -1519,6 +1519,50 @@ and is withdrawn.
 0xFE1C, 0xFE1D, 0xFE1E and 0xFE4C.** 0xFE1D remains the compressor by behaviour,
 which no table contradicts.
 
+### 0xFDF5 is the reheat's flow temperature, and the panel is what proved it
+
+The list above is one shorter after the panel walk. The screen that named
+`0x06A0` and `0x06A1` — MENOVIRT TOSILÄMPÖT NHZ and WP — was displayed while
+both 0x700 elements were being polled, and the correspondence is exact at every
+opportunity:
+
+```
+07:32:51  06A0 = 26.5   0xFDF5 = 26.5      07:32:51  06A1 = 26.3   0xFDF3 = 26.3
+07:32:56  06A0 = 26.5   0xFDF5 = 26.5      07:33:01  06A1 = 26.3   0xFDF3 = 26.3
+07:33:01  06A0 = 26.5   0xFDF5 = 26.5      07:33:09  06A1 = 26.3   0xFDF3 = 26.3
+...                                        matched 9 of 9, 0.0 K every time
+```
+
+**`0xFDF5` is the flow temperature of the electric reheat**, and `0xFDF3` is the
+heat pump's — which confirms `VORLAUFISTTEMP` from a source that owes nothing to
+kr0ner's table. This is the third pair found the same way, after `0xFDF4` and
+`0x0016` for the return, and the method has now been right every time it has
+been checkable.
+
+**The practical consequence is larger than a name.** Both 0x700 elements arrive
+every five seconds whether or not anyone is at the panel, while `0x06A0` and
+`0x06A1` arrive only during a walk. The flow temperature was never missing from
+this bus; it was being logged continuously under an index nothing had named. The
+entities follow the convention the return already set — `Flow temperature` for
+the panel's copy, `Flow temperature (module)` for the one that is always there,
+and the second is the one to build on.
+
+### 0xFE07 keeps its raw name, and here is the standard being applied
+
+`FROSTSCHUTZ` comes from kr0ner's table and nothing else. No screen in the walk
+displayed a value matching it, the dynamics recorded above do not fit a static
+protection limit, and this project's bar for renaming an element is a measured
+correspondence — which is what `0xFDF4`, `0xFDF3` and now `0xFDF5` each have and
+`0xFE07` does not. A borrowed name is a hypothesis; the entity keeps its index
+until something on this machine agrees with it.
+
+**And it produced an outlier worth recording.** During the walk `0xFE07`
+published **1584** once, at 07:43:57 — against a lifetime range of 0 and 51 to
+58 across eleven hours. That is 27 times the largest value ever seen from it.
+Not a sentinel, so the guard did not catch it, and one sample is not a range
+check: **a third class of bad data**, after the corrupted identifier and the
+sentinel, and the only one this configuration currently has no answer for.
+
 ### 0xFE1B and 0xFE1C separate once the hydraulics are known
 
 The tank is charged by the heat pump and the floor heating draws from that same
