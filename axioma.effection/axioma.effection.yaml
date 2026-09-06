@@ -61,17 +61,56 @@ captive_portal:
 # erilliset gdo0/gdo2 -pinnit; nykyinen käyttää ESPHomen omaa `spi:`-komponenttia
 # ja `wmbus_radio:`-lohkoa jossa on yksi `irq_pin`.
 #
-# **Lähde on kiinnitetty versioon, ei `@main`:iin.** Liikkuva viittaus tarkoittaa
-# että käännös voi muuttua ilman että tässä repossa muuttuu mitään, ja juuri se
-# skeemamuutos on esimerkki siitä mitä silloin tapahtuu.
+# **Tämä tiedosto oli kiinnitetty väärään haaraan.** Se osoitti `@version_4`:ään
+# ja kirjoitti silti uutta skeemaa — ja ne ovat eri sukupolvia:
 #
-# Jos käännös valittaa tuntemattomasta avaimesta, tarkista komponentin oma
-# README ja vaihda haara — `esphome config` kertoo sen sekunnissa eikä vaadi
-# rautaa.
-
+#   version_4   viimeinen julkaisu 4.1.4 (2/2025), vanha `wmbus:`-lohko
+#   5.x         "full refactor/rewrite", `spi:` + `wmbus_radio:` + `wmbus_meter:`
+#
+# Käännös olisi kaatunut tuntemattomaan avaimeen `wmbus_radio`. Vika ei ollut
+# skeemassa vaan siinä että versio kiinnitettiin lukematta mitä siihen kuuluu.
+#
+# **Eikä julkaisutagi kelvannut sekään.** `@5.1.6` on uusin julkaisu ja sillä on
+# oikea skeema, mutta se **ei tunne CC1101:tä lainkaan**:
+#
+#   Unknown value 'CC1101', valid options are 'SX1276'.
+#   'reset_pin' is a required option for [wmbus_radio].
+#   [frequency] is an invalid option for [wmbus_radio].
+#
+# Viiden sarjan uudelleenkirjoitus lähti liikkeelle SX1276:sta, ja CC1101 tuli
+# takaisin vasta sen jälkeen — päähaaraan, jota ei ole koskaan julkaistu.
+# Yhtään julkaisua jossa olisi sekä CC1101 että tämä skeema ei ole olemassa:
+#
+#   version_4   4.1.4, 2/2025   CC1101 kyllä, vanha `wmbus:`-skeema
+#   5.1.6       8/2025          uusi skeema, ei CC1101:tä
+#   main                        molemmat, ei julkaisua
+#
+# **Kiinnitys on siis commit-tunniste.** Se on ainoa muoto joka antaa sekä
+# CC1101:n että liikkumattomuuden — haara liikkuu, tagissa ei ole CC1101:tä.
+# Tarkistettu lähdekoodista eikä READMEsta, joka on tässä johtanut harhaan
+# kahdesti: `wmbus_radio/__init__.py` löytää radiotyypit
+# `transceiver_*.cpp`-tiedostoista, `reset_pin` on valinnainen ja `frequency`
+# on CC1101:n oma, oletuksena juuri 868.95 MHz.
+#
+# Commit on päähaaran kärki 20.8.2026. Kehitys on aktiivista, mutta tämä on
+# julkaisematonta koodia — se on tietoinen vaihtokauppa, ei huolimattomuus.
+#
+# **Validoitu ESPHome 2026.8.2:lla: `Configuration is valid!`** Kehysvaraus jota
+# tässä pidettiin — että komponentti ehkä vaatii `esp-idf`:n — on tarpeeton:
+# ESPHome valitsee sen jo oletuksena (esp-idf 5.5.5).
+#
+# `wmbus_common` on mukana koska `wmbus_radio` nojaa siihen. Se ei ole avain
+# jonka kirjoittaa itse — validointi kaatui `Component not found: wmbus_common`
+# ensimmäisellä ajolla, koska `components:`-rajaus esti riippuvuuden
+# latautumisen. Rajaus on silti tässä: se pitää näkyvissä mitä repo tuo, ja
+# puuttuva moduuli näkyy heti eikä hiljaa.
+#
+# `refresh: never` koska commit-tunniste ei voi muuttua. Oletus tarkistaisi
+# päivityksiä vuorokausittain kiinteälle pisteelle, mikä on pelkkää odotusta.
 external_components:
-  - source: github://SzczepanLeon/esphome-components@version_4
-    components: [wmbus_radio, wmbus_meter]
+  - source: github://SzczepanLeon/esphome-components@7eae51c8fcefe854623b029b27bbe42e11c103ea
+    components: [wmbus_common, wmbus_radio, wmbus_meter]
+    refresh: never
 
 spi:
   clk_pin: GPIO18
@@ -104,21 +143,42 @@ wmbus_radio:
 # tuottaisi entiteettejä jotka eivät koskaan täyty, ja tässä repossa on jo
 # kirjattu mitä ikuisesti tuntemattomat entiteetit maksavat.
 #
+# **Ajuri on `q400`, ei `axioma`.** Tässä luki pitkään mittarin valmistajan
+# nimi, jota ei ole olemassa ajurina. wmbusmeters tunnistaa Qalcosonic W1:n
+# automaattisesti huonosti mutta lukee sen `q400`-ajurilla, ja komponentti
+# tarjoaa ajurit suoraan wmbusmetersista.
+#
+# **Anturit ovat oma alustansa, eivät `sensors:`-lista.** 5.x:ssä ne
+# viittaavat mittariin `parent_id`:llä; sisäkkäinen lista oli 4.x:n muoto ja
+# kaatuisi samalla tavalla kuin väärä haara.
+#
 # wmbus_meter:
 #   - id: vesi
 #     meter_id: ${meter_id}
-#     type: axioma
+#     type: q400
 #     key: !secret meter_key
-#     sensors:
-#       - name: "Vesimittari"
-#         field: total_m3
-#         unit_of_measurement: "m³"
-#         device_class: water
-#         state_class: total_increasing
-#         accuracy_decimals: 3
-#       - name: "Veden lämpötila"
-#         field: temperature_c
-#         unit_of_measurement: "°C"
-#         device_class: temperature
-#         state_class: measurement
-#         accuracy_decimals: 1
+#     mode: [T1]
+#
+# sensor:
+#   - platform: wmbus_meter
+#     parent_id: vesi
+#     field: total_m3
+#     name: "Vesimittari"
+#     unit_of_measurement: "m³"
+#     device_class: water
+#     state_class: total_increasing
+#     accuracy_decimals: 3
+#
+#   # Kentän nimeä ei ole varmistettu. `q400`:n julkaistussa tulosteessa on
+#   # total_m3, consumption_at_set_date_m3, meter_datetime, set_datetime,
+#   # status ja rssi_dbm — **lämpötilaa ei ole siinä listassa**, vaikka W1
+#   # sellaisen mittaa. Ensimmäinen purettu telegrammi kertoo mitä kenttiä
+#   # tämä yksilö oikeasti tarjoaa; lisää tämä vasta sen jälkeen.
+#   # - platform: wmbus_meter
+#   #   parent_id: vesi
+#   #   field: temperature_c
+#   #   name: "Veden lämpötila"
+#   #   unit_of_measurement: "°C"
+#   #   device_class: temperature
+#   #   state_class: measurement
+#   #   accuracy_decimals: 1

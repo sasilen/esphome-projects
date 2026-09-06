@@ -98,16 +98,30 @@ luota yleiseen kaavioon.
 
 Komponentti: [SzczepanLeon/esphome-components](https://github.com/SzczepanLeon/esphome-components).
 
-**Komponentin skeema on muuttunut** sen jälkeen kun tämän projektin
-muistiinpanot kirjoitettiin. `CLAUDE.md`:n testikonfiguraatio kuvaa vanhaa
-muotoa: yksi `wmbus:`-lohko joka sisälsi SPI-pinnit ja erilliset `gdo0`/`gdo2`.
-Nykyinen käyttää ESPHomen omaa `spi:`-komponenttia ja `wmbus_radio:`-lohkoa
-jossa on yksi `irq_pin`. Ajettava versio on YAML-tiedostossa, ja **lähde on
-kiinnitetty versiohaaraan eikä `@main`:iin** — juuri tämä skeemamuutos on
-esimerkki siitä mitä liikkuva viittaus tekee.
+**Komponentista on kaksi yhteensopimatonta sukupolvea yhtä aikaa elossa.**
+`version_4` (viimeisin 4.1.4, 2/2025) käyttää yhtä `wmbus:`-lohkoa erillisine
+`gdo0`/`gdo2`-pinneineen; **5.x** (viimeisin 5.1.6, 8/2025) on täysi uudelleen-
+kirjoitus ja käyttää ESPHomen omaa `spi:`-komponenttia, `wmbus_radio:`-lohkoa
+yhdellä `irq_pin`illä ja erillistä `wmbus_meter:`-lohkoa.
 
-Jos käännös valittaa tuntemattomasta avaimesta, tarkista komponentin README ja
-vaihda haara. `esphome config` kertoo sen sekunnissa eikä vaadi rautaa.
+**Eikä kumpikaan julkaisu kelpaa tähän.** `5.1.6` on uusin, mutta viiden sarjan
+uudelleenkirjoitus lähti SX1276:sta eikä tunne CC1101:tä lainkaan; CC1101 tuli
+takaisin vasta päähaaraan, jota ei ole koskaan julkaistu. Julkaisua jossa olisi
+sekä CC1101 että nykyskeema ei ole olemassa.
+
+Lähde on siksi kiinnitetty **commit-tunnisteeseen**, ei haaraan eikä tagiin —
+se on ainoa muoto joka antaa molemmat. Vaihtokauppana koodi on julkaisematonta.
+
+Ajuri on **`q400`**, ei mittarin valmistajan nimi. Perustelut, versiotaulukko ja
+kenttien tilanne ovat [`CLAUDE.md`](CLAUDE.md):ssä.
+
+Konfiguraatio on **validoitu** ESPHome 2026.8.2:lla (`Configuration is valid!`).
+Se tarkoittaa että ESPHome suostuu kääntämään sen — ei että radio toimii.
+Rautaa ei ole kytketty.
+
+```sh
+podman exec esphome esphome config /config/axioma.effection.yaml
+```
 
 Kun radio toimii, loggeriin ilmestyy rivi tyyliin:
 
