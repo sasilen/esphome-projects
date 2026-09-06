@@ -1,5 +1,8 @@
 # Stiebel Eltron WPC 07 → Home Assistant (CAN bus)
 
+**Write-up:** [`BLOG-1-reading.md`](BLOG-1-reading.md) — part one of two, on getting
+onto the bus and decoding it. Part two covers writing.
+
 > **Overview.** Technical details and reasoning: [`CLAUDE.md`](CLAUDE.md).
 
 Read the heat pump's operating data over its CAN bus and — in phase 2 — write the
