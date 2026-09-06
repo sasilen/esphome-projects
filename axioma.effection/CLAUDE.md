@@ -48,44 +48,28 @@ Meter ID varmistetaan myöhemmin vastaanotetusta Wireless M-Bus -telegrammista.
 - 868 MHz SMA-antenni
 - ESP8266 (ei tarvita tähän projektiin)
 
-## Levy vaihtui, ja perustelu on antenni
+## Miksi ESP32 eikä ESP8266
 
-Tämä projekti oli varannut hyllyn **WROOM-32U:n** — 38-nastainen DevKitC,
-micro-USB, u.FL-liitin ([kuva](esp32-devkitc-wroom32u.jpg)). Varaus purettiin.
+**Ohjelma ei mahdu ESP8266:een.** Valmis image on 1 069 167 tavua, ja D1 minin
+sovelluspartitio on OTA:n kanssa noin megatavu. Se ei ole rajatapaus, ja se on
+mitattu eikä arvioitu — luvut ja niiden vertailu repon muihin projekteihin ovat
+kohdassa "Alustatuki".
 
-**Perustelu oli väärä.** Ulkoantennia pidettiin täällä etuna sillä oletuksella
-että vesimittari on ahtaassa metallikaapissa. Sitä ei ole missään mitattu eikä
-kirjattu — ja ennen kaikkea **wM-Bus on radio**: mittari lähettää 868 MHz:llä ja
-CC1101 kuulee sen kantaman sisältä mistä tahansa. Vastaanottimen sijoituspaikka
-on siis vapaa muuttuja, ja se valitaan sieltä missä WiFi kuuluu. Aidonissa
-vastaava pakko on aito, koska se levy on fyysisesti kiinni mittarin portissa;
-täällä ei ole.
+Komponentti ei muutenkaan tue ESP8266:ta, mutta koko olisi ratkaissut asian
+vaikka tukisi.
 
-**Eikä u.FL ole lisäominaisuus.** WROOM-32U:ssa ei ole printattua antennia
-lainkaan — ulkoinen antenni on sen pakko, ei bonus. Ilman sitä levyn WiFi olisi
-heikompi kuin tavallisen WROOM-32:n.
+**Levy on tavallinen 30-nastainen DevKit**, printtiantennilla, USB-C:llä ja
+CH340C-siltapiirillä. Viisi nastaa riittää, ja niitä on kolmekymmentä.
 
-Levy meni [hirviradalle](../hirvirata/), jossa etu on aito: ohjausrasia on ulkona
-ja harjamoottorin kipinöinti häiritsee WiFiä, joten antenni kannattaa saada ulos
-kotelosta ja kauas häiriölähteestä.
+**Ulkoantennia ei tarvita.** wM-Bus on radio: mittari lähettää 868 MHz:llä ja
+CC1101 kuulee sen kantaman sisältä mistä tahansa, joten **vastaanottimen paikan
+valitsee itse** ja sen valitsee sieltä missä WiFi kuuluu. Aidonissa vastaava
+pakko on aito, koska se levy on fyysisesti kiinni mittarin portissa — täällä ei
+ole.
 
-**Tilalle tuli tavallinen 30-nastainen DevKit**, jota on hyllyssä kaksi ja josta
-pegasos ottaa toisen. Se on tähän parempi joka kohdassa jolla on merkitystä:
-
-| | WROOM-32U | 30-nast. DevKit |
-|---|---|---|
-| Antenni | u.FL — **pakko** kiinnittää | printattu |
-| USB | micro | USB-C |
-| Siltapiiri | CP2102-luokkaa, **merkintä lukematta** | CH340C, luettu levyltä |
-| Nastat | 38 | 30 — tämä tarvitsee 5 |
-
-Se poistaa myös ajurikysymyksen, joka oli tässä tiedostossa avoimena: CH340C on
-tunnistettu levyltä eikä arvattu valokuvasta.
-
-**Ja antenneja on enää yksi.** Aiemmin tässä varoitettiin että levylle tulee
-kaksi — 2,4 GHz u.FL WiFille ja 868 MHz SMA CC1101:lle — ja että ne menevät
-sekaisin juuri siksi että molemmat ovat "se antenni". Printtiantennilla sitä
-ansaa ei ole olemassa.
+Siksi levylle tulee **vain yksi antenni: 868 MHz CC1101:lle.** Se poistaa
+sekaannuksen jota tässä tiedostossa aiemmin varoiteltiin, kun levyvaihtoehtona
+oli u.FL-antennia vaativa moduuli ja antenneja oli kaksi.
 
 **CC1101-moduulissa on 26 MHz:n kide**, mikä on odotettu arvo.
 

@@ -30,13 +30,10 @@ Integrate an Enervent Pegasos Eco ECE ventilation unit with Home Assistant using
 ### The board in stock
 
 Three ESP32 boards are on the shelf: **two of this type** — photographed in
-[`esp32-devkit.jpg`](esp32-devkit.jpg) — and one DevKitC WROOM-32U. Take one of
-the pair. **The other is no longer spare**: it went to
-[`../axioma.effection/`](../axioma.effection/), which had been holding the
-WROOM-32U on an antenna argument that did not survive scrutiny. The WROOM-32U
-went to [`../hirvirata/`](../hirvirata/) instead, where an external antenna
-earns its keep — the enclosure is outdoors and a brushed motor sparks next to
-it. All three boards are now allocated.
+[`esp32-devkit.jpg`](esp32-devkit.jpg) — and one DevKitC WROOM-32U, which
+belongs to [`../hirvirata/`](../hirvirata/). Take one of the pair; the other is
+[`../axioma.effection/`](../axioma.effection/)'s. **All three are allocated**,
+so a fourth board is a purchase.
 
 What the photo settles:
 

@@ -28,17 +28,26 @@ kaikki lasketaan yhteen.
 
 | Levy | Käytössä | Varattu suunnitelmissa | Vapaana sen jälkeen |
 |---|---|---|---|
-| Wemos D1 mini (ESP8266-12F, CH340G, USB-C) | aidon, bestway.lay-z-spa | hirvirata, stiebel.eltron | **0** |
-| ESP32 | — | pegasos.enervent, axioma.effection | 1 |
+| Wemos D1 mini (ESP8266-12F, CH340G, USB-C) | aidon, bestway.lay-z-spa, stiebel.eltron | — | **1** |
+| ESP32 | — | pegasos.enervent, axioma.effection, hirvirata | **0** |
 
 Kolme ESP32:ta ei ole kolme samanlaista, vaan 2 + 1:
 
 | Levy | Kpl | Tuntomerkit | Kenelle |
 |---|---|---|---|
-| [30-nastainen DevKit](pegasos.enervent/esp32-devkit.jpg) | 2 | USB-C, CH340C, printattu PCB-antenni | pegasos.enervent, ja yksi vapaana |
-| [38-nastainen DevKitC](axioma.effection/esp32-devkitc-wroom32u.jpg) | 1 | micro-USB, QFN-silta (CP2102-luokkaa), **WROOM-32U + u.FL** | axioma.effection |
+| [30-nastainen DevKit](pegasos.enervent/esp32-devkit.jpg) | 2 | USB-C, CH340C, printattu PCB-antenni | pegasos.enervent, axioma.effection |
+| [38-nastainen DevKitC](hirvirata/esp32-devkitc-wroom32u.jpg) | 1 | micro-USB, QFN-silta (CP2102-luokkaa), **WROOM-32U + u.FL** | hirvirata |
 
-Ainoa vapaa ESP32 on siis 30-nastainen PCB-antennilevy. Huomaa myös että
+**Kaikki kolme ESP32:ta ovat varattuja.** Ulkoantennilevy meni hirviradalle,
+jossa se on ainoa jolla on merkitystä: ohjausrasia on ulkona ja harjamoottorin
+kipinöinti häiritsee WiFiä, joten antenni kannattaa saada ulos kotelosta.
+Muualla printtiantenni riittää.
+
+Vapaa levy on siis **D1 mini**, ei ESP32. Se on hirviradan pakotie siltä
+varalta ettei ulkoantennilevy toimi, ja varalevy stiebelin vaiheelle 1 — repon
+ainoalle käynnissä olevalle mittausjärjestelmälle.
+
+Huomaa myös että
 USB-siltapiiri vaihtuu levytyypin mukana, eli myös ajuri: CH34x vs. CP210x.
 D1 minit ovat CH340G ja USB-C, eli sama CH34x-ajuri kuin diymoren ESP32:issa.
 

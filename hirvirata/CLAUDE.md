@@ -38,7 +38,8 @@ kannalta, sano se suoraan.
 Alusta vaikuttaa vain `output:`-blokkiin ja pinneihin — `fan:`, `script:` ja
 `select:` ovat identtiset, joten valinta ei ole lukittu ohjelmistoon.
 
-**Valittu: hyllyn ESP32 DevKitC (WROOM-32U), u.FL-ulkoantennilla.** Perustelu ei
+**Valittu: hyllyn ESP32 DevKitC (WROOM-32U), u.FL-ulkoantennilla**
+([kuva](esp32-devkitc-wroom32u.jpg)). Perustelu ei
 ole PWM eikä muisti vaan **antennin sijainti**, ja se tulee kahdesta tähän
 tiedostoon jo kirjatusta ongelmasta:
 

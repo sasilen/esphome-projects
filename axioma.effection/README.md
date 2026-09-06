@@ -58,16 +58,13 @@ Kaikki löytyy varastosta, tätä projektia varten tilattuna:
 - **868 MHz omniantenni SMA-liittimellä, 2 kpl**, QWORK, taitettava
 
 **Antenneja tulee yksi: 868 MHz CC1101:lle.** DevKitin WiFi on moduulin
-printtiantennissa eikä vaadi osaa.
+printtiantennissa eikä vaadi osaa. Ulkoantennia ei tarvita, koska **wM-Bus on
+radio** — vastaanottimen sijoituspaikan valitset itse, ja se valitaan sieltä
+mistä WiFi kuuluu.
 
-Hyllyn WROOM-32U ([kuva](esp32-devkitc-wroom32u.jpg)) oli tässä pitkään
-varattuna, ja se olisi tuonut mukanaan toisen antennin — 2,4 GHz u.FL WiFille —
-jonka voi sekoittaa 868 MHz:n SMA-antenniin juuri siksi että molemmat ovat "se
-antenni". Se levy meni [hirviradalle](../hirvirata/), jossa ulkoantenni on aito
-etu: siellä ohjausrasia on ulkona ja harjamoottorin kipinöinti häiritsee WiFiä,
-joten antenni kannattaa saada ulos kotelosta ja kauas häiriölähteestä. Täällä
-vastaavaa tarvetta ei ole — **wM-Bus on radio, joten vastaanottimen
-sijoituspaikan valitset itse**, ja se valitaan sieltä mistä WiFi kuuluu.
+**ESP8266 ei kelpaa tähän, ja syy on koko.** Valmis image on 1 069 167 tavua ja
+D1 minin sovelluspartitio on OTA:n kanssa noin megatavu — ei rajatapaus.
+Vertailu repon muihin projekteihin on [`CLAUDE.md`](CLAUDE.md):ssä.
 
 ## Kytkentä
 
