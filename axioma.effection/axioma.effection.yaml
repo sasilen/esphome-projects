@@ -23,8 +23,16 @@ substitutions:
   meter_id: "12345678"
 
 esphome:
-  name: vesimittari
-  friendly_name: Vesimittari
+  # `name` on tekninen identiteetti: siitä tulee verkkonimi `axioma.local`, ja
+  # se on se johon OTA osuu. Se seuraa `/config`:n muiden laitteiden tapaa
+  # (`aidon`, `wpc-can`) eli repon hakemistonimeä.
+  #
+  # `friendly_name` on saman nimen luettava muoto, ei kuvaileva vaihtoehto —
+  # niin se on repon muissakin: `wpc-can` → "WPC 07 CAN", ei "Lämpöpumppu".
+  # Laite nimetään sen mukaan mikä se on, ei mitä se tekee, koska funktio
+  # näkyy jo entiteetin omassa nimessä.
+  name: axioma
+  friendly_name: Axioma
 
 esp32:
   board: esp32dev
@@ -49,10 +57,39 @@ wifi:
   password: !secret wifi_password
   ap:
     # AP:n nimi lähetetään ilmaan eikä ole salaisuus. Salasana on.
-    ssid: "Vesimittari fallback"
+    # Nimi seuraa laitenimeä eikä ystävällistä nimeä: tätä verkkoa etsitään
+    # silloin kun WiFi ei toimi, ja silloin haetaan sitä laitetta.
+    ssid: "Axioma varayhteys"
     password: !secret ap_password
 
 captive_portal:
+
+
+# ------------------------------------------------------------------ Diagnostiikka
+# Tämä on tässä ennen kuin mittarista tulee riviäkään dataa, koska se vastaa
+# kysymykseen jonka pitää ratketa ensin: **kuuluuko levy siitä paikasta johon
+# se on tulossa.** wM-Bus on radio, joten vastaanottimen paikan valitsee itse —
+# ja tämä sensori on se mittari jolla valinnan tekee.
+#
+# Aidonissa sama kysymys jäi auki asennuksen jälkeen ja on siellä yhä avointen
+# asioiden listan kärjessä: −80 dBm luukku auki, −87…−90 kiinni. Se mitattiin
+# liian myöhään. Täällä ei ole samaa pakkoa, joten mittaa ennen kuin kiinnität.
+# Nimet ovat englanniksi kuten aidonissa, joka on repon ainoa tuotannossa oleva
+# laite: siellä diagnostiikka on englanniksi ja mittausdata suomeksi. Home
+# Assistantissa laitteet näyttävät silloin samalta, ja mittarin omat entiteetit
+# erottuvat siitä että ne ovat suomeksi.
+binary_sensor:
+  - platform: status
+    name: "Status"
+
+sensor:
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+
+  - platform: wifi_signal
+    name: "Wi-Fi"
+    update_interval: 60s
 
 
 # ------------------------------------------------------------------- Radio
@@ -159,7 +196,10 @@ wmbus_radio:
 #     key: !secret meter_key
 #     mode: [T1]
 #
-# sensor:
+# **Nämä menevät yllä olevaan `sensor:`-lohkoon `wifi_signal`in perään.** Älä
+# luo toista `sensor:`-avainta — YAML ei salli kahta samannimistä, ja virhe
+# tulee vasta silloin kun kommentit poistetaan eli pahimpaan aikaan.
+#
 #   - platform: wmbus_meter
 #     parent_id: vesi
 #     field: total_m3

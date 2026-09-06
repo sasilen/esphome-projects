@@ -73,16 +73,31 @@ sijoituspaikan valitset itse**, ja se valitaan sieltä mistä WiFi kuuluu.
 
 Piirretty auki: [`wiring.svg`](wiring.svg).
 
-| CC1101 | ESP32 | |
-|---|---|---|
-| VCC | 3.3V | **ei 5V eikä VIN** |
-| GND | GND | |
-| SI (MOSI) | GPIO23 | |
-| SO (MISO) | GPIO19 | |
-| SCK | GPIO18 | |
-| CSN | GPIO5 | strapping-nasta, mutta haluaa HIGH:n ja CS lepää HIGH:ssa |
-| GDO0 | GPIO4 | `irq_pin` |
-| GDO2 | — | **jätä kytkemättä** |
+**Moduulissa ei ole nastamerkintöjä kummallakaan puolella.** Käännä levy niin
+että **kide on ylöspäin** ja teksti `CC11010 868MHz Module` lukee vasemmassa
+reunassa pystyssä — silloin kahdeksan reikää ovat oikealla ja järjestys on
+ylhäältä alas tämä:
+
+| # | CC1101 | ESP32 | |
+|---|---|---|---|
+| 1 | CSN | GPIO5 | strapping-nasta, mutta haluaa HIGH:n ja CS lepää HIGH:ssa |
+| 2 | GDO0 | GPIO4 | `irq_pin` |
+| 3 | GDO2 | — | **jätä kytkemättä** |
+| 4 | MISO | GPIO19 | |
+| 5 | SCK | GPIO18 | |
+| 6 | MOSI | GPIO23 | |
+| 7 | GND | GND | |
+| 8 | VCC | 3.3V | **ei 5V eikä VIN** |
+
+Vasemmassa reunassa **GND — ANT — GND**; keskimmäinen on antenni.
+
+**Reikien jako on 2,0 mm eikä 2,54 mm** — Dupont-hyppylangat eivät mahdu. Juota
+ohut lanka suoraan.
+
+**Mittaa VCC ja GND ennen virtaa.** Vain ne kaksi voivat rikkoa piirin, ja ne
+tunnistaa ilman mitään taulukkoa: niiden väliltä vastuslukema nousee hitaasti
+kondensaattorien varautuessa. Jos pari löytyy rivin alapäästä kuten yllä
+luvataan, koko asento on todistettu yhdellä mittauksella.
 
 **CC1101 toimii vain 3,3 voltilla — älä koskaan käytä 5 V:a.**
 
@@ -131,6 +146,63 @@ Received T1 A frame from 12345678 RSSI -70
 
 Se kertoo kerralla neljä asiaa: radio toimii, kytkennät ovat oikein, taajuus on
 oikein ja mittari kuuluu vastaanottimeen.
+
+## Flashaus
+
+**Fläshää ennen kuin kytket.** Syy ei ole tapa vaan se että validointi ei ole
+käännös: `esphome config` tarkisti skeeman, mutta lähde on julkaisematon commit
+eikä riviäkään C++:aa ole käännetty. Ja paljas levy antaa vertailukohdan — kun
+loki tiedetään ilman radiota, ensimmäinen hiljaisuus radion kanssa on kytkentä
+tai kuuluvuus eikä kolmen tuntemattoman summa.
+
+Sama erottelu on kirjattu [stiebelissä](../stiebel.eltron/CLAUDE.md) omaksi
+luvukseen: SPI-vika ja väylävika näyttävät ulospäin samalta, eli mitään ei
+tapahdu.
+
+**1. Validoi.** Ilman rautaa, sekunneissa:
+
+```sh
+podman cp axioma.effection/axioma.effection.yaml esphome:/config/
+podman exec esphome esphome config /config/axioma.effection.yaml
+```
+
+`INFO Configuration is valid!` tarkoittaa että skeema kelpaa. `GPIO5 is a
+strapping PIN` -varoitus tulee joka kerta eikä vaadi toimia — ks. Kytkentä.
+
+**2. Käännä ja kirjoita levylle.** Kontti on palvelimella ja levy tulee
+todennäköisesti kannettavaan, joten sama reitti kuin aidonissa: ESPHomen
+web-käyttöliittymästä **Install → Manual download**, ja `.bin` erikseen
+levylle. Ensimmäinen käännös kestää minuutteja, koska se hakee toolchainin.
+
+Levy on **USB-C** ja siltapiiri **CH340C**, joten koneella pitää olla CH34x-ajuri
+— ei CP210x. Jos portti ei näy, `dmesg` kertoo kytkentähetkellä kumpi laite
+ilmestyi.
+
+```sh
+sudo esptool --port /dev/ttyUSB0 --baud 115200 write_flash 0x0 firmware.bin
+```
+
+Käytä `factory`-tiedostoa, ei `-ota.bin`-versiota. `Permission denied` ratkeaa
+komennolla `sudo usermod -a -G dialout $USER` ja uloskirjautumisella.
+
+**3. Katso boottiloki paljaana.** Ei CC1101:tä, ei antennia. Kirjaa muistiin
+mitä `wmbus_radio` sanoo kun radiota ei ole — se rivi on vertailukohta jota ei
+saa myöhemmin takaisin.
+
+WiFi yhdistyy ja API nousee. `WiFi-signaali` alkaa päivittyä minuutin välein.
+
+**4. Mittaa kuuluvuus siinä paikassa johon levy on tulossa.** Varavirtalähde,
+levy paikalleen, luukku kiinni jos sellainen on. `WiFi-signaali` kertoo
+totuuden. Tämä on halpaa nyt ja kallista myöhemmin — aidonissa se mitattiin
+liian myöhään ja on siellä yhä avointen asioiden kärjessä.
+
+**5. Irrota USB. Kytke.** Seitsemän lankaa, GDO2 jää irti, 868 MHz:n antenni
+CC1101:een **ennen** virtaa. Ks. [`wiring.svg`](wiring.svg).
+
+**6. Virta takaisin ja odota.** Lähetysväli on ~16 s, mutta älä tulkitse
+hiljaisuutta viaksi ennen kuin olet odottanut pari minuuttia.
+
+Sen jälkeen kaikki päivitykset menevät OTA:na eikä levyä tarvitse enää irrottaa.
 
 ## Este: AES-128-avain
 

@@ -139,6 +139,63 @@ CC1101 toimii vain 3.3 voltilla.
 
 Älä koskaan käytä 5V.
 
+## Moduulissa ei ole nastamerkintöjä kummallakaan puolella
+
+Levy on pieni neliö, silkkipainatuksena vain `CC11010 868MHz Module`. Kahdeksan
+reikää yhdessä reunassa, kolme vastakkaisessa, **eikä yhtään nastan nimeä.**
+Järjestys on siis tunnistettava, ei luettava.
+
+**Kaksi riippumatonta lähdettä antaa saman järjestyksen**, ja molemmat kuvaavat
+fyysisesti tätä levyä — sama silkkipainatus, sama 8 + 3 reikää. Yleinen
+"CC1101-moduulin pinout" -taulukko, joka kuvaa 10-nastaista korttia eri
+järjestyksessä, **ei päde tähän** ja hylättiin siksi.
+
+Asento ratkaistaan maamerkeistä, koska levyn saa käteen neljässä asennossa:
+**kide ylöspäin ja teksti vasemmassa reunassa pystyssä.** Silloin kahdeksan
+reikää ovat oikeassa reunassa ja järjestys ylhäältä alas on:
+
+| # | Nasta | → ESP32 |
+|---|---|---|
+| 1 | CSN | GPIO5 |
+| 2 | GDO0 | GPIO4 |
+| 3 | GDO2 | **ei kytketä** |
+| 4 | MISO | GPIO19 |
+| 5 | SCK | GPIO18 |
+| 6 | MOSI | GPIO23 |
+| 7 | GND | GND |
+| 8 | VCC | 3V3 |
+
+Vasemmassa reunassa **GND — ANT — GND**; keskimmäinen on antenni, ja järjestys
+on symmetrinen eli kääntövirhe ei sotke sitä.
+
+Piirretty auki: [`wiring.svg`](wiring.svg).
+
+**Reikien jako on 2,0 mm eikä 2,54 mm**, joten Dupont-hyppylangat eivät mahdu.
+Juota langat suoraan — ohutta, 0,2 mm² monisäikeistä tai AWG30:tä, koska paksu
+lanka repii pienen padin irti. Pysyvässä asennuksessa juotos on muutenkin
+parempi kuin liitin, mikä on sama päättely kuin stiebelin väyläjohtimissa.
+
+### Ja tämä on syy miksi taulukkoon saa luottaa tässä
+
+**Vain VCC ja GND voivat rikkoa piirin.** Loput kuusi ovat 3,3 V:n logiikkaa,
+joten väärä arvaus niissä tarkoittaa että mikään ei toimi — ei että jokin
+hajoaa. Riski on siis kahdessa nastassa, ei kahdeksassa.
+
+Ne kaksi tunnistaa mittarilla ilman mitään lähdettä: **niiden väliltä
+vastuslukema nousee hitaasti** ohituskondensaattorien varautuessa, kun taas
+logiikkanastat lukevat auki lähes kaikkeen. Jos pari löytyy rivin siitä päästä
+jonka taulukko lupaa, koko asento on todistettu yhdellä mittauksella.
+
+Sama menetelmä kuin stiebelissä, jossa TJA1050:n nastat tunnistettiin kolmella
+riippumattomalla jatkuvuusmittauksella ennen kuin mitään kytkettiin.
+
+### SPI-kello on 1 MHz, ja se näkyy lokissa
+
+Boottiloki tulostaa `data_rate: 1000000.0`. Se on SPI-väylän nopeus, ei radion
+bittinopeus. CC1101 kestäisi 10 MHz, mutta 1 MHz on se jota lähteet
+suosittelevat kehitykseen ja se jonka komponentti valitsee itse — tähän ei
+tarvitse koskea.
+
 ## Strapping-nastat, ja miksi vain toinen niistä on ongelma
 
 Piiri lukee tietyt GPIO:t **nollauksen hetkellä** päättääkseen käynnistystilan.
@@ -360,6 +417,53 @@ CC1101:n oma. Lähdekoodi kertoi sekunnissa sen mitä kolme README-lukemaa ei.
 Sama kuvio kuin stiebelin `0x8000`-sentinelleillä ja `VD`-lyhenteellä: **taulukko
 on hypoteesi, laitteen oma sanoma on todiste.**
 
+### Paljaan levyn boottiloki, 6.9.2026
+
+Fläshätty ilman CC1101:tä tarkoituksella. Tämä on vertailukohta jota ei saa
+myöhemmin takaisin, ja se tuotti yhden odottamattoman tuloksen.
+
+```
+[C][wmbus.transceiver:157]: Transceiver: CC1101
+[C][wmbus.transceiver:131]:   IRQ Pin: GPIO4
+[C][wmbus.transceiver:163]:   Frequency: 868.950 MHz
+[C][wmbus_common:013]: wM-Bus Component v5.1.7-1.19.0-fe1b1e0:
+[C][wmbus_common:015]:   Loaded drivers:
+```
+
+**Mikään ei kerro että radiota ei ole kiinni.** Komponentti tulostaa
+kokoonpanonsa boottissa riippumatta siitä vastaako piiri SPI:llä, eikä
+mitään vikailmoitusta tule.
+
+Tämä on eri kuin stiebelissä, jossa MCP2515:n puuttuminen tuottaa rivin
+`canbus is marked FAILED: unspecified` ja kytkentävian tunnistaa ennen kuin
+väylään koskee. **Täällä sitä signaalia ei ole**, joten kytkennän oikeellisuus
+ei ole todettavissa lokista — ainoa todiste on vastaanotettu kehys.
+
+Seuraus vianetsintään: jos kehyksiä ei tule, **loki ei erota kolmea syytä
+toisistaan** — väärä kytkentä, väärä taajuus tai mittari kantaman ulkopuolella.
+Ne on eroteltava muuten, esimerkiksi mittaamalla SPI-linjat tai viemällä
+vastaanotin lähemmäs mittaria.
+
+Boottilokin vertaaminen kytkennän jälkeen tähän kertoo kuitenkin yhden asian:
+**jos tulosteeseen ilmestyy uusia rivejä radion kanssa, komponentti kysyy
+piiriltä jotain.** Jos loki on identtinen, se ei kysy — ja silloin yllä oleva
+päättely pätee sellaisenaan.
+
+`Loaded drivers:` on tyhjä koska mittarilohkoa ei ole. Se tarkoittaa että
+58,3 %:n flash-luku on **ilman ajureita**.
+
+Versio raportoituu **`v5.1.7`**, eli kiinnitetty commit on yhtä julkaisua
+uudempi kuin `5.1.6`. Se vahvistaa numerolla mitä "julkaisematon koodi"
+tarkoittaa tässä.
+
+WiFi työpöydällä **−56 dBm**, verkko `IoT`, `axioma.local` /
+192.168.1.119. Se on hyvä lukema, mutta se on mitattu pöydällä — asennuspaikan
+lukema on eri asia ja se on se joka ratkaisee.
+
+Sivuhuomio joka ei vaadi toimia: ESPHome ehdottaa `sram1_as_iram: true`
+(+40 kt IRAMia). IRAM on 60,6 %:ssa, joten tilaa on — merkitty siltä varalta
+että se joskus loppuu.
+
 ### Validoitu
 
 ```
@@ -395,10 +499,32 @@ taulukon.**
 
 ### Alustatuki
 
-**ESP8266:ta ei tueta.** Komponentti on ESP32-perheen, ja sen esimerkit
-määrittävät `esp32:` ja `esp-idf`:n. Se sulkee kysymyksen jonka tämä repo
-nosti: hyllyn vapaa D1 mini ei kelpaa tähän projektiin, eikä siitä tarvitse
-kiistellä muistin tai nastojen perusteella.
+**ESP8266:ta ei tueta**, ja käännös kertoo miksi se ei ole mielivaltainen
+rajaus. Valmis image on **1 069 167 tavua** — yli megatavun, ja se on
+*kuunteleva* konfiguraatio ilman yhtään mittarianturia:
+
+```
+RAM:   [===       ]  27.3% (used 49260 bytes from 180736 bytes)
+Flash: [======    ]  58.3% (used 1069167 bytes from 1835008 bytes)
+```
+
+D1 minin sovelluspartitio on OTA:n kanssa noin megatavu, eli tämä ei
+yksinkertaisesti mahtuisi. Kysymys jota tässä repossa pohdittiin muistin ja
+nastojen kannalta ratkeaa siis kokoon, ja ratkeaa selvästi.
+
+**Vertailu repon muihin on paikallaan, koska tämä on selvästi raskain:**
+
+| | Flash | RAM |
+|---|---|---|
+| stiebel, vaihe 1 | 45,2 % | 40,0 % |
+| aidon | 46,8 % | 53,3 % |
+| **axioma** | **58,3 %** | **27,3 %** |
+
+Ero tulee wmbusmetersin ajurikoodista. RAM on väljin koko repossa, koska
+ESP32:ssa sitä on enemmän — muistista ei siis tule ongelmaa, flashista voisi.
+Jäljellä on noin 765 kt, ja mittarilohko lisää siihen vielä `q400`-ajurin. Se
+mahtuu, mutta **jos joskus houkuttaa kääntää kaikki ajurit mukaan, tämä on se
+luku jota vasten sitä katsoo.**
 
 **ESP32-C3 on nimenomaisesti testattu** — päähaaran README mainitsee
 `ESP32-C3 Super Mini`. Se poistaa toisen tässä repossa auki olleen
@@ -409,6 +535,21 @@ ole kokeiltu Arduinolla. Jos käännös kaatuu johonkin muuhun kuin skeemaan, se
 on ensimmäinen asia jota kannattaa vaihtaa.
 
 ---
+
+# Lähteet
+
+Repon tavan mukaan linkitetty eikä kopioitu.
+
+- [StudioPieters — CC1101 868MHz SPI RF Module, Complete Guide](https://www.studiopieters.nl/cc1101-868mhz-spi-rf-module-complete-guide/)
+  — piirros tästä nimenomaisesta moduulista nastanumeroineen, ja ESP32:n
+  kytkentätaulukko joka vastaa tämän projektin omaa nastasta nastaan
+- [Cirkit Designer — CC1101 Module](https://docs.cirkitdesigner.com/component/c132ba5f-b3e5-4906-a71e-12913dd93300/cc1101-module)
+  — yleinen 10-nastainen kuvaus. **Ei päde tähän levyyn**, ja se on tässä
+  esimerkkinä siitä miksi lähde pitää tarkistaa kuvaa vasten
+- [SzczepanLeon/esphome-components](https://github.com/SzczepanLeon/esphome-components)
+  — käytetty ESPHome-komponentti
+- [wmbusmeters](https://github.com/wmbusmeters/wmbusmeters) — ajurit, joista
+  `q400` lukee Qalcosonic W1:n
 
 # Hyödyllisiä hakusanoja
 

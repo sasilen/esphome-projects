@@ -67,5 +67,14 @@ Thumbs.db
 *.tmp
 !.claude/skills
 
-# Kolmannen osapuolen taulukkokaappaukset — linkitä lähteeseen, älä kopioi
+# Kolmannen osapuolen taulukkokaappaukset — linkitä lähteeseen, älä kopioi.
+# Polut on ankkuroitu juureen (`/`), koska projektihakemistoissa on omia
+# kuvia samoilla nimillä — esim. axioma.effection/cc1101-module.jpg on
+# itse otettu ja kuuluu repoon.
 fe95ef33*.jpeg
+/CC1101*
+/cc1101*
+/*_files/
+
+# ESPHomen käännöstuotteet. Firmware rakennetaan YAMLista, ei säilötä.
+*.bin
