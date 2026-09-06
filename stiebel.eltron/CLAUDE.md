@@ -1851,6 +1851,51 @@ sitting in a register nothing currently reads.
 Worth a sensor before phase 2, and worth watching against the panel's own
 status display — that is the cheap way to name bits 4 to 7.
 
+### 0x4E5E bit 6 and 0xFE1C: right about the transitions, wrong about the state
+
+A fourth compressor cycle settled bit 9 beyond argument — set within seconds of
+every start, cleared in the same second as every stop, four cycles, no
+exceptions. **Bit 9 is the compressor.**
+
+Bits 4 to 7 took longer and produced a lesson rather than a name.
+
+Three times, `0xFE1C` and `0x4E5E` changed in the same second and moved in
+opposite directions: `0xFE1C` to 100 as bit 6 cleared, or to 12 as bit 6 set.
+Three same-second coincidences is normally enough to write down. It would have
+been half wrong.
+
+**Tested as a held state, the rule fails.** Sampling both registers as standing
+values across every capture, `0xFE1C = 100` coincides with bit 6 *set* **785
+times**. As an invariant — "one is 100 when and only when the other is clear" —
+it is not true and not close.
+
+**Tested at the transitions, it is perfect.** Restricting to the moments when
+both registers were written in the same second, across every capture:
+
+```
+FE1C = 12  →  bit 6 set      16 of 16
+FE1C = 100 →  bit 6 clear    16 of 16
+```
+
+Thirty-two co-writes, no exceptions.
+
+**Both results are real and they say something specific.** The two registers are
+written on different cadences, so between state changes they drift apart and a
+held-state comparison compares one fresh value against one stale one. When the
+machine changes state it writes both, and at those moments they agree. So they
+**share a cause** — they do not determine each other, and nothing here says which
+of them is closer to it.
+
+Bit 6 clear appears alongside `0x4E5E` values of 1, 657 and 689, which are three
+different states, so bit 6 is not a proxy for any one of them either.
+
+**The methodological point is the reason this is written down at all.** The
+three same-second observations were true, the inference drawn from them was
+plausible, and stating it as a state rule would have been wrong 785 times over.
+The full test cost one query. Correlation on the moments a thing changes is a
+different claim from correlation on the value it holds, and this project had not
+previously distinguished them.
+
 ## The four unclaimed elements that keep time
 
 0x06AF, 0x1388, 0x080E and 0x019A are named elsewhere in this file as traffic
