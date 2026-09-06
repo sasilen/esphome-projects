@@ -243,6 +243,34 @@ canbus:
               // answered "not present" is worth knowing — it is a fault
               // report, not noise. No real value collides: every element
               // published here is a temperature in tenths or a 0-100 output.
+              // ---- energy counter assembly -------------------------------
+              // Five counters, each made of an MWh word, a kWh word and a day
+              // counter that the panel adds in. `seen` marks which parts have
+              // arrived; `need` is 0b111 for the four that have a day counter
+              // and 0b011 for the reheat, which has none.
+              //
+              // Function-local statics rather than globals: nothing outside
+              // this handler reads them, they are meaningless before the first
+              // complete set, and restoring a half-set from flash across a
+              // reboot could only ever produce a total that looks right and is
+              // not. Same reasoning as 0xFE4C's remembered value below.
+              struct Ctr { uint16_t mwh, kwh, day; uint8_t seen, need; };
+              static Ctr ctr[5] = {
+                  {0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0b111},
+                  {0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0b111},
+                  {0, 0, 0, 0, 0b011}};
+              auto part = [&](uint8_t i, uint8_t w, uint16_t v) {
+                Ctr &c = ctr[i];
+                if (w == 0) c.mwh = v; else if (w == 1) c.kwh = v; else c.day = v;
+                c.seen |= (uint8_t) (1 << w);
+                if (c.seen != c.need) return false;
+                c.seen = 0;
+                return true;
+              };
+              auto total = [&](uint8_t i) {
+                return ctr[i].mwh * 1000.0f + ctr[i].kwh + ctr[i].day;
+              };
+
               const bool sentinel =
                   value == 0x8000 || value == 0x9000 || value == 0x8080;
 
@@ -257,6 +285,113 @@ canbus:
                   case 0x000C: id(outdoor_temp).publish_state(t); break;
                   case 0x000E: id(dhw_temp).publish_state(t);     break;
                   case 0x0016: id(return_temp).publish_state(t);  break;
+
+                  // ---- named by walking the panel, 2026-09-06 -------------
+                  // Every element below was read off a photographed screen
+                  // whose values matched the frames logged while it was up.
+                  // That is a stronger source than the element list, which is
+                  // wrong about this machine's 0xFDFx range — so where the two
+                  // ever disagree, the screen wins.
+                  //
+                  // These update only when someone is standing at the panel.
+                  // For a setting that is fine: a setpoint stays true until
+                  // it is changed. For the measurements below it is not, and
+                  // that is why they carry no state_class — a temperature
+                  // that Home Assistant would draw as a flat line for three
+                  // days is worse than one it refuses to draw at all.
+                  case 0x0013: id(dhw_comfort).publish_state(t);  break;
+                  case 0x0A06: id(dhw_eco).publish_state(t);      break;
+                  case 0x0028: id(max_return).publish_state(t);   break;
+                  case 0x01E8: id(max_flow).publish_state(t);     break;
+                  case 0x0A00: id(frost_protect).publish_state(t);break;
+                  case 0x02CA: id(room_temp_hc1).publish_state(t);break;
+                  case 0x06A1: id(flow_temp_hp).publish_state(t); break;
+                  case 0x06A0: id(flow_temp_nhz).publish_state(t);break;
+                  case 0x01D4: id(source_temp).publish_state(t);  break;
+                  case 0x01B0: id(source_temp_min).publish_state(t); break;
+                  case 0x0265: id(hot_gas_temp).publish_state(t); break;
+
+                  // Two pressure scalings, and the panel is what separates
+                  // them: 107 reads 10.7 bar on the process screen while 41
+                  // reads 0.41 bar on the source screen. Tenths for the
+                  // circuit, hundredths for the brine — different ranges, so
+                  // a single scaling would be wrong by a factor of ten
+                  // somewhere and there is no way to tell which from the
+                  // numbers alone.
+                  case 0x0268: id(pressure_high).publish_state(t); break;
+                  case 0x07A5: id(pressure_low).publish_state(t);  break;
+                  case 0x0675:
+                    id(source_pressure).publish_state((int16_t) value / 100.0f);
+                    break;
+
+                  // Hours are counts, not tenths. Nothing but the panel says
+                  // so — 2215 on the screen against 2215 on the bus.
+                  case 0x07FC: id(hours_heat).publish_state(value);      break;
+                  case 0x0802: id(hours_dhw).publish_state(value);       break;
+                  case 0x0259: id(hours_nhz1).publish_state(value);      break;
+                  case 0x025A: id(hours_nhz2).publish_state(value);      break;
+                  case 0x0805: id(hours_nhz_both).publish_state(value);  break;
+
+                  // ---- energy counters arrive in three pieces ------------
+                  // The panel shows a total the bus never sends. Each counter
+                  // is a stored base in MWh plus kWh, and a separate day
+                  // counter, and the screen adds them: 86.822 MWh + 27 kWh
+                  // displayed as 86.849. Four counters confirm it to the
+                  // kilowatt-hour, which is why this assembles the same sum
+                  // rather than publishing the base and quietly disagreeing
+                  // with the machine's own display.
+                  //
+                  // **The parts arrive in no fixed order.** An earlier version
+                  // of this published on the MWh word, on the reasoning that
+                  // it comes last — and on the very walk that identified these
+                  // elements, 0x0921 arrived seven frames before 0x0920 and
+                  // the total came out 135 kWh short. Replaying the capture
+                  // through this handler is what caught it; the panel
+                  // photograph is what proved which number was right.
+                  //
+                  // So each counter marks off the parts it has seen and
+                  // publishes only on a complete set, whichever part completes
+                  // it. The marks clear on publish, so a half-read screen
+                  // leaves the entity at its previous value instead of
+                  // dropping a too-low total into a total_increasing series,
+                  // where Home Assistant would read the next real value as a
+                  // counter reset.
+                  case 0x0931: if (part(0, 0, value)) id(energy_heat).publish_state(total(0)); break;
+                  case 0x0930: if (part(0, 1, value)) id(energy_heat).publish_state(total(0)); break;
+                  case 0x092F: if (part(0, 2, value)) id(energy_heat).publish_state(total(0)); break;
+                  case 0x092D: if (part(1, 0, value)) id(energy_dhw).publish_state(total(1)); break;
+                  case 0x092C: if (part(1, 1, value)) id(energy_dhw).publish_state(total(1)); break;
+                  case 0x092B: if (part(1, 2, value)) id(energy_dhw).publish_state(total(1)); break;
+                  case 0x0921: if (part(2, 0, value)) id(power_heat).publish_state(total(2)); break;
+                  case 0x0920: if (part(2, 1, value)) id(power_heat).publish_state(total(2)); break;
+                  case 0x091F: if (part(2, 2, value)) id(power_heat).publish_state(total(2)); break;
+                  case 0x091D: if (part(3, 0, value)) id(power_dhw).publish_state(total(3)); break;
+                  case 0x091C: if (part(3, 1, value)) id(power_dhw).publish_state(total(3)); break;
+                  case 0x091B: if (part(3, 2, value)) id(power_dhw).publish_state(total(3)); break;
+                  // The reheat's heat has no day counter on its screen, so
+                  // this one needs two parts and its day slot stays zero.
+                  case 0x0929: if (part(4, 0, value)) id(energy_nhz).publish_state(total(4)); break;
+                  case 0x0927: if (part(4, 1, value)) id(energy_nhz).publish_state(total(4)); break;
+
+                  default: handled = false;
+                }
+              } else if (cmd == 2 && can_id == 0x601) {
+                // The mixer module holds the heating curve and the room
+                // setpoints — the parameters phase 2 exists to write. 0x601
+                // had no branch before the panel walk because it answers
+                // nothing unless a screen asks it.
+                //
+                // 0x4EA7 is deliberately absent: it is the minimum
+                // temperature, it reads POIS on the panel, and it answers
+                // with the 0x9000 sentinel every time. The guard above
+                // already stops it, and an entity that can only ever be
+                // unknown is the kind this file does not create.
+                handled = true;
+                switch (element) {
+                  case 0x0005: id(comfort_temp).publish_state((int16_t) value / 10.0f); break;
+                  case 0x0008: id(eco_temp).publish_state((int16_t) value / 10.0f); break;
+                  // et_cent_val: 23 is 0.23, and the panel agrees.
+                  case 0x010E: id(curve_slope).publish_state((int16_t) value / 100.0f); break;
                   default: handled = false;
                 }
               } else if (cmd == 2 && can_id == 0x301 && element == 0x0004) {
@@ -452,6 +587,7 @@ globals:
     type: bool
     restore_value: false
     initial_value: "false"
+
 
   # The heat pump's own clock, assembled from five elements that arrive
   # separately. clk_month stays 0 until a date has actually been seen, which
@@ -664,6 +800,77 @@ sensor:
     accuracy_decimals: 0
     entity_category: diagnostic
     update_interval: never
+
+# ------------------------------------- Named by the panel walk, 2026-09-06
+# Everything below was identified by photographing a screen and matching its
+# values against the frames logged while it was displayed. None of it is
+# guesswork from the element list.
+#
+# **All of it updates only when someone opens the screen.** That is the whole
+# character of this group and it decides how each entity is declared:
+#
+#   settings and counters  state_class, because a setpoint or an hour count
+#                          stays true between readings — stale means old, not
+#                          wrong, and a total that only steps when read is
+#                          still a total
+#   measurements           no state_class, because a source temperature from
+#                          last Tuesday drawn as a flat line is a lie about
+#                          the machine. Let Home Assistant show a number with
+#                          a timestamp instead of a graph.
+#
+# The measurements are here anyway because the panel is the only thing that
+# ever asks for them, and after a walk they answer questions nothing else on
+# this bus can: whether the brine loop is losing pressure, what the hot gas
+# reaches, how far apart high and low pressure sit.
+
+  # ---- settings: the heating curve and the room setpoints, from 0x601 ----
+  # These three are what phase 2 will write, and 0x010E already has its write
+  # frame on record.
+  - {platform: template, id: comfort_temp, name: "Comfort temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: eco_temp, name: "Eco temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: curve_slope, name: "Heating curve slope", state_class: measurement, accuracy_decimals: 2, update_interval: never}
+
+  # ---- settings: hot water and the limits, from 0x180 --------------------
+  - {platform: template, id: dhw_comfort, name: "DHW comfort temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: dhw_eco, name: "DHW eco temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: max_return, name: "Max return temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: max_flow, name: "Max flow temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: frost_protect, name: "Frost protection temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+
+  # ---- measurements: no state_class, see the note above ------------------
+  # 0x06A1 is the flow temperature the panel labels WP, and it is the one
+  # quantity this configuration was missing: the return has been readable all
+  # along from two independent nodes, the flow from neither.
+  - {platform: template, id: flow_temp_hp, name: "Flow temperature (heat pump)", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: flow_temp_nhz, name: "Flow temperature (reheat)", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: room_temp_hc1, name: "Room temperature HC1", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: source_temp, name: "Source temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: source_temp_min, name: "Source temperature minimum", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hot_gas_temp, name: "Hot gas temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: pressure_high, name: "High pressure", device_class: pressure, unit_of_measurement: "bar", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: pressure_low, name: "Low pressure", device_class: pressure, unit_of_measurement: "bar", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: source_pressure, name: "Source pressure", device_class: pressure, unit_of_measurement: "bar", accuracy_decimals: 2, entity_category: diagnostic, update_interval: never}
+
+  # ---- running hours -----------------------------------------------------
+  # total_increasing rather than total: these only ever count up, and the
+  # panel offers no way to reset them.
+  - {platform: template, id: hours_heat, name: "Compressor hours heating", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hours_dhw, name: "Compressor hours DHW", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hours_nhz1, name: "Reheat hours stage 1", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hours_nhz2, name: "Reheat hours stage 2", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hours_nhz_both, name: "Reheat hours both stages", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+
+  # ---- energy, assembled from three parts each ---------------------------
+  # Heat delivered against electricity consumed, which is the pair a seasonal
+  # COP is made of. The machine keeps both and has done since it was
+  # installed; nothing here computes a ratio, because a ratio of two numbers
+  # that update once per panel walk would be a number pretending to be a
+  # measurement.
+  - {platform: template, id: energy_heat, name: "Heat delivered heating", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: energy_dhw, name: "Heat delivered DHW", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: power_heat, name: "Electricity used heating", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: power_dhw, name: "Electricity used DHW", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: energy_nhz, name: "Heat delivered reheat", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
 
   # The return temperature as the module reports it, independent of whether
   # the panel is awake and polling 0x180. Same physical value as "Return
