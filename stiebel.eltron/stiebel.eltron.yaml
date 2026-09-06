@@ -734,13 +734,24 @@ switch:
 
   # The menu-walk switch: adds unclaimed read requests to the log, so a
   # screen's elements are named by what the panel asks for and not only by
-  # what answers. Off at boot like the other one — a walk is a session, not a
-  # setting, and leaving it on costs about one line a second forever.
+  # what answers.
+  #
+  # RESTORE_DEFAULT_OFF and not ALWAYS_OFF like the one above, and the
+  # difference is the watchdog. A stall trips it, the node is back in 14
+  # seconds, and ALWAYS_OFF would have quietly switched the logging off in
+  # the meantime — which during a walk means writing down screens that no
+  # longer reach the log, and finding out afterwards. Restoring the state
+  # across a restart costs nothing and removes a whole class of lost session.
+  #
+  # It still boots off after a flash, which is what matters for the default.
+  # Leaving it on is wasteful rather than dangerous: read requests are 44 %
+  # of traffic, so about 1.3 lines a second against the ~4 that stalled the
+  # receiver. Turn it back off when the walk is done.
   - platform: template
     id: log_reads
     name: "Log read requests"
     optimistic: true
-    restore_mode: ALWAYS_OFF
+    restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
 
 
