@@ -1647,6 +1647,14 @@ project specifically**: heating curve control assumes the machine has a live
 outdoor temperature to apply the curve to. Check it on the panel before building
 anything on top of the curve.
 
+**Answered by the overnight capture, and the sensor is live.** 3945 samples,
+37 distinct values, falling monotonically from 15.0 °C at 19:00 to 11.4 °C at
+06:00 — an ordinary night-time cooling curve, one tenth at a time. Two hours of
+a settled afternoon is simply not long enough to distinguish a slow real signal
+from a frozen one. **No panel check is needed and the curve has something to
+apply itself to**, which removes the one prerequisite phase 2 could not have
+worked around.
+
 ## The four elements the manager writes
 
 These matter more than the reads, because **phase 2 has to imitate exactly this
@@ -1655,15 +1663,32 @@ traffic** and the frames are on record:
 | Element | Values written | Every |
 |---|---|---|
 | 0xFE1B | 0, 100 | 20 s |
-| 0xFE1C | 0, 12, 100 | 20 s |
+| 0xFE1C | 0, 8, 12, 100 | 20 s |
 | 0xFE1D | 0, 100 | 10 s |
-| 0xFE1E | 0, 3, 4, 6, 7, 15 | 20 s |
+| 0xFE1E | 0, 1, 4, 5, 6, 7, 15 | 20 s |
 
 **None of the four is in the element list**, so their meaning has to come from
 behaviour. 0/100 reads as a percentage or an on/off actuator, and 0xFE1E's small
 distinct set looks like a bitfield. 0xFE1D is the informative one: it switches
 in step with 0xFE07, and the temperatures rise while both are on — so this
 group is the manager commanding the compressor side, not configuration.
+
+**An eleven-hour capture widens two of these rows and separates command from
+report.** 0xFE1C gains an 8, written three times between 02:06 and 02:09 at the
+tail of a long compressor run — rare, but it means a value set collected in two
+hours is a floor and not a set. 0xFE1E gains 1 and 5 and **loses 3**: the value
+3 is something 0x700 reports, never something 0x480 writes, and an earlier
+reading of this table mixed the two directions. The distinction is not
+cosmetic — phase 2 writes commands, so a table of "values written" that
+contains a reported-only value would have it imitating a frame the manager
+never sends.
+
+**0xFE1E is a bitfield, and the machine's state is what sets the bits.** Over a
+night its commanded value tracks the compressor closely enough to read from the
+hourly histogram alone: 0 and 4 while idle, 7 and 15 while running. The hour
+from 01:00 contains 67 writes of 7 and 125 of 15 and **not one 0 or 4**; the
+quiet hours from 03:00 to 05:00 are the exact inverse. Bits 0 and 1 are the
+ones that only come up with the compressor.
 
 That is worth knowing before phase 2 borrows the pattern. **Copy the shape of
 these frames, not their elements.** Each write is answered by 0x700 echoing the
@@ -2009,8 +2034,8 @@ goes — see "The compressor, found by elimination":
 | Element 0xFE1C | 0x700 | 0xFE1C | raw integer, diagnostic |
 
 0xFE1B is here because it is the command whose consequence 0xFE07 measures,
-and identifying either needs both visible. 0xFE1C modulates between 0, 12 and
-100 and is the only other output that moves at all.
+and identifying either needs both visible. 0xFE1C modulates between 0, 8, 12
+and 100 and is the only other output that moves at all.
 
 `Compressor` is binary because 0 and 100 are the only commands in the capture.
 If an intermediate value ever appears, this wants to become a percentage.
@@ -2133,6 +2158,21 @@ lines — but claiming it silently would mean never learning that it moved, whic
 is the one thing about it worth knowing. It is claimed while it repeats and
 released to the unclaimed path the moment it does not, which costs one line per
 distinct value ever seen.
+
+**That mechanism has a blind spot, and eleven hours of capture is what shows
+it.** The night produced zero 0xFE4C lines. Two different things produce zero
+lines: the element held its value for eleven hours, or 0x700 stopped answering
+it altogether — and **silence cannot tell them apart**, because the design
+speaks only on change and "gone" is not a change. The same hole applies to
+anything else claimed this way.
+
+It is a real gap and it is deliberately still open. Distinguishing the two
+wants a last-seen timestamp or a sighting counter, and a counter for a constant
+is the entity this scheme exists to avoid; the honest fix is probably a
+staleness check in the existing ten-second interval rather than a new sensor.
+Nothing on this bus depends on 0xFE4C today, so it is not worth carrying an
+untested change into a flash for. **Worth knowing before trusting a quiet log**:
+here, quiet means unchanged *or* absent.
 
 What is left is genuinely worth reading: the manager's four commanded outputs,
 0x06AF and 0x1388 and 0x080E, the 0x011A responses, and every system frame.

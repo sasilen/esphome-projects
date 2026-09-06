@@ -211,6 +211,16 @@ canbus:
               // silently. That matters most on exactly the night this is
               // being run: a heating cycle is a state the capture never
               // contained, and a new state is where new registers appear.
+              //
+              // The night has since run, and that last sentence was wrong.
+              // Two compressor cycles and a tank charge produced no element
+              // that had not already been seen — every one of the 85 was
+              // first sighted while the panel was being browsed, or within
+              // the hour after it. What the cycles gave instead was
+              // new *values* of known registers: 0x4E5E's bits, 0xFE1E's
+              // compressor-only 7 and 15, an 8 on 0xFE1C. Keep the fallback
+              // anyway — it is what found 0x4E5E, which is unclaimed for a
+              // different reason: the manager writes it to 0x100, not 0x700.
               bool handled = false;
 
               // ---- sentinels are not values -----------------------------
@@ -271,7 +281,7 @@ canbus:
                     break;
                   // 0xFE1B is the command whose consequence 0xFE07 measures,
                   // so identifying one needs the other visible. 0xFE1C is
-                  // here because it modulates (0, 12, 100) and is the only
+                  // here because it modulates (0, 8, 12, 100) and is the only
                   // other output that moves. Raw, unnamed, diagnostic — the
                   // same rule as 0xFE07.
                   case 0xFE1B: id(elem_fe1b).publish_state((int16_t) value); break;
