@@ -66,3 +66,6 @@ Thumbs.db
 *.bak
 *.tmp
 !.claude/skills
+
+# Kolmannen osapuolen taulukkokaappaukset — linkitä lähteeseen, älä kopioi
+fe95ef33*.jpeg
