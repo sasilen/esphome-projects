@@ -2055,6 +2055,45 @@ showed TOSILÄMPÖT HK 1 = 25.4 on the first walk, and both answered 265 against
 26.5 on the second. Same node, same value, two indices — the third such pair
 after the return and the flow, and the first where both come from 0x180.
 
+### A fourth class of bad data: the element index gets corrupted too
+
+Watching the log after the second walk turned up four elements from 0x700 that
+no capture had shown. **Most of them are not elements.**
+
+`0xFE0E` settles it. It answered **135** twice, at 09:11:18.849 and 09:11:19.846,
+in the millisecond after **four consecutive reads of `0xFE0A`** — and `0xFE0A`
+reads 13.5 °C, which is **135 raw**. The two indices differ by one bit
+(`0xFE0A ^ 0xFE0E = 0x04`). Same value, one bit apart, arriving as the answer to
+the other one's request: this is a real `0xFE0A` response wearing a corrupted
+index.
+
+That is the fourth way this bus produces something that is not data, after the
+corrupted *sender* identifier, the sentinel, and the out-of-range value. The
+first three are handled; this one is not, and deliberately so — a guard would
+have to reject any element the manager did not just ask for, and that is exactly
+the mechanism by which a genuinely new element would be found.
+
+**Graded by what the evidence supports:**
+
+| Element | Value | Reading |
+|---|---|---|
+| `0xFE0E` | 135 | **corruption, proven** — one bit from `0xFE0A`, value identical |
+| `0xFDF7` | 263, 265, 267 | **corruption, very likely** — one bit from both `0xFDF3` and `0xFDF5`, and its values sit inside their range |
+| `0xFDF6` | 4225 | probably corruption — one bit from `0xFDF4`, requested 29 ms earlier, but the value matches nothing |
+| `0xFF4C` | 0 | probably corruption — one bit from `0xFE4C`, which was just read; value does not match |
+| `0xFF0B` | 0x8000 | **probably real** — three separate occasions, always the same index and the same sentinel. Corruption does not reproduce a particular index and value three times |
+
+**So `0xFDF7` is withdrawn as a candidate flow temperature.** It was recorded
+above as a one-sample hypothesis on the strength of reading 263 while the flow
+was 26.3 °C; the same reasoning now points at a mangled `0xFDF3` or `0xFDF5`,
+both of which are one bit away and both of which read that value at the time.
+
+**And it is a warning about the method.** Naming an element from a single sample
+that happens to match a plausible value is exactly the mistake this class
+produces. Two of the three pairs proven so far — the return and the flow — were
+established over hundreds of samples. One sample is a coincidence waiting to be
+written down.
+
 **Still unnamed, and the evidence for them no longer exists:** `0x4E5A`,
 `0x06AE`, `0xFDAE`, `0xFDB0`, `0xFDB1`, `0xFDC0`, `0x070E`, `0x070F`, `0x0030`,
 `0x0669`, `0x1710`–`0x1712`, and the weekly-programme block `0x011B`–`0x0120`.
