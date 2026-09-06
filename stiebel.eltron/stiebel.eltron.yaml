@@ -524,7 +524,7 @@ canbus:
                   case 0x0668: id(rest_time).publish_state(value); break;
                   case 0x1388:
                     id(status_code).publish_state(value);
-                    id(evu_block).publish_state(value == 8246);
+                    id(evu_block).publish_state(value == 8246);  // signal, not state — see the entity
                     break;
                   case 0x0112: {
                     static const char *const MODE[6] = {
@@ -1092,16 +1092,29 @@ switch:
 
 
 binary_sensor:
-  # The EVU load block, from status code 8246. On this installation Home
-  # Assistant closes that input on the expensive spot hours, so this entity is
-  # the machine confirming a block HA asked for — the half of the loop HA has
-  # never been able to see. It also answers "why is it not running", which
-  # nothing else on this bus does: a compressor that is off looks identical
-  # whether it has no demand or is forbidden to run.
+  # Status code 8246, which marks the EVU load block. On this installation
+  # Home Assistant closes that input on the expensive spot hours, so this is
+  # the machine reporting back on a block HA asked for — the half of the loop
+  # HA has never been able to see.
   #
-  # No device_class: `problem` would be wrong, because this is contracted
-  # normal operation, and `running` inverts the sense. A plain on/off with an
-  # honest name beats a class that says the wrong thing.
+  # **It is a signal, not the block itself, and the arithmetic is what says
+  # so.** The configured delays make any block at least 20 minutes long. The
+  # register is written every 52 seconds without a gap, and across 211 writes
+  # in one night it read 8246 for at most 13 minutes 5 seconds — bounded by a
+  # 0 at 19:48:51 and the next 0 at 20:01:58. A code that clears while the
+  # block is still running cannot be the block's state.
+  #
+  # So the name says signal, and **the latching belongs in Home Assistant**,
+  # which knows its own delays. Encoding a 20-minute timer here would bake one
+  # installation's automation settings into a heat pump reader, and it would be
+  # wrong the day those settings change.
+  #
+  # Whether 8246 marks the request or the engagement is still open: the
+  # capture cannot separate them, because the compressor would not have run in
+  # that window either way.
+  #
+  # No device_class: `problem` would be wrong, because this is normal
+  # contracted operation, and `running` inverts the sense.
   #
   # And no `update_interval` either, unlike every publish-only sensor above:
   # a template binary sensor is not a polling component, so the option that
@@ -1109,7 +1122,7 @@ binary_sensor:
   # already publish-only, which is what the sensors need the option to say.
   - platform: template
     id: evu_block
-    name: "EVU block"
+    name: "EVU signal"
 
   # Named from behaviour rather than from the list — see the frame handler.
   - platform: template

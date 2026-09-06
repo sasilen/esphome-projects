@@ -2114,8 +2114,27 @@ arriving mid-write is not something the bus will announce.
 ```
 
 The register returns to zero, so it is a live status word and not a latched log
-entry — which is what makes it usable as an entity. The compressor stayed idle
-throughout; the night's first run was at 22:16.
+entry. The compressor stayed idle throughout; the night's first run was at
+22:16.
+
+**But it does not span the block, and the arithmetic settles it.** The EVU input
+on this installation is configured with a 10-minute delay on and 20 minutes off,
+so **no block can be shorter than 20 minutes**. The register is written every 52
+seconds with no gaps — 211 writes across the night — and it read 8246 for at
+most **13 minutes 5 seconds**, bounded by a 0 at 19:48:51 and the next 0 at
+20:01:58. A code that has cleared while the block is still running is not the
+block's state.
+
+So the entity is named `EVU signal` and **the latching belongs in Home
+Assistant**, which knows its own delays. Putting a 20-minute timer in the
+firmware would bake one installation's automation settings into a heat pump
+reader and be wrong the day they change.
+
+**Which of the two edges 8246 marks is still open.** It could show while the
+10-minute on-delay runs, or from the moment the block engages until some display
+timeout. The capture cannot separate them: the compressor would not have run in
+that window under either reading, so its behaviour says nothing. Catching a
+block while the machine wants to run would decide it in one observation.
 
 **This is the most useful single entity found on this bus.** Nothing else
 distinguishes "no demand" from "forbidden to run", and the two look identical
