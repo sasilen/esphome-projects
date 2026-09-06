@@ -39,15 +39,28 @@ Nämä ovat tekemättä ja voivat muuttaa komponenttivalintoja:
 Taulukko kattaa vetolinjan, ei koko rataa. Muualla tässä dokumentissa
 vaaditaan lisäksi nämä, eikä niiden varastotilannetta ole kirjattu:
 
-| Osa | Miksi | Missä perusteltu |
-|---|---|---|
-| Rajakytkin ×2, NC-kosketin | **Pakollinen.** Ilman niitä moottori jää jumiin päätyyn | Turvallisuus |
-| Toinen 41 mm hihnapyörä | Kääntöpyöräksi. U624ZZ ei kelpaa | Mekaniikka |
-| 4 mm terästanko tai 3 mm teräsköysi + tuet | Vaunun kisko | Mekaniikka |
-| M4-pultit ja aluslevyt | Rullien akselit | Mekaniikka |
-| 2200 µF / 100 nF | Käynnistyspiikki ja kipinöinti | Tunnetut riskit |
-| Sulake 3 A | 12 V:n plussaan | Turvallisuus |
-| DC-jakki ruuviliittimillä 5,5 × 2,1 mm | Teholähteen pää ilman johdon katkaisua | Turvallisuus |
+| Osa | Tila | Miksi | Missä perusteltu |
+|---|---|---|---|
+| 2020 V-slot -profiili, 1,5–2,5 m | **puuttuu** | Vaunun kisko | Mekaniikka |
+| Eksentriset välikkeet M5 | **puuttuu** | Ilman niitä pyöriä ei saa esikuormitettua | Mekaniikka |
+| M5-pultit ja aluslevyt | **puuttuu** | Pyörien akselit | Mekaniikka |
+| Sulake 3 A + inline-pidike | **puuttuu** | 12 V:n plussaan | Turvallisuus |
+| DC-jakki ruuviliittimillä 5,5 × 2,1 mm | **puuttuu** | Teholähteen pää ilman johdon katkaisua | Turvallisuus |
+| Rajakytkin ×2, NC-kosketin | valittu | **Pakollinen.** Ilman niitä moottori jää jumiin päätyyn | Turvallisuus |
+| POM V-pyörä 625ZZ | valittu | Vaunun pyörät, 3–4 kpl | Mekaniikka |
+| Kääntöpyörä 90 mm, laakeroitu | valittu | Taivutussääntö ≥ 50 mm | Mekaniikka |
+| PU-pyörähihna 5 mm | valittu | Koko tulee vetopyörän urasta | Rauta |
+| BTS7960 | valittu | Korvaa L298N:n; ks. jumivirtamittaus | Tunnetut riskit |
+| 2200 µF / 100 nF | hyllyssä | Käynnistyspiikki ja kipinöinti | Tunnetut riskit |
+
+Profiilin **rahti voi maksaa enemmän kuin profiili** — pitkä tavara on hankalaa
+lähettää. Katso paikallista lähdettä tai kahta 1,25 m pätkää liitoskappaleella.
+
+Kaksi riviä on poistunut ja se kannattaa tietää, jottei niitä osteta vahingossa:
+**pyöreä kisko** (4 mm tanko tai 3 mm vaijeri) korvautui 2020-profiililla, ja
+**toinen 41 mm hihnapyörä** kääntöpyöräksi korvautui 90 mm:llä. Samasta syystä
+akselit ovat M5 eivätkä M4. U624ZZ-urarullat on ostettu ennen kiskon vaihtoa ja
+ne jäävät varastoon.
 
 ESP8266 ja ESP32 ovat molemmat kelvollisia — alusta vaikuttaa vain
 `output:`-blokkiin ja pinneihin, `fan:`, `script:` ja `select:` ovat identtiset.

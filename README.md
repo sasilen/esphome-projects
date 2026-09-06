@@ -99,8 +99,8 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 | stiebel.eltron | 3,3 V:n CAN-lähetinvastaanotin **ja ESP32-S3-levy** vaiheeseen 2 | Ei — vaihe 1 ei vaadi hankintoja |
 | axioma.effection | — kaikki tilattu ja hyllyssä | Este on AES-128-avain, ei osa |
 | pegasos.enervent | RJ11-kaapeli | Kyllä, mutta se on ainoa |
-| hirvirata | Rajakytkimet, kääntöpyörä, kisko, kondensaattorit, sulake, DC-jakki | Kyllä |
-| aidon | Schottky SS14/1N5819 ja 330 Ω — kovetukset jäivät tekemättä | Ei, laite on käytössä |
+| hirvirata | 2020-profiili, eksentriset välikkeet, M5-pultit, sulake + pidike, DC-jakki | Kyllä |
+| aidon | Schottky SS14 tai 1N5819 — kovetus jäi tekemättä. 330 Ω on hyllyssä | Ei, laite on käytössä |
 | bestway.lay-z-spa | — | — |
 
 Stiebelin rivi muuttui 6.9.2026: ESPHomen `esp32_can` hyväksyy 20 kbps:n
