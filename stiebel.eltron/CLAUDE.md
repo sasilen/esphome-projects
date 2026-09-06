@@ -125,6 +125,25 @@ back to it.
   of capture, so it is the candidate for this node's own identity in phase 2.
   See "What a two-hour capture contains" for how each was seen.
 
+- **A seventh address in the log is a corrupted identifier, not a discovery.**
+  An overnight capture produced one frame from id 0x078 and one from 0x784.
+  Neither can be a node: the scheme puts the address in the high nibble and 0–3
+  in the low bits, so every real identifier is a multiple of 0x080 plus 0–3.
+  0x078 is the one that decodes — its seven bytes were `92 00 FA FE 1C 00 00`,
+  a byte-perfect response to 0x480 for element 0xFE1C, which only 0x700 sends,
+  and 0 is one of the two values 0x700 ever reports for that element. The
+  payload survived and the identifier did not.
+
+  **That does not make the frames themselves fictional**, and 0x784 is the
+  counterexample: its payload repeats an earlier capture's byte for byte, so
+  something real is sending it under an identifier that cannot be read reliably.
+  See "The overnight run happened" for what each of the two settles and what it
+  leaves open. The rule here is narrower than either: **an identifier outside
+  the scheme is not to be printed as a node**, which is why the YAML's shape
+  check rejects one and logs the frame raw. Two such frames and 315
+  same-millisecond duplicates in 95 000 is the normal cost of monitoring
+  silently, not a wiring fault.
+
 - Values look like tenths: element 0x0E answers 0x01F2 = 498, element 0x16
   answers 0x0112 = 274, element 0x0C answers 0x0093 = 147. As °C those are 49.8,
   27.4 and 14.7 — plausible flow, return and source temperatures, and the scaling
@@ -1723,6 +1742,61 @@ grep " raw dlc=" wpc-night.log | awk '{print $NF, $0}' | sort | uniq -c
 Either way the raw fallback is what surfaced them. A decoder that indexed a
 command table by the nibble would have read past the end of it on the first
 frame.
+
+### The overnight run happened, and the overflow reading does not survive it
+
+Eleven hours, some 95 000 frames, one watchdog restart at 20:00 and no other
+interruption. The census above returns about 580 raw frames, and **all of them
+but one are the ordinary system bursts. The exception is a single frame, and it
+is the same frame:**
+
+```
+[21:47:22.946] 784 raw dlc=3  C9 00 7D
+```
+
+Byte for byte the payload of the earlier `C9 00 7D`, and the identifier is one
+bit away from the 0x704 that carried it then — 0x704 against 0x784 is bit 7. It
+arrived one hour and 47 minutes after the only restart, with the frame counter
+incrementing normally on both sides of it, and no stall anywhere near.
+
+**A stale buffer does not reproduce a three-byte payload byte for byte in two
+separate runs.** So the overflow explanation fails on the evidence it was
+supposed to be tested against, and the test this file set for itself has to be
+read the other way: this frame is real traffic. Rare — twice in thirteen hours
+of capture — but real, and command 9 with a `dlc` of 3 remains unexplained.
+
+**What the night does establish is that the identifier is the field that gets
+corrupted, not the payload.** It produced a second oddity, and this one decodes:
+
+```
+[22:19:42.949] 078 → 92 00 FA FE 1C 00 00
+```
+
+Seven bytes, a well-formed response to 0x480 for element 0xFE1C with value 0 —
+which on this bus only 0x700 sends, and 0 is one of the two values 0x700 ever
+reports for that element. But 0x078 cannot be a node: the scheme puts the
+address in the high nibble and 0–3 in the low bits, so every real identifier is
+a multiple of 0x080 plus 0–3. The payload survived intact and the identifier did
+not, which is the exact inverse of the corrupted-payload reading.
+
+**`LISTENONLY` is why either frame reaches the application.** The datasheet is
+explicit, and it goes further than "no acknowledge":
+
+> Listen-Only mode is a silent mode, meaning no messages will be transmitted
+> while in this mode (including error flags or Acknowledge signals). In
+> Listen-Only mode, both valid and invalid messages will be received, regardless
+> of filters and masks… **The error counters are reset and deactivated in this
+> state.**
+>
+> — MCP2515 data sheet DS20001801H, §10.3
+
+A frame corrupted on the wire is normally destroyed by an error flag from some
+node. This node sends none, and no other node's flag can un-receive a frame this
+one has already latched. The last sentence is the one with consequences for
+diagnosis: **the error counters cannot be consulted**, so garbage frames in the
+log are the only corruption metric this configuration will ever have. Two
+suspect identifiers in some 95 000 frames is the current reading, and the shape
+check exists so that neither of them can be mistaken for a device.
 
 ---
 

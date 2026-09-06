@@ -141,11 +141,28 @@ canbus:
               //   x[2] > 0xFA the only defined marker is 0xFA. A frame with
               //               0xFB there appeared twice, seconds before a
               //               receive stall, and decoded to nonsense
+              //   sender      the address scheme puts the node in the high
+              //               nibble and 0-3 in the low bits, so every real
+              //               identifier is a multiple of 0x080 plus 0-3.
+              //               An id outside that is not a node, and printing
+              //               it as one invents a device — see below
               //
               // Everything excluded is logged raw. A decoder that mis-decodes
               // silently is worse than no decoder — raw hex in the log is how
-              // these three cases were found in the first place.
-              if (n != 7 || cmd > 5 || x[2] > 0xFA) {
+              // the first three cases were found in the first place.
+              //
+              // The sender check is the same rule the receiver already gets
+              // for free, applied to the other end of the frame. It exists
+              // because a frame arrived from id 0x078 once in eleven hours,
+              // carrying a byte-perfect `92 00 FA FE 1C 00 00` — a response
+              // to 0x480 that only 0x700 can send. The payload was intact and
+              // the identifier was not. In LISTENONLY the MCP2515 sends no
+              // error frame, so a frame corrupted on the wire is not
+              // destroyed: it lands in the buffer and arrives here. Two such
+              // frames in 95 000 is the price of not acknowledging, and the
+              // cost of not checking is a log line that reads like a seventh
+              // node on a bus that has six.
+              if (n != 7 || cmd > 5 || x[2] > 0xFA || (can_id & 0x7F) > 3) {
                 char raw[25] = {0};
                 for (uint8_t i = 0; i < n && i < 8; i++)
                   sprintf(raw + i * 3, "%02X ", x[i]);
