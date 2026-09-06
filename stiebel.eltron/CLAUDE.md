@@ -1671,6 +1671,75 @@ value, so the write-then-verify handshake is the machine's own and phase 2
 should imitate it rather than write blind — but the elements phase 2 wants are
 setpoints and curve parameters, which live in the named low range, not here.
 
+## 0x4E5E is a status word, and bit 9 is the compressor
+
+**This element is not in the list, not in the two-hour capture's account, and
+not in any implementation read for this file.** It surfaced only because the
+manager writes it to 0x100 rather than to 0x700, so nothing claimed it and the
+unclaimed-frame log printed it: 62 frames over eleven hours, 20:31 to 05:59, 17
+distinct values.
+
+The values are not a scale. Read as bits they are a machine state:
+
+| Time | Value | Bits set | Compressor |
+|---|---|---|---|
+| 22:15:05 | 65 | 0, 6 | off |
+| **22:16:13** | **577** | **0, 6, 9** | **on, same second** |
+| 22:33:30 | 721 | 0, 4, 6, 7, 9 | on |
+| 22:43:27 | 49 | 0, 4, 5 | on, 19 s before the sensor drops |
+| 22:45:01 | 1 | 0 | off |
+| **00:00:36** | **577** | **0, 6, 9** | **on, same second** |
+| 00:28:12 | 753 | 0, 4, 5, 6, 7, 9 | on |
+| 02:12:20 | 561 | 0, 4, 5, 9 | on |
+| 02:14:15 | 1 | 0 | off |
+
+**Bit 9 rises in the same second as the compressor on both starts.** Bit 0 is
+set in every frame ever seen. Bits 4 to 7 move around inside a run. Bit 14
+appears only in brief pairs — 16449, 16577, 17089, 17137 — each a few seconds
+from an otherwise identical value without it, so it reads as a momentary flag
+rather than a state.
+
+**This is a better compressor signal than the one this configuration uses.**
+0xFE1D is a command the manager issues and 0x700 answers, so the current sensor
+infers a state from a commanded output polled every five seconds. 0x4E5E is a
+single register that changes on the transition itself. On the first stop its
+bit 9 cleared 19 s before the 0xFE1D-derived sensor did; the second stop has no
+frame in the window that would resolve it, so **one observation is all there
+is** and leading behaviour is not established. What is established is that the
+bit and the compressor agree, and that four more bits of machine state are
+sitting in a register nothing currently reads.
+
+Worth a sensor before phase 2, and worth watching against the panel's own
+status display — that is the cheap way to name bits 4 to 7.
+
+## The four unclaimed elements that keep time
+
+0x06AF, 0x1388, 0x080E and 0x019A are named elsewhere in this file as traffic
+worth reading, but never timed. Eleven quiet hours give each of them a period,
+and a period is the strongest clue any of them carries:
+
+| Element | Direction | Median interval | Values |
+|---|---|---|---|
+| 0x06AF | 100 → 480 | **60 s** | always 1 |
+| 0x1388 | 480 → 100 | **52 s** | 0, and 8246 exactly twice |
+| 0x080E | 480 → 100 | **368 s** | 4, 6, 0 |
+| 0x019A | 180 → 100 | **600 s** | always 10 |
+
+**A constant on a fixed period is a heartbeat, not a measurement.** 0x06AF at
+one a minute and 0x019A at one every ten are keepalives — 0x06AF from the panel
+to the manager, 0x019A the boiler answering. Neither will ever be a sensor
+worth having, and knowing that is what stops them being investigated again.
+
+**0x080E's 368 s is the interesting number**, because it is the system-frame
+burst period. Those bursts come round every seven minutes, and this element
+rides with them rather than on a clock of its own.
+
+**0x1388's two exceptions are the whole of its information.** It reads 0 in
+every frame of the capture but two; both of those read 8246, and both fall
+inside the twenty minutes someone was browsing the panel. Whatever it carries is a consequence of the
+panel being touched, which makes it a menu-walk target rather than a background
+one.
+
 ## Three anomalies, all visible because the log falls back to raw hex
 
 - **System frames do not use the request/response layout.** All 48 of them are

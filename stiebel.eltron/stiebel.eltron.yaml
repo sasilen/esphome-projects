@@ -334,6 +334,20 @@ canbus:
                     id(operating_mode).publish_state(n < 6 ? MODE[n] : "?");
                     break;
                   }
+                  // 0x4E5E is a status word and not a number: 17 distinct
+                  // values over a night, all of them small bit patterns.
+                  // Bit 9 rose in the same second as the compressor on both
+                  // starts and bit 0 is set in every frame ever seen; bits 4
+                  // to 7 move within a run and bit 14 flickers for a few
+                  // seconds at a time. Full sixteen bits, not `n` — this one
+                  // is not et_little_endian, and reading it as the high byte
+                  // would throw away exactly the bits that carry the state.
+                  //
+                  // Published raw because the bits are not named yet. The
+                  // panel walk is the chance to name them: watch this against
+                  // the machine's own status display and write down what is
+                  // showing each time a bit moves.
+                  case 0x4E5E: id(elem_4e5e).publish_state(value); break;
                   case 0x0122: id(clk_day)   = n; break;
                   case 0x0123: id(clk_month) = n; break;
                   case 0x0124: id(clk_year)  = n; break;
@@ -626,6 +640,17 @@ sensor:
     id: elem_fe1e
     name: "Element 0xFE1E"
     state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+  # The manager's status word, written to 0x100 rather than to 0x700 — which
+  # is why nothing claimed it and the unclaimed log is what found it. No
+  # state_class: a bitfield has no mean and no sum, and asking Home Assistant
+  # to draw statistics over one produces a chart of nonsense.
+  - platform: template
+    id: elem_4e5e
+    name: "Element 0x4E5E"
     accuracy_decimals: 0
     entity_category: diagnostic
     update_interval: never
