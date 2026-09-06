@@ -24,24 +24,35 @@
 esphome:
   name: cantest
 
-# The variant is the whole experiment. Plain ESP32 was tested on 2026.8.2 and
-# refused; ESPHome's supported-rate table differs per variant, and the S3, C3,
-# C6 and P4 are separate entries. Swapping the two lines below and re-running
-# `esphome config` costs nothing and decides whether a EUR 5 board reopens the
-# route that removes the MCP2515.
+# The variant was the whole experiment, and it is now settled. ESPHome 2026.8.2
+# tabulates supported bit rates per variant, and the refusal message names
+# `ESP32` specifically — it meant it.
+#
+#   esp32dev              20 kbps REFUSED
+#   esp32-s3-devkitc-1    20 kbps accepted
+#   esp32-c3-devkitm-1    20 kbps accepted   <- the cheap one
+#
+# All three tested on 2026.8.2 by swapping the board line and re-running
+# `esphome config`. Nothing was flashed and no hardware was involved.
+#
+# The C3 is the one to buy: it does 20 kbps like the S3 at a third of the price,
+# its USB is native so the CH34x-vs-CP210x driver question disappears, and it
+# has roughly ten times the usable RAM of the D1 mini this repo keeps running
+# out of. Note its pins stop at GPIO21 and GPIO2/8/9 are strapping.
 esp32:
-  board: esp32dev            # tested 2026.8.2: 20 kbps REFUSED
-  # board: esp32-s3-devkitc-1   # variant: framework esp-idf may be required
-  # framework:
-  #   type: esp-idf
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+  # board: esp32dev              # 20 kbps refused
+  # board: esp32-s3-devkitc-1    # 20 kbps accepted, needs esp-idf
 
 logger:
 
 canbus:
   - platform: esp32_can
-    # Not GPIO5: it is a strapping pin and validation warns about it. These are
-    # placeholders either way — nothing is flashed and no pin is driven.
-    tx_pin: GPIO21
-    rx_pin: GPIO22
+    # Valid on C3 (pins stop at 21) and on S3, and neither is a strapping pin
+    # on either part. Placeholders regardless — nothing is flashed.
+    tx_pin: GPIO4
+    rx_pin: GPIO5
     can_id: 0x680
     bit_rate: 20KBPS

@@ -3133,9 +3133,33 @@ section — the first time believing a table, the second time believing an upgra
 **Buy the board, then test the bus, then rewrite the plan.** In that order.
 
 **The parts list moves accordingly:** the boards already on the shelf are
-D0WD-V3, plain ESP32, and none of them can take this route. An S3 is a new
-purchase — but the transceiver was needed either way, and the MCP2515 rework it
-replaces was never free.
+D0WD-V3, plain ESP32, and none of them can take this route.
+
+#### And the C3 takes it too, which decides what to buy
+
+```
+esp32dev             20 kbps REFUSED
+esp32-s3-devkitc-1   20 kbps accepted
+esp32-c3-devkitm-1   20 kbps accepted
+```
+
+Three variants, one board line apart, all on 2026.8.2. **Buy the C3.** It does
+this job at roughly a third of the S3's price, and two of its other properties
+answer problems this repo has already written down elsewhere:
+
+- **Native USB.** The board table in the repo README warns that the USB bridge
+  changes with the board type and so does the driver, CH34x against CP210x. A
+  C3 has no bridge chip, so that question stops existing.
+- **Roughly ten times the D1 mini's usable RAM.** The one documented reason to
+  leave the ESP8266 is the read set growing, and phase 1 already sits at 40 %.
+
+Its pins stop at GPIO21 and GPIO2/8/9 are strapping, which is ample for two CAN
+pins. The transceiver is still needed either way.
+
+**One thing this does not establish.** `esphome config` validates a
+configuration; it does not put a frame on a wire. That is the same standard of
+evidence that failed twice earlier in this section — once believing a table,
+once believing an upgrade. Buy the board, test the bus, then rewrite the plan.
 
 ### The original finding, on ESPHome 2026.7.4
 

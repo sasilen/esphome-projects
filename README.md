@@ -96,7 +96,7 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 
 | Projekti | Puuttuu | Estääkö aloituksen |
 |---|---|---|
-| stiebel.eltron | 3,3 V:n CAN-lähetinvastaanotin **ja ESP32-S3-levy** vaiheeseen 2 | Ei — vaihe 1 ei vaadi hankintoja |
+| stiebel.eltron | 3,3 V:n CAN-lähetinvastaanotin **ja ESP32-C3-levy** vaiheeseen 2 | Ei — vaihe 1 ei vaadi hankintoja |
 | axioma.effection | — kaikki tilattu ja hyllyssä | Este on AES-128-avain, ei osa |
 | pegasos.enervent | RJ11-kaapeli | Kyllä, mutta se on ainoa |
 | hirvirata | 2020-profiili, eksentriset välikkeet, M5-pultit, sulake + pidike, DC-jakki | Kyllä |
@@ -104,11 +104,21 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 | bestway.lay-z-spa | — | — |
 
 Stiebelin rivi muuttui 6.9.2026: ESPHomen `esp32_can` hyväksyy 20 kbps:n
-**ESP32-S3:lla** vaikka kieltäytyy siitä tavallisella ESP32:lla, ja se poistaa
-MCP2515:n vaiheesta 2. Hyllyn ESP32:t ovat D0WD-V3 eli tavallisia, joten S3 on
-uusi hankinta — mutta se korvaa moduulin SMD-työn jota ei olisi tehty ilmaiseksi
-sekään. Perustelut: [`stiebel.eltron/CLAUDE.md`](stiebel.eltron/CLAUDE.md),
-"Rejected: ESP32 built-in CAN".
+**ESP32-S3:lla ja -C3:lla** vaikka kieltäytyy siitä tavallisella ESP32:lla, ja
+se poistaa MCP2515:n vaiheesta 2. Hyllyn ESP32:t ovat D0WD-V3 eli tavallisia.
+
+**C3 on se joka kannattaa tilata**, eikä vain stiebeliä varten. Se tekee saman
+työn kolmasosalla S3:n hinnasta, sen USB on natiivi eli yllä mainittu
+CH34x-vastaan-CP210x-ajurikysymys poistuu, ja siinä on noin kymmenkertainen
+käyttömuisti D1 miniin verrattuna. Levytaulukko sanoo että D1 minejä on vapaana
+nolla; C3 on halvin tapa korjata sekin.
+
+**S3:lle ei ole tässä repossa käyttöä.** Se voitti C3:n vain muistissa,
+nastamäärässä ja ytimissä, eikä yksikään projekti tarvitse niitä.
+
+Perustelut ja kaikkien kolmen variantin testitulokset:
+[`stiebel.eltron/CLAUDE.md`](stiebel.eltron/CLAUDE.md), "Rejected: ESP32
+built-in CAN".
 
 Yksi asia joka ei näy yksittäisen projektin listalta: **D1 mineissä ei ole
 varaa.** Ks. levytaulukko yllä — neljästä kaksi on käytössä ja kaksi varattu.
