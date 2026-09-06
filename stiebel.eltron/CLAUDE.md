@@ -2252,6 +2252,59 @@ also briefly claimed: it moves between 0, 4 and 6 all night, at 21:12, 22:29,
 22:35, 22:36, 23:38 and so on, with no block anywhere near. It is something
 else, probably an operating state, and it stays unnamed.
 
+### 0x0101 is the legionella enable, and a write caught it
+
+The strongest evidence this project has produced. Not correlation, not
+elimination — **the value changed on the panel and the change is on the bus:**
+
+```
+12:49:15  180>100 resp ex=0101 = 0        off
+12:49:22  100>180 wr   ex=0101 = 256      the panel writes
+12:49:25  180>100 resp ex=0101 = 256      the machine confirms
+```
+
+`256` is `0x0100`, and `et_little_endian` puts the number in the high byte, so
+this is **0 → 1**. `ANTILEGIONELLAKÄSITT` went from `POIS` to on.
+
+**Three candidates collapsed to one.** The DHW `PERUSASETUS` screen shows three
+`POIS` rows and exactly three elements read zero there — `0x0101`, `0x027E` and
+`0x070D`. One write named the first and left the other two as `WW OPPIMISTOIM`
+and `YHDISTELMÄVAR` in some order. `0x0022` and `0x0263` both read 30 and
+neither moved, so that pair is still unresolved.
+
+**And it is the second write frame this project has captured**, after the
+heating curve's `0x010E`. Phase 2 could send it unchanged:
+
+```
+100>180 wr ex=0101 = 256
+```
+
+**Change one value and watch** is now the method of record for anything a screen
+can edit. It beats photographing, which cannot separate two elements that happen
+to hold the same number, and it beats correlation, which needs hundreds of
+samples to say less.
+
+### Why the legionella function still cannot drive a surplus-PV automation
+
+The idea is good and the arithmetic is better than the reheat's usual case: a
+legionella cycle is heat that **must** be made, so running it on surplus
+photovoltaic output has no opportunity cost at all — the 3:1 efficiency argument
+against the element does not apply to a load that is going to run regardless.
+
+**It fails on timing, not on economics.** The menu carries an enable and nothing
+else: no hour, no day, no interval. Writing the enable means "do it at the next
+scheduled moment", and the schedule is internal. Surplus control needs *now*,
+and there is no parameter that says now.
+
+**So the mechanism is the outdoor gate instead.** `KYTKENTÄLÄMPÖT WW` at
+`0x01AD` reads −19.0 °C and is what actually keeps the element off. Raising it,
+raising the DHW setpoint, and putting it back is a control loop the machine
+executes with its own logic — the same shape as the EVU block Home Assistant
+already drives, which changes the conditions rather than issuing commands.
+
+`0x01AD` was named by elimination and deserves the same treatment as `0x0101`:
+nudge it one step on the panel with read logging on, and the write will name it.
+
 ### Walking the menus costs data, and the price is now measured
 
 The walk tripped the overflow watchdog **twice**, at 07:40:15 and 07:42:39 —
