@@ -137,14 +137,52 @@ Sulake 12 V:n plussaan, 3 A. DC-jakkiliitin ruuviliittimillä teholähteen pää
 
 ## Mekaniikka
 
-**U624ZZ ei kelpaa kääntöpyöräksi** — 13 mm ulkohalkaisija on liian pieni 5 mm
-PU-hihnalle (nyrkkisääntö ~10 × hihnan paksuus, eli vähintään 50 mm).
-Kääntöpyöräksi tarvitaan toinen samanlainen 41 mm hihnapyörä.
+**Kisko on 2020 V-slot -alumiiniprofiili**, ja vaunu kulkee sillä POM-V-pyörillä.
+Se on sama pari jota jokainen Ender-luokan 3D-tulostin käyttää: massatuotettu,
+mitoitettu ja halpa, eikä siinä ole mitään keksittävää.
 
-Rullat ovat **vaunun ohjausrullia**: U-ura on tarkoitettu pyöreälle kiskolle,
-4 mm terästangolle tai 3 mm kireälle teräsköydelle. Ei sovi
-2020-alumiiniprofiiliin, joka vaatii V-uran. Akselina M4-pultti, kolme rullaa
-vaunua kohti. 4 mm tanko notkuu 2 m matkalla — tue 3–4 kohdasta.
+| | |
+|---|---|
+| Kisko | 2020 V-slot, 1,5–2,5 m |
+| Vaunun pyörät | POM V-ura, 625ZZ-laakeri, 3–4 kpl vaunua kohti |
+| Akselit | **M5** — 625ZZ on 5 × 16 × 5 |
+| Kääntöpyörä | 90 mm laakeroitu vaijeripyörä |
+| Vetopyörä | 41 × 16 × 6 mm, ura 3–5 mm hihnalle, moottorin akselilla |
+
+**Eksentriset välikkeet ovat pakollisia, eivät valinnaisia.** Vakiorakenne on
+2–3 kiinteää pyörää ja yksi eksentrinen, jolla väljyys kiskoa vasten ajetaan
+pois. Ilman niitä vaunu joko heiluu tai jumittaa, eikä sitä voi säätää
+jälkikäteen millään. Ne myydään erikseen (`eccentric spacer M5 2020`).
+
+**Kääntöpyörän halkaisija ei vaikuta nopeuteen** — vain vetopyörä esiintyy
+laskussa. Sen saa siis mitoittaa vapaasti taivutussäännön mukaan: nyrkkisääntö
+on ~10 × hihnan paksuus eli vähintään 50 mm 5 mm hihnalle, ja 90 mm ylittää sen
+selvästi. Vetopyörän 41 mm alittaa säännön, ja se on tietoinen kompromissi —
+pyörä on hyllyssä ja moottorin akselilla, ja sen vaihtaminen muuttaisi nopeutta.
+
+**Hihnan kiristys kuuluu kääntöpyörän päähän.** PU-pyörähihna hitsataan
+umpinaiseksi silmukaksi eikä sen pituutta voi jälkikäteen säätää, joten
+kannakkeeseen tarvitaan pitkittäinen säätöura. Se on halpa piirtää nyt ja
+kallis korjata sitten.
+
+### Mitä tämä korvasi, ja miksi se kannattaa tietää
+
+Alkuperäinen ratkaisu oli **U624ZZ-urarullat 4 mm pyörötangolla tai 3 mm
+kireällä vaijerilla**, akselina M4. Se kaatui jännevälistä: 4 mm tanko notkuu
+2 m matkalla ja vaatii 3–4 välitukea, kun rata on mitoitettu 1,5–2,5 metrille.
+2020-profiili tulee toimeen päätytuilla ja korkeintaan yhdellä keskituella.
+
+Välissä harkittiin **kumi- tai PU-rullia peltiä vasten**. Se ratkaisi
+jäykkyyden mutta toi kaksi uutta ongelmaa: tasainen pinta ei keskitä mitään,
+joten sivuttaisohjaus olisi pitänyt rakentaa erikseen, ja kumi vierii
+raskaammin kuin POM — merkitsevää, koska teholähde on rajatapaus.
+
+**Rulla seuraa kiskosta, ei toisin päin.** Tämä kiersi kolme kertaa juuri siksi
+että rullaa valittiin ensin: U-ura vaatii pyöreän kiskon, V-ura profiilin,
+sileä kehä tasaisen pinnan. Ne ovat kolme eri rataa, eivät kolme rullaa samalle
+radalle.
+
+U624ZZ:t on ostettu (10 kpl) ja ne jäävät varastoon.
 
 ## Mitoitusrajoite
 

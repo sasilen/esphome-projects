@@ -168,6 +168,13 @@ kun Vss = 5 V).
   vaunua kohti: kaksi tangon päälle, yksi alle.
 - 4 mm tanko notkuu 2 m matkalla — tue 3–4 kohdasta.
 
+**Yllä oleva kuvaa hylättyä ratkaisua.** Kisko on 2020 V-slot -profiili ja
+vaunu kulkee POM-V-pyörillä 625ZZ-laakerilla, akselina M5. Perustelut ja se
+mitä matkan varrella harkittiin: [`README.md`](README.md), "Mekaniikka".
+Jänneväli kaatoi pyörötangon — rata on 1,5–2,5 m ja 4 mm tanko vaatisi 3–4
+välitukea.
+
+
 ## Mitoitusrajoite
 
 200 rpm ja 37 mm efektiivinen halkaisija antavat 0,39 m/s. Virallisen
