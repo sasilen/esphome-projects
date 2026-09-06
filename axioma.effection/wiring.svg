@@ -11,7 +11,7 @@
 
   <rect x="60" y="150" width="180" height="430" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
   <rect x="88" y="166" width="124" height="46" rx="2" fill="#E9ECEF" stroke="#A8B3BC"/>
-  <text x="150" y="188" font-size="10" fill="#5A6772" text-anchor="middle">WROOM-32</text>
+  <text x="150" y="188" font-size="10" fill="#5A6772" text-anchor="middle">ESP-32</text>
   <text x="150" y="203" font-size="9" fill="#8A959E" text-anchor="middle">printtiantenni</text>
   <text x="150" y="548" font-size="10" fill="#8A959E" text-anchor="middle">CH340C</text>
   <text x="150" y="566" font-size="9" fill="#5A6772" text-anchor="middle">kaikki 7 samassa rivissa</text>

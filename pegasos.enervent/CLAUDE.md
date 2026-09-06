@@ -43,9 +43,16 @@ What the photo settles:
   CH34x driver that has to be present on the flashing machine, not CP210x.
 - On-board **AMS1117-3.3** regulator, and a `VIN` pin, so 5 V may be fed in
   directly instead of over USB.
-- The module carries a **printed PCB antenna**, i.e. plain WROOM-32. That is the
-  right board to take for this project: it needs no antenna part, and a
-  ventilation unit sits indoors where a PCB antenna is enough.
+- The module carries a **printed PCB antenna**, so it needs no antenna part —
+  right for this project, since a ventilation unit sits indoors where a PCB
+  antenna is enough.
+
+  **The shield reads `ESP-32`, not `ESP32-WROOM-32`.** This file used to call it
+  a WROOM-32; that was inferred from the antenna and the footprint, not read off
+  the part. Functionally it behaves as one and ESPHome's `esp32dev` profile
+  fits, but a genuine Espressif WROOM prints its own name on the can. Treat the
+  module as an unbranded equivalent — which matters only if a datasheet-level
+  question ever comes up, and not for pin assignment or flashing.
 
 ## Found in the same box: a GYBMEP sensor breakout
 
