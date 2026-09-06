@@ -493,19 +493,27 @@ canbus:
                   // 0x1388 is the machine's status code, and the panel writes
                   // whatever it holds into the list it calls VIRHELUETTELO.
                   // That name is misleading: the twelve entries on this
-                  // machine are all 8246, twice a day at around 09:20 and
-                  // 19:20, and **8246 is the utility's load block** — normal
-                  // contracted behaviour, not a fault. It is confirmed by the
-                  // owner and by the timing, and one block was captured whole:
-                  // the register went to 8246 at 19:53:22 and back to 0 before
-                  // 20:01:58, with the compressor idle throughout.
+                  // machine are all 8246, and **8246 is the EVU block** — the
+                  // load-control input, not a fault.
+                  //
+                  // On this installation Home Assistant drives that input from
+                  // the spot price, so the block is the owner's own automation
+                  // rather than the grid operator's. The log agrees: the
+                  // entries vary, one or two a day and none at all on two
+                  // days, which is a price threshold and not a contract.
+                  //
+                  // One block was captured whole: 8246 at 19:53:22, back to 0
+                  // before 20:01:58, compressor idle throughout.
                   //
                   // Full 16 bits, not `n`: 8246 is 0x2036 and the high byte
                   // alone would read 32.
                   //
-                  // Both entities are worth having. The block explains *why*
-                  // the machine is not running, which no other element on this
-                  // bus does, and phase 2 must not try to drive it during one.
+                  // Both entities are worth having, and the block is worth
+                  // having even though Home Assistant is the one asking for
+                  // it: what HA has never had is the *machine's* report that
+                  // the block arrived. Asking and taking effect are different
+                  // facts, and only the second says the wiring works. Phase 2
+                  // must not try to drive the machine during one either.
                   // The raw code is what a real fault would arrive in, and
                   // keeping it visible is the only way that would ever be
                   // noticed.
@@ -1084,11 +1092,12 @@ switch:
 
 
 binary_sensor:
-  # The utility's load block, from status code 8246. This is the entity that
-  # answers "why is it not running", and nothing else on this bus does — the
-  # compressor being off looks identical whether the machine has no demand or
-  # is forbidden to run. It is also the condition phase 2 has to respect: a
-  # write during a block is at best ignored and at worst confusing.
+  # The EVU load block, from status code 8246. On this installation Home
+  # Assistant closes that input on the expensive spot hours, so this entity is
+  # the machine confirming a block HA asked for — the half of the loop HA has
+  # never been able to see. It also answers "why is it not running", which
+  # nothing else on this bus does: a compressor that is off looks identical
+  # whether it has no demand or is forbidden to run.
   #
   # No device_class: `problem` would be wrong, because this is contracted
   # normal operation, and `running` inverts the sense. A plain on/off with an

@@ -2082,10 +2082,28 @@ confirms the first two exactly — `01. 8246 / 19:53 05.SYY 26` against index 0'
 else is single values.
 
 **All twelve rows carry the same code, and the code is not a fault.** 8246 is
-the utility's load block — confirmed by the owner, and the timing says the same
-thing on its own: twice a day at around 09:20 and 19:20, across ten days from 27
-August. The panel files it under VIRHELUETTELO because that is the only list it
-has, not because anything is wrong.
+the EVU block — the machine's load-control input — and the panel files it under
+VIRHELUETTELO because that is the only list it has, not because anything is
+wrong.
+
+**The block is this installation's own doing, not the grid operator's.** Home
+Assistant drives the EVU input from the spot price, to keep the compressor off
+during the expensive hours. That is confirmed by the owner and the log agrees:
+the twelve entries are not a fixed schedule but a varying one — two on some
+days, one on others, and **none at all on 29 and 30 August**. A utility's
+contracted block would not skip two days; a price threshold would, on a cheap
+one.
+
+**Which makes the entity a confirmation loop rather than a discovery.** Home
+Assistant already knows when it asked for a block; what it has never had is the
+machine's own report that the block arrived and took effect. Those are different
+facts, and only the second one says the wiring works.
+
+**And it is a second control path to keep in mind for phase 2.** This machine is
+already being load-controlled from Home Assistant over the EVU contact. Curve
+control over CAN would be a second hand on the same machine, and the two can
+disagree — writing a setpoint during a block achieves nothing, and a block
+arriving mid-write is not something the bus will announce.
 
 **One block was captured whole**, and it makes `0x1388` legible:
 
