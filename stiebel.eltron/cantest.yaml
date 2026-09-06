@@ -31,14 +31,24 @@ esphome:
 #   esp32dev              20 kbps REFUSED
 #   esp32-s3-devkitc-1    20 kbps accepted
 #   esp32-c3-devkitm-1    20 kbps accepted   <- the cheap one
+#   esp32-c6-devkitc-1    20 kbps accepted   <- and this one also does 802.15.4
 #
 # All three tested on 2026.8.2 by swapping the board line and re-running
 # `esphome config`. Nothing was flashed and no hardware was involved.
 #
-# The C3 is the one to buy: it does 20 kbps like the S3 at a third of the price,
-# its USB is native so the CH34x-vs-CP210x driver question disappears, and it
-# has roughly ten times the usable RAM of the D1 mini this repo keeps running
-# out of. Note its pins stop at GPIO21 and GPIO2/8/9 are strapping.
+# Three of the four take it, so price and capability decide rather than the bus.
+# The C3 is the cheap one; the C6 does everything the C3 does and adds an
+# 802.15.4 radio, which is the one capability none of the others can be given
+# later. Both have native USB, so the CH34x-vs-CP210x driver question that this
+# repo keeps tripping over disappears with either.
+#
+# Watch the strapping pins, which differ per variant and are the reason two of
+# these four tests failed on a pin before they could fail or pass on the rate:
+#
+#   C3   pins stop at GPIO21;  GPIO2, 8, 9 are strapping
+#   C6   GPIO4, 5, 8, 9, 15 are strapping — GPIO4/5 below are wrong for a
+#        real C6 build even though validation only warns
+#   S3   GPIO0, 3, 45, 46 are strapping
 esp32:
   board: esp32-c3-devkitm-1
   framework:

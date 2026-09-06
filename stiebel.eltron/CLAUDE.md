@@ -3141,9 +3141,19 @@ D0WD-V3, plain ESP32, and none of them can take this route.
 esp32dev             20 kbps REFUSED
 esp32-s3-devkitc-1   20 kbps accepted
 esp32-c3-devkitm-1   20 kbps accepted
+esp32-c6-devkitc-1   20 kbps accepted
 ```
 
-Three variants, one board line apart, all on 2026.8.2. **Buy the C3.** It does
+Four variants, one board line apart, all on 2026.8.2. Three of the four take it,
+so **the bus no longer decides the board** — price and capability do.
+
+**The C6 is the one worth stocking.** It does this job like the C3 and adds an
+802.15.4 radio, which is the single capability none of the others can be given
+afterwards: Thread, Zigbee, Matter. Everything else the S3 offers over the C3 is
+more of the same — RAM, pins, cores — and this repo's projects are bus adapters,
+which need none of it.
+
+**The C3 is the one worth buying in quantity.** It does
 this job at roughly a third of the S3's price, and two of its other properties
 answer problems this repo has already written down elsewhere:
 
