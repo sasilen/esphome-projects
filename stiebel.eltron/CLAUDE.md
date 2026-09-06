@@ -3045,6 +3045,19 @@ SN65HVD230 does not become surplus** — see "The CAN Pal may not be needed at
 all". It was bought for this route, and it is still a 3.3 V CAN transceiver on
 the shelf.
 
+> **Both halves of that paragraph are now wrong.** The S3 validates, so the
+> MCP2515 leaves phase 2 entirely and its rework is not unavoidable but
+> *unnecessary* — no pin lift, no SMD work, no SPI, no crystal. And the
+> SN65HVD230 was never on the shelf; that claim is retracted elsewhere in this
+> file. What survives is the transceiver requirement itself, which is the same
+> under either route.
+>
+> **What is left to modify is one resistor on the transceiver, if that.** R2 is
+> the 120 Ω terminator and R1 sets the Rs slope mode; both sit on the VP230
+> board and neither has anything to do with the MCP2515. If the "leave R2 in
+> place" reading below is right, **phase 2 involves no board modification at
+> all** — solder two bus wires, wire six logic pins, flash.
+
 Cheap way to re-test after an ESPHome upgrade — needs no hardware, just validation:
 
     podman exec esphome esphome config /config/cantest.yaml
