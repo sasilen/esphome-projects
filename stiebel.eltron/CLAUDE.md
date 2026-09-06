@@ -2017,6 +2017,52 @@ g++ -std=gnu++17 -Wall -Wextra -o replay replay.cpp && ./replay
 - **`0x01D5` was asked of 0x180 once, at 07:32:52, and never answered.** The
   only element in the capture that a node declined to respond to at all.
 
+### The second walk: the commissioning menu, and a lead on 0xFE1B and 0xFE1C
+
+A second walk covered the screens the first one missed — settings, diagnostics
+and the commissioning menu rather than the info pages. Thirty elements appeared
+that no capture had shown before. Six are named to the digit:
+
+| Element | From | Panel | Value |
+|---|---|---|---|
+| `0x070A` | 0x180 | KÄY → LÄMMITYS, LÄMMPIIRIPUMP TEHO | 100 % |
+| `0x070B` | 0x180 | KÄY → LÄMMINVESI, LV-PUMP TEHO | 100 % |
+| `0x01A2` | 0x180 | KÄY → LÄMMITYS, HD-ANTURI MAX | 40.0 bar |
+| `0x0668` | 0x480 | DIA → LÄMPÖP TILA, JÄLJ LEPOAIKA | 00 min |
+| `0x0691` | 0x480 | DIA → SIS LASKELMA, AIKAVÄLI | counts continuously |
+| `0x0692` | 0x480 | DIA → SIS LASKELMA, KYTKETYT VAIHEET | 01 |
+
+`0x0691` is the one that names itself by behaviour: it ran 65 → 99 → 73 → 81
+inside two minutes while the screen showed 76, so it is a free-running counter
+and the exact frame it was photographed against does not matter.
+
+**`0x0668` is the other half of "why is it not running".** The EVU block below
+answers one case; the compressor's remaining minimum-off time answers the rest,
+and between them a machine that is idle for a reason is distinguishable from one
+that simply has no demand.
+
+**And the commissioning menu is the first evidence that this machine describes
+pumps as percentages.** `0xFE1B` and `0xFE1C` have been unnamed 0/100 outputs
+since the first capture, with `0xFE1C` also modulating through 8 and 12 — which
+is a strange set for anything except a pump. Two pump-power rows now exist on
+the panel, both configured to 100 %. **That is a lead, not a finding**: both
+read the same value, so nothing here says which command drives which pump, or
+whether the connection exists at all. The test is to catch `0xFE1C` at 8 or 12
+and read the machine's live pump display in the same minute.
+
+**`0x0078` is a second index for `0x02CA`.** Both answered 254 while the panel
+showed TOSILÄMPÖT HK 1 = 25.4 on the first walk, and both answered 265 against
+26.5 on the second. Same node, same value, two indices — the third such pair
+after the return and the flow, and the first where both come from 0x180.
+
+**Still unnamed, and the evidence for them no longer exists:** `0x4E5A`,
+`0x06AE`, `0xFDAE`, `0xFDB0`, `0xFDB1`, `0xFDC0`, `0x070E`, `0x070F`, `0x0030`,
+`0x0669`, `0x1710`–`0x1712`, and the weekly-programme block `0x011B`–`0x0120`.
+Most answer 0 or a sentinel, which is why they were not worth the photographs
+that have since been deleted. `0x0673` is the exception worth a second look: it
+read 0 on the first walk and 2899 then 2952 within seconds on the second, so it
+moves fast and is not a setting. Naming any of these needs a fresh walk.
+
 ### 0x1388 is the status code, and 8246 is the utility block
 
 The second walk opened DIAGNOSTIIKKA → VIRHELUETTELO, and the panel dumped the

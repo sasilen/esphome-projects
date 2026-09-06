@@ -318,6 +318,18 @@ canbus:
                   // a single scaling would be wrong by a factor of ten
                   // somewhere and there is no way to tell which from the
                   // numbers alone.
+                  // Commissioning-menu settings, not live values: these are
+                  // the configured pump ceilings, both at 100 % on this
+                  // machine. Worth having because 0xFE1B and 0xFE1C are 0/100
+                  // outputs on the same machine and 0xFE1C also modulates
+                  // through 8 and 12 — a modulating pump command is the
+                  // reading those two have been missing, and these two rows
+                  // are the first evidence the machine has pumps described
+                  // that way at all. Not asserted: both read 100 here, so
+                  // nothing distinguishes which command drives which pump.
+                  case 0x070A: id(pump_power_heat).publish_state(value); break;
+                  case 0x070B: id(pump_power_dhw).publish_state(value); break;
+                  case 0x01A2: id(hp_sensor_max).publish_state(t); break;
                   case 0x0268: id(pressure_high).publish_state(t); break;
                   case 0x07A5: id(pressure_low).publish_state(t);  break;
                   case 0x0675:
@@ -497,6 +509,11 @@ canbus:
                   // The raw code is what a real fault would arrive in, and
                   // keeping it visible is the only way that would ever be
                   // noticed.
+                  // DIAGNOSTIIKKA -> LAMPOP TILA shows this as JALJ LEPOAIKA,
+                  // the compressor's remaining minimum-off time. Zero when the
+                  // machine is free to start, which makes it the second half of
+                  // the "why is it not running" question the EVU block answers.
+                  case 0x0668: id(rest_time).publish_state(value); break;
                   case 0x1388:
                     id(status_code).publish_state(value);
                     id(evu_block).publish_state(value == 8246);
@@ -897,6 +914,12 @@ sensor:
   - {platform: template, id: hours_nhz1, name: "Reheat hours stage 1", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
   - {platform: template, id: hours_nhz2, name: "Reheat hours stage 2", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
   - {platform: template, id: hours_nhz_both, name: "Reheat hours both stages", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+
+  # ---- named on the second walk -----------------------------------------
+  - {platform: template, id: pump_power_heat, name: "Heating pump power setting", unit_of_measurement: "%", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: pump_power_dhw, name: "DHW pump power setting", unit_of_measurement: "%", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hp_sensor_max, name: "High pressure sensor maximum", device_class: pressure, unit_of_measurement: "bar", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: rest_time, name: "Remaining rest time", unit_of_measurement: "min", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
 
   # The machine's status code, raw. 0 in normal running; 8246 is the utility
   # block. A real fault would arrive here too, which is the reason to keep a
