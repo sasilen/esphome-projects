@@ -2956,6 +2956,32 @@ hardware, and its pins are placeholders.
 this line was true on 2026.7.4 and is kept because the reasoning still holds if
 the re-test fails.
 
+#### The re-test was run on 2026.8.2, and it fails identically
+
+```
+canbus.esp32_can: Bit rate 20KBPS is not supported on ESP32.
+```
+
+**So the rejection stands and the MCP2515 stays.** The upgrade that was expected
+to reopen this did not. Recorded here so the same test is not run a third time
+against the same version.
+
+**The silicon is definitively not the obstacle.** Espressif's own timing macros
+for 12.5K, 16K and 20K require ESP32 revision 2 or later, and the board on hand
+is a **D0WD-V3 rev v3.1**. The part can do it; ESPHome will not ask it to.
+
+**One cheap experiment is left, and it is a one-line edit.** ESPHome's supported
+rates are tabulated *per variant* — the S3, C3, C6 and P4 are separate entries
+from the original ESP32, and the refusal message names `ESP32` specifically.
+[`cantest.yaml`](cantest.yaml) carries the alternative `board:` line commented
+out. If an S3 validates at 20 kbps, then a five-euro board removes the MCP2515,
+the SPI wiring, the crystal question, the level shifting and the receive-stall
+bug — and that is worth one `esphome config` before accepting the MCP2515 as
+settled.
+
+**A caution on that hope:** the same test has now been believed twice on
+secondhand evidence and failed twice on the machine. Validate before buying.
+
 ### The original finding, on ESPHome 2026.7.4
 
 The ESP32's built-in TWAI controller would have dropped the MCP2515, the SPI

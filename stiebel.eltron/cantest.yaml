@@ -24,14 +24,24 @@
 esphome:
   name: cantest
 
+# The variant is the whole experiment. Plain ESP32 was tested on 2026.8.2 and
+# refused; ESPHome's supported-rate table differs per variant, and the S3, C3,
+# C6 and P4 are separate entries. Swapping the two lines below and re-running
+# `esphome config` costs nothing and decides whether a EUR 5 board reopens the
+# route that removes the MCP2515.
 esp32:
-  board: esp32dev
+  board: esp32dev            # tested 2026.8.2: 20 kbps REFUSED
+  # board: esp32-s3-devkitc-1   # variant: framework esp-idf may be required
+  # framework:
+  #   type: esp-idf
 
 logger:
 
 canbus:
   - platform: esp32_can
-    tx_pin: GPIO5
-    rx_pin: GPIO4
+    # Not GPIO5: it is a strapping pin and validation warns about it. These are
+    # placeholders either way — nothing is flashed and no pin is driven.
+    tx_pin: GPIO21
+    rx_pin: GPIO22
     can_id: 0x680
     bit_rate: 20KBPS
