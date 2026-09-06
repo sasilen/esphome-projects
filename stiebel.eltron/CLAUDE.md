@@ -2094,6 +2094,54 @@ produces. Two of the three pairs proven so far — the return and the flow — w
 established over hundreds of samples. One sample is a coincidence waiting to be
 written down.
 
+#### The corruption has a shape, and it is in two adjacent bytes
+
+Twenty-eight corrupted responses have now been seen from 0x700, and none of the
+indices they carry was **ever requested** — zero read requests for the whole
+`0xFFxx` family across every capture, with read logging on. A response answers a
+request; an unrequested response is not protocol traffic. That alone settles it,
+and it retires an earlier reading in this file that called `0xFF0B` "probably
+real" because it recurred. The recurrence was the right observation and the
+wrong conclusion.
+
+**Three cases are proven by value, not by argument:**
+
+| Seen | Is really | XOR | Evidence |
+|---|---|---|---|
+| `0xFE0E` = 135 | `0xFE0A` | `0x0004` | 0xFE0A reads 13.5 °C — 135 raw |
+| `0xFE0F` = 0 | `0xFE07` | `0x0008` | 0xFE07 reads 0 when idle |
+| `0xFF4C` = 18 | `0xFE4C` | `0x0100` | 0xFE4C is constant 18 |
+
+**Every flipped bit lands in the low bits of the two index bytes.** The element
+index is bytes 3 and 4 of the frame, so `0x0002`, `0x0004` and `0x0008` are the
+low bits of byte 4 and `0x0100` is the lowest bit of byte 3 — two adjacent bytes,
+bottom bits of each:
+
+```
+0x0002   1     0x0100   2      bit 8 alone
+0x0004   6     0x0102  10      bit 8 with a low bit
+0x0008   3     0x0104   3
+0x022C   3  ← the one that fits nothing
+```
+
+Fifteen of the twenty-eight involve bit 8. This is not uniform noise across the
+frame, and a pattern that concentrated points at sampling or timing in the read
+path rather than at the wire. **It is a shape, not yet a diagnosis** — one more
+capture that keeps it would make it one.
+
+**The rate is a floor, not a measurement, and that is the important caveat.**
+Only corruptions that land *outside* the known element set are visible: a flipped
+bit that turns one real index into another real index is delivered, published,
+and indistinguishable from data. The 0x700 poll covers about eleven elements
+every five seconds, so the denominator runs past a hundred thousand responses —
+but the numerator counts only the ones that missed.
+
+**Which is the argument for the guards, restated.** The sentinel guard and the
+sender check catch what they catch because those values and identifiers are
+impossible. Nothing makes a wrong-but-legal element index impossible, and the
+median filter on the three fast temperatures is the only thing standing between
+that class and Home Assistant's history.
+
 **Still unnamed, and the evidence for them no longer exists:** `0x4E5A`,
 `0x06AE`, `0xFDAE`, `0xFDB0`, `0xFDB1`, `0xFDC0`, `0x070E`, `0x070F`, `0x0030`,
 `0x0669`, `0x1710`–`0x1712`, and the weekly-programme block `0x011B`–`0x0120`.
