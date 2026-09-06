@@ -13,10 +13,15 @@ mutta rautaa ei ole vielä koottu.
 
 Nämä ovat tekemättä ja voivat muuttaa komponenttivalintoja:
 
-1. Moottorin akselin halkaisija — hihnapyörän reikä on kiinteä 6 mm
+1. ~~Moottorin akselin halkaisija~~ — **ratkaistu: 6 mm.** Hihnapyörä on kiinni
+   moottorissa ja istuu. Sovitus on vahvempi todiste kuin mitta, ja se vapauttaa
+   pyörävalinnat: 6 mm reikä on oikea, ja hyllyn 41 mm pyörä on oikea osa.
 2. **Moottorin jumivirta** — jos > 2 A, L298N vaihtuu BTS7960:een
 3. Moottorin kiinnitysreikien jako
-4. U624ZZ-rullien uran mitat — valmistajakohtaisia, 4 mm tanko ei aina istu
+4. ~~U624ZZ-rullien uran mitat~~ — **rauennut.** Vaunun rullat eivät enää kulje
+   pyöreällä kiskolla vaan kumi- tai PU-rullina peltiä vasten, joten U-uran
+   mitoilla ei ole merkitystä. Rullatuote on vielä valitsematta ja sen mukana
+   akselikoko; ks. "Mekaniikka", joka kuvaa yhä vanhan ratkaisun.
 
 ## Rauta
 
