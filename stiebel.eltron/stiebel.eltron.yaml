@@ -255,10 +255,10 @@ canbus:
               // reboot could only ever produce a total that looks right and is
               // not. Same reasoning as 0xFE4C's remembered value below.
               struct Ctr { uint16_t mwh, kwh, day; uint8_t seen, need; };
-              static Ctr ctr[5] = {
+              static Ctr ctr[6] = {
                   {0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0b111},
                   {0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0b111},
-                  {0, 0, 0, 0, 0b011}};
+                  {0, 0, 0, 0, 0b011}, {0, 0, 0, 0, 0b011}};
               auto part = [&](uint8_t i, uint8_t w, uint16_t v) {
                 Ctr &c = ctr[i];
                 if (w == 0) c.mwh = v; else if (w == 1) c.kwh = v; else c.day = v;
@@ -370,8 +370,14 @@ canbus:
                   case 0x091B: if (part(3, 2, value)) id(power_dhw).publish_state(total(3)); break;
                   // The reheat's heat has no day counter on its screen, so
                   // this one needs two parts and its day slot stays zero.
-                  case 0x0929: if (part(4, 0, value)) id(energy_nhz).publish_state(total(4)); break;
-                  case 0x0927: if (part(4, 1, value)) id(energy_nhz).publish_state(total(4)); break;
+                  // The reheat keeps two totals, on two pages of the same
+                  // screen, and only the first was found on the first walk.
+                  // NHZ LAMM SUMMA is heating, NHZ LV SUMMA is hot water, and
+                  // the second is the larger of the two by a factor of three.
+                  case 0x0929: if (part(4, 0, value)) id(energy_nhz_heat).publish_state(total(4)); break;
+                  case 0x0927: if (part(4, 1, value)) id(energy_nhz_heat).publish_state(total(4)); break;
+                  case 0x0925: if (part(5, 0, value)) id(energy_nhz_dhw).publish_state(total(5)); break;
+                  case 0x0923: if (part(5, 1, value)) id(energy_nhz_dhw).publish_state(total(5)); break;
 
                   default: handled = false;
                 }
@@ -472,6 +478,29 @@ canbus:
                 const uint8_t n = value >> 8;
                 handled = true;
                 switch (element) {
+                  // 0x1388 is the machine's status code, and the panel writes
+                  // whatever it holds into the list it calls VIRHELUETTELO.
+                  // That name is misleading: the twelve entries on this
+                  // machine are all 8246, twice a day at around 09:20 and
+                  // 19:20, and **8246 is the utility's load block** — normal
+                  // contracted behaviour, not a fault. It is confirmed by the
+                  // owner and by the timing, and one block was captured whole:
+                  // the register went to 8246 at 19:53:22 and back to 0 before
+                  // 20:01:58, with the compressor idle throughout.
+                  //
+                  // Full 16 bits, not `n`: 8246 is 0x2036 and the high byte
+                  // alone would read 32.
+                  //
+                  // Both entities are worth having. The block explains *why*
+                  // the machine is not running, which no other element on this
+                  // bus does, and phase 2 must not try to drive it during one.
+                  // The raw code is what a real fault would arrive in, and
+                  // keeping it visible is the only way that would ever be
+                  // noticed.
+                  case 0x1388:
+                    id(status_code).publish_state(value);
+                    id(evu_block).publish_state(value == 8246);
+                    break;
                   case 0x0112: {
                     static const char *const MODE[6] = {
                         "Emergency", "Standby", "Automatic",
@@ -869,17 +898,23 @@ sensor:
   - {platform: template, id: hours_nhz2, name: "Reheat hours stage 2", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
   - {platform: template, id: hours_nhz_both, name: "Reheat hours both stages", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
 
+  # The machine's status code, raw. 0 in normal running; 8246 is the utility
+  # block. A real fault would arrive here too, which is the reason to keep a
+  # number nobody looks at most days.
+  - {platform: template, id: status_code, name: "Status code", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+
   # ---- energy, assembled from three parts each ---------------------------
   # Heat delivered against electricity consumed, which is the pair a seasonal
   # COP is made of. The machine keeps both and has done since it was
   # installed; nothing here computes a ratio, because a ratio of two numbers
   # that update once per panel walk would be a number pretending to be a
   # measurement.
-  - {platform: template, id: energy_heat, name: "Heat delivered heating", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
-  - {platform: template, id: energy_dhw, name: "Heat delivered DHW", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
-  - {platform: template, id: power_heat, name: "Electricity used heating", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
-  - {platform: template, id: power_dhw, name: "Electricity used DHW", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
-  - {platform: template, id: energy_nhz, name: "Heat delivered reheat", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: energy_heat, name: "Heat delivered heating (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: energy_dhw, name: "Heat delivered DHW (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: power_heat, name: "Electricity used heating (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: power_dhw, name: "Electricity used DHW (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: energy_nhz_heat, name: "Heat delivered reheat heating", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: energy_nhz_dhw, name: "Heat delivered reheat DHW", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
 
   # The return temperature as the module reports it, independent of whether
   # the panel is awake and polling 0x180. Same physical value as "Return
@@ -1026,6 +1061,20 @@ switch:
 
 
 binary_sensor:
+  # The utility's load block, from status code 8246. This is the entity that
+  # answers "why is it not running", and nothing else on this bus does — the
+  # compressor being off looks identical whether the machine has no demand or
+  # is forbidden to run. It is also the condition phase 2 has to respect: a
+  # write during a block is at best ignored and at worst confusing.
+  #
+  # No device_class: `problem` would be wrong, because this is contracted
+  # normal operation, and `running` inverts the sense. A plain on/off with an
+  # honest name beats a class that says the wrong thing.
+  - platform: template
+    id: evu_block
+    name: "EVU block"
+    update_interval: never
+
   # Named from behaviour rather than from the list — see the frame handler.
   - platform: template
     id: compressor

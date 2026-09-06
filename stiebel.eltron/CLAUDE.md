@@ -1147,6 +1147,54 @@ different and larger decision than triggering a boost, and one somebody made
 deliberately. If it is off at the breaker, no write will do anything at all.
 **Establish which before spending any effort on the elements below.**
 
+### The panel overturns all of that: the element has run, and it ran last night
+
+The reasoning above is left standing because the method in it is sound and the
+conclusion is wrong, which is worth being able to see at once. **The premise
+that failed is the meaning of one abbreviation.**
+
+The second page of LÄMPÖMÄÄRÄ — never opened until the second walk — reads:
+
+```
+NHZ LV SUMMA        9.896 MWh
+```
+
+Elements `0x0925` = 9 and `0x0923` = 896. With `NHZ LÄMM SUMMA` = 3.311 MWh from
+the first page that is **13.2 MWh delivered by the electric element**, and the
+twelve-megawatt-hour claim this file called impossible is understated rather
+than absurd.
+
+**The impossibility argument rested on treating 7.52 MWh as the machine's total
+hot water electricity. It is not.** Every row on the TEHONKULUTUS screen begins
+`VD` — *Verdichter*, the compressor — and there is no NHZ row on it at all. The
+reheat's electricity is not counted there. Read correctly the numbers are
+consistent and unremarkable:
+
+| | |
+|---|---|
+| Compressor electricity, hot water | 7.526 MWh |
+| Compressor heat, hot water | 18.972 MWh → COP 2.52 |
+| Element heat, hot water | 9.896 MWh, at COP 1 |
+| Element heat, heating | 3.311 MWh |
+
+**And the element is not off.** `0x0923` read **893 at 19:41 on 5 September** and
+**896 at 07:34 the next morning** — three kilowatt-hours of hot water delivered
+electrically overnight, during the same capture that recorded the tank reaching
+55.5 °C. The running hours agree: 134 h on stage 1, 132 h on stage 2, 5922 h on
+both.
+
+So `KÄYTTÖRAJA HZG` and `KÄYTTÖRAJA WW` reading `POIS` means **no operating
+limit is set**, not that the function is disabled — the reheat is permitted at
+any outdoor temperature. The 0x8000 on `NHZ_ANZAHL_STUFEN` stays unexplained,
+but it is no longer corroboration of anything.
+
+**The lesson survives its own counterexample, with a correction.** Checking a
+table against a conservation law was the right instinct and it did catch a real
+inconsistency — but the budget it was checked against was the wrong budget.
+Before declaring something impossible, confirm what the denominator actually
+measures. A counter labelled for one component is not the machine's total, and
+on this panel the three letters that say so are easy to read past.
+
 **Candidates for forcing it, none confirmed on this machine:**
 
 | Element | Name | Effect |
@@ -1846,6 +1894,8 @@ photograph carries GPS to a few metres and this repo is public:
 | [`panel-info-heat-quantity.jpg`](panel-info-heat-quantity.jpg) | the totals that turn out to be computed |
 | [`panel-info-running-hours.jpg`](panel-info-running-hours.jpg) | five hour counters, all exact |
 | [`panel-settings-heating-circuit-1.jpg`](panel-settings-heating-circuit-1.jpg) | the curve, which is what phase 2 is for |
+| [`panel-diag-event-list.jpg`](panel-diag-event-list.jpg) | the event list, code 8246, and the table transfer it produced |
+| [`panel-info-heat-quantity-page2.jpg`](panel-info-heat-quantity-page2.jpg) | NHZ LV SUMMA, the row that overturned the element verdict |
 
 Ambiguity is real and shows up as two elements holding the same value. It is
 resolved by finding a screen that shows one of them alone: `0x01AC` and
@@ -1966,6 +2016,54 @@ g++ -std=gnu++17 -Wall -Wextra -o replay replay.cpp && ./replay
   the machine is running.
 - **`0x01D5` was asked of 0x180 once, at 07:32:52, and never answered.** The
   only element in the capture that a node declined to respond to at all.
+
+### 0x1388 is the status code, and 8246 is the utility block
+
+The second walk opened DIAGNOSTIIKKA → VIRHELUETTELO, and the panel dumped the
+list onto the bus in a form nothing else on this machine uses: **an indexed
+table transfer.** `0x0B9A` counts rows, 0x480 increments it and 0x100
+acknowledges each one, and six fields follow per row.
+
+| Element | Field |
+|---|---|
+| `0x0B9A` | row index, 0 upward |
+| `0x0B9B` | code |
+| `0x0B9F` `0x0BA0` `0x0BA1` `0x0BA2` `0x0BA3` | minute, hour, day, month, year |
+
+Twelve rows decoded, every one in strictly descending time order, and the screen
+confirms the first two exactly — `01. 8246 / 19:53 05.SYY 26` against index 0's
+53, 19, 5, 9, 26. This is the only tabular transfer seen on this bus; everything
+else is single values.
+
+**All twelve rows carry the same code, and the code is not a fault.** 8246 is
+the utility's load block — confirmed by the owner, and the timing says the same
+thing on its own: twice a day at around 09:20 and 19:20, across ten days from 27
+August. The panel files it under VIRHELUETTELO because that is the only list it
+has, not because anything is wrong.
+
+**One block was captured whole**, and it makes `0x1388` legible:
+
+```
+19:53:22   1388 = 8246      block begins
+19:55:50   1388 = 8246
+20:01:58   1388 = 0         over
+```
+
+The register returns to zero, so it is a live status word and not a latched log
+entry — which is what makes it usable as an entity. The compressor stayed idle
+throughout; the night's first run was at 22:16.
+
+**This is the most useful single entity found on this bus.** Nothing else
+distinguishes "no demand" from "forbidden to run", and the two look identical
+from every temperature and every output. Phase 2 has to respect it: a write
+during a block is at best ignored.
+
+**An earlier reading of this file said 0x1388's two 8246 samples belonged to the
+panel being browsed.** They did not — they are the block, which happened to
+overlap the browsing. **And `0x080E` does not track it either**, which this file
+also briefly claimed: it moves between 0, 4 and 6 all night, at 21:12, 22:29,
+22:35, 22:36, 23:38 and so on, with no block anywhere near. It is something
+else, probably an operating state, and it stays unnamed.
 
 ### Walking the menus costs data, and the price is now measured
 
