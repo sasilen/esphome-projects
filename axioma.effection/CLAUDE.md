@@ -96,6 +96,48 @@ kunnossa eikä sovitinta tarvita.
 Jos pigtail joskus katoaa, neljännesaallon lanka on 868 MHz:llä noin 8,2 cm ja
 kelpaa kokeiluihin ilman mitään liitintä.
 
+### 8,2 vai 8,6 cm — molemmat ovat oikein, eri oletuksella
+
+Lähteet antavat neljännesaallolle **8,6 cm** ja tässä tiedostossa on lukenut
+**8,2 cm**. Kumpikaan ei ole virhe:
+
+```
+λ    = 299 792 458 / 868,95 MHz = 34,50 cm
+λ/4  = 8,63 cm                              vapaassa tilassa
+     × 0,95 nopeuskerroin                   eristetyllä langalla
+     = 8,19 cm
+```
+
+**8,6 cm on teoreettinen vapaan tilan mitta, 8,2 cm on eristetylle langalle
+lyhennetty.** Jos leikkaat paljasta lankaa, käytä 8,6 cm; jos eristettyä,
+8,2 cm on lähempänä. Ero on puoli senttiä eikä ratkaise mitään vastaanotossa —
+mutta se selittää miksi kaksi lähdettä antaa eri luvun.
+
+**Ja vastaanotossa viritys on vähemmän kriittinen kuin lähetyksessä.** Huono
+sovitus heikentää herkkyyttä, mutta ei riko mitään — lähettävässä päässä
+heijastunut teho voi rikkoa. Tämä solmu ei lähetä koskaan.
+
+### Kolme lukua linkkibudjettiin
+
+| | |
+|---|---|
+| RX-herkkyys | noin **−110 dBm** |
+| RX-virta | ~14 mA |
+| Datanopeus | 0,6–600 kbps — wM-Bus T1 on 100 kbps, hyvin sisällä |
+
+−110 dBm on se luku jota vasten kuuluvuutta arvioidaan, jos mittari ei kuulu.
+Vertailun vuoksi WiFi lukee tällä levyllä −56 dBm työpöydällä.
+
+### Lähetysrajoitus ei koske tätä
+
+EU:n 868 MHz -kaista on **1 %:n lähetysaikarajoitettu**, ja se on syytä tuntea
+— mutta se ei rajoita mitään täällä, koska tämä solmu **ei lähetä koskaan.**
+Kuuntelu on rajoittamatonta.
+
+Mittarin ~16 sekunnin lähetysväli ei myöskään johdu siitä: telegrammi kestää
+millisekunteja, joten sen käyttöaste on promillen luokkaa. Väli on
+paristonkeston valinta, ei sääntelyn pakko.
+
 ---
 
 # Arkkitehtuuri
