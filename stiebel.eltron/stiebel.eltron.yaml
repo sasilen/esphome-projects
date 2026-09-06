@@ -213,7 +213,32 @@ canbus:
               // contained, and a new state is where new registers appear.
               bool handled = false;
 
-              if (cmd == 2 && can_id == 0x180) {
+              // ---- sentinels are not values -----------------------------
+              // 0x8000, 0x9000 and 0x8080 mark a parameter that is absent or
+              // unconfigured, and three nodes send them on this bus: 0x180
+              // on 0x01AE, 0x01AF and 0x01C0, 0x480 on 0x0679, 0x601 on
+              // 0x4EA7. As tenths they decode to -3276.8, -2867.2 and
+              // -3264.0 °C.
+              //
+              // None of those elements has a sensor today, which is exactly
+              // why this guard goes in before the menu walk rather than
+              // after it. The sensors that do exist read 0x180 — the outdoor
+              // temperature, the tank, the return, the DHW setpoint — and
+              // 0x180 is a node already observed answering "not present". A
+              // detached sensor is all it takes, and a bad sample in Home
+              // Assistant's history stays there.
+              //
+              // Not dropped silently: skipping the dispatch leaves the frame
+              // unclaimed, so it goes to the raw log below. Which element
+              // answered "not present" is worth knowing — it is a fault
+              // report, not noise. No real value collides: every element
+              // published here is a temperature in tenths or a 0-100 output.
+              const bool sentinel =
+                  value == 0x8000 || value == 0x9000 || value == 0x8080;
+
+              if (sentinel) {
+                // handled stays false — falls through to the raw log
+              } else if (cmd == 2 && can_id == 0x180) {
                 // et_dec_val: tenths, signed, negatives are legal
                 const float t = (int16_t) value / 10.0f;
                 handled = true;
