@@ -1177,16 +1177,33 @@ consistent and unremarkable:
 | Element heat, hot water | 9.896 MWh, at COP 1 |
 | Element heat, heating | 3.311 MWh |
 
-**And the element is not off.** `0x0923` read **893 at 19:41 on 5 September** and
-**896 at 07:34 the next morning** — three kilowatt-hours of hot water delivered
-electrically overnight, during the same capture that recorded the tank reaching
-55.5 °C. The running hours agree: 134 h on stage 1, 132 h on stage 2, 5922 h on
-both.
+**The element has run — over its lifetime.** The running hours say so
+independently of the energy counters: 134 h on stage 1, 132 h on stage 2, 5922 h
+on both. Those are totals, and they say nothing about *when*.
 
-So `KÄYTTÖRAJA HZG` and `KÄYTTÖRAJA WW` reading `POIS` means **no operating
-limit is set**, not that the function is disabled — the reheat is permitted at
-any outdoor temperature. The 0x8000 on `NHZ_ANZAHL_STUFEN` stays unexplained,
-but it is no longer corroboration of anything.
+**A claim that it ran overnight is withdrawn.** This file briefly said `0x0923`
+read 893 at 19:41 on 5 September and 896 the next morning, and called the
+difference three kilowatt-hours delivered electrically that night. **893 appears
+exactly once in every capture; 896 appears 115 times.** One sample against a
+hundred and fifteen is not a counter incrementing, it is a sample that cannot be
+told apart from the corruption class documented later in this file — and
+building on a single reading is the specific error that already cost this
+project the 0xFDF7 hypothesis.
+
+**The settings argue the other way, and the owner confirms it.**
+`KYTKENTÄLÄMPÖT HZG` and `KYTKENTÄLÄMPÖT WW` are both **−19.0 °C**: the reheat
+engages only below that outdoor temperature, and the capture ran at 11–15 °C. On
+this installation the element is not expected to run at all, and nothing in the
+data establishes that it did.
+
+So the reading of `KÄYTTÖRAJA … POIS` as "no operating limit set" still stands as
+the more likely of the two, but it no longer has the overnight increment behind
+it — the switching temperature is what actually keeps the element off, and it is
+doing that job. The 0x8000 on `NHZ_ANZAHL_STUFEN` stays unexplained.
+
+**How to settle it:** watch `0x0923`. If it ever reads 897 or more, the element
+ran and the counter is live. If it sits at 896 across weeks, the 893 was noise.
+That costs nothing and needs no decision in the meantime.
 
 **The lesson survives its own counterexample, with a correction.** Checking a
 table against a conservation law was the right instinct and it did catch a real
