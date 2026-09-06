@@ -1,0 +1,37 @@
+# Validation-only config. It is never flashed and it drives no hardware.
+#
+# It exists to answer one question that decides the whole of phase 2: does the
+# installed ESPHome accept 20 kbps on the ESP32's built-in TWAI controller?
+#
+#   esphome config cantest.yaml
+#
+#   passes  -> esp32_can is available. The MCP2515 goes away, and with it the
+#              SPI wiring, the crystal question, the level shifting and the
+#              receive-stall bug. Phase 2 becomes an ESP32 plus a transceiver.
+#   fails   -> "Bit rate 20KBPS is not supported on ESP32". Stay on the
+#              MCP2515, which does 20 kbps unconditionally.
+#
+# The rejection recorded in CLAUDE.md was tested on ESPHome 2026.7.4. It is an
+# ESPHome limit and not a silicon one — the board on hand is an ESP32-D0WD-V3
+# rev v3.1, whose BRP divider reaches 20 kbps, and a working Tecalor project
+# runs this same Elster bus at this rate on stock `esp32_can`. So the answer
+# changes with the ESPHome version, which is why this file is kept rather than
+# retyped: an instruction to run a file that does not exist is not a procedure.
+#
+# Nothing here is secret and nothing is board-specific beyond the pins, which
+# are placeholders — validation never touches them.
+
+esphome:
+  name: cantest
+
+esp32:
+  board: esp32dev
+
+logger:
+
+canbus:
+  - platform: esp32_can
+    tx_pin: GPIO5
+    rx_pin: GPIO4
+    can_id: 0x680
+    bit_rate: 20KBPS

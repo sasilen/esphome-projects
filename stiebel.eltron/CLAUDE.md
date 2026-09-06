@@ -2939,11 +2939,18 @@ problem; the ESP32's TWAI controller does not have it. The transceiver would be
 the SN65HVD230 already chosen for phase 2, which is also the part that project
 uses.
 
-The re-test costs nothing and needs no hardware:
+The re-test costs nothing and needs no hardware. **The file lives here** —
+[`cantest.yaml`](cantest.yaml) — because the first time this instruction was
+followed it failed on a missing file: the original was a throwaway and an
+instruction to run a file nobody kept is not a procedure.
 
 ```sh
 podman exec esphome esphome config /config/cantest.yaml
 ```
+
+Copy it into the ESPHome container's `/config` first, or point the command at
+wherever this repo is mounted. It is validation only — never flashed, drives no
+hardware, and its pins are placeholders.
 
 **Do that before ordering or soldering anything for phase 2.** Everything below
 this line was true on 2026.7.4 and is kept because the reasoning still holds if
