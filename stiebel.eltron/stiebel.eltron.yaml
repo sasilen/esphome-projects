@@ -1093,10 +1093,14 @@ binary_sensor:
   # No device_class: `problem` would be wrong, because this is contracted
   # normal operation, and `running` inverts the sense. A plain on/off with an
   # honest name beats a class that says the wrong thing.
+  #
+  # And no `update_interval` either, unlike every publish-only sensor above:
+  # a template binary sensor is not a polling component, so the option that
+  # says "never poll" is rejected rather than ignored. With no lambda it is
+  # already publish-only, which is what the sensors need the option to say.
   - platform: template
     id: evu_block
     name: "EVU block"
-    update_interval: never
 
   # Named from behaviour rather than from the list — see the frame handler.
   - platform: template
