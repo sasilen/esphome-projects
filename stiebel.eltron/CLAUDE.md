@@ -2982,6 +2982,46 @@ settled.
 **A caution on that hope:** the same test has now been believed twice on
 secondhand evidence and failed twice on the machine. Validate before buying.
 
+#### The S3 validates, and that reopens the route
+
+```
+canbus:
+  - platform: esp32_can
+    bit_rate: 20KBPS
+    ...
+    variant: ESP32S3
+
+INFO Configuration is valid!
+```
+
+**The variant was the gate all along.** ESPHome 2026.8.2 refuses 20 kbps on the
+plain ESP32 and accepts it on the ESP32-S3, with nothing else changed but the
+board line and the pins. The refusal message named `ESP32` specifically and it
+meant it.
+
+**So phase 2's hardware answer changes.** An ESP32-S3 plus a 3.3 V transceiver
+removes the MCP2515, and with it the SPI wiring, the crystal question, the level
+shifting, the SMD rework on the module, the pin lift — and the receive-stall bug,
+which has cost this project more time than everything else combined and tripped
+the watchdog three times in one morning.
+
+**It may also remove the index corruption.** The flipped bits cluster in the low
+bits of two adjacent frame bytes, which points at the SPI read path rather than
+the wire. TWAI has no SPI. That is a prediction and not a finding — but it is
+testable the moment an S3 is on the bus, and if it holds, three of the four bad
+data classes in this file were MCP2515 artefacts.
+
+**What this does not prove.** `esphome config` validates a configuration; it does
+not put a frame on a wire. Everything above is the compiler agreeing to build,
+which is exactly the standard of evidence that failed twice already in this
+section — the first time believing a table, the second time believing an upgrade.
+**Buy the board, then test the bus, then rewrite the plan.** In that order.
+
+**The parts list moves accordingly:** the boards already on the shelf are
+D0WD-V3, plain ESP32, and none of them can take this route. An S3 is a new
+purchase — but the transceiver was needed either way, and the MCP2515 rework it
+replaces was never free.
+
 ### The original finding, on ESPHome 2026.7.4
 
 The ESP32's built-in TWAI controller would have dropped the MCP2515, the SPI

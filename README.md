@@ -96,12 +96,19 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 
 | Projekti | Puuttuu | Estääkö aloituksen |
 |---|---|---|
-| stiebel.eltron | 3,3 V:n CAN-lähetinvastaanotin vaiheeseen 2 (CAN Pal tai VP230) | Ei — vaihe 1 ei vaadi hankintoja |
+| stiebel.eltron | 3,3 V:n CAN-lähetinvastaanotin **ja ESP32-S3-levy** vaiheeseen 2 | Ei — vaihe 1 ei vaadi hankintoja |
 | axioma.effection | — kaikki tilattu ja hyllyssä | Este on AES-128-avain, ei osa |
 | pegasos.enervent | RJ11-kaapeli | Kyllä, mutta se on ainoa |
 | hirvirata | Rajakytkimet, kääntöpyörä, kisko, kondensaattorit, sulake, DC-jakki | Kyllä |
 | aidon | Schottky SS14/1N5819 ja 330 Ω — kovetukset jäivät tekemättä | Ei, laite on käytössä |
 | bestway.lay-z-spa | — | — |
+
+Stiebelin rivi muuttui 6.9.2026: ESPHomen `esp32_can` hyväksyy 20 kbps:n
+**ESP32-S3:lla** vaikka kieltäytyy siitä tavallisella ESP32:lla, ja se poistaa
+MCP2515:n vaiheesta 2. Hyllyn ESP32:t ovat D0WD-V3 eli tavallisia, joten S3 on
+uusi hankinta — mutta se korvaa moduulin SMD-työn jota ei olisi tehty ilmaiseksi
+sekään. Perustelut: [`stiebel.eltron/CLAUDE.md`](stiebel.eltron/CLAUDE.md),
+"Rejected: ESP32 built-in CAN".
 
 Yksi asia joka ei näy yksittäisen projektin listalta: **D1 mineissä ei ole
 varaa.** Ks. levytaulukko yllä — neljästä kaksi on käytössä ja kaksi varattu.
