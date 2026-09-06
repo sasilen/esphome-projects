@@ -345,6 +345,63 @@ Jos tämä näkyy:
 
 ---
 
+# Avoin: lähettääkö mittari lainkaan
+
+**Radio toimii — se on todistettu.** Kytkettynä ja parin metrin päässä
+mittarista loki tuotti:
+
+```
+[D][packet:106]: Have data from radio (8 bytes)
+[D][wmbusmeters:351]: raw packet "320C800948884A28"
+```
+
+SPI, kytkennät, taajuus ja komponentti ovat kunnossa. Vaiheen 1 neljästä
+todistettavasta asiasta kolme on selvä.
+
+**Neljäs ei ole.** Kolmessa minuutissa tuli yksi kahdeksan tavun paketti, eikä
+se näytä telegrammilta: pituuskenttä `0x32` lupaa 50 tavua, mutta seuraava tavu
+`0x0C` ei ole kelvollinen C-kenttä — T1-lähetyksessä siinä olisi tyypillisesti
+`0x44`. Todennäköisemmin kohinaa kuin katkennut telegrammi.
+
+**Kahden metrin päässä kuuluvuus ei selitä tätä.** Oman mittarin telegrammin
+pitäisi tulla vahvana ja kokonaisena. Antenni on kiinni ANT-padissa, ja se on
+kierteinen kuparilanka eli heliksiantenni — säteilijä, ei pelkkä siirtolinja.
+
+Kysymys ei siis ole vastaanotossa vaan siinä **lähettääkö mittari.**
+
+## Siitä on tässä repossa kokemusta
+
+Aidonin koko projekti alkoi samasta:
+
+> **Portti on oletuksena kuollut.** Verkkoyhtiön on aktivoitava sekä rajapinta
+> että 5 V:n syöttö. Tämä on projektin ainoa vaihe jota ei voi nopeuttaa —
+> tilaa se ensin.
+
+Vesimittarissa on sama mahdollisuus: radio voi olla pois päältä, tai
+konfiguroitu **kävelyluentaan** eli lähettämään harvakseltaan tai vain tiettyinä
+aikoina, koska paristo mitoitetaan 15 vuodeksi.
+
+Tämän tiedoston **`noin 16 sekunnin väli` on yleisestä lähteestä eikä mitattu
+tästä yksilöstä.** Se on oletus siinä missä ne taulukot joita tässä projektissa
+on jouduttu kumoamaan neljä kertaa.
+
+**Kysy se samalla kun kysyt AES-avainta.** Molempiin menee kalenteriaikaa ja
+molemmat menevät samalle vastaanottajalle:
+
+1. Onko mittarin radiolähetys päällä, ja millä välillä se lähettää?
+2. AES-128-avain
+
+## Miten se ratkeaa ilman kysymistä
+
+`on_frame` tulostaa RSSI:n ja tavumäärän, ja puoli tuntia parin metrin päässä
+erottaa kolme tapausta:
+
+| Havainto | Tulkinta |
+|---|---|
+| Kehyksiä säännöllisesti | kaikki toimii, siirry mittarilohkoon |
+| Yksittäisiä katkelmia | vastaanotto-ongelma — antennin kaista, RX-asetukset |
+| Ei mitään | mittari ei lähetä; kysymys vesilaitokselle |
+
 # AES-128 salaus
 
 Axioma Qalcosonic W1 käyttää yleensä AES-128-salausta.

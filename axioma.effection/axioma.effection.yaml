@@ -168,6 +168,32 @@ wmbus_radio:
   irq_pin: GPIO4
   frequency: 868.95MHz
 
+  # Ilman tätä komponentti tulostaa vastaanotetun paketin näin:
+  #
+  #   [D][packet:106]: Have data from radio (8 bytes)
+  #   [D][wmbusmeters:351]: raw packet "320C800948884A28"
+  #
+  # Se riittää todistamaan että radio toimii, mutta **ei kerro RSSI:tä eikä
+  # sitä onko kehys kokonainen.** Juuri ne kaksi erottavat toisistaan
+  # "mittari on kaukana" ja "vastaanotto katkeaa" — ja ilman niitä
+  # vianetsintä on arvailua, kuten yllä olevan esimerkkirivin kohdalla kävi.
+  #
+  # Tämä on juuri se mitä vaihe 1 tarvitsee: **tulostaa jokaisen kehyksen
+  # jokaiselta kuuluvalta mittarilta.** Se ei vaadi Meter ID:tä eikä
+  # AES-avainta — molemmat ovat vasta tulkintaa varten, ja tässä vaiheessa
+  # kysymys on kuuluuko mitään.
+  #
+  # Naapurin mittari kelpaa todisteeksi yhtä hyvin kuin oma: se todistaa että
+  # radio, kytkentä ja taajuus toimivat. Oman tunnistaa vasta ID:stä.
+  on_frame:
+    - then:
+        - logger.log:
+            format: "Kehys: RSSI %d dBm, %d tavua: %s"
+            args:
+              - frame->rssi()
+              - (int) frame->data().size()
+              - frame->as_hex().c_str()
+
 
 # --------------------------------------------------------------- Mittari
 # Tämä lohko on tarkoituksella kommentoituna. Se odottaa kahta asiaa, ja
