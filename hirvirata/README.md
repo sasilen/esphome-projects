@@ -30,8 +30,8 @@ Nämä ovat tekemättä ja voivat muuttaa komponenttivalintoja:
 | Ohjain | Wemos D1 mini (ESP8266), vaihtoehtoisesti mikä tahansa ESP32 |
 | Moottoriajuri | ARCELI L298N -moduuli, 5 kpl |
 | Moottori | 12 V vaihdemoottori, 200 rpm, ikkunanavaajatyyppi |
-| Hihnapyörä | 41 × 16 × 6 mm, alumiini, yksi ura, kiinteä 6 mm reikä |
-| Hihna | 5 mm PU-pyörähihna, päät hitsataan |
+| Hihnapyörä | 41 × 16 × 6 mm, alumiini, yksi ura, kiinteä 6 mm reikä, **ura 3–5 mm hihnalle** |
+| Hihna | 5 mm PU-pyörähihna, päät hitsataan. Koko tulee pyörän urasta, ei toisin päin |
 | Teholähde | Newding 12 V / 2 A pistokemuuntaja. **Rajatapaus** |
 | ESP:n virta | LM2596 buck 12 V → 5,0 V |
 | Vaunun rullat | U624ZZ, 4 × 13 × 7 mm, U-ura. **Eivät** kelpaa hihnapyöräksi |
