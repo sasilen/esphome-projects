@@ -38,11 +38,35 @@ esp32:
   board: esp32dev
 
 logger:
-  # DEBUG, ei VERY_VERBOSE. Telegrammi tulee kerran 16 sekunnissa, joten tässä
-  # ei ole samaa kuormaongelmaa kuin CAN-väylällä — mutta VERY_VERBOSE tulostaa
-  # myös SPI-liikenteen, ja se hukuttaa juuri sen yhden rivin jota tässä
-  # vaiheessa etsitään.
-  level: DEBUG
+  # **VERY_VERBOSE, ja SPI vaiennettuna tagikohtaisesti.** Tässä luki aiemmin
+  # että VERY_VERBOSE hukuttaa etsityn rivin SPI-liikenteeseen. Se on totta,
+  # mutta johtopäätös oli väärä: ratkaisu on vaientaa `spi` eikä laskea koko
+  # tasoa, koska ainoa todiste SPI-väylän toimivuudesta tulostuu VV-tasolla.
+  #
+  # Se rivi on radioajurin setup-vaiheesta, tagilla `CC1101`:
+  #
+  #   [VV][CC1101]: part: 00, version: XX
+  #
+  # **`version` pitää olla 04 tai 14.** Jos se on 00 tai FF, MISO ei vastaa.
+  # Tätä tarvitaan siksi, että komponentin oma tarkistus vertaa vain
+  # osanumeroa ja kaatuu vasta jos se on jotain muuta kuin nolla — ja kuollut
+  # väylä lukee nollaa. `Invalid part number` ei siis tule koskaan väärästä
+  # kytkennästä, vaikka se on ainoa virheilmoitus jonka ajuri antaa.
+  #
+  # Tämän kanssa myös `RX FIFO overflow` ja `RX timeout after N bytes` näkyvät.
+  # Ne ovat W-tasolla eli tulisivat muutenkin, mutta ne ovat juuri se ero jolla
+  # tämä laite eroaa yläpuolen bugista #425 — ks. CLAUDE.md.
+  level: VERY_VERBOSE
+  logs:
+    spi: INFO
+    spi_device: INFO
+    # Nämä eivät hukuta lokia mutta eivät kerro tässä vaiheessa mitään.
+    api: INFO
+    api.service: INFO
+    wifi: INFO
+    # **`sensor` jää päälle tarkoituksella.** Se on `Uptime`-rivin tagi, ja
+    # tämän repon OTA-ohje nojaa siihen: lähetyksen perille meno todennetaan
+    # laitteesta eikä komennon paluuarvosta.
 
 api:
   encryption:
@@ -180,21 +204,25 @@ wmbus_radio:
   # projektin vianetsintä listaa juuri sen boot-loopin syyksi.
   irq_pin: GPIO4
 
-  # **Testissä S-moodi.** Oletus on 868.95 MHz eli T- ja C-moodi, ja sillä
-  # kuunneltiin 8,5 tuntia parin metrin päässä mittarista: nolla telegrammia,
-  # 47 kohinapakettia. Vertailuksi 16 sekunnin välein lähettävä mittari olisi
-  # tuottanut noin 1900 vastaanottoa.
+  # **Takaisin T/C-moodiin, ja tällä kertaa oikeaan aikaan.**
   #
-  #   S      868.30 MHz   <- tämä nyt
-  #   T, C   868.95 MHz   <- kuunneltu, hiljaista
+  #   S      868.30 MHz   <- kokeiltu, hiljaista
+  #   T, C   868.95 MHz   <- tämä nyt, W1:n oletus
   #
-  # `T1`-oletus tulee samasta lähdeperheestä kuin `type: axioma`, joka
-  # osoittautui olemattomaksi ajuriksi. Sitä ei ole todennettu tästä
-  # yksilöstä, ja tämä testi maksaa yhden rivin eikä vaadi keneltäkään mitään.
+  # Molemmat aiemmat mittaukset osuivat mittarin lähetysikkunan ulkopuolelle
+  # tai väärälle taajuudelle, joten kumpikaan ei todista mitään mittarista:
   #
-  # **Palauta 868.95MHz jos tämäkin on hiljainen** — silloin kysymys on
-  # mittarissa eikä taajuudessa, ja se menee vesilaitokselle.
-  frequency: 868.30MHz
+  #   8,5 h 868.95:llä   su 21:15 → ma 05:45   ikkunan ulkopuolella
+  #   6 min 868.30:llä   ma aamu               ikkunan sisällä, väärä taajuus
+  #
+  # Qalcosonic W1:n oletusaikataulu on **ma–pe 6:00–18:00**, ja sen
+  # ulkopuolella radio on hiljaa kokonaan — paristo mitoitetaan 15 vuodeksi.
+  # Nolla telegrammia sunnuntaiyönä on siis odotettu tulos, ei havainto.
+  #
+  # Aikataulu on maskitettu sekä viikonpäivä- että kuukausitasolla, ja maskit
+  # ovat luettavissa mittarista NFC:llä ilman salasanaa. Se on tämän oletuksen
+  # tarkistus, jos päiväsaikaan ajettu kuuntelu on yhä hiljainen.
+  frequency: 868.95MHz
 
   # Ilman tätä komponentti tulostaa vastaanotetun paketin näin:
   #
