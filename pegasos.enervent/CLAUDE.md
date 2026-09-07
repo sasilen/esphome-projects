@@ -21,11 +21,79 @@ Integrate an Enervent Pegasos Eco ECE ventilation unit with Home Assistant using
 - RS-485 ↔ TTL module — in stock: JZK, 5 pcs, automatic hardware flow control,
   works at 3.3 V or 5 V. See the wiring section: it is not a plain MAX485
   breakout and is wired differently
-- RJ11 cable — **not in stock, the one thing this project is waiting for**
+- **4P4C cable** — **not in stock, the one thing this project is waiting for.**
+  This file said RJ11 until the connector was looked at; see below, and count
+  the positions before ordering
 
 ### Optional
 
-- RJ11 breakout adapter (not required if you are willing to cut one end of an RJ11 cable)
+- A breakout adapter (not required if you are willing to cut one end of the
+  cable). Note that an *RJ11* breakout will not fit a 4P4C jack
+
+## The connector is 4P4C, not RJ11 — and that is a purchase, not a detail
+
+The Freeway port on the Enervent computer board takes a **4P4C** cable, also
+sold as RJ10 or a telephone *handset* cord: four positions, four conductors.
+**A six-position RJ11 plug does not fit a four-position jack**, so an RJ11 cable
+and an RJ11 breakout are both the wrong part.
+
+This file said RJ11 from the first commit. What changed it: an independent
+project documents the Freeway port as 4P4C, and **the connector on this unit
+looks like the smaller one** when compared against a cable. That is an
+observation and not a measurement — settle it by counting the metal contacts in
+the jack, or by holding a handset cord (4P4C) against a wall-phone cord (6P)
+and seeing which one matches.
+
+| PIN | Colour | Signal |
+|---|---|---|
+| 1 | black | **+5 VDC** |
+| 2 | red | Data + → module A |
+| 3 | green | Data − → module B |
+| 4 | yellow | Ground |
+
+**Pin 1 is a supply and must not reach the transceiver.** That is the warning
+this file already carried, now with a pin number on it. It is also an
+opportunity: 5 V into the ESP32's `VIN` would give one common ground reference
+and no second supply — but measure what the rail can deliver before trusting
+it, because an ESP32 peaks well above what a control board's service port is
+likely sized for. The same reasoning is worked through for a bus supply in
+[`../stiebel.eltron/CLAUDE.md`](../stiebel.eltron/CLAUDE.md).
+
+**Do not trust pin numbers through the cable — trust colours, then verify with
+a meter.** A standard handset cord is *reversed*: pin 1 at one end lands on
+pin 4 at the other. Cut one end, identify the four conductors by colour, and
+then check with a meter which colour actually reaches which contact at the
+surviving plug. A cord that happens to be wired straight-through and one that
+is reversed look identical from the outside.
+
+**Two independent things are still unverified for this unit.** The pinout above
+comes from a project that confirms Pingvin, Pandion, Pelican and LTR-3 — **not
+Pegasos**. And the wire colours are the convention for 4P4C cordage, not a
+promise about this cable. Both are hypotheses to check with a meter, which is
+the same standard this repo applies to every table it has had to overturn.
+
+## Sources for the three unknowns
+
+Linked rather than copied, per repo convention.
+
+- [Jalle19/eda-modbus-bridge](https://github.com/Jalle19/eda-modbus-bridge) —
+  HTTP/MQTT bridge for Enervent EDA and MD units, GPL-3, actively maintained.
+  **Not a component to adopt here** — this project is ESPHome without MQTT —
+  but its documentation is the prior art for the connection and the registers.
+- [docs/CONNECTION.md](https://github.com/Jalle19/eda-modbus-bridge/blob/master/docs/CONNECTION.md)
+  — the 4P4C pinout above, and the slave-address rule below.
+- The Enervent *Modbus Registers* document is the register map, hard to find and
+  linked from that project. Part of its `docs/` is marked proprietary, so it
+  stays linked and out of this repo.
+
+**The slave address has a trap of its own.** Read *Modbus address* from the
+control panel — the manual gives the password — and **if it reads 0, change it
+to 1.** Zero is broadcast in Modbus and is not a valid slave address, so a unit
+left at 0 will never answer a read no matter how correct the wiring is.
+
+Serial settings are not in that documentation. This file's 9600 8N1 is a
+starting point and 19200 is the other candidate; it is a one-line change and
+cheaper to try than to research.
 
 ### The board in stock
 
@@ -161,29 +229,31 @@ Enervent B (D-)
 
 If communication fails initially, swap A and B.
 
-## RJ11 Notes
+## Connector notes
 
-The Enervent uses an RJ11 connector rather than screw terminals.
+The Enervent uses a modular connector rather than screw terminals, and it is
+4P4C — see above for why that matters and what it rules out.
 
-An RJ11 breakout board is **not required** if:
+A breakout board is **not required** if:
 
-- a normal RJ11 cable is used
+- a 4P4C cable is used
 - one end of the cable is cut
-- the conductors are stripped and connected directly to the MAX485
+- the conductors are stripped and connected directly to the module
 
-A breakout adapter is only recommended because it makes identifying the correct pins easier.
+A breakout only makes identifying the pins easier, and an RJ11 one will not fit.
 
 ## Important Warning
 
-Do **not** assume the RJ11 pinout.
+Do **not** assume the pinout, even the one in this file.
 
-The connector may contain:
+The connector carries:
 
 - RS-485 A/B
 - Ground
-- Supply voltage
+- **A supply voltage** — pin 1, +5 VDC
 
-The pinout should be verified before wiring.
+Verify with a meter before wiring, and find that supply pin first so it can be
+left alone.
 
 ## ESPHome
 
@@ -216,11 +286,16 @@ Advantages:
 
 ## Remaining Unknowns
 
-The following information still needs to be determined:
+All three now have a documented source, so what is left is verification on this
+unit rather than research:
 
-1. RJ11 pinout
-2. Modbus slave address
-3. Enervent Modbus register map
+1. **Connector and pinout** — 4P4C with the pin table above, unverified for
+   Pegasos and unmeasured on this cable
+2. **Modbus slave address** — read it from the control panel, and change 0 to 1
+3. **Enervent Modbus register map** — the *Modbus Registers* document, linked
+   above
+
+The blocking item is none of those: it is **having a 4P4C cable in hand.**
 
 Once the register map is available, ESPHome can expose:
 
@@ -237,13 +312,20 @@ Once the register map is available, ESPHome can expose:
 
 ## Next Steps
 
-1. Obtain or identify the RJ11 pinout.
-2. Connect the MAX485 to the ESP32.
-3. Flash ESPHome onto the ESP32.
-4. Verify Modbus communication.
-5. Identify the correct Modbus registers.
-6. Add sensors, switches and controls in ESPHome.
-7. Integrate with Home Assistant.
+The first two cost nothing and decide what gets ordered:
+
+1. **Count the positions in the jack** — four or six. Everything else waits on
+   this, because it is the one step with a delivery time behind it.
+2. **Read the Modbus address from the control panel**, and change it to 1 if it
+   reads 0.
+3. Get a 4P4C cable, cut one end, and identify the conductors by colour — then
+   confirm with a meter which colour reaches which contact, because handset
+   cords are reversed.
+4. Wire red → A, green → B, yellow → ground, **black to nothing**.
+5. Flash ESPHome with `uart` and `modbus_controller`, 9600 8N1, and one read
+   request. If nothing answers, swap A and B, then try 19200.
+6. Identify the registers against the Enervent document.
+7. Add sensors, switches and controls, and integrate with Home Assistant.
 
 ## Long-Term Goal
 
