@@ -55,6 +55,19 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+
+  # **OTA:n takia, ei kuuluvuuden.** Oletus `LIGHT` nukuttaa radion
+  # majakkavälien välissä, ja megatavun OTA on tuhansia kuittauskierroksia —
+  # jokaiseen tulee herätysviive. Yksi lähetys katkesi 33 %:n kohdalla
+  # aikakatkaisuun ja laite katosi verkosta kokonaan.
+  #
+  # Aidonin avointen asioiden lista suosittelee samaa ensimmäisenä keinona
+  # heikkoon radioon. Hinta on muutama milliampeeri, ja tämä on verkkovirralla.
+  #
+  # Tämä ei yksin riitä: **pysäytä `esphome logs` -virta OTA:n ajaksi.**
+  # Kolme yhtäaikaista asiakasta — HA, lokivirta ja OTA — on flash-kirjoituksen
+  # aikana enemmän kuin laite kantaa.
+  power_save_mode: NONE
   ap:
     # AP:n nimi lähetetään ilmaan eikä ole salaisuus. Salasana on.
     # Nimi seuraa laitenimeä eikä ystävällistä nimeä: tätä verkkoa etsitään
@@ -166,7 +179,22 @@ wmbus_radio:
   # nastaa ylös käynnistyksen aikana, levy ei tule normaalitilaan — ja tämän
   # projektin vianetsintä listaa juuri sen boot-loopin syyksi.
   irq_pin: GPIO4
-  frequency: 868.95MHz
+
+  # **Testissä S-moodi.** Oletus on 868.95 MHz eli T- ja C-moodi, ja sillä
+  # kuunneltiin 8,5 tuntia parin metrin päässä mittarista: nolla telegrammia,
+  # 47 kohinapakettia. Vertailuksi 16 sekunnin välein lähettävä mittari olisi
+  # tuottanut noin 1900 vastaanottoa.
+  #
+  #   S      868.30 MHz   <- tämä nyt
+  #   T, C   868.95 MHz   <- kuunneltu, hiljaista
+  #
+  # `T1`-oletus tulee samasta lähdeperheestä kuin `type: axioma`, joka
+  # osoittautui olemattomaksi ajuriksi. Sitä ei ole todennettu tästä
+  # yksilöstä, ja tämä testi maksaa yhden rivin eikä vaadi keneltäkään mitään.
+  #
+  # **Palauta 868.95MHz jos tämäkin on hiljainen** — silloin kysymys on
+  # mittarissa eikä taajuudessa, ja se menee vesilaitokselle.
+  frequency: 868.30MHz
 
   # Ilman tätä komponentti tulostaa vastaanotetun paketin näin:
   #

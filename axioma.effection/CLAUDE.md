@@ -439,6 +439,38 @@ Testi on yhden rivin muutos ja tunnin kuuntelu:
 **Tämä kannattaa tehdä ennen kuin kysyy keneltäkään mitään**, koska se ei vaadi
 kalenteriaikaa.
 
+### Hypoteesi 1 on testattu ja kumottu
+
+S-moodi ajettiin 7.9.2026. Se **ei tuottanut yhtään kehystä**, ja kohinaa se
+tuotti enemmän kuin T/C-moodi:
+
+| Taajuus | Aika | Raakapaketteja | Tahti | Kehyksiä |
+|---|---|---|---|---|
+| 868,95 (T, C) | 8,5 h | 47 | 1 / 11 min | **0** |
+| 868,30 (S) | 6 min | 6 | 1 / min | **0** |
+
+Nopeampi tahti ei ole löytö vaan kohinaisempi kanava — S-moodin eri modulaatio-
+ja nopeusasetukset laukaisevat väärän synkronoinnin herkemmin.
+
+**Ja otsikot sulkevat asian lopullisesti.** Kuuden S-moodipaketin kentät:
+
+```
+L:  3, 86, 152, 5, 115, 199
+C:  F7, FA, 29, 14, 5F, E4
+```
+
+Molemmat ovat tasaisesti jakautuneita koko tavun alueelle. **Yksi mittari
+lähettää saman mittaisia telegrammeja:** jos nämä olisivat katkenneita oman
+mittarin lähetyksiä, pituuskenttä olisi joka kerta sama ja C-kenttä joka kerta
+`0x44`. Satunnainen L ja satunnainen C on kohinan allekirjoitus, eikä kuudesta
+ole yhtään poikkeusta.
+
+Kuusi minuuttia on lyhyt otos, mutta **datan luonne on yksiselitteinen** eikä
+pidempi kuuntelu muuta satunnaisia otsikoita säännöllisiksi.
+
+Kumpikaan 868-kaistan moodi ei siis tuota telegrammia, ja vastaanotin on
+todistetusti toimiva: SPI, GDO0, taajuus ja RF-etupää kaikki neljä.
+
 ### Hypoteesi 2: mittari ei lähetä
 
 Radio pois päältä, tai kävelyluenta-aikataulu — lähetys vain tiettyinä aikoina
