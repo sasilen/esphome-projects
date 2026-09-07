@@ -6,9 +6,16 @@ Vesimittarin lukeminen langattomasti Home Assistantiin ESP32:lla ja CC1101-radio
 Mittari lähettää Wireless M-Bus -telegrammin 868,95 MHz:llä noin 16 sekunnin
 välein; ESP32 vastaanottaa sen ja välittää ESPHomen natiivi-APIlla. Ei MQTT:tä.
 
-**Tila: kytketty ja kuuntelee, ei yhtään telegrammia.** Radio vastaa ja
-kohinapaketteja tulee läpi, mutta kokonaisia kehyksiä ei ole tullut kertaakaan.
-Syy on auki — ks. [`CLAUDE.md`](CLAUDE.md), "Avoin: miksi kehyksiä ei tule".
+**Tila: kytketty, kuuntelee, eikä mittari lähetä wM-Busia.** Vastaanotin on
+todistetusti kunnossa — kohinapaketteja tulee läpi — mutta täysi lähetysikkuna
+ma 7.9.2026 klo 10–18 tuotti **nolla kehystä**, ja yön kanssa yhteensä
+kuusitoista tuntia nollaa.
+
+**Todennäköisin syy: mittari on LoRaWAN-luennassa.** W1:ssä LoRaWAN ja wM-Bus
+ovat erilliset liput, ja vesilaitoksella ei ole syytä pitää wM-Busia päällä jos
+se lukee mittarin LoRaWANilla — paristo on mitoitettu 15 vuodeksi. LoRaWAN ei
+ole vaihtoehtoinen paikallinen reitti, koska sen avaimet ovat verkkopalvelimella.
+Perustelut: [`CLAUDE.md`](CLAUDE.md).
 
 Konfiguraatio on tarkoituksella **pelkkä kuuntelija**. Se ei osaa lukea mittarin
 arvoja eikä yritäkään — se todentaa radion, kytkennät, taajuuden ja kuuluvuuden.
@@ -208,20 +215,27 @@ hiljaisuutta viaksi ennen kuin olet odottanut pari minuuttia.
 
 Sen jälkeen kaikki päivitykset menevät OTA:na eikä levyä tarvitse enää irrottaa.
 
-## Este 1: yhtään kehystä ei ole tullut
+## Este 1: mittari ei lähetä wM-Busia
 
-Kolme mahdollista syytä, eikä yksikään mittaus ole vielä erottanut niitä
-toisistaan: mittari ei lähetä silloin kun kuunnellaan, se lähettää S-moodissa
-jota tämä komponentti ei osaa, tai komponentti ei kokoa kehystä. Kolmannelle on
-avoin bugi yläpuolella. Perustelut ja testijärjestys ovat
-[`CLAUDE.md`](CLAUDE.md):ssä.
+Vastaanottimen puoli on niin pitkälle todistettu kuin ilman kehystä voi: SPI ja
+keskeytys toimivat, taajuus ja moodi ovat oikeat, ja FIFO-kynnyksen lasku 32:sta
+neljään tavuun ei muuttanut mitään. Jäljelle jää mittari, ja LoRaWAN selittää
+sen ilman että mitään on vialla.
 
-Halvin tarkistus ei vaadi keneltäkään mitään: **FIFO-kynnyksen lasku 32:sta
-neljään tavuun** paikallisessa työkopiossa, joka on kolmannen syyn suora testi.
+**Ratkaisu on pyyntö, ei koodi:** onko `wMBus T1` päällä, ja voiko sen kytkeä.
+Se on vesilaitoksen laite ja kieltävä vastaus on mahdollinen.
 
-Mittarin konfiguraation luku NFC:llä kertoisi radiotilan ja moodin suoraan,
-mutta se reitti on kiinni: salasanaton sovellus on poistettu, nykyinen Axilink
-vaatii jälleenmyyjän tunnuksen eikä Axilink Lite asennu joka puhelimeen.
+NFC kertoisi radiotilan suoraan ohi vesilaitoksen, mutta **puhelinreitti on
+kiinni:** mittarin NFC on ISO 15693, jonka Android reitittää vain sallitulle
+sovellukselle — ja sellaista ei ole saatavilla. Paljas napautus on hiljaa
+vaikka tunniste olisi kentässä.
+
+## Ohitus: PN5180 kaataa molemmat esteet
+
+Noin viiden euron NFC-moduuli lukee mittarin suoraan ilman AES-avainta, ilman
+lähetysikkunaa ja riippumatta siitä kumpaa radiota vesilaitos käyttää. Hinta on
+se että vastaanotin on vietävä mittarin viereen — eli WiFin pitää kuulua siellä
+missä mittari on. Ks. [`CLAUDE.md`](CLAUDE.md).
 
 ## Este 2: AES-128-avain
 

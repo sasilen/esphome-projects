@@ -402,14 +402,19 @@ kumpaakaan ei ole todennettu tästä mittarista, ja NFC-luku kertoisi sen.
 **Kysy se samalla kun kysyt AES-avainta.** Kaikkiin menee kalenteriaikaa ja
 kaikki menevät samalle vastaanottajalle:
 
-1. Onko mittarin radiolähetys päällä, ja millä välillä se lähettää?
-2. **Missä moodissa se lähettää — T1, C1 vai S1?**
+1. **Onko `wMBus T1` päällä lainkaan — ja voitteko kytkeä sen päälle?**
+2. Missä moodissa se lähettää — T1, C1 vai S1?
 3. AES-128-avain
 
-Kohta 2 on lisätty sen jälkeen kun kävi ilmi ettei komponentti tue S-moodia
-lainkaan. **Se on kysymyslistan tärkein**, koska se on ainoa joka voi kaataa
-rautavalinnan: T1 ja C1 tulevat samalla kuuntelulla, S1 vaatii toisen
-vastaanottimen.
+Kohta 1 muuttui muodosta "onko radiolähetys päällä" tähän, kun selvisi että
+**mittari on LoRaWAN-luennassa.** Silloin kysymys ei ole onko radio päällä
+vaan onko *tämä* radio päällä, ja vastaus on todennäköisesti ei — ks. "Ratkaisu
+on todennäköisesti tämä". Se tekee kohdasta 1 pyynnön muuttaa asetusta heidän
+omassa laitteessaan, ja **kieltävä vastaus on siinä rehellinen mahdollisuus**
+paristoperustelulla.
+
+Kohta 2 on yhä listalla, koska se on ainoa joka voi kaataa rautavalinnan: T1 ja
+C1 tulevat samalla kuuntelulla, S1 vaatii toisen vastaanottimen.
 
 **Älä esitä johtopäätöstä "mittari ei lähetä"** vaan kysy neutraalisti. Tämän
 tiedoston oma päättely siitä on jouduttu peruuttamaan kahdesti, ja
@@ -527,6 +532,49 @@ YAML-asetusta. Se 8,5 tunnin ajo 868,95:llä kuunteli siis molempia.
 Kommentoidussa mittarilohkossa on tämän takia ansa: **`mode: [T1]` suodattaisi
 C1-telegrammit pois.** Jätä oletus `Any`.
 
+### Ratkaisu on todennäköisesti tämä: mittari on LoRaWAN-luennassa
+
+**Tämä mittari on LoRaWAN-käytössä.** Se tiedetään asennuksesta eikä väylältä,
+ja se selittää kaiken mitä yllä on mitattu.
+
+W1:ssä radiot ovat **erilliset liput** — `LoRa WAN`, `wMBus T1`, `wMBus S1` —
+eivät toisensa poissulkevia mutta eivät myöskään kytkeytyneitä toisiinsa. Jos
+vesilaitos lukee mittarin LoRaWANilla, **sillä ei ole mitään syytä pitää
+wM-Bus-radiota päällä**, ja on yksi hyvä syy pitää se pois: paristo on
+mitoitettu viideksitoista vuodeksi ja jokainen ylimääräinen lähetys on siitä
+pois. Se on konfiguraatio joka tuottaisi täsmälleen tämän tiedoston
+mittaustulokset — toimiva vastaanotin, oikea taajuus, oikea moodi, ei mitään
+kuultavaa.
+
+**LoRaWAN ei ole vaihtoehtoinen paikallinen reitti.** Lähetykset menevät
+vesilaitoksen verkkopalvelimelle, ja hyötykuorma on salattu istuntoavaimilla
+joita se palvelin hallinnoi. Paikallinen LoRa-vastaanotin — komponentti tukee
+SX1276:ta ja SX1262:ta, eli rauta olisi olemassa — näkisi että lähetyksiä
+tulee, mutta ei niiden sisältöä. **Avaimet ovat kauempana kuin se AES-avain
+jota tässä alun perin lähdettiin kysymään**, koska ne eivät ole mittarin
+ominaisuus vaan verkon.
+
+Kaksi seurausta:
+
+- **Kysymyslistan ensimmäinen kohta vaihtuu.** Ei enää "missä moodissa se
+  lähettää" vaan **"onko wM-Bus T1 päällä lainkaan, ja voitteko kytkeä sen".**
+  Se on pyyntö muuttaa asetusta heidän omassa laitteessaan, ja siihen voi tulla
+  kieltävä vastaus paristoperustelulla — mikä on rehellinen perustelu eikä
+  pelkkä byrokratia.
+- **NFC nousee ensisijaiseksi.** Se on paikallinen, ei tarvitse avainta, ei
+  radiota eikä lähetysikkunaa, **eikä siihen vaikuta se kumpaa radiota
+  vesilaitos käyttää.** Mittarin data on NFC-rajapinnassa riippumatta siitä
+  lähettääkö se mitään.
+
+**Yksi hypoteesi jota tämä herättää ja jota ei ole todennettu.** Ne kuusi
+kohinapakettia voisivat olla mittarin omia LoRaWAN-lähetyksiä, joita 2-FSK-
+vastaanotin näkee roskana — LoRa on chirp-hajaspektri eikä CC1101 demoduloi
+sitä, mutta chirp voi laukaista väärän sync-osuman. Aikavälit eivät kuitenkaan
+tue tätä siististi: 66, 88, 72, 44 ja 128 minuuttia, kun LoRaWAN-vesimittari
+lähettää tyypillisesti säännöllisin välein. Jos vastaanotin osuisi vain
+satunnaiseen osaan lähetyksistä, epäsäännöllisyys selittyisi — eli tätä ei voi
+sulkea pois eikä vahvistaa tällä datalla. **Se on merkintä, ei löytö.**
+
 ### Hypoteesi 2: mittari ei lähetä silloin kun kuunnellaan
 
 Kolme muotoa, halvimmasta alkaen:
@@ -575,6 +623,33 @@ säilyttää:
 
 Sama 8 tavun allekirjoitus, eri intensiteetti. Se on varteenotettava epäilty eikä
 kirjattu syy.
+
+### Täysi lähetysikkuna mitattu: nolla kehystä
+
+7.9.2026, maanantai, 868,95 MHz, mittari parin metrin päässä. **Ensimmäinen
+mittaus tässä projektissa jonka voi kirjata sellaisenaan** — kolme aiempaa
+kumoutui, koska ne mittasivat jotain muuta kuin väittivät.
+
+| | |
+|---|---|
+| Kuunneltu ikkunan sisällä | noin **7,5 h** (10:13 → 18:00, kaksi flashausta välissä) |
+| Kohinapaketteja | **6** — 10:11, 11:18, 12:46, 13:58, 14:42, 16:50 |
+| Kokonaisia kehyksiä | **0** |
+| `RX timeout` / `RX FIFO overflow` | **0** |
+| FIFO-kynnys 32 vs. 4 tavua | ei eroa |
+
+Odotusarvo jos mittari lähettäisi 16 sekunnin välein: **noin 1700
+vastaanottoa.** Yön mittauksen kanssa yhteensä noin 16 tuntia ja nolla kehystä.
+
+Neljä muuttujaa olivat tällä kertaa oikein samaan aikaan — oikea taajuus, moodi
+jota komponentti tukee, lähetysikkunan sisällä, ja vastaanotin todistetusti
+elossa. **Vastaanottimen puoli on siis niin pitkälle todistettu kuin ilman
+kehystä voi**, ja se on syy pitää mittarin puolta ensisijaisena.
+
+Yksi kirjanpitohuomio: `LOCAL PATCH` -rivi ei ole kaappauslokissa vaan
+flashauksen boottitulosteessa. Kokoonpanotuloste toistuu vain **uudelle**
+liittyvälle lokiasiakkaalle, ja taustalla `>>`-ohjauksella pyörinyt virta oli jo
+kiinni — sama mekanismi joka on kirjattu juuren CLAUDE.md:hen.
 
 ### Testi: FIFO-kynnys 32 → 4 tavua
 
@@ -681,6 +756,51 @@ Se salasanaton luku johon tässä aiemmin nojattiin **koski poistettua
 sovellusta**, ei nykyistä. Reitti on siis olemassa mutta ei ilmainen: se vaatii
 joko jälleenmyyjän tunnuksen, APK:n kolmannen osapuolen peilistä, tai
 maahantuojan (Effectio Oy) apua.
+
+### Ja puhelin ei näe mittaria — se on puhelimesta, ei mittarista
+
+Napautus tuotti **ei mitään**: puhelin ei havainnut tunnistetta lainkaan. Se ei
+ole havainto mittarista, ja kaksi syytä selittävät sen puhelimen puolelta.
+
+**Mittarin NFC on ISO 15693 eli NFC-V**, ei se NFC-A jota puhelimet käyttävät
+maksamiseen ja tarroihin. Tämä on päätelty luotettavasti mutta epäsuorasti:
+`esphome_qalcosonicnfc` lukee W1:tä **PN5180-piirillä**, joka on nimenomaan
+ISO 15693 -lukija.
+
+**Androidilla NFC-V on rajoitettu.** Käyttöjärjestelmä tarjoaa siihen vain
+raakaa `transceive`-liikennettä ilman NDEF-tukea, ja **Android 15 lisäsi
+tunnisteiden lupajärjestelmän jossa ISO 15693 on "restricted" ellei jokin
+sovellus ole erikseen sallittujen listalla**; Android 16 lisäsi siihen
+vahvistusdialogin. Ilman NFC-V-kelpoista sovellusta järjestelmä ei reititä
+tunnistetta minnekään, eli **paljas puhelin on hiljaa vaikka tunniste olisi
+kentässä.** Se selittää todennäköisesti myös sen miksi Axilink Lite ei
+asentunut kyseiseen puhelimeen.
+
+Toinen syy on kohdistus. Mittarin kela on tarkassa paikassa — paikannettu
+FCC-hakemuksesta — ja siihen on tehty **3D-tulostettu kotelo joka kohdistaa
+PN5180:n antennin.** Jos kohdistus vaatii tulostetun kotelon, se ei ole
+armollinen puhelimen kelalle.
+
+**Sääntö tästä: puhelimen hiljaisuus ei kuulu mittarin vikaluetteloon.** Se on
+sama virhemuoto kuin S-moodin testi väärillä rekistereillä — mittaus joka ei
+mittaa sitä mitä sen otsikko sanoo.
+
+### Siksi PN5180 ei ole enää varavaihtoehto
+
+[esphome_qalcosonicnfc](https://github.com/dbmaxpayne/esphome_qalcosonicnfc) on
+noin viiden euron moduuli, ja se **ohittaa kolme estettä kerralla**: ei
+AES-avainta, ei lähetysikkunaa, eikä väliä sillä kumpaa radiota vesilaitos
+käyttää. Sille on valmis kotelomalli antennin kohdistukseen.
+
+Hinta on rehellisesti sanottava, ja se kaataa yhden tämän tiedoston omista
+perusteluista: **vastaanotin on vietävä mittarin viereen.** Tässä on luettu
+että wM-Bus on radio ja siksi paikan valitsee itse sieltä missä WiFi kuuluu —
+NFC:llä se vapaus katoaa, ja mittarikaivo tai tekninen tila on se paikka jossa
+WiFin pitää silloin kuulua.
+
+Se on eri projekti eikä korjaus tähän. Mutta kun tähän on nyt käytetty
+kuusitoista tuntia kuuntelua nollalla kehyksellä, se on **suorempi tie kuin
+radio jonka lähettämisestä ei ole todistetta.**
 
 **Asetusten muuttaminen ei onnistu**, ja syy on rakenteellinen: parametrien
 kirjoitus lukittuu pysyvästi kun mittari on läpäissyt 10 litran kynnyksen.
