@@ -592,21 +592,44 @@ joten **muutos on kirjattu tänne jotta se on toistettavissa ilman sitä puuta.*
 YAMLissa `external_components` osoittaa toistaiseksi paikalliseen polkuun ja
 GitHub-lähde on kommentoituna sen alla.
 
-**Todentaminen ei tule lokista vaan käyttäytymisestä.** Rivi `configuring FIFO
-threshold` on VV-tasolla ja siis setup-vaiheessa, jota API-lokivirta ei näe —
-eikä tagin tasoa voi nostaa globaalin yli, koska ylemmät tasot on käännetty
-pois. Sen sijaan kynnys 4 laukaisee GDO0:n paljon herkemmin kuin 32, joten:
+**Kontrolli on toinen paikallinen lisäys, ei pakettitahti.** Rivi `configuring
+FIFO threshold` on VV-tasolla ja siis setup-vaiheessa, jota API-lokivirta ei näe,
+eikä tagin tasoa voi nostaa globaalin yli — ylemmät tasot on käännetty pois.
+Siksi `transceiver.cpp`:n `dump_config`:iin on lisätty rivi:
 
-| Havainto lähetyksen jälkeen | Tulkinta |
+```
+[C][wmbus.transceiver]:   LOCAL PATCH: FIFOTHR=0x00 (RX FIFO >= 4 bytes)
+```
+
+`ESP_LOGCONFIG` on C-tasolla ja **kokoonpanotuloste toistuu joka lokiasiakkaan
+liittyessä**, joten patchatun puun voi todeta binäärissä milloin tahansa ilman
+sarjaporttia. Jos rivi puuttuu, käännös ei käyttänyt tätä puuta.
+
+**Ja se ansaitsi itsensä heti.** Ensimmäinen käännös paikallisen puun kanssa
+tuotti kokoonpanotulosteen ilman tätä riviä: `podman cp` oli pesinyt puun
+`/config/upstream/upstream`:iin, koska kohdehakemisto oli jo olemassa, ja
+käännös luki vanhaa kopiota. Ilman merkkiriviä se olisi näyttänyt onnistuneelta
+testiltä. **Kopioi sisältö eikä hakemistoa:** `podman cp <polku>/upstream/.
+esphome:/config/upstream/`.
+
+**Pakettitahti ei kelpaa kontrolliksi, ja se oli tässä ensin väärin.**
+`MDMCFG2 = 0x06` vaatii 16/16-bitin sync-osuman ennen kuin FIFO alkaa täyttyä,
+eli kohinapakettien tahti syntyy väärien sync-osumien todennäköisyydestä.
+FIFO-kynnys päättää vain siitä toimitetaanko osuman jälkeinen purske jos se ei
+kasva 32 tavuun. Vaikutus on siis kohtalainen eikä dramaattinen, ja mitattu ero
+— yksi paketti 65 minuutissa vastaan noin yksi kahdessa tunnissa — sopii yhtä
+hyvin kumpaan tahansa johtopäätökseen.
+
+| Havainto | Tulkinta |
 |---|---|
-| Raakapakettien tahti nousee jyrkästi | Patch on ajossa. Tämä on myös #425:n profiili (1–3 s) |
-| Tahti pysyy ~1 / 11 min | Patch **ei** ole ajossa tai kynnys ei ole se joka määrää tahdin |
+| `LOCAL PATCH` -rivi lokissa | Patch on binäärissä. Vasta tämän jälkeen hiljaisuus tarkoittaa jotain |
+| Rivi puuttuu | Käännös ei käyttänyt paikallista puuta — `esphome clean` ja uudelleen |
 | Kokonainen kehys | Hypoteesi 3 vahvistuu ja este oli vastaanottimessa |
 
-Kolmas rivi on se jota testi hakee. **Ensimmäinen rivi ei ole tulos vaan
-kontrolli** — se kertoo että muutos on todella laitteessa, mikä on tässä
-tarpeen, koska kaksi kertaa aiemmin on tulkittu mittausta joka ei mitannut
-sitä mitä luultiin.
+Kolmas rivi on se jota testi hakee. Kaksi ensimmäistä ovat kontrolli, ja se on
+tässä tarpeen: **kaksi kertaa aiemmin on tulkittu mittausta joka ei mitannut
+sitä mitä luultiin** — S-moodi väärillä rekistereillä ja 8 tavun otsikot jotka
+eivät olleet otsikoita.
 
 Jos senkin jälkeen on hiljaista, `version_4` on todistetusti toimiva CC1101-
 toteutus, mutta kahdella ehdolla: **GDO2 on kytkettävä takaisin** sync-portiksi
