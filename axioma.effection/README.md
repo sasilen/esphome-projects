@@ -6,15 +6,18 @@ Vesimittarin lukeminen langattomasti Home Assistantiin ESP32:lla ja CC1101-radio
 Mittari lähettää Wireless M-Bus -telegrammin 868,95 MHz:llä noin 16 sekunnin
 välein; ESP32 vastaanottaa sen ja välittää ESPHomen natiivi-APIlla. Ei MQTT:tä.
 
-**Tila: suunnitteluvaihe, konfiguraatio valmis.**
-[`axioma.effection.yaml`](axioma.effection.yaml) on olemassa ja ajettavissa;
-rauta on laatikossa mutta kytkemättä.
+**Tila: kytketty ja kuuntelee, ei yhtään telegrammia.** Radio vastaa ja
+kohinapaketteja tulee läpi, mutta kokonaisia kehyksiä ei ole tullut kertaakaan.
+Syy on auki — ks. [`CLAUDE.md`](CLAUDE.md), "Avoin: miksi kehyksiä ei tule".
 
 Konfiguraatio on tarkoituksella **pelkkä kuuntelija**. Se ei osaa lukea mittarin
-arvoja eikä yritäkään — se todentaa radion, kytkennät, taajuuden ja kuuluvuuden,
-ja kaikki neljä näkyvät yhdestä lokirivistä. Sensorilohko on tiedostossa
-kommentoituna ja odottaa kahta asiaa: Meter ID:tä lokista ja AES-avainta
-vesilaitokselta.
+arvoja eikä yritäkään — se todentaa radion, kytkennät, taajuuden ja kuuluvuuden.
+Sensorilohko on tiedostossa kommentoituna ja odottaa kahta asiaa: Meter ID:tä
+lokista ja AES-avainta vesilaitokselta.
+
+**Kuuntele arkena klo 6–18.** Mittarin oletusaikataulu on ma–pe 6:00–18:00, ja
+sen ulkopuolella radio on hiljaa kokonaan. Yöllä tai viikonloppuna mitattu
+hiljaisuus ei kerro laitteistosta mitään.
 
 ## Mittari
 
@@ -205,15 +208,28 @@ hiljaisuutta viaksi ennen kuin olet odottanut pari minuuttia.
 
 Sen jälkeen kaikki päivitykset menevät OTA:na eikä levyä tarvitse enää irrottaa.
 
-## Este: AES-128-avain
+## Este 1: yhtään kehystä ei ole tullut
+
+Kolme mahdollista syytä, eikä yksikään mittaus ole vielä erottanut niitä
+toisistaan: mittari ei lähetä silloin kun kuunnellaan, se lähettää S-moodissa
+jota tämä komponentti ei osaa, tai komponentti ei kokoa kehystä. Kolmannelle on
+avoin bugi yläpuolella. Perustelut ja testijärjestys ovat
+[`CLAUDE.md`](CLAUDE.md):ssä.
+
+Halvin tarkistus ei vaadi keneltäkään mitään: **lue mittarin konfiguraatio
+NFC:llä puhelimella.** Radiotila, moodi ja lähetysikkunan maskit näkyvät sieltä
+ilman salasanaa.
+
+## Este 2: AES-128-avain
 
 Qalcosonic W1 käyttää yleensä AES-128-salausta. Avain **ei** ole näytössä,
 tyyppikilvessä eikä sarjanumerossa — se pitää pyytää vesilaitokselta,
 isännöitsijältä, rakennuttajalta tai mittarin toimittajalta. Ilman sitä näkyvät
 vain salatut telegrammit.
 
-Tämä kannattaa laittaa liikkeelle heti, koska siihen menee kalenteriaikaa —
-radion toimivuuden voi silti todentaa ennen avaimen saapumista.
+Tämä kannattaa laittaa liikkeelle heti, koska siihen menee kalenteriaikaa.
+**Kysy samalla kertaa radiotila ja moodi** — moodi ratkaisee onko rautavalinta
+oikea, eikä sitä kannata selvittää kahdessa erässä.
 
 ## Vianetsintä
 
@@ -224,14 +240,16 @@ radion toimivuuden voi silti todentaa ennen avaimen saapumista.
 | Huono vastaanotto | Antenni liian lähellä metallia, etäisyys, antennin laatu |
 
 Ensimmäistä telegrammia voi joutua odottamaan hetken — lähetysväli on noin
-16 sekuntia.
+16 sekuntia **aikatauluikkunan sisällä.**
 
 ## Seuraavat vaiheet
 
-1. Kytke ESP32 ja CC1101
-2. Flashaa testikonfiguraatio
-3. Tarkista loggerista näkyykö Meter ID
-4. Hanki AES-128-avain vesiyhtiöltä
-5. Lisää mittari Home Assistantiin
+1. Kuuntele 868,95 MHz arkena klo 6–18
+2. Todenna SPI sarjaportista: `[VV][CC1101]: part: 00, version: XX`, jossa
+   `version` on `04` tai `14`
+3. Lue mittarin konfiguraatio NFC:llä
+4. Kysy vesilaitokselta radiotila, moodi ja AES-128-avain
+5. Pura ensimmäinen telegrammi ja varmista Meter ID siitä
+6. Lisää mittari Home Assistantiin
 
 Yksityiskohdat: [`CLAUDE.md`](CLAUDE.md).

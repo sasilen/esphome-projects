@@ -19,7 +19,7 @@ muuten mDNS ei toimi eikä OTA löydä levyjä.
 | [hirvirata](hirvirata/) | Liikkuva maalitaulurata | — (H-silta, PWM) | Wemos D1 mini + L298N + 12 V vaihdemoottori | Suunnittelu, YAML-luonnos valmis |
 | [stiebel.eltron](stiebel.eltron/) | Stiebel Eltron WPC 07 -lämpöpumppu | CAN 20 kbps | ESP8266/ESP32 + MCP2515 (5 V → 3,3 V -muutos) | Suunnittelu, rauta osin hankittu, kuuntelu-YAML valmis |
 | [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | RS-485 / Modbus RTU (RJ11-huoltoliitin) | ESP32 + MAX485 | Suunnittelu |
-| [axioma.effection](axioma.effection/) | Axioma Effectio / Qalcosonic W1 -vesimittari | Wireless M-Bus 868,95 MHz T1 | ESP32 + CC1101 | Suunnittelu |
+| [axioma.effection](axioma.effection/) | Axioma Effectio / Qalcosonic W1 -vesimittari | Wireless M-Bus 868,95 MHz T1/C1 | ESP32 + CC1101 | Kytketty ja kuuntelee, ei yhtään telegrammia |
 
 ## Levyt ja varasto
 
@@ -106,7 +106,7 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 | Projekti | Puuttuu | Estääkö aloituksen |
 |---|---|---|
 | stiebel.eltron | 3,3 V:n CAN-lähetinvastaanotin **ja ESP32-C3-levy** vaiheeseen 2 | Ei — vaihe 1 ei vaadi hankintoja |
-| axioma.effection | — kaikki tilattu ja hyllyssä | Este on AES-128-avain, ei osa |
+| axioma.effection | — kaikki tilattu ja kytketty | Este on kehysten puuttuminen, ei osa — avain on vasta toinen este |
 | pegasos.enervent | RJ11-kaapeli | Kyllä, mutta se on ainoa |
 | hirvirata | 2020-profiili, eksentriset välikkeet, M5-pultit, sulake + pidike, DC-jakki | Kyllä |
 | aidon | Schottky SS14 tai 1N5819 — kovetus jäi tekemättä. 330 Ω on hyllyssä | Ei, laite on käytössä |

@@ -345,7 +345,7 @@ Jos tämä näkyy:
 
 ---
 
-# Avoin: lähettääkö mittari lainkaan
+# Avoin: miksi kehyksiä ei tule
 
 **Radio toimii — se on todistettu.** Kytkettynä ja parin metrin päässä
 mittarista loki tuotti:
@@ -355,19 +355,29 @@ mittarista loki tuotti:
 [D][wmbusmeters:351]: raw packet "320C800948884A28"
 ```
 
-SPI, kytkennät, taajuus ja komponentti ovat kunnossa. Vaiheen 1 neljästä
-todistettavasta asiasta kolme on selvä.
+**SPI ja GDO0 ovat tässä kunnossa**, ja perustelu on vahvempi kuin pelkkä rivin
+ilmestyminen: vaihtelevat tavut eivät voi tulla kuolleelta väylältä, koska
+vastaamaton MISO lukee tasaista nollaa tai `0xFF`:ää. Keskeytyslinja laukeaa ja
+FIFO:sta luetaan oikeasti dataa.
 
-**Neljäs ei ole.** Kolmessa minuutissa tuli yksi kahdeksan tavun paketti, eikä
-se näytä telegrammilta: pituuskenttä `0x32` lupaa 50 tavua, mutta seuraava tavu
-`0x0C` ei ole kelvollinen C-kenttä — T1-lähetyksessä siinä olisi tyypillisesti
-`0x44`. Todennäköisemmin kohinaa kuin katkennut telegrammi.
+**Se ei tarkoita että vastaanottopolku kokoaa kehyksiä.** Kolmessa minuutissa
+tuli yksi kahdeksan tavun paketti, eikä siinä ole telegrammia: `0x32` ja `0x0C`
+eivät ole L- ja C-kenttiä lainkaan vaan dekoodaamatonta chip-tason dataa, ja
+kahdeksan tavua on juuri se vakio jonka epäonnistunut otsikon purku tuottaa —
+perustelu on kohdassa "Niiden 47 paketin otsikkoanalyysi ei ollut pätevä".
+Tässä luki aiemmin että `0x0C` on kelvoton C-kenttä; se luki kenttää väärästä
+paikasta.
 
-**Kahden metrin päässä kuuluvuus ei selitä tätä.** Oman mittarin telegrammin
-pitäisi tulla vahvana ja kokonaisena. Antenni on kiinni ANT-padissa, ja se on
-kierteinen kuparilanka eli heliksiantenni — säteilijä, ei pelkkä siirtolinja.
+**Kahden metrin päässä kuuluvuus ei selitä hiljaisuutta.** Oman mittarin
+telegrammin pitäisi tulla vahvana ja kokonaisena. Antenni on kiinni ANT-padissa,
+ja se on kierteinen kuparilanka eli heliksiantenni — säteilijä, ei pelkkä
+siirtolinja.
 
-Kysymys ei siis ole vastaanotossa vaan siinä **lähettääkö mittari.**
+Jäljelle jää **kolme** kysymystä eikä yksi, ja ne on eroteltava toisistaan:
+lähettääkö mittari, lähettääkö se moodissa jota tämä komponentti osaa, ja
+kokoaako komponentti kehyksen jos lähetys tulee. Ne ovat hypoteesit 2, 1 ja 3
+alla. **Yksikään mittaus ei tähän mennessä ole erottanut niitä**, koska
+kaikki kolme näyttävät lokissa samalta.
 
 ## Siitä on tässä repossa kokemusta
 
@@ -377,21 +387,38 @@ Aidonin koko projekti alkoi samasta:
 > että 5 V:n syöttö. Tämä on projektin ainoa vaihe jota ei voi nopeuttaa —
 > tilaa se ensin.
 
-Vesimittarissa on sama mahdollisuus: radio voi olla pois päältä, tai
-konfiguroitu **kävelyluentaan** eli lähettämään harvakseltaan tai vain tiettyinä
-aikoina, koska paristo mitoitetaan 15 vuodeksi.
+Vesimittarissa on sama mahdollisuus, mutta muoto on eri: **kyse ei ole
+kävelyluennasta vastaan kiinteä verkko.** Sama laite lähettää 16 sekunnin välein
+aikatauluikkunan sisällä ja on hiljaa sen ulkopuolella, ja oletusikkuna on
+**ma–pe 6:00–18:00.** Kumpi luentatapa on käytössä ei siis ratkaise mitään —
+kellonaika ratkaisee.
 
 Tämän tiedoston **`noin 16 sekunnin väli` on yleisestä lähteestä eikä mitattu
 tästä yksilöstä.** Se on oletus siinä missä ne taulukot joita tässä projektissa
-on jouduttu kumoamaan neljä kertaa.
+on jouduttu kumoamaan neljä kertaa. Maahantuojan myyntimateriaali sanoo
+lähetysväliksi **5 minuuttia**, mikä on ristiriidassa 16 sekunnin kanssa —
+kumpaakaan ei ole todennettu tästä mittarista, ja NFC-luku kertoisi sen.
 
-**Kysy se samalla kun kysyt AES-avainta.** Molempiin menee kalenteriaikaa ja
-molemmat menevät samalle vastaanottajalle:
+**Kysy se samalla kun kysyt AES-avainta.** Kaikkiin menee kalenteriaikaa ja
+kaikki menevät samalle vastaanottajalle:
 
 1. Onko mittarin radiolähetys päällä, ja millä välillä se lähettää?
-2. AES-128-avain
+2. **Missä moodissa se lähettää — T1, C1 vai S1?**
+3. AES-128-avain
 
-## Yön mittaus ratkaisi sen: kohinaa, ei telegrammeja
+Kohta 2 on lisätty sen jälkeen kun kävi ilmi ettei komponentti tue S-moodia
+lainkaan. **Se on kysymyslistan tärkein**, koska se on ainoa joka voi kaataa
+rautavalinnan: T1 ja C1 tulevat samalla kuuntelulla, S1 vaatii toisen
+vastaanottimen.
+
+**Älä esitä johtopäätöstä "mittari ei lähetä"** vaan kysy neutraalisti. Tämän
+tiedoston oma päättely siitä on jouduttu peruuttamaan kahdesti, ja
+vastaanottimen puolella on yhä avoin epäilty — ks. hypoteesi 3.
+
+Pyyntöön kuuluu **tyyppikilven oikea sarjanumero.** Repossa se on paikanpitäjä
+`12345678`, koska repo on julkinen.
+
+## Yön mittaus ei ratkaissut sitä: se osui lähetysikkunan ulkopuolelle
 
 8,5 tuntia parin metrin päässä mittarista, taajuudella 868,95 MHz:
 
@@ -400,24 +427,56 @@ molemmat menevät samalle vastaanottajalle:
 | Kokonaisia kehyksiä | **0** |
 | Raakapaketteja | 47 |
 
-Ja jokainen niistä 47:stä on kohinaa, minkä neljä ominaisuutta yhdessä
-osoittavat:
+**Nolla on tässä odotettu tulos eikä havainto.** Qalcosonic W1:n oletusaikataulu
+on **ma–pe 6:00–18:00**, ja sen ulkopuolella radio on hiljaa kokonaan — paristo
+mitoitetaan 15 vuodeksi. Mittaus alkoi sunnuntaina noin 21:15 ja päättyi
+maanantaina 05:45, eli se oli kokonaan ikkunan ulkopuolella ja viikonloppuna
+kahdesti.
 
-- **Kaikki täsmälleen 8 tavua.** Pituuskentät vaihtelevat (0x32, 0x28, 0x46,
-  0xAB…), toimitettu määrä ei. Kiinteä katkaisu tulee komponentin
-  lukugranulariteetista, ei signaalista — heikko signaali katkeaisi
-  satunnaisesta kohdasta.
-- **Kaikki eri sisältöä.** Ei toistuvaa lähdettä.
-- **Noin yksi yhdessätoista minuutissa, satunnaisesti.** Ei mitään rytmiä.
-- **Yksikään C-kenttä ei kelpaa.** `0x0C`, `0x91`, `0xAB`, `0x7F`… T1:ssä siinä
-  olisi tyypillisesti `0x44`.
+Aikataulu on maskitettu sekä viikonpäivä- että kuukausitasolla. Lähde ei ole
+valmistajan datalehti vaan riippumaton rakentaja joka törmäsi täsmälleen tähän
+oireeseen, ja wmbusmetersin ylläpitäjä vahvistaa ilmiön yleisyyden: osa
+mittareista sammuttaa radion öisin ja viikonloppuisin oletuskonfiguraatiolla.
+Maskit ovat luettavissa mittarista NFC:llä, joten oletus on tarkistettavissa
+laitteesta — ks. "Mittarin oma konfiguraatio on luettavissa NFC:llä".
 
-**Vertailuluku ratkaisee.** Kahden metrin päässä 16 sekunnin välein lähettävä
-mittari tuottaisi noin 1900 vastaanottoa 8,5 tunnissa. Tuli nolla.
+**Vertailuluku pätee silti, kun mittaus tehdään ikkunan sisällä.** Kahden metrin
+päässä 16 sekunnin välein lähettävä mittari tuottaisi noin 1900 vastaanottoa
+8,5 tunnissa.
 
-**Vastaanotin toimii ja mittarin telegrammeja ei tule.** Kaksi hypoteesia jää.
+### Niiden 47 paketin otsikkoanalyysi ei ollut pätevä
 
-### Hypoteesi 1: väärä taajuus — testattavissa ilmaiseksi
+Tässä luki että neljä ominaisuutta yhdessä osoittavat kaikki 47 kohinaksi.
+Johtopäätös osuu todennäköisesti oikeaan, mutta **kaksi neljästä perustelusta
+ei mittaa sitä mitä se väittää.**
+
+`packet.cpp` yrittää T1:n 3-of-6-dekoodausta kolmesta ensimmäisestä tavusta. Jos
+yksikin kuuden bitin koodi on kelvoton, dekoodaus palauttaa tyhjän ja L-kenttä
+palaa oletusarvoon 0 — ja siitä `expected_size` laskee `(3·5+1)/2 =` **8**.
+Satunnaisdatalla dekoodaus läpäisee noin 0,4 %:n todennäköisyydellä, joten
+käytännössä jokainen kohinaosuma tuottaa saman luvun.
+
+Kaksi seurausta:
+
+- **8 tavua ei ole lukugranulariteetti vaan laskettu vakio.** Se on komponentin
+  allekirjoitus tilanteelle "en saanut otsikkoa auki" eikä kerro signaalista
+  mitään suuntaan tai toiseen.
+- **Lokiin tulostetut tavut eivät ole L- ja C-kenttiä.** `convert_to_frame`
+  yrittää dekoodausta vasta myöhemmin ja kaatuu samalla tavalla, joten
+  tulosteessa on dekoodaamatonta chip-tason dataa. Väite "yksikään C-kenttä ei
+  kelpaa" lukee kenttää joka ei ole siinä paikassa. Tämän voi tarkistaa lokin
+  omalla esimerkillä: `0x32 = 0b00110010`, ja `>>2 = 0b001100` ei ole
+  3-of-6-hakutaulussa, eli dekoodaus kaatuu jo ensimmäiseen segmenttiin.
+
+Jäljelle jää kaksi kelvollista perustelua: paketit ovat eri sisältöisiä eikä
+niissä ole rytmiä. Ne riittävät sanomaan ettei mikään lähde toistu, mutta
+**eivät erota kohinaa oman mittarin kehyksestä jonka otsikon purku
+epäonnistui.**
+
+Tämä on sama opetus kolmatta kertaa tässä tiedostossa: **taulukko on hypoteesi,
+laitteen oma sanoma on todiste** — ja tällä kerralla väärä taulukko oli oma.
+
+### Hypoteesi 1: väärä taajuus — ei testattavissa tällä komponentilla
 
 868-kaistalla on kaksi wM-Bus-moodia, ja kuuntelemme vain toista:
 
@@ -426,58 +485,103 @@ mittari tuottaisi noin 1900 vastaanottoa 8,5 tunnissa. Tuli nolla.
 | **S** | **868,30 MHz** |
 | T, C | 868,95 MHz |
 
-Jos mittari on S-moodissa, havainto olisi täsmälleen tämä. Ja `T1`-oletus tulee
-samasta lähdeperheestä kuin `type: axioma`, joka jo osoittautui olemattomaksi
-ajuriksi — sitä ei ole todennettu tästä yksilöstä.
+**Tässä luki että hypoteesi on testattu ja kumottu 7.9.2026. Se peruutetaan:
+testi oli kyvytön havaitsemaan sitä mitä se väitti sulkevansa pois.**
 
-Testi on yhden rivin muutos ja tunnin kuuntelu:
+`transceiver_cc1101.cpp` kirjoittaa koko rekisteritaulukon kiinteillä
+literaaleilla, ja `frequency`-asetuksesta johdetaan **vain** FREQ2/FREQ1/FREQ0:
 
-```yaml
-  frequency: 868.30MHz
-```
+| Asetus | Rekisteri | |
+|---|---|---|
+| 100 kbps | MDMCFG4 `0x5C`, MDMCFG3 `0x04` | kiinteä |
+| 2-FSK, Manchester **pois**, 16/16 sync | MDMCFG2 `0x06` | kiinteä |
+| Deviaatio ~50 kHz | DEVIATN `0x44` | kiinteä |
+| Sync word `0x543D` | SYNC1/SYNC0 | kiinteä |
 
-**Tämä kannattaa tehdä ennen kuin kysyy keneltäkään mitään**, koska se ei vaadi
-kalenteriaikaa.
+Koodin oma kommentti sanoo sen suoraan: `Configure for wM-Bus Mode C/T at
+868.95 MHz, 100 kbps, 2-FSK`.
 
-### Hypoteesi 1 on testattu ja kumottu
+**`frequency: 868.30MHz` siirsi siis pelkän paikallisoskillaattorin.** S-moodi on
+32,768 kbps **Manchester-koodattuna** ja eri synkronointikuviolla; vastaanotin oli
+100 kbps 2-FSK ilman Manchesteria. Se ei demoduloi S-lähetystä millään
+signaalinvoimakkuudella.
 
-S-moodi ajettiin 7.9.2026. Se **ei tuottanut yhtään kehystä**, ja kohinaa se
-tuotti enemmän kuin T/C-moodi:
+Samasta syystä myös selitys jota tässä kokeiltiin — "S-moodi on kohinaisempi
+kanava, koska sen eri modulaatio- ja nopeusasetukset laukaisevat väärän
+synkronoinnin herkemmin" — ei voi olla oikea: **yhtään modulaatio- tai
+nopeusasetusta ei vaihtunut.** Ja 43 minuutin ajo 868,30:llä tuotti
+myöhemmin **nolla** raakapakettia, mikä on päinvastainen havainto kuin se kuuden
+minuutin otos jolla kohinaisuutta perusteltiin.
 
-| Taajuus | Aika | Raakapaketteja | Tahti | Kehyksiä |
-|---|---|---|---|---|
-| 868,95 (T, C) | 8,5 h | 47 | 1 / 11 min | **0** |
-| 868,30 (S) | 6 min | 6 | 1 / min | **0** |
+**Komponentti ei tue S-moodia lainkaan.** Radiokerros asettaa link moden vain
+arvoihin C1 tai T1, ja `wmbus_meter`:n `mode:`-valinnat ovat `Any`, `C1` ja `T1`.
+Tätä hypoteesia ei siis voi testata tällä raudalla: jos mittari on S1-moodissa,
+vastaanotin on vaihdettava, ja rtl-sdr + rtl_wmbus osaa S:n, T:n ja C:n.
+**Siksi moodi kuuluu vesilaitokselle menevään kysymyslistaan** — se ratkaisee
+onko koko rautavalinta oikea.
 
-Nopeampi tahti ei ole löytö vaan kohinaisempi kanava — S-moodin eri modulaatio-
-ja nopeusasetukset laukaisevat väärän synkronoinnin herkemmin.
+**Toinen puoli päättelystä kestää: C1 tuli katetuksi.** C1 ja T1 jakavat saman
+radioasetuksen, ja C1 tunnistetaan preamble-tavusta `0x54` automaattisesti ilman
+YAML-asetusta. Se 8,5 tunnin ajo 868,95:llä kuunteli siis molempia.
 
-**Ja otsikot sulkevat asian lopullisesti.** Kuuden S-moodipaketin kentät:
+Kommentoidussa mittarilohkossa on tämän takia ansa: **`mode: [T1]` suodattaisi
+C1-telegrammit pois.** Jätä oletus `Any`.
 
-```
-L:  3, 86, 152, 5, 115, 199
-C:  F7, FA, 29, 14, 5F, E4
-```
+### Hypoteesi 2: mittari ei lähetä silloin kun kuunnellaan
 
-Molemmat ovat tasaisesti jakautuneita koko tavun alueelle. **Yksi mittari
-lähettää saman mittaisia telegrammeja:** jos nämä olisivat katkenneita oman
-mittarin lähetyksiä, pituuskenttä olisi joka kerta sama ja C-kenttä joka kerta
-`0x44`. Satunnainen L ja satunnainen C on kohinan allekirjoitus, eikä kuudesta
-ole yhtään poikkeusta.
+Kolme muotoa, halvimmasta alkaen:
 
-Kuusi minuuttia on lyhyt otos, mutta **datan luonne on yksiselitteinen** eikä
-pidempi kuuntelu muuta satunnaisia otsikoita säännöllisiksi.
-
-Kumpikaan 868-kaistan moodi ei siis tuota telegrammia, ja vastaanotin on
-todistetusti toimiva: SPI, GDO0, taajuus ja RF-etupää kaikki neljä.
-
-### Hypoteesi 2: mittari ei lähetä
-
-Radio pois päältä, tai kävelyluenta-aikataulu — lähetys vain tiettyinä aikoina
-tai harvakseltaan, koska paristo mitoitetaan 15 vuodeksi.
+1. **Lähetysikkuna.** Oletus ma–pe 6:00–18:00 selittää yön mittauksen
+   sellaisenaan. Tarkistus: kuuntele arkena päiväsaikaan.
+2. **Kuljetustila.** Uudessa mittarissa radio on pois päältä ja aktivoituu
+   automaattisesti kun kumuloitunut tilavuus ylittää **10 litraa**. Sama
+   tapahtuma lukitsee konfiguraatioparametrit pysyvästi. Tarkistus:
+   kokonaistilavuus ei ole nolla.
+3. **Radio konfiguroitu pois.** Tämä menee vesilaitokselle.
 
 Tämä on sama muoto kuin aidonin este, ja sen ratkaisu on sama: kysy, ja kysy
 ajoissa.
+
+### Hypoteesi 3: vastaanotin ei kokoa kehystä
+
+Tämä ei ollut listalla lainkaan, ja se on syytä pitää mielessä ennen kuin
+mittarista tehdään johtopäätöksiä.
+
+[Issue #425](https://github.com/SzczepanLeon/esphome-components/issues/425),
+avattu 2.8.2026 ja yhä avoin: `wmbus_radio/CC1101 receives only noise (8-byte
+packets, RX FIFO overflow) — never captures full telegrams`. Kiinnitetty commit
+on `main`:n kärki, joten korjausta ei ole olemassa eikä pinnin siirtäminen auta.
+
+Epäily kohdistuu siihen että GDO0 laukeaa FIFO-kynnyksestä eikä sync-wordin
+osumasta. RF-asetukset ovat sukupolvien välillä tavu tavulta identtiset; ero on
+lukustrategiassa:
+
+| | `version_4` | `main` 5.1.7 |
+|---|---|---|
+| FIFO-kynnys RX:n alussa | **4 tavua** | **32 tavua** |
+| GDO2 sync-porttina | kyllä, oma tila | ei käytössä |
+| PKTLEN pituuden selvittyä | vaihdetaan fixed-tilaan | jää infinite-tilaan |
+| `sync_mode`-asetus | on | ei ole |
+
+**Oireprofiili ei silti täsmää tähän laitteeseen**, ja se erotus kannattaa
+säilyttää:
+
+| | #425 | tämä laite |
+|---|---|---|
+| Raportoijia | 1 | |
+| Kohinapaketteja | 1–3 s välein | 1 / 11 min |
+| `RX FIFO overflow` | jatkuvasti | **ei yhtään** |
+| CPU:n näännyttäminen | kyllä | ei havaittu |
+
+Sama 8 tavun allekirjoitus, eri intensiteetti. Se on varteenotettava epäilty eikä
+kirjattu syy. Testi on FIFO-kynnyksen lasku paikallisessa työkopiossa —
+`FIFOTHR` arvoon `0x00`, joka on `version_4`:n neljä tavua — ja se ei vaadi
+keneltäkään mitään. `upstream/` on gitignoressa juuri tällaiseen.
+
+Jos senkin jälkeen on hiljaista, `version_4` on todistetusti toimiva CC1101-
+toteutus, mutta kahdella ehdolla: **GDO2 on kytkettävä takaisin** sync-portiksi
+ja **ei GPIO2:een** (strapping, perusteltu yllä), ja #425:n raportoija sanoo
+`version_4`:n kaatuvan nykyisillä ESPHome-versioilla. Siksi se on vasta viimeinen.
 
 # AES-128 salaus
 
@@ -497,6 +601,47 @@ Sen saa yleensä:
 - mittarin toimittajalta
 
 Ilman AES-avainta voidaan yleensä nähdä vain salatut telegrammit.
+
+# Mittarin oma konfiguraatio on luettavissa NFC:llä
+
+W1:ssä on NFC-rajapinta, ja **konfiguraation lukeminen ei vaadi salasanaa** —
+vasta kirjoitus vaatii. Puhelimella saa siis suoraan mittarista ne asiat joita
+tässä tiedostossa on arvailtu yleisistä lähteistä:
+
+- radiotila päällä vai pois
+- `wMBus T1` ja `wMBus S1` erillisinä lippuina — eli **moodi**
+- lähetysikkunan viikonpäivä- ja kuukausimaski
+- kokonaistilavuus, eli onko kuljetustila jo purkautunut
+
+Tämä on halvin tapa tarkistaa lähetysikkunaoletus, ja se on **sama sääntö kuin
+muualla tässä tiedostossa: laitteen oma sanoma voittaa taulukon.** Sovellus on
+Axilink (NFC ja optinen pää) tai vanha `Qalcosonic configurator W1`.
+
+**Asetusten muuttaminen ei onnistu**, ja syy on rakenteellinen: parametrien
+kirjoitus lukittuu pysyvästi kun mittari on läpäissyt 10 litran kynnyksen.
+Asennetun mittarin aikataulua ei siis säädetä kuluttajan työkaluilla — se on
+vesilaitoksen tai valmistajan oikeus.
+
+**Mittarissa on kommunikointikredit**: lisärajapintojen käyttö on rajattu noin
+20 minuuttiin kuukaudessa pariston säästämiseksi, ja rajan täyttyessä rajapinta
+lukkiutuu tunnin vaihtumiseen asti. Älä siis pollaa NFC:tä.
+
+Näyttö on tätä heikompi todiste. LCD:llä on radioviestinnän indikaattori, mutta
+**ei ole varmistettu kertooko se "radio konfiguroitu päälle" vai "lähetys
+käynnissä"**, ja yksittäisiä näyttösivuja voi piilottaa asennuksessa — sivun
+puuttuminen ei siis todista mitään.
+
+## NFC on myös vaihtoehtoinen reitti koko projektille
+
+[esphome_qalcosonicnfc](https://github.com/dbmaxpayne/esphome_qalcosonicnfc)
+lukee W1:n NFC:llä PN5180-moduulilla ja tuo ESPHomeen kulutuksen, virtaaman,
+lämpötilat, paristotason ja virheliput. **Se ei tarvitse AES-avainta eikä
+lähetysikkunaa** — eli se ohittaa kerralla molemmat tämän projektin esteet.
+
+Hinta on uusi moduuli ja se että vastaanotin on vietävä mittarin viereen, mikä
+kaataa tämän tiedoston oman perustelun siitä että wM-Bus antaa valita paikan
+vapaasti. Se on siis eri projekti eikä korjaus tähän, mutta se on olemassa jos
+avain ei koskaan tule.
 
 ---
 
@@ -622,13 +767,34 @@ mitään vikailmoitusta tule.
 
 Tämä on eri kuin stiebelissä, jossa MCP2515:n puuttuminen tuottaa rivin
 `canbus is marked FAILED: unspecified` ja kytkentävian tunnistaa ennen kuin
-väylään koskee. **Täällä sitä signaalia ei ole**, joten kytkennän oikeellisuus
-ei ole todettavissa lokista — ainoa todiste on vastaanotettu kehys.
+väylään koskee. Kokoonpanotuloste ei siis erottele mitään.
 
-Seuraus vianetsintään: jos kehyksiä ei tule, **loki ei erota kolmea syytä
-toisistaan** — väärä kytkentä, väärä taajuus tai mittari kantaman ulkopuolella.
-Ne on eroteltava muuten, esimerkiksi mittaamalla SPI-linjat tai viemällä
-vastaanotin lähemmäs mittaria.
+**Mutta tässä luki että kytkennän oikeellisuus ei ole todettavissa lokista, ja
+se on väärin.** Tarkistus on olemassa, kahdessa kerroksessa piilossa:
+
+```
+[VV][CC1101]: part: 00, version: XX
+```
+
+Se tulostuu tagilla `CC1101` **VERY_VERBOSE-tasolla setup-vaiheessa**, ja
+`version`-rekisteri on se ainoa todiste SPI:stä päästä päähän: **arvon pitää
+olla `04` tai `14`.** Osanumeroon ei voi luottaa, koska ajurin oma tarkistus
+kaatuu vain jos se on jotain muuta kuin nolla — ja kuollut väylä lukee nollaa.
+`Invalid part number` ei siis tule koskaan väärästä kytkennästä.
+
+Kaksi syytä miksi se on jäänyt näkemättä:
+
+- **Taso oli DEBUG**, ja rivi on VV:llä. Nyt YAMLissa on VERY_VERBOSE ja `spi`
+  vaiennettu tagikohtaisesti, mikä oli oikea ratkaisu koko ajan — aiempi
+  kommentti hylkäsi VV:n SPI-tulvan takia eikä kokeillut suodatinta.
+- **API-lokivirta ei näe setup-vaihetta.** `esphome logs` liittyy vasta kun
+  laite on verkossa, joten radion setup, `Receiver task created` ja mahdollinen
+  paniikin backtrace ovat jo menneet. Nämä rivit näkee vain **sarjaportista.**
+
+Seuraus vianetsintään: jos kehyksiä ei tule, **loki erottaa syyt toisistaan
+vasta kun se luetaan sarjaportista VV-tasolla.** Ilman sitä väärä kytkentä,
+väärä taajuus, hiljainen mittari ja kehystä kokoamaton vastaanotin näyttävät
+lokissa samalta — nollalta.
 
 Boottilokin vertaaminen kytkennän jälkeen tähän kertoo kuitenkin yhden asian:
 **jos tulosteeseen ilmestyy uusia rivejä radion kanssa, komponentti kysyy
@@ -782,11 +948,25 @@ Yleensä:
 
 # Seuraavat vaiheet
 
-1. Kytke ESP32 ja CC1101.
-2. Lataa testi-ESPHome.
-3. Tarkista loggerista näkyykö Meter ID.
-4. Hanki AES-128-avain vesiyhtiöltä.
-5. Lisää mittari Home Assistantiin.
+Rauta on kytketty ja komponentti kääntyy, joten jäljellä on sen selvittäminen
+miksi kehyksiä ei tule. Järjestys on halvin ensin, ja kolme ensimmäistä eivät
+vaadi keneltäkään mitään:
+
+1. **Kuuntele 868,95 MHz arkena klo 6–18.** Oletusaikataulun sisällä, koska
+   molemmat aiemmat mittaukset osuivat sen ulkopuolelle tai väärälle
+   taajuudelle. Tämä on koko selvityksen ratkaisevin ja halvin testi.
+2. **Todenna SPI sarjaportista VV-tasolla.** Etsi `[VV][CC1101]: part: 00,
+   version: XX` ja vaadi `version` = `04` tai `14`. Samalla ajolla näkee
+   setup-vaiheen rivit joita API-lokivirta ei näytä.
+3. **Lue mittarin konfiguraatio NFC:llä** — radiotila, moodi ja aikataulumaskit.
+   Se korvaa arvailun laitteen omalla sanomalla.
+4. **Laske FIFO-kynnys paikallisessa työkopiossa** jos edelliset eivät ratkaise:
+   `FIFOTHR` arvoon `0x00`. Testaa hypoteesin 3 johtavan epäilyn.
+5. **Kysy vesilaitokselta** radiotila, **moodi** ja AES-128-avain. Käynnistä
+   tämä rinnalla heti, koska siihen menee kalenteriaikaa.
+6. Pura ensimmäinen telegrammi ja varmista Meter ID sekä `q400`:n kenttänimet
+   siitä, ei taulukosta.
+7. Lisää mittari Home Assistantiin.
 
 ---
 
