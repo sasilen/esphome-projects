@@ -423,14 +423,23 @@ canbus:
                 handled = true;
                 switch (element) {
                   case 0xFE1D:
-                    // The compressor. The manager commands 0 or 100 and the
-                    // module reports 1 or 98 back, and its on-window is the
-                    // only one in the capture that matches heat actually
-                    // being made: tank rising, flow and return at 53-54.
-                    // Binary because 0 and 100 are the only commands seen —
-                    // if a middle value ever appears this wants to become a
-                    // percentage instead.
-                    id(compressor).publish_state(value > 50);
+                    // The compressor, but no longer the source of truth for
+                    // it. The manager commands 0 or 100 and the module reports
+                    // 1 or 98 back, and its on-window is the only one in the
+                    // capture that matches heat actually being made: tank
+                    // rising, flow and return at 53-54. Binary because 0 and
+                    // 100 are the only commands seen — if a middle value ever
+                    // appears this wants to become a percentage instead.
+                    //
+                    // **Seed only.** 0x4E5E bit 9 took this over: it changes
+                    // on the transition rather than on a poll. But that word
+                    // is written only when the state changes, so this fills
+                    // the entity in from the first poll after a boot and then
+                    // gets out of the way. Whichever arrives first is right;
+                    // they have never disagreed except at a transition, where
+                    // bit 9 is the earlier of the two.
+                    if (!id(compressor_from_status))
+                      id(compressor).publish_state(value > 50);
                     break;
                   // 0xFE1B is the command whose consequence 0xFE07 measures,
                   // so identifying one needs the other visible. 0xFE1C is
@@ -542,11 +551,28 @@ canbus:
                   // is not et_little_endian, and reading it as the high byte
                   // would throw away exactly the bits that carry the state.
                   //
-                  // Published raw because the bits are not named yet. The
-                  // panel walk is the chance to name them: watch this against
-                  // the machine's own status display and write down what is
-                  // showing each time a bit moves.
-                  case 0x4E5E: id(elem_4e5e).publish_state(value); break;
+                  // Still published raw because bits 4 to 7 are not named. The
+                  // panel walk is the chance to name them, and it has to happen
+                  // while the compressor runs — the word only changes on a
+                  // transition, so a walk with the machine idle names nothing.
+                  //
+                  // **Bit 9 is the compressor, and it is the better source.**
+                  // Four cycles, set within seconds of every start and cleared
+                  // in the same second as every stop, no exceptions. 0xFE1D is
+                  // a commanded output polled every five to ten seconds; this
+                  // is a register that changes on the transition itself, and on
+                  // one stop it led the 0xFE1D-derived sensor by 19 s.
+                  case 0x4E5E:
+                    id(elem_4e5e).publish_state(value);
+                    id(compressor).publish_state((value >> 9) & 1);
+                    // From here on 0xFE1D stops publishing this entity. It
+                    // stays as the seed below, because this word is written
+                    // only on transitions — 62 frames in eleven hours — and
+                    // without a seed the entity would read unknown from every
+                    // boot until the compressor next changed state. With the
+                    // watchdog restarting the node that is not a rare event.
+                    id(compressor_from_status) = true;
+                    break;
                   case 0x0122: id(clk_day)   = n; break;
                   case 0x0123: id(clk_month) = n; break;
                   case 0x0124: id(clk_year)  = n; break;
@@ -626,6 +652,16 @@ globals:
     type: uint32_t
     restore_value: false
     initial_value: "0"
+
+  # Which source owns the compressor entity. False from boot, so the polled
+  # 0xFE1D fills it in; true for good once 0x4E5E has been seen, because bit 9
+  # changes on the transition and the poll does not. `restore_value: false` is
+  # deliberate: after a restart the node has no idea how old the stored state
+  # is, and one poll cycle is a cheaper way to find out than trusting it.
+  - id: compressor_from_status
+    type: bool
+    restore_value: false
+    initial_value: "false"
 
   # Watchdog state. See "the silent stall" below.
   - id: last_seen_count
@@ -1125,6 +1161,8 @@ binary_sensor:
     name: "EVU signal"
 
   # Named from behaviour rather than from the list — see the frame handler.
+  # Two sources feed it: 0x4E5E bit 9 from 0x480 once that word has been seen,
+  # and the polled 0xFE1D from 0x700 as the seed until then.
   - platform: template
     id: compressor
     name: "Compressor"

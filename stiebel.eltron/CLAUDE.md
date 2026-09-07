@@ -1854,9 +1854,9 @@ appears only in brief pairs — 16449, 16577, 17089, 17137 — each a few second
 from an otherwise identical value without it, so it reads as a momentary flag
 rather than a state.
 
-**This is a better compressor signal than the one this configuration uses.**
-0xFE1D is a command the manager issues and 0x700 answers, so the current sensor
-infers a state from a commanded output polled every five seconds. 0x4E5E is a
+**This is a better compressor signal than 0xFE1D, and the entity now uses it.**
+0xFE1D is a command the manager issues and 0x700 answers, so the old sensor
+inferred a state from a commanded output polled every five seconds. 0x4E5E is a
 single register that changes on the transition itself. On the first stop its
 bit 9 cleared 19 s before the 0xFE1D-derived sensor did; the second stop has no
 frame in the window that would resolve it, so **one observation is all there
@@ -1864,8 +1864,24 @@ is** and leading behaviour is not established. What is established is that the
 bit and the compressor agree, and that four more bits of machine state are
 sitting in a register nothing currently reads.
 
-Worth a sensor before phase 2, and worth watching against the panel's own
-status display — that is the cheap way to name bits 4 to 7.
+**0xFE1D stays as the seed, and the reason is the same property that makes
+bit 9 good.** The word is written only when the state changes — 62 frames in
+eleven hours — so a node that has just booted has nothing to publish until the
+compressor next starts or stops. With the watchdog restarting this node that is
+not a rare event, and an entity that reads unknown for an hour is worse than
+one that is five seconds stale. So the polled element fills the entity in from
+the first poll after a boot, a global flips the moment 0x4E5E arrives, and from
+there the status word owns it.
+
+The two have never disagreed except at a transition, where bit 9 is the earlier.
+If they ever disagree while the machine is steady, **bit 9 is not what this file
+says it is** — and that is worth knowing rather than papering over, which is why
+the raw `Element 0x4E5E` entity stays alongside.
+
+Bits 4 to 7 are still unnamed, and naming them needs a walk against the panel's
+own status display **while the compressor runs.** The word only changes on a
+transition, so a walk with the machine idle names nothing — which is exactly what
+the first walk found out the expensive way.
 
 ### 0x4E5E bit 6 and 0xFE1C: right about the transitions, wrong about the state
 
@@ -2676,7 +2692,7 @@ goes — see "The compressor, found by elimination":
 
 | Entity | From | Element | Kind |
 |---|---|---|---|
-| Compressor | 0x700 | 0xFE1D | binary, on above 50 |
+| Compressor | **0x480** | **0x4E5E bit 9** | binary, on the transition — 0x700 / 0xFE1D > 50 seeds it until the first status word arrives |
 | Element 0xFE07 | 0x700 | 0xFE07 | raw integer, diagnostic |
 | Element 0xFE1B | 0x700 | 0xFE1B | raw integer, diagnostic |
 | Element 0xFE1C | 0x700 | 0xFE1C | raw integer, diagnostic |
