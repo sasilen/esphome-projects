@@ -574,9 +574,39 @@ säilyttää:
 | CPU:n näännyttäminen | kyllä | ei havaittu |
 
 Sama 8 tavun allekirjoitus, eri intensiteetti. Se on varteenotettava epäilty eikä
-kirjattu syy. Testi on FIFO-kynnyksen lasku paikallisessa työkopiossa —
-`FIFOTHR` arvoon `0x00`, joka on `version_4`:n neljä tavua — ja se ei vaadi
-keneltäkään mitään. `upstream/` on gitignoressa juuri tällaiseen.
+kirjattu syy.
+
+### Testi: FIFO-kynnys 32 → 4 tavua
+
+Tehty paikallisessa työkopiossa, koska yhtä tavua ei voi muuttaa etälähteeseen.
+Puu on ladattu samasta commitista kuin YAMLin kiinnitys, ja **ero on tämä yksi
+rivi** tiedostossa `wmbus_radio/transceiver_cc1101.cpp`:
+
+```c
+// this->write_register(CC1101_FIFOTHR, 0x07);   // upstream: RX FIFO >= 32 tavua
+   this->write_register(CC1101_FIFOTHR, 0x00);   // version_4: RX FIFO >= 4 tavua
+```
+
+`upstream/` on gitignoressa eikä kolmannen osapuolen koodi mene tähän repoon,
+joten **muutos on kirjattu tänne jotta se on toistettavissa ilman sitä puuta.**
+YAMLissa `external_components` osoittaa toistaiseksi paikalliseen polkuun ja
+GitHub-lähde on kommentoituna sen alla.
+
+**Todentaminen ei tule lokista vaan käyttäytymisestä.** Rivi `configuring FIFO
+threshold` on VV-tasolla ja siis setup-vaiheessa, jota API-lokivirta ei näe —
+eikä tagin tasoa voi nostaa globaalin yli, koska ylemmät tasot on käännetty
+pois. Sen sijaan kynnys 4 laukaisee GDO0:n paljon herkemmin kuin 32, joten:
+
+| Havainto lähetyksen jälkeen | Tulkinta |
+|---|---|
+| Raakapakettien tahti nousee jyrkästi | Patch on ajossa. Tämä on myös #425:n profiili (1–3 s) |
+| Tahti pysyy ~1 / 11 min | Patch **ei** ole ajossa tai kynnys ei ole se joka määrää tahdin |
+| Kokonainen kehys | Hypoteesi 3 vahvistuu ja este oli vastaanottimessa |
+
+Kolmas rivi on se jota testi hakee. **Ensimmäinen rivi ei ole tulos vaan
+kontrolli** — se kertoo että muutos on todella laitteessa, mikä on tässä
+tarpeen, koska kaksi kertaa aiemmin on tulkittu mittausta joka ei mitannut
+sitä mitä luultiin.
 
 Jos senkin jälkeen on hiljaista, `version_4` on todistetusti toimiva CC1101-
 toteutus, mutta kahdella ehdolla: **GDO2 on kytkettävä takaisin** sync-portiksi
@@ -613,9 +643,21 @@ tässä tiedostossa on arvailtu yleisistä lähteistä:
 - lähetysikkunan viikonpäivä- ja kuukausimaski
 - kokonaistilavuus, eli onko kuljetustila jo purkautunut
 
-Tämä on halvin tapa tarkistaa lähetysikkunaoletus, ja se on **sama sääntö kuin
-muualla tässä tiedostossa: laitteen oma sanoma voittaa taulukon.** Sovellus on
-Axilink (NFC ja optinen pää) tai vanha `Qalcosonic configurator W1`.
+Tämä olisi halvin tapa tarkistaa lähetysikkunaoletus, ja se on **sama sääntö kuin
+muualla tässä tiedostossa: laitteen oma sanoma voittaa taulukon.**
+
+**Käytännössä reitti on kiinni**, ja se johtuu sovelluksista eikä mittarista:
+
+| Sovellus | |
+|---|---|
+| `Qalcosonic configurator W1`, `QW1 Radio Activator` | luki ilman salasanaa ja näytti aikataulumaskit — **poistettu Play Storesta**, enää APK-peileissä |
+| **Axilink** | Axioman nykyinen, NFC ja optinen pää — **salasanasuojattu**, tunnus tulee jälleenmyyjältä |
+| **Axilink Lite** | ilmainen ja virallinen, kertoisi onko mittari aktiivinen ja lähettääkö se — **ei asennettavissa Pixel 9:ään** |
+
+Se salasanaton luku johon tässä aiemmin nojattiin **koski poistettua
+sovellusta**, ei nykyistä. Reitti on siis olemassa mutta ei ilmainen: se vaatii
+joko jälleenmyyjän tunnuksen, APK:n kolmannen osapuolen peilistä, tai
+maahantuojan (Effectio Oy) apua.
 
 **Asetusten muuttaminen ei onnistu**, ja syy on rakenteellinen: parametrien
 kirjoitus lukittuu pysyvästi kun mittari on läpäissyt 10 litran kynnyksen.
@@ -960,10 +1002,11 @@ vaadi keneltäkään mitään:
 2. **Todenna SPI sarjaportista VV-tasolla.** Etsi `[VV][CC1101]: part: 00,
    version: XX` ja vaadi `version` = `04` tai `14`. Samalla ajolla näkee
    setup-vaiheen rivit joita API-lokivirta ei näytä.
-3. **Lue mittarin konfiguraatio NFC:llä** — radiotila, moodi ja aikataulumaskit.
-   Se korvaa arvailun laitteen omalla sanomalla.
-4. **Laske FIFO-kynnys paikallisessa työkopiossa** jos edelliset eivät ratkaise:
-   `FIFOTHR` arvoon `0x00`. Testaa hypoteesin 3 johtavan epäilyn.
+3. **Laske FIFO-kynnys paikallisessa työkopiossa:** `FIFOTHR` arvoon `0x00`.
+   Testaa hypoteesin 3 johtavan epäilyn, eikä vaadi keneltäkään mitään.
+4. **Lue mittarin konfiguraatio NFC:llä** — radiotila, moodi ja aikataulumaskit.
+   Tämä nousi kolmannelta neljännelle, koska sovellusreitti on kiinni: ks.
+   "Mittarin oma konfiguraatio on luettavissa NFC:llä".
 5. **Kysy vesilaitokselta** radiotila, **moodi** ja AES-128-avain. Käynnistä
    tämä rinnalla heti, koska siihen menee kalenteriaikaa.
 6. Pura ensimmäinen telegrammi ja varmista Meter ID sekä `q400`:n kenttänimet

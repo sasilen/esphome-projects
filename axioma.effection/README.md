@@ -216,9 +216,12 @@ jota tämä komponentti ei osaa, tai komponentti ei kokoa kehystä. Kolmannelle 
 avoin bugi yläpuolella. Perustelut ja testijärjestys ovat
 [`CLAUDE.md`](CLAUDE.md):ssä.
 
-Halvin tarkistus ei vaadi keneltäkään mitään: **lue mittarin konfiguraatio
-NFC:llä puhelimella.** Radiotila, moodi ja lähetysikkunan maskit näkyvät sieltä
-ilman salasanaa.
+Halvin tarkistus ei vaadi keneltäkään mitään: **FIFO-kynnyksen lasku 32:sta
+neljään tavuun** paikallisessa työkopiossa, joka on kolmannen syyn suora testi.
+
+Mittarin konfiguraation luku NFC:llä kertoisi radiotilan ja moodin suoraan,
+mutta se reitti on kiinni: salasanaton sovellus on poistettu, nykyinen Axilink
+vaatii jälleenmyyjän tunnuksen eikä Axilink Lite asennu joka puhelimeen.
 
 ## Este 2: AES-128-avain
 
@@ -247,7 +250,8 @@ Ensimmäistä telegrammia voi joutua odottamaan hetken — lähetysväli on noin
 1. Kuuntele 868,95 MHz arkena klo 6–18
 2. Todenna SPI sarjaportista: `[VV][CC1101]: part: 00, version: XX`, jossa
    `version` on `04` tai `14`
-3. Lue mittarin konfiguraatio NFC:llä
+3. Laske FIFO-kynnys `0x00`:aan paikallisessa työkopiossa ja katso nouseeko
+   pakettitahti
 4. Kysy vesilaitokselta radiotila, moodi ja AES-128-avain
 5. Pura ensimmäinen telegrammi ja varmista Meter ID siitä
 6. Lisää mittari Home Assistantiin

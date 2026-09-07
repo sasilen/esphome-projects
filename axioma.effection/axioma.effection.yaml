@@ -186,10 +186,31 @@ sensor:
 #
 # `refresh: never` koska commit-tunniste ei voi muuttua. Oletus tarkistaisi
 # päivityksiä vuorokausittain kiinteälle pisteelle, mikä on pelkkää odotusta.
+# **Väliaikaisesti paikallinen työkopio, ei GitHub.** Syy on yhden tavun
+# testimuutos jota ei voi tehdä etälähteeseen: `FIFOTHR` 0x07 → 0x00, eli
+# GDO0 laukeaa neljästä tavusta eikä 32:sta. Se on version_4:n arvo ja issue
+# #425:n johtava epäily siitä miksi kehyksiä ei koskaan koota.
+#
+# Puu on ladattu samasta commitista kuin alla oleva kiinnitys, joten **muuta
+# eroa ei ole kuin se yksi rivi.** `upstream/` on gitignoressa eikä
+# kolmannen osapuolen koodi mene tähän repoon; muutos on kirjattu
+# CLAUDE.md:hen jotta se on toistettavissa ilman tätä puuta.
+#
+# **Palauta alla oleva rivi heti kun testi on ratkennut** — kumpaan suuntaan
+# tahansa. Paikallinen puu ei päivity eikä näy kenellekään muulle.
+#
+# Polku on suhteessa tähän tiedostoon, ja se tarkoittaa että `upstream/`:n on
+# oltava kontin näkemässä hakemistossa YAMLin vieressä. Jos käännös sanoo
+# ettei polkua ole, kopioi hakemisto sinne käsin.
 external_components:
-  - source: github://SzczepanLeon/esphome-components@7eae51c8fcefe854623b029b27bbe42e11c103ea
+  - source:
+      type: local
+      path: upstream/esphome-components/components
     components: [wmbus_common, wmbus_radio, wmbus_meter]
-    refresh: never
+
+  # - source: github://SzczepanLeon/esphome-components@7eae51c8fcefe854623b029b27bbe42e11c103ea
+  #   components: [wmbus_common, wmbus_radio, wmbus_meter]
+  #   refresh: never
 
 spi:
   clk_pin: GPIO18
