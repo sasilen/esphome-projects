@@ -187,6 +187,9 @@ Enervent Pegasos Eco ECE
 
 ## ESP32 ↔ RS-485 module wiring
 
+Drawn out in [`wiring.svg`](wiring.svg), together with the unit side and the
+checks that come before anything is plugged in.
+
 **The module in stock switches direction by itself.** Five JZK TTL↔RS-485
 boards were bought, described as having *automatic hardware flow control*: the
 driver enable is handled on the board from activity on the TX line, and no

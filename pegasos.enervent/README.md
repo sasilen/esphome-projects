@@ -55,6 +55,8 @@ is running — plus more headroom for future sensors.
 
 ## Wiring
 
+Drawn out in [`wiring.svg`](wiring.svg).
+
 | RS-485 module | ESP32 |
 |---|---|
 | RXD | TX (GPIO17) |
