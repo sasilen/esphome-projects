@@ -104,3 +104,60 @@ Home Assistant pyörii Podman-kontissa, joten ESPHome-lisäosaa ei ole. ESPHome 
 oma konttinsa, `Network=host` pakollinen — muuten mDNS ei toimi eikä OTA löydä
 levyjä. Tavoite kaikissa projekteissa on paikallinen ohjaus ilman pilveä ja
 ESPHome-projekteissa ilman MQTT:tä.
+
+## Kontti päivittyy itsestään, ja se rikkoo käännöshakemiston
+
+Quadletissa on `AutoUpdate=registry`, eli image vaihtuu taustalla. Kerran se
+näkyi näin:
+
+```
+'/root/.cache/esphome/idf/penvs/5.5.5/bin/python' is currently active in the
+environment while the project was configured with
+'/config/.esphome/idf/penvs/5.5.5/bin/python'.
+```
+
+ESP-IDF:n välimuisti oli siirtynyt imagen mukana, ja **käännös kaatui — mutta
+`esphome run` ei näyttänyt siltä kuin mitään olisi vialla.** Laite vain ei
+käynnistynyt uudelleen. Vika löytyi vasta lokista: `Uptime` juoksi
+katkeamattomana yhdeksän tuntia, eli OTA:ta ei koskaan yritetty.
+
+**Korjaus on `esphome clean` ja uusi käännös.**
+
+Kaksi asiaa kannattaa ottaa tästä:
+
+- **Todenna OTA laitteesta, älä komennon paluuarvosta.** `Uptime`-anturi tai
+  boottirivi kertoo menikö se perille; komento voi onnistua näennäisesti.
+- Tämä on sama ilmiö kuin liikkuva versioviittaus, yhtä kerrosta alempana.
+  Repossa on kirjattu kolmesti mitä `@main` tekee; `AutoUpdate=registry` on
+  sama asia käännösympäristölle. **Sama YAML voi kääntyä eri tavalla ilman että
+  repossa muuttuu mitään.**
+
+## OTA kaatuu jos laitteella on liikaa asiakkaita
+
+Toinen OTA-yritys eteni 33 %:iin ja katkesi aikakatkaisuun, ja laite katosi
+verkosta kokonaan. Laitteella oli samaan aikaan kolme asiakasta: Home Assistant,
+`esphome logs` -virta ja OTA itse. Flash-kirjoituksen aikana se on liikaa.
+
+**Pysäytä lokivirta lähetyksen ajaksi**, niin se menee läpi:
+
+```sh
+pkill -f "esphome logs"
+# Install → Wirelessly, tai esphome run --no-logs
+podman exec esphome esphome logs /config/laite.yaml >> laite.log 2>&1 &
+```
+
+Käytä `>>` eikä `>`. Uudelleenohjaus nollasi axioman lokin kolmesti, ja kerran
+se vei mennessään yön mittausaineiston — analyysi oli onneksi jo commitissa.
+Tee siitä skripti jos sama loki käynnistetään usein.
+
+Rinnalla kannattaa asettaa **`power_save_mode: NONE`**. Oletus `LIGHT` nukuttaa
+radion majakkavälien välissä, ja megatavun OTA on tuhansia kuittauskierroksia
+joista jokaiseen tulee herätysviive. Aidonin avointen asioiden lista suosittelee
+samaa ensimmäisenä keinona heikkoon radioon.
+
+Jos OTA katkeaa vielä näidenkin jälkeen, seuraava epäilty on virtalähde:
+flash-kirjoitus ja WiFi-lähetys yhtä aikaa on se hetki jolloin heikko syöttö
+notkahtaa.
+
+**Keskeytynyt OTA ei riko mitään** — ESP32:n rollback palauttaa toimivan
+imagen, ja niin se teki tässäkin.
