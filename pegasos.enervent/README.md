@@ -49,9 +49,10 @@ entity discovery, and OTA firmware updates.
 
 ### Why ESP32 rather than ESP8266
 
-An ESP8266 can do Modbus, but it has to give up its serial logger to do it. The
-ESP32 has multiple hardware UARTs, which keeps debugging possible *while* Modbus
-is running — plus more headroom for future sensors.
+**Not because an ESP8266 could not do it** — it could. One of the DevKit pair is
+already allocated here, while the spare D1 mini is the fallback for the one
+system in this repo that is running. Reasoning, and the three-line path back to
+an ESP8266 if a board is ever needed elsewhere: [`CLAUDE.md`](CLAUDE.md).
 
 ## Wiring
 

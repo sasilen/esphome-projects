@@ -153,17 +153,45 @@ extract air humidity is exactly the reading a ventilation unit's Modbus register
 map may not expose, and it rides on the same ESP32 over I²C without touching the
 RS-485 side. That is a later decision, not part of getting Modbus working.
 
-## Why ESP32 instead of ESP8266?
+## Why ESP32 instead of ESP8266 — a stock question, not a technical one
 
-Although an ESP8266 can technically communicate over Modbus, the ESP32 is the better choice because it offers:
+**An ESP8266 would do this job.** Modbus RTU at 9600 baud is a light load, and
+the UART constraint that looks like a blocker has a clean fix. This file used to
+list "multiple hardware UARTs" and "better ESPHome support" as reasons; that is
+vague enough to read as *the ESP8266 cannot*, which is not true.
 
-- Multiple hardware UARTs
-- Better ESPHome support
-- Easier debugging while Modbus is running
-- More reliable long-term serial communication
-- Better expandability for future sensors or controls
+**The constraint, precisely.** The ESP8266 has one full hardware UART. UART0's
+RX and TX are the pins the USB console and serial logging use, and **UART1 has TX
+only** — its RX pin is committed to flash. Modbus needs both directions, so the
+options are UART0 or a software serial port.
 
-ESP8266 is usable but requires disabling the serial logger and has fewer resources.
+**And UART0 is the right answer, because the log does not depend on it.** Set
+`logger: baud_rate: 0` and the serial console is released for the `uart`
+component while **logging continues over the ESPHome API on WiFi.** That is
+standard practice rather than a compromise, and it is why the old wording
+"requires disabling the serial logger" overstated the cost.
+
+What is genuinely given up:
+
+- **The serial console**, and with it the two things that only ever appear
+  there: setup-phase lines and a panic backtrace. That cost is invisible until
+  something breaks in a way that prevents booting — see
+  [`../axioma.effection/CLAUDE.md`](../axioma.effection/CLAUDE.md), where an API
+  log stream could not show a radio driver's own register read.
+- **RAM headroom**, if the register map turns into 50–100 entities. A listening
+  configuration with a handful of sensors is nowhere near that.
+
+**So the reason to use the ESP32 here is which board is scarcer.** One of the
+DevKit pair is already allocated to this project and using it costs nothing;
+the spare D1 mini is the documented fallback for
+[`../stiebel.eltron/`](../stiebel.eltron/) — the only system in this repo that
+is actually running — and it is shared with [`../hirvirata/`](../hirvirata/).
+Spending the scarce part to save the plentiful one is the wrong way round.
+
+**The migration path stays open, and it is three lines.** `esp32:` → `esp8266:`,
+the UART pins to GPIO1/GPIO3, and `logger: baud_rate: 0`. Of the three projects
+holding an ESP32, this is the one that moves most cleanly — worth knowing if a
+board is ever needed elsewhere in a hurry.
 
 ## Architecture
 
