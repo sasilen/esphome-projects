@@ -784,9 +784,11 @@ kaatuu vain jos se on jotain muuta kuin nolla — ja kuollut väylä lukee nolla
 
 Kaksi syytä miksi se on jäänyt näkemättä:
 
-- **Taso oli DEBUG**, ja rivi on VV:llä. Nyt YAMLissa on VERY_VERBOSE ja `spi`
-  vaiennettu tagikohtaisesti, mikä oli oikea ratkaisu koko ajan — aiempi
-  kommentti hylkäsi VV:n SPI-tulvan takia eikä kokeillut suodatinta.
+- **Taso on DEBUG**, ja rivi on VV:llä. VV:n voi nostaa ja SPI-tulvan voi
+  vaientaa tagikohtaisesti `logs:`-lohkossa — aiempi kommentti hylkäsi VV:n
+  tulvan takia eikä kokeillut suodatinta. YAMLissa on ohje siihen, mutta taso
+  on tarkoituksella DEBUG: VV maksaa megatavun lokia tunnissa ja CPU-kuormaa
+  eikä anna vastineeksi mitään ilman sarjaporttia.
 - **API-lokivirta ei näe setup-vaihetta.** `esphome logs` liittyy vasta kun
   laite on verkossa, joten radion setup, `Receiver task created` ja mahdollinen
   paniikin backtrace ovat jo menneet. Nämä rivit näkee vain **sarjaportista.**

@@ -38,12 +38,22 @@ esp32:
   board: esp32dev
 
 logger:
-  # **VERY_VERBOSE, ja SPI vaiennettuna tagikohtaisesti.** Tässä luki aiemmin
-  # että VERY_VERBOSE hukuttaa etsityn rivin SPI-liikenteeseen. Se on totta,
-  # mutta johtopäätös oli väärä: ratkaisu on vaientaa `spi` eikä laskea koko
-  # tasoa, koska ainoa todiste SPI-väylän toimivuudesta tulostuu VV-tasolla.
+  # **DEBUG päivän kuunteluun, VERY_VERBOSE vain sarjaporttiajoon.**
   #
-  # Se rivi on radioajurin setup-vaiheesta, tagilla `CC1101`:
+  # Kehysrivi ja `RX FIFO overflow` ovat D- ja W-tasolla eli näkyvät tässä.
+  # VV:llä on yksi peruste ja se on alla oleva `version`-rivi — mutta se
+  # tulostuu setup-vaiheessa, jota **API-lokivirta ei näe koskaan**, joten
+  # VV:stä ei ole hyötyä ilman sarjaporttia. Hinta olisi megatavu lokia
+  # tunnissa ja CPU-kuorma virtaavan API-yhteyden kanssa, ja juuri CPU:n
+  # näännyttäminen on yksi oire siinä yläpuolen bugissa jota tässä epäillään.
+  # Kuuntelun pitää olla puhdas mittaus.
+  #
+  # Kun pääset levyn ääreen, nosta taso takaisin ja lue sarjaportista:
+  #
+  #   level: VERY_VERBOSE
+  #   logs: {spi: INFO, spi_device: INFO, api: INFO, wifi: INFO}
+  #
+  # Etsittävä rivi on radioajurin setup-vaiheesta, tagilla `CC1101`:
   #
   #   [VV][CC1101]: part: 00, version: XX
   #
@@ -53,20 +63,15 @@ logger:
   # väylä lukee nollaa. `Invalid part number` ei siis tule koskaan väärästä
   # kytkennästä, vaikka se on ainoa virheilmoitus jonka ajuri antaa.
   #
-  # Tämän kanssa myös `RX FIFO overflow` ja `RX timeout after N bytes` näkyvät.
-  # Ne ovat W-tasolla eli tulisivat muutenkin, mutta ne ovat juuri se ero jolla
-  # tämä laite eroaa yläpuolen bugista #425 — ks. CLAUDE.md.
-  level: VERY_VERBOSE
-  logs:
-    spi: INFO
-    spi_device: INFO
-    # Nämä eivät hukuta lokia mutta eivät kerro tässä vaiheessa mitään.
-    api: INFO
-    api.service: INFO
-    wifi: INFO
-    # **`sensor` jää päälle tarkoituksella.** Se on `Uptime`-rivin tagi, ja
-    # tämän repon OTA-ohje nojaa siihen: lähetyksen perille meno todennetaan
-    # laitteesta eikä komennon paluuarvosta.
+  # `RX FIFO overflow` ja `RX timeout after N bytes` näkyvät tälläkin tasolla —
+  # ne ovat W-tasolla, ja ne ovat juuri se ero jolla tämä laite eroaa yläpuolen
+  # bugista #425. Niitä ei ole tullut yhtään. Ks. CLAUDE.md.
+  #
+  # **`sensor`-tagia ei saa vaientaa.** Se on `Uptime`-rivin tagi, ja tämän
+  # repon OTA-ohje nojaa siihen: lähetyksen perille meno todennetaan laitteesta
+  # eikä komennon paluuarvosta. Sama rivi paljastaa myös sen että toistuvat
+  # `ESPHome version` -bannerit lokissa eivät ole boottauksia.
+  level: DEBUG
 
 api:
   encryption:

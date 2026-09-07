@@ -125,12 +125,31 @@ katkeamattomana yhdeksän tuntia, eli OTA:ta ei koskaan yritetty.
 
 Kaksi asiaa kannattaa ottaa tästä:
 
-- **Todenna OTA laitteesta, älä komennon paluuarvosta.** `Uptime`-anturi tai
-  boottirivi kertoo menikö se perille; komento voi onnistua näennäisesti.
+- **Todenna OTA laitteesta, älä komennon paluuarvosta.** `Uptime`-anturi kertoo
+  menikö se perille; komento voi onnistua näennäisesti.
 - Tämä on sama ilmiö kuin liikkuva versioviittaus, yhtä kerrosta alempana.
   Repossa on kirjattu kolmesti mitä `@main` tekee; `AutoUpdate=registry` on
   sama asia käännösympäristölle. **Sama YAML voi kääntyä eri tavalla ilman että
   repossa muuttuu mitään.**
+
+## Boottirivi ei kelpaa todisteeksi — se toistuu jokaiselle lokiasiakkaalle
+
+Tässä luki että `Uptime`-anturi **tai boottirivi** kertoo menikö OTA perille.
+Boottirivi ei kerro: **ESPHome toistaa koko kokoonpanotulosteen aina kun uusi
+lokiasiakas liittyy**, alkaen rivistä `ESPHome version … compiled on …`.
+
+Axioman lokissa on kolme sellaista banneria kymmenen sekunnin sisällä, mikä
+lukee boot-loopilta. Laite ei käynnistynyt kertaakaan: `Uptime` juoksi samaan
+aikaan katkeamattomana 4624 sekunnista 4864:ään. Bannerien määrä kertoi
+asiakkaista.
+
+**`Uptime` on ainoa rivi joka erottaa uudelleenkäynnistyksen liittymisestä**, ja
+`sensor`-tagin vaientaminen `logger:`-lohkossa hävittää juuri sen.
+
+Sivutuote joka on hyödyllinen: kokoonpanotulosteen saa uudelleen milloin
+tahansa liittämällä lokiasiakkaan — mutta **setup-vaihetta se ei toista.**
+Radion alustusrivit ja mahdollinen paniikin backtrace tapahtuvat ennen kuin API
+on pystyssä, ja ne näkee vain sarjaportista.
 
 ## OTA kaatuu jos laitteella on liikaa asiakkaita
 
