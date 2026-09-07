@@ -391,16 +391,61 @@ molemmat menevät samalle vastaanottajalle:
 1. Onko mittarin radiolähetys päällä, ja millä välillä se lähettää?
 2. AES-128-avain
 
-## Miten se ratkeaa ilman kysymistä
+## Yön mittaus ratkaisi sen: kohinaa, ei telegrammeja
 
-`on_frame` tulostaa RSSI:n ja tavumäärän, ja puoli tuntia parin metrin päässä
-erottaa kolme tapausta:
+8,5 tuntia parin metrin päässä mittarista, taajuudella 868,95 MHz:
 
-| Havainto | Tulkinta |
+| | |
 |---|---|
-| Kehyksiä säännöllisesti | kaikki toimii, siirry mittarilohkoon |
-| Yksittäisiä katkelmia | vastaanotto-ongelma — antennin kaista, RX-asetukset |
-| Ei mitään | mittari ei lähetä; kysymys vesilaitokselle |
+| Kokonaisia kehyksiä | **0** |
+| Raakapaketteja | 47 |
+
+Ja jokainen niistä 47:stä on kohinaa, minkä neljä ominaisuutta yhdessä
+osoittavat:
+
+- **Kaikki täsmälleen 8 tavua.** Pituuskentät vaihtelevat (0x32, 0x28, 0x46,
+  0xAB…), toimitettu määrä ei. Kiinteä katkaisu tulee komponentin
+  lukugranulariteetista, ei signaalista — heikko signaali katkeaisi
+  satunnaisesta kohdasta.
+- **Kaikki eri sisältöä.** Ei toistuvaa lähdettä.
+- **Noin yksi yhdessätoista minuutissa, satunnaisesti.** Ei mitään rytmiä.
+- **Yksikään C-kenttä ei kelpaa.** `0x0C`, `0x91`, `0xAB`, `0x7F`… T1:ssä siinä
+  olisi tyypillisesti `0x44`.
+
+**Vertailuluku ratkaisee.** Kahden metrin päässä 16 sekunnin välein lähettävä
+mittari tuottaisi noin 1900 vastaanottoa 8,5 tunnissa. Tuli nolla.
+
+**Vastaanotin toimii ja mittarin telegrammeja ei tule.** Kaksi hypoteesia jää.
+
+### Hypoteesi 1: väärä taajuus — testattavissa ilmaiseksi
+
+868-kaistalla on kaksi wM-Bus-moodia, ja kuuntelemme vain toista:
+
+| Moodi | Taajuus |
+|---|---|
+| **S** | **868,30 MHz** |
+| T, C | 868,95 MHz |
+
+Jos mittari on S-moodissa, havainto olisi täsmälleen tämä. Ja `T1`-oletus tulee
+samasta lähdeperheestä kuin `type: axioma`, joka jo osoittautui olemattomaksi
+ajuriksi — sitä ei ole todennettu tästä yksilöstä.
+
+Testi on yhden rivin muutos ja tunnin kuuntelu:
+
+```yaml
+  frequency: 868.30MHz
+```
+
+**Tämä kannattaa tehdä ennen kuin kysyy keneltäkään mitään**, koska se ei vaadi
+kalenteriaikaa.
+
+### Hypoteesi 2: mittari ei lähetä
+
+Radio pois päältä, tai kävelyluenta-aikataulu — lähetys vain tiettyinä aikoina
+tai harvakseltaan, koska paristo mitoitetaan 15 vuodeksi.
+
+Tämä on sama muoto kuin aidonin este, ja sen ratkaisu on sama: kysy, ja kysy
+ajoissa.
 
 # AES-128 salaus
 
