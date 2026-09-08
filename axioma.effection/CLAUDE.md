@@ -566,14 +566,22 @@ Kaksi seurausta:
   vesilaitos käyttää.** Mittarin data on NFC-rajapinnassa riippumatta siitä
   lähettääkö se mitään.
 
-**Yksi hypoteesi jota tämä herättää ja jota ei ole todennettu.** Ne kuusi
-kohinapakettia voisivat olla mittarin omia LoRaWAN-lähetyksiä, joita 2-FSK-
+**Yksi hypoteesi jonka tämä herätti, ja jonka pidempi aineisto kaataa.** Ne
+kohinapaketit voisivat olla mittarin omia LoRaWAN-lähetyksiä, joita 2-FSK-
 vastaanotin näkee roskana — LoRa on chirp-hajaspektri eikä CC1101 demoduloi
-sitä, mutta chirp voi laukaista väärän sync-osuman. Aikavälit eivät kuitenkaan
-tue tätä siististi: 66, 88, 72, 44 ja 128 minuuttia, kun LoRaWAN-vesimittari
-lähettää tyypillisesti säännöllisin välein. Jos vastaanotin osuisi vain
-satunnaiseen osaan lähetyksistä, epäsäännöllisyys selittyisi — eli tätä ei voi
-sulkea pois eikä vahvistaa tällä datalla. **Se on merkintä, ei löytö.**
+sitä, mutta chirp voi laukaista väärän sync-osuman. LoRaWAN-vesimittari
+lähettää säännöllisin välein, joten hypoteesi on testattavissa aikaväleistä.
+
+Kahdenkymmenen paketin välit 30 tunnin ajalta ovat 30, 140, 66, 88, 72, 45,
+128, 92, 25, 38, 15, 103, 130, 32, 50, 9, 210, 480 ja 60 minuuttia.
+Vaihteluväli on **yhdeksästä minuutista kahdeksaan tuntiin.** Vastaväite oli
+että jos vastaanotin osuisi vain satunnaiseen osaan lähetyksistä, välit
+olisivat silti saman perusjakson monikertoja — ja niitä ne eivät ole: yksikään
+jakso tunnin sisällä ei sovi näihin edes löysästi, vaan parhaallakin ehdokkaalla
+pahin poikkeama on **yli kolmannes jaksosta.**
+
+Se on kohinaa. **Merkintä on käsitelty**, ja jäljelle jää mitä 8 tavun purskeet
+ovat olleet alusta asti: vääriä sync-osumia.
 
 ### Hypoteesi 2: mittari ei lähetä silloin kun kuunnellaan
 
@@ -650,6 +658,32 @@ Yksi kirjanpitohuomio: `LOCAL PATCH` -rivi ei ole kaappauslokissa vaan
 flashauksen boottitulosteessa. Kokoonpanotuloste toistuu vain **uudelle**
 liittyvälle lokiasiakkaalle, ja taustalla `>>`-ohjauksella pyörinyt virta oli jo
 kiinni — sama mekanismi joka on kirjattu juuren CLAUDE.md:hen.
+
+#### Ja 20 tuntia perään valvomatta: sama nolla
+
+Kaappaus jäi päälle ikkunan päätyttyä ja katkesi vasta 8.9.2026 klo 14:00
+sähkökatkoon. Se antoi ilmaiseksi sen mitä ikkunamittaus ei kata: illan, yön ja
+seuraavan arkiaamun puolelta päivään.
+
+| | |
+|---|---|
+| Lisäaikaa ikkunan jälkeen | noin **20 h** (7.9. 18:00 → 8.9. 14:00) |
+| Uusia kohinapaketteja | **12** — koko lokissa yhteensä 20 |
+| Kokonaisia kehyksiä | **0** |
+| Uudelleenkäynnistyksiä | **0** |
+
+Kumulatiivisesti kuuntelua on siis noin **36 tuntia ja nolla kehystä.**
+
+Ajo on samalla vahvin todiste vastaanottimen vakaudesta mitä tässä on: `Uptime`
+juoksi katkeamatta **95 584 sekuntiin eli 26,5 tuntiin** viimeisestä
+flashauksesta 7.9. klo 11:28. Levy ei siis kaatunut, jumittunut eikä pudonnut
+verkosta kertaakaan sinä aikana kun se ei kuullut mitään — ja `Uptime` on ainoa
+rivi joka erottaa nämä toisistaan, kuten juuren CLAUDE.md:hen on kirjattu.
+
+**Tämä ei ollut suunniteltu mittaus vaan päälle unohtunut loki.** Uutta se ei
+kumoa — ikkunamittaus kaatoi lähetysikkunahypoteesin jo — mutta se poistaa
+viimeisenkin epäilyn ajoituksesta: ikkunan sisä- ja ulkopuoli on nyt mitattu
+peräkkäin katkeamatta, eikä kummallakaan puolella ole eroa.
 
 ### Testi: FIFO-kynnys 32 → 4 tavua
 
@@ -799,8 +833,31 @@ NFC:llä se vapaus katoaa, ja mittarikaivo tai tekninen tila on se paikka jossa
 WiFin pitää silloin kuulua.
 
 Se on eri projekti eikä korjaus tähän. Mutta kun tähän on nyt käytetty
-kuusitoista tuntia kuuntelua nollalla kehyksellä, se on **suorempi tie kuin
-radio jonka lähettämisestä ei ole todistetta.**
+kolmekymmentäkuusi tuntia kuuntelua nollalla kehyksellä, se on **suorempi tie
+kuin radio jonka lähettämisestä ei ole todistetta.**
+
+#### Lukijaa ostettaessa: piirin nimi on ainoa asia joka ratkaisee
+
+**Lukijan on tuettava ISO 15693:a, ja `PN5180` on käytännössä ainoa halpa piiri
+joka tukee.** Muut samaan pystyvät — RC663, ST25R3911B, TRF7970A, CR95HF — eivät
+ole hyllytavaraa.
+
+**RC522 ei kelpaa.** MFRC522 tukee vain ISO 14443A:ta eli MIFARE-kortteja. Se on
+sama 13,56 MHz, sama SPI, sama 3,3 V ja usein sama myyntikuvaus — **ja se on eri
+protokolla.** Sama muoto kuin stiebelissä kirjattu opetus siitä ettei
+RS-485-moduuli kelpaa CAN-väylälle: yhteinen fysiikka ei ole yhteensopivuus.
+
+Kolme merkkiä joista väärän tunnistaa listauksesta:
+
+- **Piiriä ei nimetä**, vain "13.56 MHz SPI, compatible with Arduino". Jos nimeä
+  ei ole, se on RC522
+- **Hinta 2–3 € kappale** ja myyntierä 3–5 kappaletta. PN5180 on 8–10 € kappale
+- **Antenni on pieni neliö samalla levyllä.** PN5180 on kaksiosainen: pieni
+  piirilevy ja siihen liitetty luottokortin kokoinen suorakaiteen antennilevy
+
+Hae siis piirin nimellä `PN5180`, ei kuvauksella. Ja tarkista rimasta että
+siinä on **sekä 5 V että 3,3 V** — lähetinpää tarvitsee viisi volttia, logiikka
+kolme.
 
 **Asetusten muuttaminen ei onnistu**, ja syy on rakenteellinen: parametrien
 kirjoitus lukittuu pysyvästi kun mittari on läpäissyt 10 litran kynnyksen.

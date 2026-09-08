@@ -8,8 +8,9 @@ välein; ESP32 vastaanottaa sen ja välittää ESPHomen natiivi-APIlla. Ei MQTT:
 
 **Tila: kytketty, kuuntelee, eikä mittari lähetä wM-Busia.** Vastaanotin on
 todistetusti kunnossa — kohinapaketteja tulee läpi — mutta täysi lähetysikkuna
-ma 7.9.2026 klo 10–18 tuotti **nolla kehystä**, ja yön kanssa yhteensä
-kuusitoista tuntia nollaa.
+ma 7.9.2026 klo 10–18 tuotti **nolla kehystä**, ja kaappaus jatkui siitä
+katkeamatta seuraavaan päivään klo 14 asti. Kuuntelua on yhteensä noin
+**36 tuntia ja nolla kehystä**, ikkunan sisä- ja ulkopuolelta.
 
 **Todennäköisin syy: mittari on LoRaWAN-luennassa.** W1:ssä LoRaWAN ja wM-Bus
 ovat erilliset liput, ja vesilaitoksella ei ole syytä pitää wM-Busia päällä jos
