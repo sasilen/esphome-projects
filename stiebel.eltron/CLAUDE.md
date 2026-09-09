@@ -1122,6 +1122,39 @@ the secondary target in the original plan rather than the primary one.
 Curve second, because it is capped by hardware this project does not control
 and cannot see.
 
+### The cap is removable, and it is removed at the manifold, not on the bus
+
+The section above treats the thermostats as a fixed property of the building.
+They are not. They are 230 V wired units driving **thermal actuators that
+unscrew from the manifold by hand.** A thermal actuator is normally closed — the
+valve insert's own spring opens it — so taking one off leaves that loop **fully
+open**, and screwing it back restores the previous behaviour exactly. The
+intervention is mechanical, reversible, and touches no 230 V wiring.
+
+So "nothing on the CAN bus can widen that gap" stays true and stops mattering.
+**The gap is widened at the manifold instead**, once, and after that the curve
+governs the house the way this project assumed from the start that it did.
+
+What it costs is that the throttling was doing real work. With 21 loops open at
+once the flow distributes by pipe resistance rather than by need, so thermostatic
+control has to be replaced by hydraulic balancing on the flow meters. And with
+one shared pump already at its top dial setting, **whether it can feed 21 open
+loops is an open question rather than a detail** — see the hydraulics section
+below for why there is no second pump to help.
+
+That makes measurement the prerequisite, not the follow-up:
+
+- a DS18B20 on **each loop's return pipe**, both manifolds, plus one supply
+  reference per manifold and two in the buffer — 25 sensors, two ESP32-C3 nodes
+- one week of baseline with the thermostats still in control
+- actuators removed **one manifold at a time**, because the pump is shared and
+  cannot be staged — so the load is staged instead
+- the Wilo's display reads power in watts, and at a fixed dial that is a flow
+  proxy: when it stops rising as loops are opened, the pump has run out
+
+**Until that runs, "curve second" stands.** After it, the ranking is open again,
+and the building mass becomes the sink the README always claimed it was.
+
 ### The electric element is a third lever, and it is about speed, not efficiency
 
 **This file briefly claimed the electric element had delivered twelve megawatt
@@ -1723,6 +1756,79 @@ precise names.
 **Pending config change**, not worth a re-flash mid-capture: `Element 0xFE07`
 should become a temperature in tenths named for frost protection, and
 `Element 0xFDF3` a flow temperature. The raw values are in the log either way.
+
+### The hydraulics are now known from the installation, and one premise above is wrong
+
+The section above reasons from "the tank is charged by the heat pump and the
+floor heating draws from that same tank." **That is wrong.** There is a
+**separate buffer tank and a separate DHW tank**, and the floor circuit draws
+from the buffer.
+
+The plant as installed:
+
+| | |
+|---|---|
+| DHW tank | separate — 0x180's `SPEICHERISTTEMP` is this one |
+| Buffer tank | separate, and **no sensor on this bus** — but see below |
+| Floor circulation pump | **external Wilo at the buffer.** Switched on and off by the machine; speed set on its own dial; **L, N and PE only — no signal wire** |
+| Manifolds | **two**, 11 + 10 = **21 loops**, both fed by that one pump |
+| Room control | 230 V wired thermostats driving thermal actuators on the manifolds |
+
+**That answers the either/or above, and it is the first branch:** the buffer has
+no sensor reporting here. The floor circuit is not plumbed through the machine.
+
+**0xFE1B is the heating circuit pump, and the name survives its premise
+failing.** It reads 100 exactly when the floor circulates with the compressor
+off, and 0 while DHW charges — which is what an external heating circuit pump
+does. The section above reached the right name from the wrong plumbing, which is
+worth noticing: the *measurement* was sound and only the story around it was not.
+
+**And the character of the two outputs now maps onto two kinds of pump.** 0xFE1B
+only ever takes 0 or 100; 0xFE1C modulates through 8, 12 and 100. That is a
+relay output to a pump whose speed is set on a dial, and a speed-controlled
+output to one the machine governs itself. The distinction was in the capture
+before there was anything to attach it to.
+
+**`0x070A LÄMMPIIRIPUMP TEHO` is a dead letter in this installation.** The WPC
+supports a modulating heating circuit pump; the fitted pump takes power and
+nothing else. The parameter reads 100 % because nothing reads it. Its twin
+`0x070B` is unexamined and may be in the same position — the commissioning
+menu's "lead" on the two pump-power rows is therefore weaker than it looked.
+
+#### Which makes one phase 2 limit hard rather than open
+
+**Floor circuit flow is not controllable from Home Assistant, at any price short
+of replacing the pump and pulling a signal wire.** The bus carries on/off, the
+on/off is the machine's own decision, and the speed lives on a dial in the plant
+room. The surplus-storage levers are exactly three:
+
+| Lever | Status |
+|---|---|
+| Curve slope and parallel shift | usable once the manifold cap is removed — see "The cap is removable" above |
+| DHW setpoint | usable, and phase 2's first target |
+| EVU contact | already in use, via the Shelly |
+| ~~Floor circuit flow~~ | **not a lever** |
+
+#### 0x02CA is the candidate for the buffer sensor
+
+`PUSKURIKÄYTTÖ` is on (`0x068F` = 1), so the machine has a buffer temperature
+from somewhere. With buffer operation enabled the heating circuit's *actual*
+temperature is read at the buffer, and the panel walk found **`0x02CA`
+TOSILÄMPÖT HK 1 = 25.4 °C** — plausible for a floor heating buffer in September.
+`0x0078` answers the same value.
+
+**The reason it did not appear in the buffer analysis above is structural, not
+hydraulic.** 0x02CA is panel-polled: nothing asks for it unless a screen is
+displaying it, so its dynamics have never been observed at all. The conclusion
+"none of the elements on this bus behaves like a buffer tank" was drawn from the
+three continuously polled 0xFDFx temperatures, and could not have covered an
+element that is silent whenever nobody is looking.
+
+**The test costs nothing and needs no code.** Leave the panel on TOSILÄMPÖT HK 1
+and log for a couple of hours — the panel polls what it displays. If `0x02CA`
+moves with the circulation pump's cycles, the buffer has been on this bus all
+along and the DS18B20s in the tank are corroboration rather than the only
+source.
 
 ### The panel was checked, and nothing reads 5.6 or 5.2
 
@@ -3008,6 +3114,14 @@ is left:
   resistors get used.
 - Identify the writable elements: heating curve slope, room setpoint
   (comfort/ECO), DHW setpoint, operating mode.
+- **Do not plan anything around floor circuit flow.** It is not on the bus as
+  anything but the machine's own on/off, and the pump's speed is a dial — see
+  "Which makes one phase 2 limit hard rather than open". Three levers, and this
+  is not one of them.
+- **The curve lever is blocked on work outside this project.** Writing it
+  achieves nothing until the manifold's thermal actuators come off and the loops
+  are balanced. DHW setpoint has no such prerequisite, which is the second
+  reason it goes first.
 - Give the node a bus identity. Writing means leaving listen-only, so the bit rate
   has to be confirmed first and the node must address the WPM the way an FEK or
   ISG does — **using an identifier the phase 1 capture showed to be free.**
@@ -3033,12 +3147,12 @@ is left:
 
 ## Still Needed
 
-Nothing for phase 1. For phase 2, one transceiver.
+Nothing for phase 1, and phase 2's one purchase is now ordered.
 
-- **A 3.3 V CAN transceiver breakout** × 1 — Adafruit CAN Pal #5708, or an
-  SN65HVD230 / VP230 board, or any equivalent. The SN65HVD230 this file used to
-  claim was in stock does not exist, so this is a real purchase. Order it when
-  phase 1 has confirmed the bit rate, not before.
+- **A 3.3 V CAN transceiver breakout** — **on order, waiting to arrive.** VP230
+  boards, several of them, so a cooked one costs nothing. The SN65HVD230 this
+  file used to claim was in stock did not exist; this replaces it. **Read R1
+  and R2 on arrival** — see "The board chosen" above for what each decides.
 - PESD1CAN or NUP2105L (SOT-23) — only if the chosen transceiver board carries no
   bus protection
 - LM2596 or similar buck, if power is taken from the heat pump. Note that

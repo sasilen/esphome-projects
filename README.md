@@ -30,6 +30,7 @@ kaikki lasketaan yhteen.
 |---|---|---|---|
 | Wemos D1 mini (ESP8266-12F, CH340G, USB-C) | aidon, bestway.lay-z-spa, stiebel.eltron | — | **1** |
 | ESP32 | — | pegasos.enervent, axioma.effection, hirvirata | **0** |
+| ESP32-C3 SuperMini, 6 kpl (odottaa osia) | — | stiebel vaihe 2, kaksi jakotukkisolmua, puskurisolmu | **2** |
 
 Kolme ESP32:ta ei ole kolme samanlaista, vaan 2 + 1:
 
@@ -46,6 +47,16 @@ Muualla printtiantenni riittää.
 Vapaa levy on siis **D1 mini**, ei ESP32. Se on hirviradan pakotie siltä
 varalta ettei ulkoantennilevy toimi, ja varalevy stiebelin vaiheelle 1 — repon
 ainoalle käynnissä olevalle mittausjärjestelmälle.
+
+**Kuusi ESP32-C3:a odottaa saapumista, ja se poistaa levypulan.** Rajoitetta ei
+siis enää ole, ja kaksi jää yli senkin jälkeen kun stiebelin vaihe 2 ja
+lattialämmityksen kolme mittaussolmua on katettu. Tilatut ovat **SuperMini**-
+mallia, jossa on kaksi asiaa tiedettävänä ennen asennusta: **GPIO8 ajaa levyn
+LEDiä**, ja mallin keraaminen antenni on tunnetusti heikko. Jälkimmäinen osuu
+ikävästi lattialämmityksen käyttöön, koska jakotukkikaappi on usein upotettu
+teräskaappi — sama ilmiö joka on kirjattu aidonin mittarikaapista (−87…−90 dBm
+luukku kiinni). **Mittaa RSSI luukku kiinni ennen kuin kiinnität levyn**, ja
+varaudu viemään se kaapin ulkopuolelle.
 
 Huomaa myös että
 USB-siltapiiri vaihtuu levytyypin mukana, eli myös ajuri: CH34x vs. CP210x.
@@ -83,15 +94,30 @@ Moduulit:
   ja **868 MHz omniantenni SMA:lla, 2 kpl** → axioma.effection. ESP32:n oma
   2,4 GHz u.FL -antenni ja kaapeli tulivat DevKitC-setin mukana. Levylle tulee
   siis kaksi eri antennia — älä sekoita niitä.
+- **DS18B20**, vedenkestävä sauva metrin kaapelilla, **25 kpl** (odottaa osia)
+  → lattialämmityksen kaksi jakotukkia ja puskurivaraaja. Jako on 11 + 1
+  paluuta ja menoa alatukkiin, 10 + 1 ylätukkiin, 2 puskuriin. Perustelu on
+  [stiebel.eltronin CLAUDE.md:ssä](stiebel.eltron/CLAUDE.md), "The cap is
+  removable".
+- **SN65HVD230 / VP230 CAN-lähetinvastaanotin, 5 kpl** (ARCELI, odottaa osia)
+  → stiebel.eltron vaihe 2. **Lue R1 ja R2 saapuessa** — ne ratkaisevat
+  terminoinnin ja Rs-loivennuksen.
+- **PN5180 NFC-lukija** (odottaa osia) → axioma.effection. Ainoa halpa
+  ISO 15693 -piiri; RC522 ei kelpaa.
 - **BME280-anturikortti, 2 kpl** (APKLVSR,
   [kuva](pegasos.enervent/gybmep-sensor.jpg)). Molemmat pegasoksen laatikossa,
-  samannäköisiä. Ei kuulu yhdenkään projektin suunnitelmaan eikä
-  käyttötarkoitusta ole kirjattu mihinkään. Onko piiri oikeasti BME280 vai
-  BMP280 on varmistamatta; ero on kosteusmittaus.
-**SN65HVD230:aa ei ole.** Se on ollut stiebel.eltronin osalistalla varastossa
-olevana ensimmäisestä commitista asti, mutta sitä ei ole tilaushistoriassa
-eikä laatikossa. Väite oli virheellinen, ja seuraus on että stiebelin vaihe 2
-tarvitsee ostetun lähetinvastaanottimen.
+  samannäköisiä. **Käyttötarkoitus on nyt olemassa:** kahteen huoneeseen
+  ilmalämpötilaksi ja kosteudeksi lattialämmityksen mittausten rinnalle. Ne
+  eivät ole lattialämpötilaa varten — sen antavat jakotukin paluuanturit
+  kiertopumpun seisokin aikana. Onko piiri oikeasti BME280 vai BMP280 on
+  varmistamatta, ja **ero on juuri se kosteusmittaus** jonka takia ne nyt
+  otetaan käyttöön.
+
+**SN65HVD230:aa ei ollut.** Se oli stiebel.eltronin osalistalla varastossa
+olevana ensimmäisestä commitista asti, mutta sitä ei ollut tilaushistoriassa
+eikä laatikossa. Väite oli virheellinen, ja seuraus oli että stiebelin vaihe 2
+tarvitsi ostetun lähetinvastaanottimen. **Kortti odottaa nyt saapumista**, eli
+puute korjataan ostamalla eikä löytämällä.
 
 **RS-485-moduuli ei korvaa sitä**, vaikka sekin on differentiaalinen pari.
 CAN vaatii että recessiivinen tila *päästetään irti* — siihen perustuu sekä
@@ -105,12 +131,19 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 
 | Projekti | Puuttuu | Estääkö aloituksen |
 |---|---|---|
-| stiebel.eltron | 3,3 V:n CAN-lähetinvastaanotin **ja ESP32-C3-levy** vaiheeseen 2 | Ei — vaihe 1 ei vaadi hankintoja |
-| axioma.effection | — kaikki tilattu ja kytketty. **PN5180 (n. 5 €) ohittaisi esteet** | Este on että mittari ei lähetä wM-Busia, ei osa |
-| pegasos.enervent | **4P4C-kaapeli** (ei RJ11 — kuusipaikkainen pistoke ei mahdu) | Kyllä, mutta se on ainoa |
+| stiebel.eltron | — **odottaa osia**: lähetinvastaanotin ja C3 | Ei |
+| axioma.effection | — **odottaa PN5180:tä** | Ei enää osa, vaan asennus mittarin viereen |
+| pegasos.enervent | **4P4C-kaapeli** (ei RJ11 — kuusipaikkainen pistoke ei mahdu) | Kyllä, ja se on yhä ainoa |
 | hirvirata | 2020-profiili, eksentriset välikkeet, M5-pultit, sulake + pidike, DC-jakki | Kyllä |
 | aidon | Schottky SS14 tai 1N5819 — kovetus jäi tekemättä. 330 Ω on hyllyssä | Ei, laite on käytössä |
 | bestway.lay-z-spa | — | — |
+
+**Pegasoksen rivi ei sulkeudu RJ11-kaapelilla, vaikka pistokkeen vaihtaisi.**
+Uudelleenpuristus 4P4C:hen toimii vain jos kaapelissa on **neljä johdinta** —
+ADSL-kaapeli on usein 6P2C eli kaksi, eikä kahdella saa A:ta, B:tä ja maata.
+**Laske kuparit pistokkeen läpi ennen kuin luotat varasuunnitelmaan.** Yksi etu
+uudelleenpuristuksessa silti on: kun molemmat päät puristaa itse, ohittaa sen
+käännetyn luurijohdon ansan jonka pegasoksen CLAUDE.md kirjaa.
 
 Stiebelin rivi muuttui 6.9.2026: ESPHomen `esp32_can` hyväksyy 20 kbps:n
 **ESP32-S3:lla ja -C3:lla** vaikka kieltäytyy siitä tavallisella ESP32:lla, ja
@@ -121,6 +154,11 @@ työn kolmasosalla S3:n hinnasta, sen USB on natiivi eli yllä mainittu
 CH34x-vastaan-CP210x-ajurikysymys poistuu, ja siinä on noin kymmenkertainen
 käyttömuisti D1 miniin verrattuna. Levytaulukko sanoo että D1 minejä on vapaana
 nolla; C3 on halvin tapa korjata sekin.
+
+**Kuusi on tulossa.** Perustelu laajeni matkalla: stiebelin
+vaiheen lisäksi ne kattavat lattialämmityksen mittaussolmut, ja kaksi jää
+varalle — mikä on ensimmäinen kerta kun tässä repossa on varalevy jolle on
+käyttöä useammassa kuin yhdessä projektissa.
 
 **S3:lle ei ole tässä repossa käyttöä.** Se voitti C3:n vain muistissa,
 nastamäärässä ja ytimissä, eikä yksikään projekti tarvitse niitä.
