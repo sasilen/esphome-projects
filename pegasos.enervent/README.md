@@ -84,6 +84,80 @@ On the Enervent side, red → A, green → B, yellow → ground.
 > before wiring anything, and do not trust pin numbers through the cable —
 > handset cords are reversed end to end. Reasoning in [`CLAUDE.md`](CLAUDE.md).
 
+### Doing it, in order
+
+Each step ends in a check. **If a check fails, stop there** — every one of them
+is cheaper to settle in place than to separate later from a bus that is simply
+silent.
+
+**1. Count the positions in the jack.**
+
+> Four means the tables above. **Six means stop:** the pinout is then from a
+> different unit and nothing below applies.
+
+**2. Read the Modbus address from the control panel**, password from the
+manual. Write down what it says. If it reads 0, change it to 1.
+
+**3. Cut one end off the cable** and strip the four conductors. The plug stays
+on the other end and the cable stays in the unit, which is powered for this
+step.
+
+**4. Identify ground with a meter, at the cut end.** Take one conductor as
+reference and measure the other three against it. The correct reference is the
+one where exactly one conductor reads **+5 V** and **no reading is negative**.
+A negative reading means the reference is the supply, not ground — switch and
+measure again.
+
+> Expect black +5 V, yellow ground, red and green data. **Those colours are the
+> convention for 4P4C cordage, not a promise about this cable.** The meter
+> decides, not the table.
+
+**5. Mark the +5 V conductor and cut it back short.** A conductor that has been
+identified and removed cannot slip into the wrong screw. It is the only way
+this project can destroy anything.
+
+Then unplug the cable from the unit.
+
+**6. Wire the ESP32 to the module** — four wires, tables above, power off. Mind
+the crossover.
+
+> Measure between 3V3 and GND before applying power. A short there is a
+> misplaced jumper, and it is cheaper to find with a meter than with smoke.
+
+**7. Wire the module to the cable** — red to A, green to B, yellow to GND,
+black to nothing. **Do not tin the ends**: solder cold-flows under a screw
+clamp and the joint starts failing months later. Fold a thin conductor double
+instead.
+
+**8. Flash and verify before the cable goes anywhere near the unit.** Power the
+ESP32 from a separate USB supply — not from the unit's +5 V, which is a
+different experiment for a later day. The cable is still unplugged.
+
+Check the log for three things: the board boots and joins Wi-Fi, `modbus` and
+`modbus_controller` start without error, and the probe begins trying. **A
+timeout here is the correct result** — nothing is connected yet.
+
+> This step is the whole reason for the order. It separates "the node is
+> broken" from "the bus is silent", and those two produce the same symptom if
+> they are tested together.
+
+**9. Plug the cable in and watch.** Three outcomes:
+
+| Log | Means |
+|---|---|
+| `received: 01 03 02 ...` | the register exists and answered |
+| `Modbus error ... 02` | **the unit is alive**, the register address is wrong |
+| nothing at all | work through the four combinations below |
+
+The first two both mean the bus works and only the register map is left. For
+the third, sweep baud and polarity — four combinations, none of which can
+damage anything:
+
+|  | A→A, B→B | A↔B swapped |
+|---|---|---|
+| **9600** | 1 | 2 |
+| **19200** | 3 | 4 |
+
 ## Modbus settings
 
 Starting point, all to be verified against the unit:
@@ -132,14 +206,15 @@ alarm status and heat recovery status.
 
 ## Next steps
 
-1. Count the connector positions
-2. Read the Modbus address from the panel, change it to 1 if it reads 0
-3. Get the cable, cut one end, identify the conductors by colour and confirm
-   with a meter
-4. Wire the module to the ESP32 and to A/B/ground — black to nothing
-5. Flash ESPHome and send one read request; if nothing answers, swap A and B,
-   then try 19200
-6. Identify the registers, then add sensors, switches and controls
-7. Integrate with Home Assistant
+1. Get the cable — the only item with a delivery time
+2. Work through [Doing it, in order](#doing-it-in-order). It ends with the unit
+   either answering or not, and both are informative
+3. Identify the registers, then add sensors, switches and controls
+4. Integrate with Home Assistant
+
+Steps 1 and 2 of that procedure — counting the jack positions and reading the
+Modbus address from the panel — **need no cable and can be done today.** They
+remove two of the four things that cause silence, which is what turns a failed
+first attempt from open-ended into a four-line table.
 
 Full notes: [`CLAUDE.md`](CLAUDE.md).
