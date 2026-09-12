@@ -1,0 +1,197 @@
+# Enervent Pegasos Eco ECE — phase 1: prove the bus, read nothing
+#
+# This configuration does not read the ventilation unit's values and does not
+# try to. The register map is not in hand yet, so every address here is a
+# placeholder. What it does prove is the one thing that has to be true before
+# any register matters: **that the unit answers at all.**
+#
+# The probe below is built so that it succeeds even when its register address
+# is wrong. A Modbus slave that is alive and correctly addressed answers an
+# unknown register with an *exception* — illegal data address — and an
+# exception is a reply. So there are three outcomes and all three are
+# informative:
+#
+#   [VV][modbus]  received: 01 03 02 xx xx ....   the register exists, value read
+#   [W][modbus_controller]  Modbus error ... 02    the unit is alive, address wrong
+#   nothing at all                                 wiring, baud, polarity or slave id
+#
+# Only the third is a failure, and the four things that cause it are all safe
+# to try in turn — see "If nothing answers" at the bottom.
+#
+# Unlike the stiebel.eltron project, **there is no listening phase here.** The
+# Freeway port is a service port with no other master polling it, so this node
+# transmits from its first frame. There is no passive mode to hide behind,
+# which is why the wiring is settled on a meter before this is ever flashed.
+
+substitutions:
+  # The two unknowns, both one-line edits followed by a re-flash.
+  #
+  # `slave_id` — read *Modbus address* from the unit's control panel; the
+  # manual gives the password. **If the panel reads 0, change it to 1.** Zero
+  # is broadcast in Modbus: a unit at address 0 never answers a read, however
+  # correct everything else is, and the symptom is indistinguishable from bad
+  # wiring.
+  #
+  # `baud` — 9600 is documented for Enervent EDA. 19200 is the second thing to
+  # try, and the only other value worth trying.
+  slave_id: "1"
+  baud: "9600"
+
+esphome:
+  # Technical identity, following the repo's other devices (`aidon`,
+  # `wpc-can`, `axioma`): the directory name, not a description of the job.
+  name: pegasos
+  friendly_name: Pegasos
+
+esp32:
+  # The 30-pin DevKit in stock — D0WD-V3, plain ESP32.
+  board: esp32dev
+
+logger:
+  # DEBUG for everyday running; the modbus tag is lifted to VERY_VERBOSE
+  # because **the raw frames are the whole point of this phase.** Without them
+  # a silent bus and a malformed reply look identical.
+  #
+  # This costs almost nothing here: the probe polls once every ten seconds, so
+  # it is a handful of lines a minute rather than the four-a-second load that
+  # stalled the stiebel node.
+  level: DEBUG
+  logs:
+    modbus: VERY_VERBOSE
+    modbus_controller: DEBUG
+
+  # UART0 (GPIO1/GPIO3) stays the console. That is why Modbus is on GPIO16/17
+  # and not on the default pins — see below.
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Keep the radio awake. The default LIGHT sleeps between beacons, which adds
+  # a wake-up delay to every acknowledgement of an OTA transfer. The root
+  # CLAUDE.md records what that costs.
+  power_save_mode: NONE
+
+  ap:
+    # The AP *name* is broadcast and is not a secret. The password is, and it
+    # is the one that gets forgotten because it feels like a device setting
+    # rather than a network credential.
+    ssid: "Pegasos Fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# ---------------------------------------------------------------------------
+# The bus
+# ---------------------------------------------------------------------------
+
+uart:
+  id: modbus_uart
+
+  # **UART2.** UART0 is the USB console and serial log; UART1's RX pin is
+  # committed to flash on this chip, so it can transmit but not receive.
+  # Modbus needs both directions, which leaves UART2 — GPIO16 and GPIO17.
+  #
+  # Note the crossover at the module: the module's RXD takes what the ESP32
+  # transmits. Wiring TX→TXD is the mistake that produces perfect silence.
+  #
+  #   ESP32 GPIO17 (TX)  →  module RXD
+  #   ESP32 GPIO16 (RX)  ←  module TXD
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+
+  baud_rate: ${baud}
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+
+modbus:
+  id: modbus_bus
+  uart_id: modbus_uart
+
+  # **No `flow_control_pin`, and that is deliberate.** The JZK board in stock
+  # is not a plain MAX485 breakout: it derives driver enable from activity on
+  # the TX line and brings no DE/RE pin out to the MCU. That removes a wire, a
+  # GPIO and this line of configuration.
+  #
+  # If a different module is ever fitted — one with RE and DE brought out —
+  # tie them together to a GPIO and declare it here, and note that the pin
+  # names change to RO → RX and DI → TX.
+
+modbus_controller:
+  - id: pegasos
+    modbus_id: modbus_bus
+    address: ${slave_id}
+
+    # Ten seconds is a probe interval, not a monitoring interval. It is short
+    # enough to iterate against while standing at the unit and long enough
+    # that the log stays readable.
+    update_interval: 10s
+    setup_priority: -10
+
+# ---------------------------------------------------------------------------
+# The probe
+# ---------------------------------------------------------------------------
+
+sensor:
+  # **This register address is a guess and it does not need to be right.**
+  # The question it answers is "does anything reply", and an exception reply
+  # counts. Rename and re-address it the day the register map is in hand;
+  # until then it is a liveness test wearing a sensor's clothes.
+  - platform: modbus_controller
+    modbus_controller_id: pegasos
+    name: "Probe holding register 1"
+    address: 1
+    register_type: holding
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+    # No device class and no unit: nothing is known about what this number
+    # means, and publishing it as a temperature would be inventing a fact.
+    entity_category: diagnostic
+
+  - platform: wifi_signal
+    name: "Wi-Fi"
+    update_interval: 60s
+
+  - platform: uptime
+    # The one line that separates a restart from a log client reconnecting.
+    # Do not silence the sensor tag in `logger:` — the root CLAUDE.md records
+    # what that cost on another device.
+    name: "Uptime"
+    update_interval: 60s
+
+# ---------------------------------------------------------------------------
+# If nothing answers
+# ---------------------------------------------------------------------------
+#
+# Silence has four causes and one symptom, so work through them in an order
+# that never repeats a combination. The panel and the meter remove two of them
+# before the first flash — the slave id and the pinout — which leaves baud and
+# polarity, four combinations, all of them safe:
+#
+#   1.  9600, A→A B→B      the documented case
+#   2.  9600, A↔B swapped  swap the two wires at the module's screw terminal
+#   3. 19200, A→A B→B      edit `baud` above, re-flash
+#   4. 19200, A↔B swapped
+#
+# **None of these can damage anything.** A reversed differential pair is
+# silent, not destructive, and a read request cannot change a setting whatever
+# else is wrong. The one wire that can destroy something is pin 1, +5 VDC, and
+# it is identified and left disconnected before any of this.
+#
+# If all four are silent, the next suspects are the pinout itself — documented
+# for Pingvin, Pandion, Pelican and LTR-3, but **not for Pegasos** — and the
+# cable, which reverses end to end if it is a handset cord.
+#
+# Validate before flashing:
+#
+#   podman exec esphome esphome config /config/pegasos.enervent.yaml

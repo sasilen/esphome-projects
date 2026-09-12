@@ -39,7 +39,12 @@ entity discovery, and OTA firmware updates.
 - RS-485 ↔ TTL module — in stock, JZK with automatic direction control, 5 pcs
 - **4P4C cable** (also sold as RJ10, or as a telephone handset cord) — **not in
   stock.** Not RJ11: a six-position plug does not fit a four-position jack, and
-  this file said RJ11 until the connector was looked at
+  this file said RJ11 until the connector was looked at.
+  **Prefer a straight cable over a coiled handset cord.** Coiled cords are
+  usually *tinsel* wire — copper foil wound around a textile core, chosen
+  because it survives being coiled and uncoiled for years. It neither solders
+  nor crimps reliably, and this project ends with stripped conductors in a
+  screw terminal
 
 **Optional**
 
@@ -91,6 +96,23 @@ Starting point, all to be verified against the unit:
 | Slave ID | read it from the control panel — **and change 0 to 1** |
 
 ESPHome components: `uart`, `modbus`, `modbus_controller`.
+
+## The configuration
+
+[`pegasos.enervent.yaml`](pegasos.enervent.yaml) is written and waiting. It
+**reads nothing and proves one thing**: that the unit answers. The register map
+is not in hand, so its single register address is a placeholder — and it does
+not need to be right, because a slave that is alive answers an unknown register
+with an exception, and an exception is a reply.
+
+The two values to sweep are `substitutions:` at the top: the slave address and
+the baud rate. Both are one-line edits followed by a re-flash.
+
+Validate before flashing; it has not been through ESPHome's schema yet:
+
+```sh
+podman exec esphome esphome config /config/pegasos.enervent.yaml
+```
 
 ## What is left
 
