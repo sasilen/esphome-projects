@@ -32,10 +32,12 @@ substitutions:
   # correct everything else is, and the symptom is indistinguishable from bad
   # wiring.
   #
-  # `baud` — 9600 is documented for Enervent EDA. 19200 is the second thing to
-  # try, and the only other value worth trying.
+  # `baud` — **19200, and that is a change from what this project assumed.**
+  # Jalle19/eda-modbus-bridge, the working implementation for EDA and MD units,
+  # opens its serial port hardcoded at 19200 8N1 with slave id 1. A running
+  # implementation beats a guess, so 19200 goes first and 9600 is the fallback.
   slave_id: "1"
-  baud: "9600"
+  baud: "19200"
 
 esphome:
   # Technical identity, following the repo's other devices (`aidon`,
@@ -178,10 +180,15 @@ sensor:
 # before the first flash — the slave id and the pinout — which leaves baud and
 # polarity, four combinations, all of them safe:
 #
-#   1.  9600, A→A B→B      the documented case
-#   2.  9600, A↔B swapped  swap the two wires at the module's screw terminal
-#   3. 19200, A→A B→B      edit `baud` above, re-flash
-#   4. 19200, A↔B swapped
+#   1. 19200, A→A B→B      what the working bridge uses
+#   2. 19200, A↔B swapped  pull two jumpers at the module's bus header
+#   3.  9600, A→A B→B      edit `baud` above, re-flash
+#   4.  9600, A↔B swapped
+#
+# Check the module's send and receive LEDs before working through these. A dark
+# send light means nothing is being transmitted, and then the fault is on the
+# ESP32 side — UART pins, the crossover, the config — and sweeping the bus is
+# wasted effort.
 #
 # **None of these can damage anything.** A reversed differential pair is
 # silent, not destructive, and a read request cannot change a setting whatever

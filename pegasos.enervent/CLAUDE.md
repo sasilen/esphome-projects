@@ -130,7 +130,35 @@ Linked rather than copied, per repo convention.
   — the 4P4C pinout above, and the slave-address rule below.
 - The Enervent *Modbus Registers* document is the register map, hard to find and
   linked from that project. Part of its `docs/` is marked proprietary, so it
-  stays linked and out of this repo.
+  stays linked and out of this repo. The official copies live on Enervent's own
+  document server under its **Modbus** and **EDA** folders, and Jaakko
+  Ala-Paavola's project space hosted the EDA register PDF — reachable through
+  the Internet Archive rather than at the original address.
+- **The practical register map is the bridge's own source**, not the PDF:
+  [`app/enervent.ts`](https://github.com/Jalle19/eda-modbus-bridge/blob/master/app/enervent.ts)
+  carries the addresses, types and scalings as running code. Read it there
+  rather than hunting the document; a register that a working implementation
+  polls is better evidence than a table.
+
+### Two things that source settles, and one of them is a change
+
+**The baud rate is 19200, not 9600.** This file and the README both carried
+9600 as the starting point with 19200 as the second candidate. The bridge opens
+its serial port **hardcoded at 19200, 8 data bits, no parity, 1 stop bit**,
+with a default slave id of 1. A running implementation for this automation
+family outranks an assumed default, so the order is reversed: 19200 first, 9600
+as the fallback. The YAML's `baud` substitution follows.
+
+**The unit answers on holding registers and coils.** The bridge reads with
+`readCoils` and `readHoldingRegisters` — function codes 1 and 3 — and writes
+with `writeCoil` and `writeRegister`. That confirms the probe's
+`register_type: holding` and rules out spending the bring-up guessing at input
+registers.
+
+**Pegasos is still not on anyone's confirmed list.** The bridge names Pingvin,
+Pelican and Pandion, and its connection document names none. Everything above
+is the right starting point for the family and remains unverified for this
+model — which is what the first read request is for.
 
 **The slave address has a trap of its own.** Read *Modbus address* from the
 control panel — the manual gives the password — and **if it reads 0, change it

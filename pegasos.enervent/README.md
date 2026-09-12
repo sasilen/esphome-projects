@@ -227,8 +227,8 @@ damage anything:
 
 |  | A→A, B→B | A↔B swapped |
 |---|---|---|
-| **9600** | 1 | 2 |
-| **19200** | 3 | 4 |
+| **19200** | 1 | 2 |
+| **9600** | 3 | 4 |
 
 ## Modbus settings
 
@@ -237,7 +237,7 @@ Starting point, all to be verified against the unit:
 | Setting | Value |
 |---|---|
 | Protocol | Modbus RTU |
-| Baud rate | 9600 (19200 is the other candidate) |
+| Baud rate | **19200** (9600 is the fallback — see below) |
 | Frame | 8N1 |
 | Slave ID | read it from the control panel — **and change 0 to 1** |
 
