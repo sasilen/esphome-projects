@@ -53,11 +53,57 @@ and seeing which one matches.
 
 **Pin 1 is a supply and must not reach the transceiver.** That is the warning
 this file already carried, now with a pin number on it. It is also an
-opportunity: 5 V into the ESP32's `VIN` would give one common ground reference
-and no second supply — but measure what the rail can deliver before trusting
-it, because an ESP32 peaks well above what a control board's service port is
-likely sized for. The same reasoning is worked through for a bus supply in
+opportunity, and the section below works out what that opportunity is actually
+worth. The same reasoning is gone through for a bus supply in
 [`../stiebel.eltron/CLAUDE.md`](../stiebel.eltron/CLAUDE.md).
+
+### Powering the ESP32 from pin 1 — worth doing, worth doing last
+
+This file used to offer two reasons for taking the node's supply from the
+service port: no second supply, and a common ground reference. **The second
+one is not a reason.** The common reference comes from pin 4, the yellow
+conductor, and it is connected whether or not the 5 V is used. Once the unit's
+ground, the module's ground and the ESP32's ground are one net, the reference
+is already shared.
+
+So the benefit is exactly one: **one cable carries both power and data**, and
+the manifold-cupboard problem of needing a socket where the node lives goes
+away. That is a real benefit for a permanent install and no benefit at all
+during bring-up.
+
+**Measure the rail before designing around it, and do not trust the number in
+the table.** This repo has a fresh precedent: the Stiebel wiring diagram
+labels X27 pin 4 `+12V` and it **measures 17.4 V** — an unregulated rail rises
+above nominal at light load. If this one is genuinely 5 V it goes to the
+ESP32's `VIN`, never to `3V3`, because the DevKit's own regulator belongs in
+between. If it turns out higher, `VIN` will still take it, but the arithmetic
+changes.
+
+**What decides it is whether the rail can carry the peaks.** An ESP32 averages
+around 100 mA and reaches 250–500 mA on Wi-Fi transmit bursts. A service port's
+5 V is sized for a handheld tool or a small display, which could mean 100 mA
+or 500 mA, and nothing in any document says which.
+
+**The danger is not damage, it is diagnosis.** A sagging rail makes the node
+reboot or behave erratically, and that is indistinguishable from Modbus not
+working. Combining the two unknowns is how a week gets spent on the wrong one.
+Hence the order:
+
+1. Get the bus answering on a **separate USB supply**. Proven first.
+2. Measure the rail unloaded.
+3. Connect the ESP32 and measure again **during Wi-Fi traffic**. Below about
+   4.7 V the rail cannot carry it. A multimeter averages and will miss the
+   peaks, but a real sag shows up even so.
+4. Only then make it permanent.
+
+**Fuse the feed.** A polyfuse of 200–300 mA in the +5 V conductor keeps a fault
+in this node out of the ventilation unit's control board. That is the same
+condition the stiebel file puts on taking power from the heat pump's bus, and
+it costs cents.
+
+One more reason to buy a straight cable rather than a coiled handset cord:
+4P4C conductors are around 28 AWG, which carries a few hundred milliamps over
+two metres without trouble — but tinsel wire does not.
 
 **Do not trust pin numbers through the cable — trust colours, then verify with
 a meter.** A standard handset cord is *reversed*: pin 1 at one end lands on
