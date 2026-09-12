@@ -18,7 +18,7 @@ muuten mDNS ei toimi eikä OTA löydä levyjä.
 | [bestway.lay-z-spa](bestway.lay-z-spa/) | Bestway Lay-Z-SPA -poreallas | CIO/DSP-lattakaapeli → **MQTT** | ESP8266 + tasonsiirrin | **Käytössä**. Ei ESPHome, ks. alla |
 | [hirvirata](hirvirata/) | Liikkuva maalitaulurata | — (H-silta, PWM) | Wemos D1 mini + L298N + 12 V vaihdemoottori | Suunnittelu, YAML-luonnos valmis |
 | [stiebel.eltron](stiebel.eltron/) | Stiebel Eltron WPC 07 -lämpöpumppu | CAN 20 kbps | ESP8266/ESP32 + MCP2515 (5 V → 3,3 V -muutos) | Suunnittelu, rauta osin hankittu, kuuntelu-YAML valmis |
-| [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | RS-485 / Modbus RTU (4P4C-huoltoliitin, Freeway) | ESP32 + MAX485 | Suunnittelu, odottaa kaapelia |
+| [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | **Potentiaalivapaat koskettimet** (ei Modbusia — ECC05) | ESP32 + rele | Suunnittelu, ei odota osia |
 | [axioma.effection](axioma.effection/) | Axioma Effectio / Qalcosonic W1 -vesimittari | Wireless M-Bus 868,95 MHz T1/C1 | ESP32 + CC1101 | Kuuntelee, mutta mittari on LoRaWAN-luennassa |
 
 ## Levyt ja varasto
@@ -85,8 +85,11 @@ Moduulit:
   riittää molemmille kolmen jäädessä yli, eli aiempi huoli kilpailusta oli
   aiheeton. Lähtöjännite on **asetettava mittarilla ennen kuormaa**.
 - **TTL ↔ RS-485 -moduuli, 5 kpl** (JZK, automaattinen suunnanvaihto) →
-  pegasos.enervent. **Ei ole tavallinen MAX485-kortti**: DE/RE-ohjausta ei ole,
-  joten kytkentä on neljä johdinta eikä viisi.
+  **vapautui, ei varattuna.** Oli pegasokselle, kunnes selvisi ettei koneessa
+  ole Modbusia lainkaan. **Ei ole tavallinen MAX485-kortti**: DE/RE-ohjausta ei
+  ole, joten kytkentä on neljä johdinta eikä viisi. Kortilla on 120 Ω
+  terminaattori pois piiristä (piste `R0`), TVS-suojaus ja lähetys/vastaanotto-
+  LEDit.
 - **LM2596** → hirvirata, ja stiebel.eltron jos virta otetaan lämpöpumpulta.
   Varaston moduuli on **ADJ eli säädettävä**: lähtöjännite on asetettava
   mittarilla ennen kuin kuorma kytketään.
@@ -133,17 +136,22 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 |---|---|---|
 | stiebel.eltron | — **odottaa osia**: lähetinvastaanotin ja C3 | Ei |
 | axioma.effection | — **odottaa PN5180:tä** | Ei enää osa, vaan asennus mittarin viereen |
-| pegasos.enervent | **4P4C-kaapeli** (ei RJ11 — kuusipaikkainen pistoke ei mahdu) | Kyllä, ja se on yhä ainoa |
+| pegasos.enervent | — **ei mitään.** Kaapeli ei ole enää este, koska Modbusia ei ole | Ei |
 | hirvirata | 2020-profiili, eksentriset välikkeet, M5-pultit, sulake + pidike, DC-jakki | Kyllä |
 | aidon | Schottky SS14 tai 1N5819 — kovetus jäi tekemättä. 330 Ω on hyllyssä | Ei, laite on käytössä |
 | bestway.lay-z-spa | — | — |
 
-**Pegasoksen rivi ei sulkeudu RJ11-kaapelilla, vaikka pistokkeen vaihtaisi.**
-Uudelleenpuristus 4P4C:hen toimii vain jos kaapelissa on **neljä johdinta** —
-ADSL-kaapeli on usein 6P2C eli kaksi, eikä kahdella saa A:ta, B:tä ja maata.
-**Laske kuparit pistokkeen läpi ennen kuin luotat varasuunnitelmaan.** Yksi etu
-uudelleenpuristuksessa silti on: kun molemmat päät puristaa itse, ohittaa sen
-käännetyn luurijohdon ansan jonka pegasoksen CLAUDE.md kirjaa.
+**Pegasoksen rivi tyhjeni, mutta ei siksi että kaapeli olisi saapunut.**
+Kaksi viikkoa projekti odotti 4P4C-kaapelia Modbus-yhteyttä varten. Koneessa ei
+ole Modbusia: automatiikka on ECC05 ja molemmat nelipaikkaiset liittimet ovat
+ohjauspaneelien portteja. Ohjaus tehdään potentiaalivapaista koskettimista,
+joihin ei tarvita kaapelia eikä RS-485-moduulia. Perustelut:
+[pegasos.enervent/CLAUDE.md](pegasos.enervent/CLAUDE.md).
+
+**Se on repon kallein yksittäinen virhe tähän mennessä**, kahdeksantoista
+committia väärälle sukupolvelle kirjoitettua dokumentaatiota. Syy on kirjattu
+sinne: lähde oli täsmällinen, oikean valmistajan ja väärän automaatiopolven —
+ja repossa oli jo sääntö juuri tästä, stiebelin liitintyöstä.
 
 Stiebelin rivi muuttui 6.9.2026: ESPHomen `esp32_can` hyväksyy 20 kbps:n
 **ESP32-S3:lla ja -C3:lla** vaikka kieltäytyy siitä tavallisella ESP32:lla, ja

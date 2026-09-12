@@ -1,437 +1,215 @@
-# Enervent Pegasos Eco ECE → Home Assistant (ESPHome) Integration Notes
+# Enervent Pegasos Eco ECE → Home Assistant (ESPHome)
 
 > **Technical details and reasoning.** Overview: [README.md](README.md).
 
 ## Goal
 
-Integrate an Enervent Pegasos Eco ECE ventilation unit with Home Assistant using a local ESPHome bridge over RS-485/Modbus.
+Read the ventilation unit's fault state into Home Assistant, and optionally
+select its fan speed, **using the potential-free terminals the control board
+already provides.** Locally, over the ESPHome native API, without MQTT.
 
-## Current Environment
+## What the unit is
 
-- Home Assistant running in Podman
-- Enervent Pegasos Eco ECE ventilation unit
-- RJ11 service connector available
-- Suspected communication protocol: RS-485 (Modbus RTU)
+| | |
+|---|---|
+| Unit | Enervent Pegasos eco ECE |
+| Automation | **ECC05** |
+| Panel | ECC-05(E) membrane keypad — no display, LEDs for speeds 1–4 and setpoint |
+| Fans | EC, driven 0–10 V from the control board |
+| Afterheater | electric — the `E` in `ECE` |
 
-## Hardware
+The manual defines the suffix itself: *"EC = Ilmanvaihtolaite ECC05-ohjauksella,
+ilman jälkilämmitystä. ECE = Ilmanvaihtolaite ECC05-ohjauksella ja sähköisellä
+jälkilämmittimellä."* **The `E` means ECC05 plus electric heat**, so the model
+name states the automation generation and there was never anything to infer.
 
-### Required
+---
 
-- ESP32 development board (recommended over ESP8266) — in stock
-- RS-485 ↔ TTL module — in stock: JZK, 5 pcs, automatic hardware flow control,
-  works at 3.3 V or 5 V. See the wiring section: it is not a plain MAX485
-  breakout and is wired differently
-- **4P4C cable** — **not in stock, the one thing this project is waiting for.**
-  This file said RJ11 until the connector was looked at; see below, and count
-  the positions before ordering
+# The Modbus route is closed
 
-### Optional
+This project assumed Modbus RTU over a 4P4C "Freeway" service port for eighteen
+commits. That assumption is wrong, and the manufacturer's own documentation
+settles it three ways.
 
-- A breakout adapter (not required if you are willing to cut one end of the
-  cable). Note that an *RJ11* breakout will not fit a 4P4C jack
+**The word "Modbus" does not appear in the ECC manual.** Forty-four pages,
+covering every unit with ECC automation including `Enervent Pegasos eco EC(E)`,
+zero occurrences. Nor "RS-485", nor "Freeway".
 
-## The connector is 4P4C, not RJ11 — and that is a purchase, not a detail
+**Both 4P4C connectors are control-panel ports.** The external-cabling table
+names them:
 
-The Freeway port on the Enervent computer board takes a **4P4C** cable, also
-sold as RJ10 or a telephone *handset* cord: four positions, four conductors.
-**A six-position RJ11 plug does not fit a four-position jack**, so an RJ11 cable
-and an RJ11 breakout are both the wrong part.
-
-This file said RJ11 from the first commit. What changed it: an independent
-project documents the Freeway port as 4P4C, and **the connector on this unit
-looks like the smaller one** when compared against a cable. That is an
-observation and not a measurement — settle it by counting the metal contacts in
-the jack, or by holding a handset cord (4P4C) against a wall-phone cord (6P)
-and seeing which one matches.
-
-| PIN | Colour | Signal |
+| Point | Description | Supplied |
 |---|---|---|
-| 1 | black | **+5 VDC** |
-| 2 | red | Data + → module A |
-| 3 | green | Data − → module B |
-| 4 | yellow | Ground |
+| `OPpanel1` | Ohjainpaneeli | 1 standard, bus traffic, 20 m RJ 4P4C |
+| `OPpanel2` | Ohjainpaneeli | **accessory, up to 2 more**, bus traffic, 20 m RJ 4P4C |
 
-**Pin 1 is a supply and must not reach the transceiver.** That is the warning
-this file already carried, now with a pin number on it. It is also an
-opportunity, and the section below works out what that opportunity is actually
-worth. The same reasoning is gone through for a bus supply in
-[`../stiebel.eltron/CLAUDE.md`](../stiebel.eltron/CLAUDE.md).
+The parts list agrees: *"Ohjauspaneeli ECC-05(E), kojeeseen voidaan kytkeä
+maks. 1+4 kpl paneelia."* Up to five panels on a private protocol. There is no
+service port among them.
 
-### Powering the ESP32 from pin 1 — worth doing, worth doing last
+**The two-connector observation does not discriminate.** An EDA board also
+carries two 4P4C jacks, both marked `RJ11 FREEWAY`. Counting connectors was
+never going to settle which board this is; the panel did, and the model name
+would have.
 
-This file used to offer two reasons for taking the node's supply from the
-service port: no second supply, and a common ground reference. **The second
-one is not a reason.** The common reference comes from pin 4, the yellow
-conductor, and it is connected whether or not the 5 V is used. Once the unit's
-ground, the module's ground and the ESP32's ground are one net, the reference
-is already shared.
+## The error, and its class
 
-So the benefit is exactly one: **one cable carries both power and data**, and
-the manifold-cupboard problem of needing a socket where the node lives goes
-away. That is a real benefit for a permanent install and no benefit at all
-during bring-up.
+Every wrong fact in this file's history came from one source —
+[Jalle19/eda-modbus-bridge](https://github.com/Jalle19/eda-modbus-bridge) and
+its connection document — which says plainly that it supports **EDA and MD**
+automation and names Pingvin, Pelican and Pandion. This unit is the generation
+before.
 
-**Measure the rail before designing around it, and do not trust the number in
-the table.** This repo has a fresh precedent: the Stiebel wiring diagram
-labels X27 pin 4 `+12V` and it **measures 17.4 V** — an unregulated rail rises
-above nominal at light load. If this one is genuinely 5 V it goes to the
-ESP32's `VIN`, never to `3V3`, because the DevKit's own regulator belongs in
-between. If it turns out higher, `VIN` will still take it, but the arithmetic
-changes.
+**This repo already had a rule against exactly this.** From
+[`../stiebel.eltron/CLAUDE.md`](../stiebel.eltron/CLAUDE.md), about a service
+connector pinout taken from a different heat pump series:
 
-**What decides it is whether the rail can carry the peaks.** An ESP32 averages
-around 100 mA and reaches 250–500 mA on Wi-Fi transmit bursts. A service port's
-5 V is sized for a handheld tool or a small display, which could mean 100 mA
-or 500 mA, and nothing in any document says which.
+> **WPC is a different series. Do not transfer these numbers.**
 
-**The danger is not damage, it is diagnosis.** A sagging rail makes the node
-reboot or behave erratically, and that is indistinguishable from Modbus not
-working. Combining the two unknowns is how a week gets spent on the wrong one.
-Hence the order:
+The rule was written down, and then the same transfer was made here anyway —
+because the source was specific, confident and about the right manufacturer. A
+pinout that matches the connector you are holding is not evidence that the
+protocol behind it is the one the source describes.
 
-1. Get the bus answering on a **separate USB supply**. Proven first.
-2. Measure the rail unloaded.
-3. Connect the ESP32 and measure again **during Wi-Fi traffic**. Below about
-   4.7 V the rail cannot carry it. A multimeter averages and will miss the
-   peaks, but a real sag shows up even so.
-4. Only then make it permanent.
+## A confident summary is not a source
 
-**Fuse the feed.** A polyfuse of 200–300 mA in the +5 V conductor keeps a fault
-in this node out of the ventilation unit's control board. That is the same
-condition the stiebel file puts on taking power from the heat pump's bus, and
-it costs cents.
+Two ready-made answers arrived during this investigation, both fluent, both
+citing real documents, and both wrong in ways that a check caught in minutes:
 
-One more reason to buy a straight cable rather than a coiled handset cord:
-4P4C conductors are around 28 AWG, which carries a few hundred milliamps over
-two metres without trouble — but tinsel wire does not.
+- one claimed an *"official Freeway AC/ECC bus guide"* stating Modbus RTU at
+  **19200/EVEN**, citing eda-modbus-bridge — whose code reads
+  `parity: 'none'`, and which contains no such guide
+- one claimed the board is a *"Picco or AC automation card"* and the panel bus
+  is **I²C**, citing the ECC manual — which defines `ECE` as ECC05 and never
+  mentions I²C, and which specifies a 20 m cable to up to five panels, a length
+  I²C cannot drive
 
-**Do not trust pin numbers through the cable — trust colours, then verify with
-a meter.** A standard handset cord is *reversed*: pin 1 at one end lands on
-pin 4 at the other. Cut one end, identify the four conductors by colour, and
-then check with a meter which colour actually reaches which contact at the
-surviving plug. A cord that happens to be wired straight-through and one that
-is reversed look identical from the outside.
+**Three of four register numbers in the first were correct**, which is what
+makes this hard: the errors were mixed with accurate detail. The check that
+caught both was the same one this repo applies to element lists and pinouts —
+open the cited source and read the line.
 
-**Two independent things are still unverified for this unit.** The pinout above
-comes from a project that confirms Pingvin, Pandion, Pelican and LTR-3 — **not
-Pegasos**. And the wire colours are the convention for 4P4C cordage, not a
-promise about this cable. Both are hypotheses to check with a meter, which is
-the same standard this repo applies to every table it has had to overturn.
+---
 
-## Sources for the three unknowns
+# What the board actually offers
 
-Linked rather than copied, per repo convention.
+From the manual's connector list. `Ruuvi` = screw terminal, `Pika` = quick
+connector.
 
-- [Jalle19/eda-modbus-bridge](https://github.com/Jalle19/eda-modbus-bridge) —
-  HTTP/MQTT bridge for Enervent EDA and MD units, GPL-3, actively maintained.
-  **Not a component to adopt here** — this project is ESPHome without MQTT —
-  but its documentation is the prior art for the connection and the registers.
-- [docs/CONNECTION.md](https://github.com/Jalle19/eda-modbus-bridge/blob/master/docs/CONNECTION.md)
-  — the 4P4C pinout above, and the slave-address rule below.
-- The Enervent *Modbus Registers* document is the register map, hard to find and
-  linked from that project. Part of its `docs/` is marked proprietary, so it
-  stays linked and out of this repo. The official copies live on Enervent's own
-  document server under its **Modbus** and **EDA** folders, and Jaakko
-  Ala-Paavola's project space hosted the EDA register PDF — reachable through
-  the Internet Archive rather than at the original address.
-- **The practical register map is the bridge's own source**, not the PDF:
-  [`app/enervent.ts`](https://github.com/Jalle19/eda-modbus-bridge/blob/master/app/enervent.ts)
-  carries the addresses, types and scalings as running code. Read it there
-  rather than hunting the document; a register that a working implementation
-  polls is better evidence than a table.
+| Terminal | Function | Notes |
+|---|---|---|
+| `S1` `S2` `S3` `S4` | **fan speeds 1–4** | potential-free contact |
+| `OVERP` | overpressure / fireplace boost | momentary, spring-return button |
+| `STOP` | ventilation emergency stop | potential-free |
+| `ALARM` | external fault in (fire, frost) | potential-free |
+| `LTOC` | cooling recovery | max 35 V |
+| `NC` `COM` `NO` | **fault output** | potential-free, max 250 VAC / 1 A |
+| `T1` `T2` `T3` | outdoor, post-HRC supply, supply sensors | `Pika`, the board's own inputs |
+| `AFTHEAT` | electric afterheater control | ECE models |
+| `TF CTRL` `PF CTRL` | **0–10 V to the fans** | see below — not an input |
 
-### Two things that source settles, and one of them is a change
+**The manufacturer documents the pattern this project will copy.** The wiring
+diagram shows an external humidity hygrostat wired to the `S1`–`S4` terminals to
+change speed: *"nopeuksille (S1–S4) liittimet 2 (tehostusnopeus) ja 3
+(normaalinopeus)"*. A relay doing the same thing is not a hack; it is the
+documented way to control this unit from outside.
 
-**The baud rate is 19200, not 9600.** This file and the README both carried
-9600 as the starting point with 19200 as the second candidate. The bridge opens
-its serial port **hardcoded at 19200, 8 data bits, no parity, 1 stop bit**,
-with a default slave id of 1. A running implementation for this automation
-family outranks an assumed default, so the order is reversed: 19200 first, 9600
-as the fallback. The YAML's `baud` substitution follows.
+## `TF CTRL` and `PF CTRL` are outputs, and driving them is the one way to break something
 
-**The unit answers on holding registers and coils.** The bridge reads with
-`readCoils` and `readHoldingRegisters` — function codes 1 and 3 — and writes
-with `writeCoil` and `writeRegister`. That confirms the probe's
-`register_type: holding` and rules out spending the bring-up guessing at input
-registers.
+The connector list reads `Pika TFCTRL` **0-10 V tulopuhaltimelle** and
+`Pika PFCTRL` **0-10 V poistopuhaltimelle** — *to* the supply fan and *to* the
+exhaust fan, listed alongside the `T1`/`T2`/`T3` sensors and `AFTHEAT` as the
+board's connections to the unit's own components. They are the board's fan
+drive.
 
-**Pegasos is still not on anyone's confirmed list.** The bridge names Pingvin,
-Pelican and Pandion, and its connection document names none. Everything above
-is the right starting point for the family and remains unverified for this
-model — which is what the first read request is for.
+The same names also appear as **trimmers**: *"Ohjainkortin trimmerit ilmamäärän
+säätämistä varten"*, next to `FANSPEED CTRL` and `TFDIFF` with percentage bands
+for each speed step. Neither reading is an external control input.
 
-**The slave address has a trap of its own.** Read *Modbus address* from the
-control panel — the manual gives the password — and **if it reads 0, change it
-to 1.** Zero is broadcast in Modbus and is not a valid slave address, so a unit
-left at 0 will never answer a read no matter how correct the wiring is.
+Two consequences:
 
-Serial settings are not in that documentation. This file's 9600 8N1 is a
-starting point and 19200 is the other candidate; it is a one-line change and
-cheaper to try than to research.
+- **Injecting a voltage there fights the board's own driver** — two sources on
+  one node.
+- **Cutting the board out and driving the fans directly discards the unit's
+  logic**, and the manual shows how much of it is tied to fan speed: during
+  defrost the supply fan stops and the exhaust fan runs at speed 3, on a
+  two-hour check cycle below −15 °C. Frost protection and the afterheater go
+  with it.
 
-### The board in stock
+Stepless control would genuinely beat four steps. It is not available here at
+an acceptable price.
 
-Three ESP32 boards are on the shelf: **two of this type** — photographed in
-[`esp32-devkit.jpg`](esp32-devkit.jpg) — and one DevKitC WROOM-32U, which
-belongs to [`../hirvirata/`](../hirvirata/). Take one of the pair; the other is
-[`../axioma.effection/`](../axioma.effection/)'s. **All three are allocated**,
-so a fourth board is a purchase.
+---
 
-What the photo settles:
+# Keep for EDA readers: the official register map
 
-- **30-pin DevKit layout**, 15 pins per side. Every pin in the wiring table below
-  is brought out on it.
-- **USB-C**, not micro-USB, and the USB bridge is a **CH340C** — so it is the
-  CH34x driver that has to be present on the flashing machine, not CP210x.
-- On-board **AMS1117-3.3** regulator, and a `VIN` pin, so 5 V may be fed in
-  directly instead of over USB.
-- The module carries a **printed PCB antenna**, so it needs no antenna part —
-  right for this project, since a ventilation unit sits indoors where a PCB
-  antenna is enough.
+This does **not** apply to this unit. It is recorded because it was expensive to
+find and because it is authoritative — Enervent's own KNX adapter instructions,
+which describe the gateway as an `IntesisBox KNX-Modbus RTU master` on the
+Freeway port, making that port a Modbus slave on **EDA** boards.
 
-  **The shield reads `ESP-32`, not `ESP32-WROOM-32`.** This file used to call it
-  a WROOM-32; that was inferred from the antenna and the footprint, not read off
-  the part. Functionally it behaves as one and ESPHome's `esp32dev` profile
-  fits, but a genuine Espressif WROOM prints its own name on the can. Treat the
-  module as an unbranded equivalent — which matters only if a datasheet-level
-  question ever comes up, and not for pin assignment or flashing.
+Bus settings: `RS485`, baud `19200`, slave address `1`. Parity is not stated;
+eda-modbus-bridge uses none.
 
-## Found in the same box: a GYBMEP sensor breakout
-
-Not part of the plan, and not needed for Modbus — recorded because it turned up
-with this project's parts. [`gybmep-sensor.jpg`](gybmep-sensor.jpg).
-
-Ordered as an **APKLVSR BME280 module, pack of two**, sold as the real BME280
-with humidity, 5 V tolerant, I²C. **Both are here and both look identical**, so
-the pair never got split across projects — which also means there is no second
-box to point at what they were bought for. No project in this repo has ever
-documented a use for them, and nothing in the git history does either. The
-purpose is simply not recorded.
-
-Two identical boards means one is spare whatever they end up doing.
-
-The purple `GYBMEP` breakout is the common Bosch BME280 / BMP280 board: a 662K
-(XC6206) 3.3 V regulator and level shifting on board, so it accepts 3–5 V, and
-the four-hole version is **I²C only** with the address fixed on the board —
-usually 0x76. Scan the bus rather than assume.
-
-**Confirm which sensor actually arrived.** The listing says BME280, but these
-purple boards are routinely shipped as BME280 while carrying a BMP280, which
-measures temperature and pressure but **not humidity** — the one reading that
-would make this module worth using here. Register 0xD0 settles it: 0x60 is a
-BME280, 0x58 a BMP280. ESPHome reports it at startup — `bme280_i2c` refuses to
-start against a BMP280, and `bmp280_i2c` is the component for that case.
-
-If it turns out to be a real BME280 it is worth something here: supply and
-extract air humidity is exactly the reading a ventilation unit's Modbus register
-map may not expose, and it rides on the same ESP32 over I²C without touching the
-RS-485 side. That is a later decision, not part of getting Modbus working.
-
-## Why ESP32 instead of ESP8266 — a stock question, not a technical one
-
-**An ESP8266 would do this job.** Modbus RTU at 9600 baud is a light load, and
-the UART constraint that looks like a blocker has a clean fix. This file used to
-list "multiple hardware UARTs" and "better ESPHome support" as reasons; that is
-vague enough to read as *the ESP8266 cannot*, which is not true.
-
-**The constraint, precisely.** The ESP8266 has one full hardware UART. UART0's
-RX and TX are the pins the USB console and serial logging use, and **UART1 has TX
-only** — its RX pin is committed to flash. Modbus needs both directions, so the
-options are UART0 or a software serial port.
-
-**And UART0 is the right answer, because the log does not depend on it.** Set
-`logger: baud_rate: 0` and the serial console is released for the `uart`
-component while **logging continues over the ESPHome API on WiFi.** That is
-standard practice rather than a compromise, and it is why the old wording
-"requires disabling the serial logger" overstated the cost.
-
-What is genuinely given up:
-
-- **The serial console**, and with it the two things that only ever appear
-  there: setup-phase lines and a panic backtrace. That cost is invisible until
-  something breaks in a way that prevents booting — see
-  [`../axioma.effection/CLAUDE.md`](../axioma.effection/CLAUDE.md), where an API
-  log stream could not show a radio driver's own register read.
-- **RAM headroom**, if the register map turns into 50–100 entities. A listening
-  configuration with a handful of sensors is nowhere near that.
-
-**So the reason to use the ESP32 here is which board is scarcer.** One of the
-DevKit pair is already allocated to this project and using it costs nothing;
-the spare D1 mini is the documented fallback for
-[`../stiebel.eltron/`](../stiebel.eltron/) — the only system in this repo that
-is actually running — and it is shared with [`../hirvirata/`](../hirvirata/).
-Spending the scarce part to save the plentiful one is the wrong way round.
-
-**The migration path stays open, and it is three lines.** `esp32:` → `esp8266:`,
-the UART pins to GPIO1/GPIO3, and `logger: baud_rate: 0`. Of the three projects
-holding an ESP32, this is the one that moves most cleanly — worth knowing if a
-board is ever needed elsewhere in a hurry.
-
-## Architecture
+Freeway pinout, from Enervent's own drawing — `20 m RJ4P4C erikoiskaapeli`, a
+*special* cable:
 
 ```
-Enervent Pegasos Eco ECE
-        │
-      RJ11
-        │
-   RS-485 (A/B)
-        │
-     MAX485 module
-        │
-      UART (TTL)
-        │
-       ESP32
-        │
-      Wi-Fi API
-        │
- Home Assistant (Podman)
+PIN 1 - 5 VDC     PIN 2 - +     PIN 3 - -     PIN 4 - GND
 ```
 
-## ESP32 ↔ RS-485 module wiring
+Holding registers, value × 10 for temperatures:
 
-Drawn out in [`wiring.svg`](wiring.svg), together with the unit side and the
-checks that come before anything is plugged in.
+| Register | Signal |
+|---|---|
+| `3x0006` | Outside air temperature |
+| `3x0007` | Supply air temperature after HRC |
+| `3x0008` | Supply air temperature |
+| `3x0009` | Waste air temperature |
+| `3x0010` | Exhaust air temperature |
+| `3x0011` | Exhaust air before HRC (heat pump units) |
+| `3x0013` | Exhaust air humidity, 0–100 % |
+| `3x0029` `3x0030` | HRC efficiency, supply and exhaust side |
+| `3x0046` | Room temperature average |
+| `3/16x0053` | **Ventilation output, RW, 20–100** |
+| `3/16x0135` | Temperature setpoint, RW, 10–40 °C |
 
-**The module in stock switches direction by itself.** Five JZK TTL↔RS-485
-boards were bought, described as having *automatic hardware flow control*: the
-driver enable is handled on the board from activity on the TX line, and no
-control pin is brought out to the MCU. That removes a wire, a GPIO and a line of
-YAML.
+Coils `1x0001`–`1x0012` carry away, away long, overpressure, cooker hood,
+central vacuum, max heating, max cooling, manual forcing and summer night
+cooling; `1x0041` and `1x0042` are alarm A and B, read-only.
 
-| RS-485 module | ESP32 |
-|---------------|-------|
-| RXD | TX (GPIO17) |
-| TXD | RX (GPIO16) |
-| VCC | 3.3 V |
-| GND | GND |
+**Note what `0053` is not.** Ventilation output is a **percentage, 20–100**, not
+a speed 1–4. The 1–4 concept belongs to AC-fan units, which the same document
+encodes separately as `8-15 = AC fan speed 1-8`. An `eco` unit has EC fans and
+answers in percent.
 
-Note the crossover: the module's RXD takes what the ESP32 transmits.
+---
 
-With this board there is **no `flow_control_pin`** in the ESPHome `uart:` block.
-Auto-direction boards derive their turnaround from the baud rate, so keep an eye
-on it if the unit turns out to run faster than the usual 9600 or 19200 — at
-Modbus RTU speeds it is a non-issue.
+# Remaining unknowns
 
-**Check the board before wiring.** If the one you pick up has `DE` and `RE` pins
-brought out, it is the classic MAX485 breakout instead, and it needs the older
-scheme: tie RE and DE together to a GPIO (GPIO4 works) and declare that GPIO as
-`flow_control_pin`. Then the pin names are RO → RX and DI → TX rather than
-TXD/RXD.
+The blocking item is no longer a purchase. It is a decision.
 
-## MAX485 ↔ Enervent
+1. **Whether the project is worth building at all**, and at what scope. The
+   honest case is in [README.md](README.md) — it is a fault notification, not an
+   energy project.
+2. **Terminal designations, confirmed on this board.** The table above is read
+   from the manual's text, extracted heuristically from a PDF whose tables did
+   not survive cleanly. Confirm against the wiring diagrams at the end of the
+   manual before wiring.
+3. **Whether the fault output is normally-closed or normally-open in service** —
+   `NC`, `COM` and `NO` are all brought out, so either polarity is available,
+   but which one means "healthy" wants checking rather than assuming. This repo
+   has been caught by exactly that inversion once already, on the heat pump's
+   EVU contact.
 
-The MAX485 connects to the Enervent RS-485 bus.
+## Not worth investigating
 
-```
-Enervent A (D+)
-        │
-        ├──── MAX485 A
+**Decoding the panel bus.** It is technically tractable — there is continuous
+traffic, and a button press provokes a deterministic change, which is a better
+handle than the heat pump's bus ever offered. But the payoff is the contents of
+a keypad: four speed LEDs, a setpoint step, a few status lights. Almost all of
+it is already on the screw terminals as dry contacts, and the one thing it would
+add — reading what somebody set at the wall panel — is cheaper to get by
+watching the panel's own LEDs.
 
-Enervent B (D-)
-        │
-        ├──── MAX485 B
-```
-
-If communication fails initially, swap A and B.
-
-## Connector notes
-
-The Enervent uses a modular connector rather than screw terminals, and it is
-4P4C — see above for why that matters and what it rules out.
-
-A breakout board is **not required** if:
-
-- a 4P4C cable is used
-- one end of the cable is cut
-- the conductors are stripped and connected directly to the module
-
-A breakout only makes identifying the pins easier, and an RJ11 one will not fit.
-
-## Important Warning
-
-Do **not** assume the pinout, even the one in this file.
-
-The connector carries:
-
-- RS-485 A/B
-- Ground
-- **A supply voltage** — pin 1, +5 VDC
-
-Verify with a meter before wiring, and find that supply pin first so it can be
-left alone.
-
-## ESPHome
-
-Recommended communication settings:
-
-- Protocol: Modbus RTU
-- Baud rate: 9600
-- Data bits: 8
-- Parity: None
-- Stop bits: 1
-
-Typical slave ID is 1 but should be verified.
-
-ESPHome components:
-
-- uart
-- modbus
-- modbus_controller
-
-## Home Assistant
-
-No USB passthrough is required because the ESP32 communicates with Home Assistant over Wi-Fi using the native ESPHome API.
-
-Advantages:
-
-- No serial devices inside the Podman container
-- Automatic entity discovery
-- OTA firmware updates
-- Stable long-term operation
-
-## Remaining Unknowns
-
-All three now have a documented source, so what is left is verification on this
-unit rather than research:
-
-1. **Connector and pinout** — 4P4C with the pin table above, unverified for
-   Pegasos and unmeasured on this cable
-2. **Modbus slave address** — read it from the control panel, and change 0 to 1
-3. **Enervent Modbus register map** — the *Modbus Registers* document, linked
-   above
-
-The blocking item is none of those: it is **having a 4P4C cable in hand.**
-
-Once the register map is available, ESPHome can expose:
-
-- Supply air temperature
-- Extract air temperature
-- Outdoor air temperature
-- Exhaust air temperature
-- Fan speeds
-- Operating mode
-- Boost mode
-- Filter reminder
-- Alarm status
-- Heat recovery status
-
-## Next Steps
-
-The first two cost nothing and decide what gets ordered:
-
-1. **Count the positions in the jack** — four or six. Everything else waits on
-   this, because it is the one step with a delivery time behind it.
-2. **Read the Modbus address from the control panel**, and change it to 1 if it
-   reads 0.
-3. Get a 4P4C cable, cut one end, and identify the conductors by colour — then
-   confirm with a meter which colour reaches which contact, because handset
-   cords are reversed.
-4. Wire red → A, green → B, yellow → ground, **black to nothing**.
-5. Flash ESPHome with `uart` and `modbus_controller`, 9600 8N1, and one read
-   request. If nothing answers, swap A and B, then try 19200.
-6. Identify the registers against the Enervent document.
-7. Add sensors, switches and controls, and integrate with Home Assistant.
-
-## Long-Term Goal
-
-Create a completely local integration for the Enervent Pegasos Eco ECE that provides monitoring and control through Home Assistant without relying on any cloud service.
+Recorded so the question is not reopened without a reason.
