@@ -121,6 +121,13 @@ Then unplug the cable from the unit.
 **6. Wire the ESP32 to the module** — four wires, tables above, power off. Mind
 the crossover.
 
+> The module ships with its pin header **loose in the bag**, so there is one
+> soldering job in this project after all. Hold the header square by pressing
+> it into a breadboard, or tack one end pin and straighten by remelting that
+> single joint before doing the rest. Check for bridges between adjacent pins
+> before the board sees power. The screw terminal is usually fitted already —
+> confirm it.
+
 > Measure between 3V3 and GND before applying power. A short there is a
 > misplaced jumper, and it is cheaper to find with a meter than with smoke.
 
