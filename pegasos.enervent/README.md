@@ -85,10 +85,14 @@ On the Enervent side, red → A, green → B, yellow → ground.
 Three things worth knowing before wiring, none of them obvious from the pin
 tables:
 
-- **The screw terminal has three poles, not two: `A+`, `B−` and an earth
-  terminal** marked for the surge protection. It is not the signal ground.
-  Where the unit's ground conductor belongs is settled with a meter — see
-  step 7 of the procedure.
+- **Every connection on this board is a solder pad.** No screw terminal and no
+  header are fitted: four holes on the logic side, three on the bus side, and
+  all seven have to be soldered. That is two soldering jobs, not one.
+- **The bus side has three pads — `A+`, `B−` and a ground of its own** — and
+  that ground is **not** the logic side's. The two are separate nets: the
+  bus-side one belongs to the surge protection, the logic-side one is the
+  signal common. It decides where the unit's ground conductor goes, and the
+  answer is not the one the labels suggest — see step 7.
 - **Two LEDs, Send and Rec.** They are the fastest diagnostic this project
   has: the send light proves the ESP32 is transmitting, the receive light
   proves something answered. Between them they split a silent bus into two
@@ -138,12 +142,16 @@ Then unplug the cable from the unit.
 **6. Wire the ESP32 to the module** — four wires, tables above, power off. Mind
 the crossover.
 
-> The module ships with its pin header **loose in the bag**, so there is one
-> soldering job in this project after all. Hold the header square by pressing
-> it into a breadboard, or tack one end pin and straighten by remelting that
-> single joint before doing the rest. Check for bridges between adjacent pins
-> before the board sees power. The screw terminal is usually fitted already —
-> confirm it.
+> The module ships bare: **nothing is fitted to either side**, so both the
+> four logic pads and the three bus pads have to be soldered. Hold a header
+> square by pressing it into a breadboard, or tack one end pin and straighten
+> by remelting that single joint before doing the rest. Check for bridges
+> between adjacent pins before the board sees power.
+>
+> **Fit a header on the bus side too, not the cable directly.** The bring-up
+> sweep includes swapping A and B, and with the conductors soldered in place
+> that is two desolderings per attempt. Three pins and jumpers make it a
+> five-second change. Solder the cable in permanently once the bus answers.
 
 > Measure between 3V3 and GND before applying power. A short there is a
 > misplaced jumper, and it is cheaper to find with a meter than with smoke.
@@ -151,19 +159,23 @@ the crossover.
 **7. Wire the module to the cable** — red to `A+`, green to `B−`, black to
 nothing.
 
-Yellow is the one that needs a decision, because the terminal's third pole is
-an **earth** pole for the surge protection and not necessarily the signal
-ground. **Measure continuity between that pole and the header's GND pin.**
-Same net → either will do. Different nets → the unit's ground joins the
-*header* side, on the same net as the ESP32, and the earth pole stays empty.
-There is no protective earth in this install to connect it to.
+**Yellow does not go to the ground pad next to `A+` and `B−`**, and that is the
+counter-intuitive part of this board. The two sides carry separate grounds: the
+bus-side one is the earth return for the surge protection, and the logic-side
+one is the signal common. **Yellow joins the logic-side GND, on the same net as
+the ESP32.** The bus-side ground pad stays empty — there is no protective earth
+in this install to connect it to.
 
-That is what "one net, one reference" in [`wiring.svg`](wiring.svg) means: the
-RS-485 signal common and the ESP32's ground have to be the same node, or the
-receiver has nothing to measure its differential against.
+That is what "one net, one reference" in [`wiring.svg`](wiring.svg) means. An
+RS-485 receiver measures a differential against its own common; if the unit's
+ground is tied to a net the receiver does not share, there is nothing anchoring
+the pair and the common-mode voltage is free to drift out of range.
 
-**Do not tin the ends**: solder cold-flows under a screw clamp and the joint
-starts failing months later. Fold a thin conductor double instead.
+> **One observation would reverse this: a routed isolation slot across the
+> board.** A genuinely isolated module keeps the two sides apart on purpose,
+> and bridging them defeats the isolation — there the signal common belongs on
+> the bus side. These boards are normally not isolated, and the slot is
+> visible if it is there. Look before soldering.
 
 **8. Flash and verify before the cable goes anywhere near the unit.** Power the
 ESP32 from a separate USB supply — not from the unit's +5 V, which is a
