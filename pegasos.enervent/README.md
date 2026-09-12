@@ -100,6 +100,18 @@ tables:
 - **A fuse and dual TVS diodes are already fitted.** The separate bus
   protection that [`../stiebel.eltron/`](../stiebel.eltron/) has to buy is not
   needed here — this board carries it.
+- **A 120 Ω terminator is on the board but out of circuit**, brought in by
+  shorting the pad marked `R0`. **Leave it open.** The manufacturer recommends
+  shorting it for long runs, and this run is a couple of metres at 9600 baud —
+  two orders of magnitude away from where reflections begin to matter. It is
+  also the cheapest thing to try if the bus ever works *unreliably*, which is
+  a different symptom from the silence the procedure below is built around.
+- **2.54 mm pitch on both sides**, so an ordinary pin header fits either one.
+
+The manufacturer settles the earth question in the same breath: connecting the
+earth pad is for long outdoor runs with lightning exposure, and **"indoor short
+distance transmission cannot access the earth."** This installation is indoors
+and a couple of metres. The pad stays empty.
 
 > **Pin 1 is +5 V. Leave it unconnected.** Find the supply pin with a meter
 > before wiring anything, and do not trust pin numbers through the cable —
@@ -171,11 +183,9 @@ RS-485 receiver measures a differential against its own common; if the unit's
 ground is tied to a net the receiver does not share, there is nothing anchoring
 the pair and the common-mode voltage is free to drift out of range.
 
-> **One observation would reverse this: a routed isolation slot across the
-> board.** A genuinely isolated module keeps the two sides apart on purpose,
-> and bridging them defeats the isolation — there the signal common belongs on
-> the bus side. These boards are normally not isolated, and the slot is
-> visible if it is there. Look before soldering.
+The bus side has no signal ground of its own to use instead — `A+`, `B−` and
+earth is the whole of it — which settles the question by elimination rather
+than by preference.
 
 **8. Flash and verify before the cable goes anywhere near the unit.** Power the
 ESP32 from a separate USB supply — not from the unit's +5 V, which is a
