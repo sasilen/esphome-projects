@@ -80,6 +80,23 @@ the first try, swap A and B — this is the cheapest thing to rule out.
 
 On the Enervent side, red → A, green → B, yellow → ground.
 
+### What is on the board
+
+Three things worth knowing before wiring, none of them obvious from the pin
+tables:
+
+- **The screw terminal has three poles, not two: `A+`, `B−` and an earth
+  terminal** marked for the surge protection. It is not the signal ground.
+  Where the unit's ground conductor belongs is settled with a meter — see
+  step 7 of the procedure.
+- **Two LEDs, Send and Rec.** They are the fastest diagnostic this project
+  has: the send light proves the ESP32 is transmitting, the receive light
+  proves something answered. Between them they split a silent bus into two
+  halves without reading a single log line.
+- **A fuse and dual TVS diodes are already fitted.** The separate bus
+  protection that [`../stiebel.eltron/`](../stiebel.eltron/) has to buy is not
+  needed here — this board carries it.
+
 > **Pin 1 is +5 V. Leave it unconnected.** Find the supply pin with a meter
 > before wiring anything, and do not trust pin numbers through the cable —
 > handset cords are reversed end to end. Reasoning in [`CLAUDE.md`](CLAUDE.md).
@@ -131,10 +148,22 @@ the crossover.
 > Measure between 3V3 and GND before applying power. A short there is a
 > misplaced jumper, and it is cheaper to find with a meter than with smoke.
 
-**7. Wire the module to the cable** — red to A, green to B, yellow to GND,
-black to nothing. **Do not tin the ends**: solder cold-flows under a screw
-clamp and the joint starts failing months later. Fold a thin conductor double
-instead.
+**7. Wire the module to the cable** — red to `A+`, green to `B−`, black to
+nothing.
+
+Yellow is the one that needs a decision, because the terminal's third pole is
+an **earth** pole for the surge protection and not necessarily the signal
+ground. **Measure continuity between that pole and the header's GND pin.**
+Same net → either will do. Different nets → the unit's ground joins the
+*header* side, on the same net as the ESP32, and the earth pole stays empty.
+There is no protective earth in this install to connect it to.
+
+That is what "one net, one reference" in [`wiring.svg`](wiring.svg) means: the
+RS-485 signal common and the ESP32's ground have to be the same node, or the
+receiver has nothing to measure its differential against.
+
+**Do not tin the ends**: solder cold-flows under a screw clamp and the joint
+starts failing months later. Fold a thin conductor double instead.
 
 **8. Flash and verify before the cable goes anywhere near the unit.** Power the
 ESP32 from a separate USB supply — not from the unit's +5 V, which is a
@@ -148,7 +177,21 @@ timeout here is the correct result** — nothing is connected yet.
 > broken" from "the bus is silent", and those two produce the same symptom if
 > they are tested together.
 
-**9. Plug the cable in and watch.** Three outcomes:
+**9. Plug the cable in and watch — the LEDs first, then the log.** The two
+lights answer a question the log cannot, because they sit on the wire rather
+than in the software:
+
+| Send | Rec | Means |
+|---|---|---|
+| blinks | blinks | both directions work; whatever is wrong is in the protocol, not the wiring |
+| blinks | dark | **the ESP32 transmits and nothing answers** — slave id, baud, polarity, or the unit is not listening |
+| dark | — | nothing is being sent. The fault is on the ESP32 side: UART pins, the crossover, or the config |
+
+The third row is the one worth having. A dark send light means the four-way
+sweep below would be wasted effort, because the problem is upstream of the
+bus entirely.
+
+Then the log, which says the same thing in more detail:
 
 | Log | Means |
 |---|---|
