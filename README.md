@@ -18,7 +18,7 @@ muuten mDNS ei toimi eikä OTA löydä levyjä.
 | [bestway.lay-z-spa](bestway.lay-z-spa/) | Bestway Lay-Z-SPA -poreallas | CIO/DSP-lattakaapeli → **MQTT** | ESP8266 + tasonsiirrin | **Käytössä**. Ei ESPHome, ks. alla |
 | [hirvirata](hirvirata/) | Liikkuva maalitaulurata | — (H-silta, PWM) | Wemos D1 mini + L298N + 12 V vaihdemoottori | Suunnittelu, YAML-luonnos valmis |
 | [stiebel.eltron](stiebel.eltron/) | Stiebel Eltron WPC 07 -lämpöpumppu | CAN 20 kbps | ESP8266/ESP32 + MCP2515 (5 V → 3,3 V -muutos) | Suunnittelu, rauta osin hankittu, kuuntelu-YAML valmis |
-| [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | **Potentiaalivapaat koskettimet** (ei Modbusia — ECC05) | ESP32 + rele | Suunnittelu, ei odota osia |
+| [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | Potentiaalivapaat koskettimet (ei Modbusia — ECC05) | — | **Ei toteuteta.** Perustelu kirjattu |
 | [axioma.effection](axioma.effection/) | Axioma Effectio / Qalcosonic W1 -vesimittari | Wireless M-Bus 868,95 MHz T1/C1 | ESP32 + CC1101 | Kuuntelee, mutta mittari on LoRaWAN-luennassa |
 
 ## Levyt ja varasto
@@ -29,24 +29,26 @@ kaikki lasketaan yhteen.
 | Levy | Käytössä | Varattu suunnitelmissa | Vapaana sen jälkeen |
 |---|---|---|---|
 | Wemos D1 mini (ESP8266-12F, CH340G, USB-C) | aidon, bestway.lay-z-spa, stiebel.eltron | — | **1** |
-| ESP32 | — | pegasos.enervent, axioma.effection, hirvirata | **0** |
+| ESP32 | — | axioma.effection, hirvirata | **1** |
 | ESP32-C3 SuperMini, 6 kpl (odottaa osia) | — | stiebel vaihe 2, kaksi jakotukkisolmua, puskurisolmu | **2** |
 
 Kolme ESP32:ta ei ole kolme samanlaista, vaan 2 + 1:
 
 | Levy | Kpl | Tuntomerkit | Kenelle |
 |---|---|---|---|
-| [30-nastainen DevKit](pegasos.enervent/esp32-devkit.jpg) | 2 | USB-C, CH340C, printattu PCB-antenni | pegasos.enervent, axioma.effection |
+| [30-nastainen DevKit](pegasos.enervent/esp32-devkit.jpg) | 2 | USB-C, CH340C, printattu PCB-antenni | axioma.effection, **yksi vapaa** |
 | [38-nastainen DevKitC](hirvirata/esp32-devkitc-wroom32u.jpg) | 1 | micro-USB, QFN-silta (CP2102-luokkaa), **WROOM-32U + u.FL** | hirvirata |
 
-**Kaikki kolme ESP32:ta ovat varattuja.** Ulkoantennilevy meni hirviradalle,
+**Kaksi kolmesta ESP32:sta on varattu.** Ulkoantennilevy meni hirviradalle,
 jossa se on ainoa jolla on merkitystä: ohjausrasia on ulkona ja harjamoottorin
 kipinöinti häiritsee WiFiä, joten antenni kannattaa saada ulos kotelosta.
 Muualla printtiantenni riittää.
 
-Vapaa levy on siis **D1 mini**, ei ESP32. Se on hirviradan pakotie siltä
-varalta ettei ulkoantennilevy toimi, ja varalevy stiebelin vaiheelle 1 — repon
-ainoalle käynnissä olevalle mittausjärjestelmälle.
+Vapaita on nyt kaksi: **D1 mini** ja **yksi 30-nastainen DevKit**, joka
+vapautui kun pegasos päätettiin jättää toteuttamatta 13.9.2026. D1 mini on
+hirviradan pakotie siltä varalta ettei ulkoantennilevy toimi, ja varalevy
+stiebelin vaiheelle 1 — repon ainoalle käynnissä olevalle
+mittausjärjestelmälle.
 
 **Kuusi ESP32-C3:a odottaa saapumista, ja se poistaa levypulan.** Rajoitetta ei
 siis enää ole, ja kaksi jää yli senkin jälkeen kun stiebelin vaihe 2 ja
@@ -136,22 +138,25 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 |---|---|---|
 | stiebel.eltron | — **odottaa osia**: lähetinvastaanotin ja C3 | Ei |
 | axioma.effection | — **odottaa PN5180:tä** | Ei enää osa, vaan asennus mittarin viereen |
-| pegasos.enervent | — **ei mitään.** Kaapeli ei ole enää este, koska Modbusia ei ole | Ei |
+| pegasos.enervent | — projektia ei toteuteta | — |
 | hirvirata | 2020-profiili, eksentriset välikkeet, M5-pultit, sulake + pidike, DC-jakki | Kyllä |
 | aidon | Schottky SS14 tai 1N5819 — kovetus jäi tekemättä. 330 Ω on hyllyssä | Ei, laite on käytössä |
 | bestway.lay-z-spa | — | — |
 
-**Pegasoksen rivi tyhjeni, mutta ei siksi että kaapeli olisi saapunut.**
-Kaksi viikkoa projekti odotti 4P4C-kaapelia Modbus-yhteyttä varten. Koneessa ei
-ole Modbusia: automatiikka on ECC05 ja molemmat nelipaikkaiset liittimet ovat
-ohjauspaneelien portteja. Ohjaus tehdään potentiaalivapaista koskettimista,
-joihin ei tarvita kaapelia eikä RS-485-moduulia. Perustelut:
-[pegasos.enervent/CLAUDE.md](pegasos.enervent/CLAUDE.md).
+**Pegasos jätettiin toteuttamatta 13.9.2026**, ja perustelu on kirjattu sen
+omaan [README:hen](pegasos.enervent/README.md). Lyhyesti: ainoa arvokas signaali
+on vikalähtö, se on 230/400 V:n kotelon sisällä, ja sähkönsäästöä ei projektissa
+ole. Kone on ilmanvaihtanut talon vuosia ilman tätä.
 
-**Se on repon kallein yksittäinen virhe tähän mennessä**, kahdeksantoista
-committia väärälle sukupolvelle kirjoitettua dokumentaatiota. Syy on kirjattu
-sinne: lähde oli täsmällinen, oikean valmistajan ja väärän automaatiopolven —
-ja repossa oli jo sääntö juuri tästä, stiebelin liitintyöstä.
+Tiedostot jäävät, koska ne kertovat myös **mikä avaisi asian uudelleen** — ja
+todennäköisin niistä on että sähköasentaja avaa sen kotelon jostain muusta
+syystä, jolloin vikakosketin on kahdenkymmenen minuutin lisätyö.
+
+Matkalla kumoutui projektin koko alkuperäinen premissi: konetta rakennettiin
+kahdeksantoista committia Modbus-väylälle jota siinä ei ole. Lähde oli
+täsmällinen, oikean valmistajan ja väärän automaatiopolven — ja repossa oli jo
+sääntö juuri tästä, stiebelin liitintyöstä kirjattuna. Se on tämän projektin
+pysyvin anti.
 
 Stiebelin rivi muuttui 6.9.2026: ESPHomen `esp32_can` hyväksyy 20 kbps:n
 **ESP32-S3:lla ja -C3:lla** vaikka kieltäytyy siitä tavallisella ESP32:lla, ja

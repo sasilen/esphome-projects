@@ -2,10 +2,21 @@
 
 > **Technical details and reasoning.** Overview: [README.md](README.md).
 
-## Goal
+## Status: shelved 13.9.2026, and this file is the record
 
-Read the ventilation unit's fault state into Home Assistant, and optionally
-select its fan speed, **using the potential-free terminals the control board
+**The project is not being built.** The case against it is in
+[README.md](README.md); the short version is that the only lever with real value
+sits behind a 230/400 V enclosure, there is no energy saving in any of it, and
+nothing in the house is worse for its absence.
+
+This file is kept because the knowledge in it was expensive and because it is
+what makes the project cheap to restart. Everything below is true of the unit;
+none of it is a plan.
+
+## What it would have been
+
+Reading the ventilation unit's fault state into Home Assistant, and optionally
+selecting its fan speed, **using the potential-free terminals the control board
 already provides.** Locally, over the ESPHome native API, without MQTT.
 
 ## What the unit is
@@ -185,22 +196,32 @@ answers in percent.
 
 ---
 
-# Remaining unknowns
+# If it is ever built
 
-The blocking item is no longer a purchase. It is a decision.
+The decision was the blocking item and it has been made. Should one of the
+conditions in [README.md](README.md) reopen it, three things are unverified and
+all three are cheap:
 
-1. **Whether the project is worth building at all**, and at what scope. The
-   honest case is in [README.md](README.md) — it is a fault notification, not an
-   energy project.
-2. **Terminal designations, confirmed on this board.** The table above is read
+1. **Terminal designations, confirmed on this board.** The table above is read
    from the manual's text, extracted heuristically from a PDF whose tables did
    not survive cleanly. Confirm against the wiring diagrams at the end of the
-   manual before wiring.
-3. **Whether the fault output is normally-closed or normally-open in service** —
-   `NC`, `COM` and `NO` are all brought out, so either polarity is available,
-   but which one means "healthy" wants checking rather than assuming. This repo
-   has been caught by exactly that inversion once already, on the heat pump's
-   EVU contact.
+   manual before wiring anything.
+2. **Whether the fault output reads closed or open when healthy.** `NC`, `COM`
+   and `NO` are all brought out, so either polarity is available and the wiring
+   decides it. Trigger a fault deliberately and watch which way it moves. This
+   repo has been caught by exactly that inversion once already, on the heat
+   pump's EVU contact, where the entity meant the opposite of its own name.
+3. **Whether a duct sensor belongs in the airstream rather than on the duct.**
+   It does. A water pipe's wall sits at water temperature and a strapped-on
+   sensor reads it; **air does not transfer heat well enough for that to hold**,
+   so a sensor taped to a duct reads a mixture of air and room. Drill, insert
+   the probe into the flow, seal the entry. The unit's own `T1`/`T2`/`T3` are
+   in the airstream for the same reason.
+
+Note also that the supply duct is measured **after the electric afterheater**,
+so supply-side recovery efficiency cannot be computed from outside the machine.
+The exhaust-side figure can: `(extract − exhaust) / (extract − outdoor)`, all
+three from ducts.
 
 ## Not worth investigating
 
