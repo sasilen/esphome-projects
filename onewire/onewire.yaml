@@ -11,11 +11,15 @@
 # DS18S20 `10.0ED2A0020800`, joka oli isännän pään laite — samasta päästä
 # puuttuu myös DS2438, ja ne katosivat yhdessä.
 #
-# **Mutta vain viisi antaa lukeman; viisitoista palauttaa `nan`.** Luettelointi
-# onnistuu kaikilla, lukeminen ei, joten vika on signaalin laadussa eikä
-# osoitteissa. Ne viisi toimivaa ovat täsmälleen vuosien 2015 ja 2020 välillä
-# lisätyt ovikattoanturit. Perustelut ja korjausjärjestys ovat CLAUDE.md:ssä;
-# ensimmäinen kokeiltava on ylösvedon lasku 2,2 kΩ:iin.
+# **Mutta vain viisi antaa lukeman; neljätoista palauttaa `nan`.** Loki nimeää
+# syyn: `dropping reading caused by sensor reset` eli rekisterissä on tasan
+# 85,0 °C ja tavu 6 on 0x0C. Anturi vastaa, CRC on kunnossa — **muunnos ei vain
+# koskaan tapahdu.** Ne neljätoista ovat loiskäytöllä eivätkä saa virtaa
+# muunnoksen ajaksi.
+#
+# Jako on kategorinen eikä asteittainen: 21 kierrosta, 5/5 onnistui ja 14/14
+# epäonnistui, ei yhtään poikkeusta kumpaankaan suuntaan. Perustelut ovat
+# CLAUDE.md:ssä.
 #
 # Kytkentä on wiring.svg:ssä. Neljä johdinta: RJ45:n nasta 2 on 5 V, nasta 4 on
 # data GPIO4:ään, nastat 1 ja 5 ovat maita. Ylösveto 4,7 kΩ GPIO4:n ja 3V3:n
@@ -96,13 +100,25 @@ one_wire:
 # vierashuoneeseen — lyhenne säilyy OWFS-kommentissa, jos se joskus osoittautuu
 # toiseksi.
 #
-# Muunnosnopeus on 750 ms per anturi täydellä 12 bitin tarkkuudella, ja näitä
-# on kaksikymmentä — noin 15 s väyläaikaa minuutissa. `resolution: 11`
-# puolittaa sen ja jättää tarkkuudeksi 0,125 astetta, enemmän kuin rakenteen
-# lämpötilalta tarvitaan.
+# **`resolution: 9` on neljälletoista, ja se on koe.**
 #
-# **Sitä ei silti aseteta vielä.** Ylösvedon lasku on ensimmäinen kokeiltava, ja
-# jos molemmat vaihdetaan yhtä aikaa, ei tiedetä kumpi auttoi.
+# Loiskäytössä anturi käy muunnoksen ajan sisäisen kondensaattorinsa varassa.
+# Ylösveto lataa sitä 0,7 mA:lla ja muunnos tyhjentää nopeammin, joten ratkaisee
+# **varaus eikä virta** — virta kertaa aika. 750 ms → 94 ms on kahdeksasosa
+# vaatimuksesta, ja Raspberry sai nämä ajoittain läpi jo 12 bitillä.
+#
+# Ylösvedon laskeminen ei auta eikä sitä yritetä: jotta anturille jäisi ~3 V
+# 1,5 mA:n vedolla, vastuksen olisi oltava alle 200 Ω, ja silloin isäntä nielisi
+# 16 mA joka kerta kun se vetää linjan alas. **Passiivinen vastus ei korvaa
+# vahvaa ylösvetoa** — juuri siksi vahva ylösveto on olemassa.
+#
+# **Ne viisi toimivaa jätetään 12 bittiin tarkoituksella.** Ne ovat muuttumaton
+# verrokki: jos jokin neljästätoista alkaa raportoida eikä viidessä tapahdu
+# mitään, syy on tässä muutoksessa. Jos koe onnistuu, `resolution: 10` on
+# seuraava askel takaisin tarkkuuteen päin.
+#
+# Puolen asteen askel on karkea, mutta nämä mittaavat rakenteen lämpötilaa —
+# ja nolla desimaalia on parempi kuin nolla lukemaa.
 #
 # `device_class`, `state_class`, `unit_of_measurement` ja `accuracy_decimals`
 # eivät ole tässä, koska **`dallas_temp` asettaa ne jo itse** — asteet,
@@ -114,12 +130,14 @@ sensor:
     one_wire_id: bus_a
     address: 0x0E0004755A26FF28          # 28.FF265A750400
     name: "Keittiö ikkuna sisä"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xAD0004757B89FF28          # 28.FF897B750400
     name: "Keittiö ikkuna ulko"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -144,12 +162,14 @@ sensor:
     one_wire_id: bus_a
     address: 0x8400000557F41E28          # 28.1EF457050000
     name: "Makuuhuone 1 etelä sisä"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x4F00000557EF5828          # 28.58EF57050000
     name: "Makuuhuone 1 länsi"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -162,42 +182,49 @@ sensor:
     one_wire_id: bus_a
     address: 0xA6000473185FFF28          # 28.FF5F18730400
     name: "Makuuhuone 2 itä"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xC9000474357FFF28          # 28.FF7F35740400
     name: "Makuuhuone 3 itä"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x8D00047679ECFF28          # 28.FFEC79760400
     name: "Makuuhuone 3 pohjoinen"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x1B00000557E66528          # 28.65E657050000
     name: "Makuuhuone 4 länsi"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x9300000617537828          # 28.785317060000
     name: "Makuuhuone 4 pohjoinen sisä"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xCB000005F69C7928          # 28.799CF6050000
     name: "Makuuhuone 4 pohjoinen ulko"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x830004767BBAFF28          # 28.FFBA7B760400
     name: "Olohuone sisä"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -210,6 +237,7 @@ sensor:
     one_wire_id: bus_a
     address: 0x5E0004757B80FF28          # 28.FF807B750400
     name: "Olohuone ulko"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -217,12 +245,14 @@ sensor:
     address: 0xB2000476784EFF28          # 28.FF4E78760400
     # VH = vaatehuone omistajan muistin mukaan, ei aineistosta
     name: "Vaatehuone etelä sisä"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x400004757682FF28          # 28.FF8276750400
     name: "Vaatehuone etelä ulko"
+    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
