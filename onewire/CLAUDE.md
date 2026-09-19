@@ -1026,6 +1026,30 @@ mutta sen tuntemattomat lukevat sisälämpötiloja; `050000` on makuuhuoneita,
 mutta sen kaksi tuntematonta ovat koko verkon lämpimimmät. **Eräkoodi kertoo
 milloin, ei missä.**
 
+### Omistajan oletus: alakerran dokumentoimaton haara
+
+Nämä yhdeksän ovat todennäköisesti **alakerran haara, jota ei ole
+dokumentoitu.** Se sopii siihen mitä aineistosta tiedetään: vuoden 2015
+listaukset etenivät huone kerrallaan ja PHP-kartta vuodelta 2020 nimeää
+samat tilat, eli molemmat kattavat saman kerroksen.
+
+Kolme havaintoa tukee sitä:
+
+- **`BFF565` ja `B23B66` lukevat tasan saman** 25,875 °C:n lukeman, eli ne
+  ovat samassa tilassa.
+- **Yksikään ei ole ulkopinta.** Ne ovat kaikki 22,9–25,9 °C, kun tunnetut
+  ulkopinnat ovat 16–19 °C. Haara mittaa sisätiloja eikä rakennetta.
+- **Kolme lämpimintä ovat koko verkon lämpimimmät**, kattorajan antureita
+  lukuun ottamatta.
+
+Yksi asia ei sovi suoraan: **eräkoodit sanovat vähintään kolmea ostoa**, joten
+haara ei ole syntynyt kerralla. Se ei kumoa oletusta vaan tarkentaa sitä —
+haara on kasvanut ajan myötä, mikä sopii tilaan jota on muokattu vähitellen
+eikä rakennettu kerralla valmiiksi.
+
+**Testattavissa yön käyrällä.** Jos ne ovat yhtä ja samaa tilaa, ne jäähtyvät
+samassa tahdissa keskenään ja eri tahdissa kuin yläkerta.
+
 Kaksi havaintoa kannattaa merkitä:
 
 - **`BFF565` ja `B23B66` lukevat täsmälleen saman**, 25,875 °C eli 1/16 asteen

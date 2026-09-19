@@ -148,6 +148,17 @@ sensor:
     address: 0x0E0004755A26FF28          # 28.FF265A750400
     name: "Keittiö ikkuna sisä"
     update_interval: never
+    filters: &lampo
+      # **`nan` ei mene HA:han.** Epäonnistunut luku ei julkaise mitään, joten
+      # entiteetti pitää edellisen arvonsa `unknown`:in sijaan. Rakenteen
+      # lämpötila ei muutu minuutissa, joten vanha lukema on lähempänä totuutta
+      # kuin tyhjä. Epäonnistumiset näkyvät yhä lokissa `Got Temperature=nan`.
+      - filter_out: nan
+      # Julkaise vain kun jotain tapahtui tai vartti on kulunut. Vähentää
+      # API-liikenteen kolmestakymmenestä viestistä minuutissa murto-osaan.
+      - or:
+          - delta: 0.2
+          - heartbeat: 15min
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -155,6 +166,7 @@ sensor:
     address: 0xAD0004757B89FF28          # 28.FF897B750400
     name: "Keittiö ikkuna ulko"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -162,6 +174,7 @@ sensor:
     address: 0x6E00044C35D0FF28          # 28.FFD0354C0400
     name: "Keittiö sisä"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -169,6 +182,7 @@ sensor:
     address: 0x4A00044D1394FF28          # 28.FF94134D0400
     name: "Keittiö sisä ovi katto"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -176,6 +190,7 @@ sensor:
     address: 0x8C00044E2E63FF28          # 28.FF632E4E0400
     name: "Kodinhoitohuone sisä ovi katto"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -183,6 +198,7 @@ sensor:
     address: 0x8400000557F41E28          # 28.1EF457050000
     name: "Makuuhuone 1 etelä sisä"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -190,6 +206,7 @@ sensor:
     address: 0x4F00000557EF5828          # 28.58EF57050000
     name: "Makuuhuone 1 länsi"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -197,6 +214,7 @@ sensor:
     address: 0x3900044E2012FF28          # 28.FF12204E0400
     name: "Makuuhuone 1 sisä ovi katto"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -204,6 +222,7 @@ sensor:
     address: 0xA6000473185FFF28          # 28.FF5F18730400
     name: "Makuuhuone 2 itä"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -211,6 +230,7 @@ sensor:
     address: 0xC9000474357FFF28          # 28.FF7F35740400
     name: "Makuuhuone 3 itä"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -218,6 +238,7 @@ sensor:
     address: 0x8D00047679ECFF28          # 28.FFEC79760400
     name: "Makuuhuone 3 pohjoinen"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -225,6 +246,7 @@ sensor:
     address: 0x1B00000557E66528          # 28.65E657050000
     name: "Makuuhuone 4 länsi"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -232,6 +254,7 @@ sensor:
     address: 0x9300000617537828          # 28.785317060000
     name: "Makuuhuone 4 pohjoinen sisä"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -239,6 +262,7 @@ sensor:
     address: 0xCB000005F69C7928          # 28.799CF6050000
     name: "Makuuhuone 4 pohjoinen ulko"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -246,6 +270,7 @@ sensor:
     address: 0x830004767BBAFF28          # 28.FFBA7B760400
     name: "Olohuone sisä"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -253,6 +278,7 @@ sensor:
     address: 0xF700044C32D4FF28          # 28.FFD4324C0400
     name: "Olohuone sisä ovi katto"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -260,6 +286,7 @@ sensor:
     address: 0x5E0004757B80FF28          # 28.FF807B750400
     name: "Olohuone ulko"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -268,6 +295,7 @@ sensor:
     # VH = vaatehuone omistajan muistin mukaan, ei aineistosta
     name: "Vaatehuone etelä sisä"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -275,6 +303,7 @@ sensor:
     address: 0x400004757682FF28          # 28.FF8276750400
     name: "Vaatehuone etelä ulko"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -285,6 +314,7 @@ sensor:
     # ja se ero on juuri se mitä ylösvedon vaihdon jälkeen katsotaan.
     name: "Nimeämätön DS18S20"
     update_interval: never
+    filters: *lampo
 
 # --------------------------------------------------------------- Perhe 3B
 # Kolme laitetta joita ei ole vuoden 2020 kartassa lainkaan. Perhe 0x3B on
@@ -320,6 +350,7 @@ sensor:
     address: 0x000000001916163B          # 3B.161619000000
     name: "Leivinuuni 1"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -327,6 +358,7 @@ sensor:
     address: 0xCC0000001915A13B          # 3B.A11519000000
     name: "Leivinuuni 2"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -334,6 +366,7 @@ sensor:
     address: 0x6D0000001870913B          # 3B.917018000000
     name: "Leivinuuni 3"
     update_interval: never
+    filters: *lampo
 
 # ------------------------------------------------- Tuntemattomat DS18B20:t
 # Yhdeksän anturia joita **ei ole vuoden 2020 kartassa lainkaan**. Verkkoa on
@@ -354,6 +387,7 @@ sensor:
     address: 0x03000475D890FF28          # 28.FF90D8750400
     name: "Tuntematon 28 FF90D8"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -361,6 +395,7 @@ sensor:
     address: 0x160215539DACFF28          # 28.FFAC9D531502
     name: "Tuntematon 28 FFAC9D"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -368,6 +403,7 @@ sensor:
     address: 0x1A03146583F0FF28          # 28.FFF083651403
     name: "Tuntematon 28 FFF083"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -375,6 +411,7 @@ sensor:
     address: 0x2F000005663BB228          # 28.B23B66050000
     name: "Tuntematon 28 B23B66"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -382,6 +419,7 @@ sensor:
     address: 0x6D00000565F5BF28          # 28.BFF565050000
     name: "Tuntematon 28 BFF565"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -389,6 +427,7 @@ sensor:
     address: 0x7000044E2BC0FF28          # 28.FFC02B4E0400
     name: "Tuntematon 28 FFC02B"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -396,6 +435,7 @@ sensor:
     address: 0xAC021503E5EAFF28          # 28.FFEAE5031502
     name: "Tuntematon 28 FFEAE5"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -403,6 +443,7 @@ sensor:
     address: 0xCE000475DBBAFF28          # 28.FFBADB750400
     name: "Tuntematon 28 FFBADB"
     update_interval: never
+    filters: *lampo
 
   - platform: dallas_temp
     one_wire_id: bus_a
@@ -410,6 +451,7 @@ sensor:
     address: 0xD80000070B272128          # 28.21270B070000
     name: "Tuntematon 28 21270B"
     update_interval: never
+    filters: *lampo
 
   - platform: wifi_signal
     name: "Wi-Fi"
