@@ -396,20 +396,46 @@ ESPHome luetteloi löytämänsä osoitteet itse, ja nimi liitetään niihin
 täsmäämällä sarjanumeron numerot. Kartoitusajo tuottaa siis osoitteet ja tämä
 taulukko nimet.
 
-### Mitä vanhoista listauksista jäi
+### Kaksi lähdettä, ja kumpi voittaa missäkin
 
-Vuoden 2015 listaukset oli otettu haara kerrallaan ja tallennettu kumulatiivisina
-tiedostoina, mikä antaa haarakohtaisen ryhmittelyn: keittiö kuusi laitetta,
-makuuhuoneet kuusi lisää, olohuone kolme, neljäs haara seitsemän.
+Aineistoa on kahdenlaista, ja ne eivät ole samanarvoisia:
 
-Ne sisältävät myös kaksi laitetta joita PHP:n kartassa ei ole: **DS18S20
-`10.0ED2A0020800`** eli nimeämätön vanhemman polven lämpötila-anturi, ja
-`81.566632000000` joka on **DS2490 eli sovitin itse** — OWFS näyttää isännän
-väylän laitteena.
+- **`.txt`-listaukset ovat mitattuja.** Ne ovat OWFS-hakemiston listauksia eli
+  sitä mitä väylä raportoi vuonna 2015.
+- **PHP-kartta on kirjoitettu.** Se on ihmisen tekemä annotaatio vuodelta 2020.
 
-Ja toisin päin: PHP:n kartassa on viisi osoitetta joita vuoden 2015 listauksissa
-ei ole. Verkko on siis kasvanut välissä, ja **PHP on niistä uudempi ja
-täydellisempi lähde.**
+Ristiriidassa **listaus voittaa olemassaolosta ja PHP nimistä**, koska kumpikin
+on ainoa lähde omalle asialleen. Vertailu ei tuottanut ristiriitoja vaan
+aikajanan.
+
+**Väylällä oli 22 laitetta, PHP:ssä on 25.** Viisi PHP:n osoitetta puuttuu
+listauksista, ja ne ovat kaikki samaa tyyppiä: `MH1 sisä ovi katto`, `KHH sisä
+ovi katto`, `K sisä ovi katto`, `OH sisä ovi katto` ja `K sisä`. Verkkoa on siis
+laajennettu ovikatto-antureilla vuosien 2015 ja 2020 välillä.
+
+Toiseen suuntaan kaksi laitetta on nimeämättä: **DS18S20 `10.0ED2A0020800`**,
+vanhemman polven lämpötila-anturi, ja `81.566632000000` joka on **sovitin
+itse** — OWFS näyttää isännän väylän laitteena, joten se ei ole anturi.
+
+### Listaukset eivät kerro haaroja
+
+**Tässä tiedostossa luki hetken että kumulatiiviset listaukset antavat
+haarakohtaisen ryhmittelyn. Ne eivät anna, ja vertailu PHP:n nimiin on se joka
+sen paljasti.**
+
+Jokainen kumulatiivinen askel tuo mukanaan yhden `varasto`-kytkintulon, ja
+ensimmäinen tuo teknisen tilan kosteusanturin keittiön antureiden mukana.
+Huonekohtaisessa haarassa niin ei kävisi. Todennäköisin selitys on että
+**DS2406:t ovat keskipisteessä varastossa**, yksi kutakin haaraa kohden, ja että
+tiedostot seuraavat asennuksen etenemistä eivätkä sitä mikä pistoke oli kiinni.
+
+Lisäksi listaukset eivät ole identtisissä oloissa otettuja: sovitin ja DS2438
+ovat mukana listauksissa 1, 2 ja 4 mutta puuttuvat listauksesta 3. **Laitteen
+puuttuminen yhdestä listauksesta ei siis todista sen poissaoloa**, mikä on sama
+epävakaus jota tähtitopologiassa muutenkin epäillään.
+
+**Haaratopologia on siis yhä tuntematon** ja se selviää vasta kartoitusajosta,
+tarvittaessa haara kerrallaan keskipisteessä.
 
 ## Kytkös lattialämmitykseen
 
