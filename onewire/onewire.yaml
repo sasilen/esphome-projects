@@ -6,9 +6,16 @@
 # CRC8 päälle. CRC ei ole satunnainen vaan laskettu muista tavuista, joten
 # täysi osoite on johdettavissa ilman että väylään kosketaan.
 #
-# **Tarkista silti ensimmäisellä käynnistyksellä.** Jos jokin osoite ei vastaa
-# mitään laitetta, ESPHome sanoo sen suoraan — ja silloin tavujärjestys on
-# väärinpäin, mikä on muunnoksen ainoa epävarma kohta.
+# **Väylä on vahvistanut tämän.** Ensimmäinen luettelointi löysi 19 näistä
+# 20:stä sellaisenaan, eli tavujärjestys oli oikein. Ainoa joka puuttuu on
+# DS18S20 `10.0ED2A0020800`, joka oli isännän pään laite — samasta päästä
+# puuttuu myös DS2438, ja ne katosivat yhdessä.
+#
+# **Mutta vain viisi antaa lukeman; viisitoista palauttaa `nan`.** Luettelointi
+# onnistuu kaikilla, lukeminen ei, joten vika on signaalin laadussa eikä
+# osoitteissa. Ne viisi toimivaa ovat täsmälleen vuosien 2015 ja 2020 välillä
+# lisätyt ovikattoanturit. Perustelut ja korjausjärjestys ovat CLAUDE.md:ssä;
+# ensimmäinen kokeiltava on ylösvedon lasku 2,2 kΩ:iin.
 #
 # Kytkentä on wiring.svg:ssä. Neljä johdinta: RJ45:n nasta 2 on 5 V, nasta 4 on
 # data GPIO4:ään, nastat 1 ja 5 ovat maita. Ylösveto 4,7 kΩ GPIO4:n ja 3V3:n
@@ -33,8 +40,12 @@ esp32:
 # on siis matalin taso joka näyttää vedoksen.
 #
 # Hinta on jaarittelu: kaksikymmentä anturia minuutin välein tarkoittaa noin
-# kahtakymmentä riviä minuutissa. **Laske INFO:on kun osoitteet on vahvistettu**
-# — siihen asti luettelo on tärkeämpi kuin hiljaisuus.
+# kahtakymmentä riviä minuutissa.
+#
+# **Osoitteet on nyt vahvistettu, ja taso pysyy silti DEBUGissa.** Alkuperäinen
+# peruste täyttyi, mutta tilalle tuli parempi: `Got Temperature=nan` kertoo
+# anturikohtaisesti kumpaan joukkoon kukin kuuluu, ja se on se mittari jolla
+# ylösvedon vaihdon onnistuminen luetaan. **Laske INFO:on kun väylä lukee.**
 logger:
   level: DEBUG
 
@@ -49,6 +60,10 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  # Oletus LIGHT nukuttaa radion majakkavälien välissä, ja megatavun OTA on
+  # tuhansia kuittauskierroksia joista jokaiseen tulee herätysviive. Tämä on
+  # repon vakiosuositus heikkoon radioon ja katkeileviin OTA-lähetyksiin.
+  power_save_mode: NONE
   ap:
     ssid: "1-Wire fallback"
     password: !secret ap_password
@@ -82,179 +97,119 @@ one_wire:
 # toiseksi.
 #
 # Muunnosnopeus on 750 ms per anturi täydellä 12 bitin tarkkuudella, ja näitä
-# on kaksikymmentä. Jos väyläaika alkaa painaa, `resolution: 11` puolittaa sen
-# ja jättää tarkkuudeksi 0,125 astetta — enemmän kuin rakenteen lämpötilalta
-# tarvitaan.
+# on kaksikymmentä — noin 15 s väyläaikaa minuutissa. `resolution: 11`
+# puolittaa sen ja jättää tarkkuudeksi 0,125 astetta, enemmän kuin rakenteen
+# lämpötilalta tarvitaan.
+#
+# **Sitä ei silti aseteta vielä.** Ylösvedon lasku on ensimmäinen kokeiltava, ja
+# jos molemmat vaihdetaan yhtä aikaa, ei tiedetä kumpi auttoi.
+#
+# `device_class`, `state_class`, `unit_of_measurement` ja `accuracy_decimals`
+# eivät ole tässä, koska **`dallas_temp` asettaa ne jo itse** — asteet,
+# yksi desimaali, lämpötila, mittaus. Kirjoitettuina ne olivat kahdeksankymmentä
+# riviä jotka eivät tee mitään.
 
 sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x0E0004755A26FF28          # 28.FF265A750400
     name: "Keittiö ikkuna sisä"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xAD0004757B89FF28          # 28.FF897B750400
     name: "Keittiö ikkuna ulko"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x6E00044C35D0FF28          # 28.FFD0354C0400
     name: "Keittiö sisä"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x4A00044D1394FF28          # 28.FF94134D0400
     name: "Keittiö sisä ovi katto"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x8C00044E2E63FF28          # 28.FF632E4E0400
     name: "Kodinhoitohuone sisä ovi katto"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x8400000557F41E28          # 28.1EF457050000
     name: "Makuuhuone 1 etelä sisä"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x4F00000557EF5828          # 28.58EF57050000
     name: "Makuuhuone 1 länsi"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x3900044E2012FF28          # 28.FF12204E0400
     name: "Makuuhuone 1 sisä ovi katto"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xA6000473185FFF28          # 28.FF5F18730400
     name: "Makuuhuone 2 itä"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xC9000474357FFF28          # 28.FF7F35740400
     name: "Makuuhuone 3 itä"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x8D00047679ECFF28          # 28.FFEC79760400
     name: "Makuuhuone 3 pohjoinen"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x1B00000557E66528          # 28.65E657050000
     name: "Makuuhuone 4 länsi"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x9300000617537828          # 28.785317060000
     name: "Makuuhuone 4 pohjoinen sisä"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xCB000005F69C7928          # 28.799CF6050000
     name: "Makuuhuone 4 pohjoinen ulko"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x830004767BBAFF28          # 28.FFBA7B760400
     name: "Olohuone sisä"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xF700044C32D4FF28          # 28.FFD4324C0400
     name: "Olohuone sisä ovi katto"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x5E0004757B80FF28          # 28.FF807B750400
     name: "Olohuone ulko"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
@@ -262,30 +217,18 @@ sensor:
     address: 0xB2000476784EFF28          # 28.FF4E78760400
     # VH = vaatehuone omistajan muistin mukaan, ei aineistosta
     name: "Vaatehuone etelä sisä"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x400004757682FF28          # 28.FF8276750400
     name: "Vaatehuone etelä ulko"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xA5000802A0D20E10          # 10.0ED2A0020800
     name: "Nimeämätön DS18S20"
-    device_class: temperature
-    state_class: measurement
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
     update_interval: 60s
 
   - platform: wifi_signal

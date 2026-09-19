@@ -713,6 +713,80 @@ listauksissa 1, 2 ja 4 mutta puuttuvat listauksesta 3. **Laitteen puuttuminen
 yhdestä listauksesta ei siis todista sen poissaoloa.** Ryhmittely on luettu
 lisäyksistä eikä puuttumisista, joten tämä ei horjuta taulukkoa.
 
+## Ensimmäinen luettelointi: osoitteet osuivat, mutta väylä ei lue
+
+Väylä on kytketty ja luetteloitu. Tulos ratkaisee kaksi kysymystä ja avaa
+yhden uuden.
+
+### Tavujärjestys oli oikein
+
+**19 konfiguraation 20 osoitteesta löytyi väylältä sellaisenaan.** PHP-kartasta
+laskettu osoite osui jokaiseen DS18B20:een. Se sulkee yllä jääneen epävarmuuden:
+OWFS kirjoittaa sarjatavut vähiten merkitsevä ensin, ja Dallasin CRC8 on
+laskettavissa muista tavuista. **Koko osoiteavaruus oli johdettavissa
+koskematta väylään**, ja väylä vahvisti sen kerralla.
+
+Ainoa joka ei löytynyt on **DS18S20 `10.0ED2A0020800`**. Se oli isännän pään
+laite, ja samasta päästä puuttuu myös **DS2438 `26.139121010000`**. Molemmat
+katosivat yhdessä, mikä sopii siihen että ne olivat Raspberryn päässä omassa
+tyngässään eivätkä talon tähdessä.
+
+### Väylällä on 38 laitetta, ei 25
+
+| Perhe | Nyt | Kartassa 2020 |
+|---|---|---|
+| 28 DS18B20 | 28 | 19 |
+| 12 DS2406 | 6 | 5 |
+| **3B DS1825 / MAX31850** | **3** | 0 |
+| 3A DS2413 | 1 | 0 |
+| 26 DS2438 | **0** | 1 |
+
+**Ne kolme 3B:tä ovat leivinuunin anturit.** Ne ovat väylällä ja ESPHome
+tunnistaa perheen, mutta `dallas_temp` ei lue niitä — kysymys on yhä auki ja
+nyt se on konkreettinen eikä hypoteettinen.
+
+### Viisi lukee, viisitoista antaa `nan` — ja ne viisi ovat uusin asennus
+
+Kaikki 20 konfiguroitua julkaisevat joka kierroksella. Viisi antaa lukeman:
+
+```
+K sisä · K sisä ovi katto · KHH sisä ovi katto
+MH1 sisä ovi katto · OH sisä ovi katto
+```
+
+**Ne ovat täsmälleen ne viisi jotka puuttuvat vuoden 2015 listauksista** ja
+esiintyvät vain vuoden 2020 PHP-kartassa — yllä oleva ovikattolaajennus. Koko
+2015 asennettu tähti on hiljaa; vain sen jälkeen lisätty osa vastaa.
+
+Vastaavuus on täydellinen eikä osittainen, joten kyse ei ole yksittäisistä
+vioittuneista antureista vaan **siitä mitä kyseiselle asennusvaiheelle on
+yhteistä** — todennäköisimmin oma, lyhyempi vetonsa.
+
+### Luettelointi onnistuu vaikka lukeminen ei, ja se rajaa syyn
+
+ROM-haku löytää kaikki 38. Vasta 750 ms:n muunnos ja 72 bitin
+scratchpad-luku epäonnistuvat. Haku on yksinkertaista bittiliikennettä;
+lukeminen ei ole. **Vika on siis signaalin laadussa, ei laitteissa eikä
+osoitteissa.**
+
+**Ratkaiseva vihje on vanha isäntä.** DS9490 ajoi tätä samaa tähteä vuosia, eli
+verkko on ajettavissa. Muuttunut ei ole topologia vaan vetovoima: **DS9490R
+käyttää aktiivista ylösvetoa**, joka vetää linjan ylös transistorilla, kun taas
+tässä on passiivinen 4,7 kΩ. 38 laitteen kapasitanssi tekee nousureunasta liian
+loivan kaukaisimmille haaroille, ja ESPHome ei osaa aktiivista ylösvetoa.
+
+Järjestys halvimmasta alkaen:
+
+1. **Ylösveto 2,2 kΩ:iin, tarvittaessa 1,5 kΩ:iin.** 3,3 V / 1,5 kΩ = 2,2 mA,
+   selvästi ESP32:n nielun sisällä.
+2. **`resolution: 11`** puolittaa muunnosajan.
+3. **Mittaa että 5 V yltää kaukaiselle haaralle.** Jos ei, anturit ovat
+   loiskäytöllä ja kohta 1 ei ole optimointi vaan välttämättömyys.
+
+**Yksi muutos kerrallaan.** Jos vastus ja tarkkuus vaihdetaan yhtä aikaa, ei
+tiedetä kumpi auttoi — ja seuraavan kerran kun väylä oireilee, tieto puuttuu.
+Viisi toimivaa anturia on hyvä mittari: muutos on onnistunut kun luku kasvaa.
+
 ## Kytkös lattialämmitykseen
 
 Jos anturit ovat lattiavalussa, tämä projekti menee päällekkäin
