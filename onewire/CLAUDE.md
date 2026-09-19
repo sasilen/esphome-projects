@@ -514,6 +514,18 @@ sarjanumeron yli.
 Kaikki kaksikymmentä on laskettu valmiiksi
 [`onewire.yaml`](onewire.yaml):iin nimineen.
 
+**Nimissä huonekoodit on laajennettu, paikkasanat ei.** K on keittiö, KHH
+kodinhoitohuone, MH1–MH4 makuuhuoneet ja OH olohuone; "sisä", "ulko", "itä" ja
+"ovi katto" jätetään sellaisinaan, koska ne ovat mittauksen kuvauksia eikä niitä
+kannata tulkita uudelleen. Alkuperäinen lyhennemuoto säilyy jokaisen anturin
+OWFS-kommentissa.
+
+**VH on jätetty laajentamatta.** Se voi olla vaatehuone tai vierashuone, ja
+molemmat sopivat aineistoon yhtä hyvin: anturit ovat eteläseinän sisä- ja
+ulkoparina, mikä ei erottele. Arvaus päätyisi Home Assistantin
+entiteettitunnuksiin asti, ja niiden muuttaminen jälkikäteen on kalliimpaa kuin
+lyhenne.
+
 **Yksi epävarmuus jää, ja se on tavujärjestys.** Päättely nojaa siihen että
 OWFS kirjoittaa sarjatavut vähiten merkitsevä ensin — mikä näkyy siitä että
 vanhempien antureiden ylätavut ovat nollia ja ne päätyvät muunnoksessa

@@ -56,10 +56,16 @@ one_wire:
 
 
 # ------------------------------------------------------------------ Anturit
-# Nimet ovat talon omaa sanastoa vuoden 2020 OWFS-kartasta: K on keittiö, KHH
-# kodinhoitohuone, MH1-MH4 makuuhuoneet, OH olohuone, VH vaatehuone. Pari
-# "sisä" ja "ulko" samassa paikassa tarkoittaa rakenteen kahta puolta, ei
-# huoneilmaa.
+# Huonekoodit on laajennettu vanhan OWFS-kartan lyhenteistä: K on keittiö, KHH
+# kodinhoitohuone, MH1-MH4 makuuhuoneet, OH olohuone. **Paikkasanat on jätetty
+# ennalleen** — "sisä", "ulko", "itä", "ovi katto" ovat mittauksen kuvauksia
+# eikä niitä tulkita uudelleen.
+#
+# Pari "sisä" ja "ulko" samassa paikassa tarkoittaa rakenteen kahta puolta, ei
+# huoneilmaa. Alkuperäinen lyhennemuoto on kunkin anturin OWFS-kommentissa.
+#
+# **VH on jätetty laajentamatta**, koska se voi olla vaatehuone tai vierashuone
+# eikä kumpikaan seuraa aineistosta. Arvaus päätyisi entiteettitunnuksiin asti.
 #
 # Muunnosnopeus on 750 ms per anturi täydellä 12 bitin tarkkuudella, ja näitä
 # on kaksikymmentä. Jos väyläaika alkaa painaa, `resolution: 11` puolittaa sen
@@ -70,7 +76,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x0E0004755A26FF28          # 28.FF265A750400
-    name: "K ikkuna sisä"
+    name: "Keittiö ikkuna sisä"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -80,7 +86,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xAD0004757B89FF28          # 28.FF897B750400
-    name: "K ikkuna ulko"
+    name: "Keittiö ikkuna ulko"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -90,7 +96,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x6E00044C35D0FF28          # 28.FFD0354C0400
-    name: "K sisä"
+    name: "Keittiö sisä"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -100,7 +106,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x4A00044D1394FF28          # 28.FF94134D0400
-    name: "K sisä ovi katto"
+    name: "Keittiö sisä ovi katto"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -110,7 +116,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x8C00044E2E63FF28          # 28.FF632E4E0400
-    name: "KHH sisä ovi katto"
+    name: "Kodinhoitohuone sisä ovi katto"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -120,7 +126,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x8400000557F41E28          # 28.1EF457050000
-    name: "MH1 etelä sisä"
+    name: "Makuuhuone 1 etelä sisä"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -130,7 +136,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x4F00000557EF5828          # 28.58EF57050000
-    name: "MH1 länsi"
+    name: "Makuuhuone 1 länsi"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -140,7 +146,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x3900044E2012FF28          # 28.FF12204E0400
-    name: "MH1 sisä ovi katto"
+    name: "Makuuhuone 1 sisä ovi katto"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -150,7 +156,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xA6000473185FFF28          # 28.FF5F18730400
-    name: "MH2 itä"
+    name: "Makuuhuone 2 itä"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -160,7 +166,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xC9000474357FFF28          # 28.FF7F35740400
-    name: "MH3 itä"
+    name: "Makuuhuone 3 itä"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -170,7 +176,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x8D00047679ECFF28          # 28.FFEC79760400
-    name: "MH3 pohjoinen"
+    name: "Makuuhuone 3 pohjoinen"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -180,7 +186,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x1B00000557E66528          # 28.65E657050000
-    name: "MH4 länsi"
+    name: "Makuuhuone 4 länsi"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -190,7 +196,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x9300000617537828          # 28.785317060000
-    name: "MH4 pohjoinen sisä"
+    name: "Makuuhuone 4 pohjoinen sisä"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -200,7 +206,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xCB000005F69C7928          # 28.799CF6050000
-    name: "MH4 pohjoinen ulko"
+    name: "Makuuhuone 4 pohjoinen ulko"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -210,7 +216,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x830004767BBAFF28          # 28.FFBA7B760400
-    name: "OH sisä"
+    name: "Olohuone sisä"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -220,7 +226,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xF700044C32D4FF28          # 28.FFD4324C0400
-    name: "OH sisä ovi katto"
+    name: "Olohuone sisä ovi katto"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -230,7 +236,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x5E0004757B80FF28          # 28.FF807B750400
-    name: "OH ulko"
+    name: "Olohuone ulko"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -240,6 +246,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xB2000476784EFF28          # 28.FF4E78760400
+    # VH laajentamatta: vaatehuone vai vierashuone, ei pääteltävissä
     name: "VH etelä sisä"
     device_class: temperature
     state_class: measurement
