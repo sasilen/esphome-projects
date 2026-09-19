@@ -38,6 +38,12 @@ vendor/
 *.bin
 *.hex
 
+# Keskeneräinen selainlataus. ESPHomen "Install -> Manual download" pudottaa
+# .bin-tiedoston, joka on jo yllä — mutta kesken jäänyt lataus on .crdownload
+# eikä osu siihen, ja päätyi kerran committiin asti.
+*.crdownload
+*.part
+
 # --- Python ------------------------------------------------------------------
 __pycache__/
 *.py[cod]
