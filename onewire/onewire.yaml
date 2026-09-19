@@ -19,10 +19,14 @@
 # Jako on kategorinen eikä asteittainen: 21 kierrosta, 5/5 onnistui ja 14/14
 # epäonnistui, ei yhtään poikkeusta kumpaankaan suuntaan.
 #
-# **Isännästä se ei johdu.** ESPHome jättää nastan OUTPUT-tilaan ajamaan linjaa
-# ylös push-pullina, eli vahva ylösveto on päällä koko muunnoksen ajan. Paras
-# jäljellä oleva selitys on kelluva VDD noilla haaroilla — mutta anturit ovat
-# rakenteissa eikä sitä pääse mittaamaan, joten se jää ehdokkaaksi.
+# **Isännän sähkö ei ole syy.** ESPHome jättää nastan OUTPUT-tilaan ajamaan
+# linjaa ylös push-pullina, eli vahva ylösveto on päällä koko muunnoksen ajan.
+#
+# **Isännän ohjelmisto voi silti olla.** `dallas_temp` ei lukitse väylää
+# muunnoksen ajaksi, joten toisen anturin `update()` keskeyttää sen — ja juuri
+# siinä on ero Raspberryyn, jonka w1-ajuri pitää mutexia. Anturit ajetaan nyt
+# sarjassa; perustelu on alempana sarjoituslohkossa.
+#
 # Koko päättelyketju kumottuine välivaiheineen on CLAUDE.md:ssä.
 #
 # Kytkentä on wiring.svg:ssä. Neljä johdinta: RJ45:n nasta 2 on 5 V, nasta 4 on
@@ -112,8 +116,10 @@ one_wire:
 # ESPHome ajaa linjaa ylös push-pullina muunnoksen ajan, joten isäntä ei ole
 # se joka jättää virtaa antamatta. Pienempi vastus ei lisäisi mitään.
 #
-# Kumpikin kokeiltava on siis käytetty. Se mitä väylälle jää tehtäväksi on
-# kaapelointia, ei konfiguraatiota.
+# Kolmas kokeiltava sen sijaan on kesken, ja se on alempana: **väylää ei
+# lukita muunnoksen ajaksi.** Anturit ajetaan nyt sarjassa `interval`-lohkosta,
+# ja se on ensimmäinen selitys joka osoittaa isännän *ohjelmistoon* eikä
+# sähköön. Perustelu on sarjoituslohkon kommentissa.
 #
 # `device_class`, `state_class`, `unit_of_measurement` ja `accuracy_decimals`
 # eivät ole tässä, koska **`dallas_temp` asettaa ne jo itse** — asteet,
@@ -123,127 +129,147 @@ one_wire:
 sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t00
     address: 0x0E0004755A26FF28          # 28.FF265A750400
     name: "Keittiö ikkuna sisä"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t01
     address: 0xAD0004757B89FF28          # 28.FF897B750400
     name: "Keittiö ikkuna ulko"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t02
     address: 0x6E00044C35D0FF28          # 28.FFD0354C0400
     name: "Keittiö sisä"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t03
     address: 0x4A00044D1394FF28          # 28.FF94134D0400
     name: "Keittiö sisä ovi katto"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t04
     address: 0x8C00044E2E63FF28          # 28.FF632E4E0400
     name: "Kodinhoitohuone sisä ovi katto"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t05
     address: 0x8400000557F41E28          # 28.1EF457050000
     name: "Makuuhuone 1 etelä sisä"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t06
     address: 0x4F00000557EF5828          # 28.58EF57050000
     name: "Makuuhuone 1 länsi"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t07
     address: 0x3900044E2012FF28          # 28.FF12204E0400
     name: "Makuuhuone 1 sisä ovi katto"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t08
     address: 0xA6000473185FFF28          # 28.FF5F18730400
     name: "Makuuhuone 2 itä"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t09
     address: 0xC9000474357FFF28          # 28.FF7F35740400
     name: "Makuuhuone 3 itä"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t10
     address: 0x8D00047679ECFF28          # 28.FFEC79760400
     name: "Makuuhuone 3 pohjoinen"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t11
     address: 0x1B00000557E66528          # 28.65E657050000
     name: "Makuuhuone 4 länsi"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t12
     address: 0x9300000617537828          # 28.785317060000
     name: "Makuuhuone 4 pohjoinen sisä"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t13
     address: 0xCB000005F69C7928          # 28.799CF6050000
     name: "Makuuhuone 4 pohjoinen ulko"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t14
     address: 0x830004767BBAFF28          # 28.FFBA7B760400
     name: "Olohuone sisä"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t15
     address: 0xF700044C32D4FF28          # 28.FFD4324C0400
     name: "Olohuone sisä ovi katto"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t16
     address: 0x5E0004757B80FF28          # 28.FF807B750400
     name: "Olohuone ulko"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t17
     address: 0xB2000476784EFF28          # 28.FF4E78760400
     # VH = vaatehuone omistajan muistin mukaan, ei aineistosta
     name: "Vaatehuone etelä sisä"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t18
     address: 0x400004757682FF28          # 28.FF8276750400
     name: "Vaatehuone etelä ulko"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t19
     address: 0xA5000802A0D20E10          # 10.0ED2A0020800
     # Ei löytynyt luetteloinnista. Jätetään silti tähän: sen `nan` erottaa
     # "laitetta ei ole" -tapauksen siitä joukosta joka on väylällä muttei lue,
     # ja se ero on juuri se mitä ylösvedon vaihdon jälkeen katsotaan.
     name: "Nimeämätön DS18S20"
-    update_interval: 60s
+    update_interval: never
 
 # --------------------------------------------------------------- Perhe 3B
 # Kolme laitetta joita ei ole vuoden 2020 kartassa lainkaan. Perhe 0x3B on
@@ -275,21 +301,24 @@ sensor:
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t20
     address: 0x000000001916163B          # 3B.161619000000
     name: "Tuntematon 3B 161619"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t21
     address: 0xCC0000001915A13B          # 3B.A11519000000
     name: "Tuntematon 3B A11519"
-    update_interval: 60s
+    update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
+    id: t22
     address: 0x6D0000001870913B          # 3B.917018000000
     name: "Tuntematon 3B 917018"
-    update_interval: 60s
+    update_interval: never
 
   - platform: wifi_signal
     name: "Wi-Fi"
@@ -300,6 +329,80 @@ sensor:
     name: "Uptime"
     update_interval: 60s
     entity_category: diagnostic
+
+
+# ------------------------------------------------------- Sarjoitettu luku
+# **ESPHome ei lukitse väylää muunnoksen ajaksi.** `dallas_temp::update()`
+# lähettää CONVERT T:n ja jatkaa `set_timeout`illa, joten niiden 750 ms:n
+# aikana pääsilmukka pyörii — ja jokainen toisen anturin `update()` aloittaa
+# omalla `reset()`illään, joka vetää linjan alas 480 µs:ksi. Se **keskeyttää
+# kesken olevan muunnoksen ja pudottaa vahvan ylösvedon** samalla.
+#
+# Linuxin w1-alijärjestelmä pitää väylämutexia koko tapahtuman ajan. Siinä on
+# se ero Raspberryyn, jota etsittiin koko ilta ylösvedosta ja syötöstä.
+#
+# Se selittää myös sen mikä oli ristiriitaista: `PollingComponent`-vaiheet
+# lukitaan käynnistyksessä ja toistuvat tasan 60 000 ms:n välein, joten samat
+# parit törmäävät joka kierros identtisesti — **21 kierrosta ilman yhtään
+# poikkeusta.** Ja jos törmäys osuu ikkunan alkuun, ikkunan lyhentäminen
+# 750 ms:sta 94 ms:iin ei auta, mikä on juuri se mitä `resolution: 9` -kokeessa
+# nähtiin.
+#
+# Tässä tehdään mitä Linux tekee: anturit irrotetaan omista kelloistaan
+# (`update_interval: never`) ja ajetaan yksi kerrallaan. Sekunnin väli kattaa
+# 750 ms:n muunnoksen; 22 anturia on 22 s, eli minuuttiin mahtuu reilusti.
+#
+# **Jos tämä ei auta, hypoteesi kaatuu** eikä ole maksanut kuin yhden
+# flashauksen — ja silloin jäljellä on kaapelointi.
+
+interval:
+  - interval: 60s
+    then:
+      - lambda: 'id(t00).update();'   # Keittiö ikkuna sisä
+      - delay: 1s
+      - lambda: 'id(t01).update();'   # Keittiö ikkuna ulko
+      - delay: 1s
+      - lambda: 'id(t02).update();'   # Keittiö sisä
+      - delay: 1s
+      - lambda: 'id(t03).update();'   # Keittiö sisä ovi katto
+      - delay: 1s
+      - lambda: 'id(t04).update();'   # Kodinhoitohuone sisä ovi katto
+      - delay: 1s
+      - lambda: 'id(t05).update();'   # Makuuhuone 1 etelä sisä
+      - delay: 1s
+      - lambda: 'id(t06).update();'   # Makuuhuone 1 länsi
+      - delay: 1s
+      - lambda: 'id(t07).update();'   # Makuuhuone 1 sisä ovi katto
+      - delay: 1s
+      - lambda: 'id(t08).update();'   # Makuuhuone 2 itä
+      - delay: 1s
+      - lambda: 'id(t09).update();'   # Makuuhuone 3 itä
+      - delay: 1s
+      - lambda: 'id(t10).update();'   # Makuuhuone 3 pohjoinen
+      - delay: 1s
+      - lambda: 'id(t11).update();'   # Makuuhuone 4 länsi
+      - delay: 1s
+      - lambda: 'id(t12).update();'   # Makuuhuone 4 pohjoinen sisä
+      - delay: 1s
+      - lambda: 'id(t13).update();'   # Makuuhuone 4 pohjoinen ulko
+      - delay: 1s
+      - lambda: 'id(t14).update();'   # Olohuone sisä
+      - delay: 1s
+      - lambda: 'id(t15).update();'   # Olohuone sisä ovi katto
+      - delay: 1s
+      - lambda: 'id(t16).update();'   # Olohuone ulko
+      - delay: 1s
+      - lambda: 'id(t17).update();'   # Vaatehuone etelä sisä
+      - delay: 1s
+      - lambda: 'id(t18).update();'   # Vaatehuone etelä ulko
+      - delay: 1s
+      - lambda: 'id(t19).update();'   # Nimeämätön DS18S20
+      - delay: 1s
+      - lambda: 'id(t20).update();'   # Tuntematon 3B 161619
+      - delay: 1s
+      - lambda: 'id(t21).update();'   # Tuntematon 3B A11519
+      - delay: 1s
+      - lambda: 'id(t22).update();'   # Tuntematon 3B 917018
 
 button:
   - platform: restart
