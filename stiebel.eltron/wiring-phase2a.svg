@@ -18,7 +18,7 @@
     <text x="150" y="204">3V3</text>
     <text x="150" y="240">GND</text>
     <text x="126" y="276">GPIO4</text>
-    <text x="126" y="312">GPIO5</text>
+    <text x="126" y="312">GPIO3</text>
   </g>
   <text x="140" y="372" font-size="11" font-weight="700" fill="#16212B" text-anchor="middle">5V</text>
   <text x="140" y="388" font-size="9.5" fill="#5A6772" text-anchor="middle">from the buck below</text>
@@ -106,7 +106,7 @@
     <text x="66" y="798">canbus:</text>
     <text x="66" y="816">  - platform: esp32_can</text>
     <text x="66" y="834">    tx_pin: GPIO4</text>
-    <text x="66" y="852">    rx_pin: GPIO5</text>
+    <text x="66" y="852">    rx_pin: GPIO3</text>
     <text x="66" y="870">    can_id: 0x680</text>
     <text x="66" y="888">    bit_rate: 20kbps</text>
   </g>
@@ -118,8 +118,8 @@
     <text x="400" y="872"><tspan font-weight="700">0x680</tspan> never appeared in two</text>
     <text x="400" y="888">hours of capture. 0x301 did.</text>
   </g>
-  <text x="50" y="924" font-size="11.5" fill="#16212B"><tspan font-weight="700">Pins are a proposal, not a reading of the board.</tspan> GPIO2, 8 and 9 are strapping pins and GPIO8</text>
-  <text x="50" y="942" font-size="11.5" fill="#16212B">also drives the SuperMini's LED, so the CAN pair stays away from all three.</text>
+  <text x="50" y="924" font-size="11.5" fill="#16212B"><tspan font-weight="700">GPIO4 and GPIO3 share an edge with 3V3 and GND</tspan>, so all four wires leave one side of the</text>
+  <text x="50" y="942" font-size="11.5" fill="#16212B">board. Neither is strapping — GPIO2, 8 and 9 are, and GPIO2 is GPIO3's neighbour. Mind the iron.</text>
 
   <rect x="50" y="966" width="660" height="114" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
   <rect x="50" y="966" width="6" height="114" fill="#A3301F"/>
