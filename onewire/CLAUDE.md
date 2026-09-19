@@ -478,16 +478,52 @@ Kolme seurausta:
 - **Viisi kytkintuloa varastossa on selvittämättä.** `latch.B` on DS2406:n
   digitaalitulo, ja mitä ne siellä valvovat ei käy nimestä ilmi.
 
+### Mitä väylällä voi vielä olla
+
+Kartta on vuodelta 2020 ja verkko on kasvanut kerran jo sitä ennen. Kaksi
+laiteryhmää tiedetään puuttuvan siitä:
+
+- **Sauna.** Ei kummassakaan lähteessä, vaikka se on ainoa tila jonka
+  odottaisi olevan mukana.
+- **Leivinuunin anturit.** Näitä ei voi olla DS18B20:llä: **sen yläraja on
+  +125 °C** ja leivinuuni käy 200–400 asteessa. Todennäköisin vaihtoehto
+  1-Wire-väylällä on **MAX31850**, joka lukee K-tyypin termoparia
+  1-Wire-rajapinnan takaa — piiri pysyy viileässä ja vain termopari on
+  kuumuudessa. Perhekoodi `3B`.
+
+**Perhekoodi kertoo laitetyypin suoraan käynnistysluettelosta**, joten
+ensimmäinen käynnistys ei kerro vain montako laitetta väylällä on vaan myös
+mitä ne ovat:
+
+| Perhekoodi | Piiri | Mitä |
+|---|---|---|
+| `28` | DS18B20 | lämpötila |
+| `10` | DS18S20 | lämpötila, vanhempi polvi |
+| `3B` | MAX31850 | termopari, korkea lämpötila |
+| `26` | DS2438 | lämpötila ja kosteus |
+| `12` | DS2406 | kytkintulo |
+| `81` | DS2490 | sovitin itse, ei anturi |
+
 ### ESPHome ei lue kaikkea tätä
 
-`dallas_temp` kattaa DS18B20:n ja DS18S20:n, eli **ne 19 lämpötila-anturia**.
-**DS2438 ja DS2406 eivät ole ESPHomen omissa komponenteissa**, joten kosteus ja
-viisi kytkintuloa jäisivät lukematta. Tämä on tarkistettava asennetusta
-versiosta ennen kuin siihen nojaa, mutta suunta on selvä: jos ne halutaan
-mukaan, tarvitaan OWFS rinnalle tai tilalle.
+`dallas_temp` kattaa DS18B20:n ja DS18S20:n, eli **ne 20 lämpötila-anturia**.
+**DS2438, DS2406 ja MAX31850 eivät ole ESPHomen omissa komponenteissa**, joten
+kosteus, viisi kytkintuloa ja mahdolliset uunianturit jäisivät lukematta. Tämä
+on tarkistettava asennetusta versiosta ennen kuin siihen nojaa, mutta suunta on
+selvä: jos ne halutaan mukaan, tarvitaan OWFS rinnalle tai tilalle.
 
-Se on todellinen valinta eikä tekninen este: 19 anturia 25:stä on valtaosa, ja
-kosteus teknisessä tilassa on yksi lukema.
+**Tämä on avoin suunnittelukysymys eikä tekninen este**, ja se kasvaa sitä
+mukaa kun väylältä löytyy muita perhekoodeja kuin `28` ja `10`. Kaksi tapaa:
+
+- **Hyväksy osittainen kattavuus.** Lämpötilat ovat valtaosa ja se osa toimii
+  natiivisti ilman MQTT:tä, mikä on repon linja.
+- **Pidä OWFS rinnalla** jollain pienellä isännällä niitä laitteita varten
+  joita ESPHome ei lue. Silloin väylällä on kaksi isäntää, mikä ei käy —
+  ellei väylää haaroiteta niin että kumpikin isäntä saa omansa.
+
+Jälkimmäinen on se tapaus jossa tähden haaroittaminen lakkaa olemasta
+vikakorjaus ja muuttuu rakenteeksi. Päätös kannattaa tehdä vasta kun
+käynnistysluettelo kertoo mitä väylällä oikeasti on.
 
 ### Osoitemuoto muuntuu laskemalla
 
