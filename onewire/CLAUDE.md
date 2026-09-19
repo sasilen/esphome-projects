@@ -489,19 +489,39 @@ mukaan, tarvitaan OWFS rinnalle tai tilalle.
 Se on todellinen valinta eikä tekninen este: 19 anturia 25:stä on valtaosa, ja
 kosteus teknisessä tilassa on yksi lukema.
 
-### Osoitemuoto ei ole sama
+### Osoitemuoto muuntuu laskemalla
 
 OWFS kirjoittaa osoitteen muodossa `28.FF265A750400` — perhekoodi, piste,
 sarjanumero. **ESPHome käyttää täyttä 64-bittistä ROM-osoitetta** muodossa
 `0x…28`, jossa perhekoodi on alimpana tavuna, sarjanumero käänteisessä
 järjestyksessä ja CRC ylimpänä.
 
-`28.FF265A750400` vastaa siis ESPHomessa osoitetta joka päättyy `FF28`:aan ja
-jonka keskeltä löytyy `04755A26` käänteisenä. **CRC ei ole OWFS-muodossa
-mukana**, joten täyttä osoitetta ei voi laskea — mutta sitä ei tarvitsekaan:
-ESPHome luetteloi löytämänsä osoitteet itse, ja nimi liitetään niihin
-täsmäämällä sarjanumeron numerot. Kartoitusajo tuottaa siis osoitteet ja tämä
-taulukko nimet.
+**Tässä luki hetken ettei täyttä osoitetta voi laskea, koska CRC ei ole
+OWFS-muodossa mukana. Se oli väärin.** CRC ei ole satunnainen tunniste vaan
+**laskettu muista seitsemästä tavusta** Dallasin CRC8:lla (polynomi X⁸+X⁵+X⁴+1,
+käytännössä reflektoitu 0x8C). Se on siis johdettavissa, ja koko kartta
+muuntuu ESPHomen muotoon ilman että väylään kosketaan.
+
+Muunnos on kaksiosainen: **käännä sarjatavut** ja **laske CRC** perhekoodin ja
+sarjanumeron yli.
+
+| OWFS | ESPHome |
+|---|---|
+| `28.FF265A750400` | `0x0E0004755A26FF28` |
+| `28.1EF457050000` | `0x8400000557F41E28` |
+| `28.799CF6050000` | `0xCB000005F69C7928` |
+
+Kaikki kaksikymmentä on laskettu valmiiksi
+[`onewire.yaml`](onewire.yaml):iin nimineen.
+
+**Yksi epävarmuus jää, ja se on tavujärjestys.** Päättely nojaa siihen että
+OWFS kirjoittaa sarjatavut vähiten merkitsevä ensin — mikä näkyy siitä että
+vanhempien antureiden ylätavut ovat nollia ja ne päätyvät muunnoksessa
+`0000`-jaksoksi juuri sinne missä ESPHomen osoitteissa sellainen tyypillisesti
+on. Se on vahva viite muttei todiste.
+
+**Ensimmäinen käynnistys ratkaisee sen maksutta:** jos osoite ei vastaa mitään
+laitetta, ESPHome sanoo sen suoraan, ja silloin tavujärjestys on väärinpäin.
 
 ### Kaksi lähdettä, ja kumpi voittaa missäkin
 

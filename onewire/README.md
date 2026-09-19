@@ -159,13 +159,23 @@ OWFS-muoto `28.FF265A750400`, ja ESPHome haluaa täyden 64-bittisen
 ROM-osoitteen CRC:n kanssa. Sitä ei voi laskea OWFS-muodosta, mutta ESPHome
 luetteloi sen itse.
 
-### Kolme askelta
+### Neljä askelta, ja flashaus on ensimmäinen
 
-1. **Kaapeli ja pistoke** — neljä johdinta, vastus C3:n päähän
-2. **Flashaa [`discovery.yaml`](discovery.yaml)** — se luetteloi löytämänsä
-   osoitteet käynnistysvedoksessa
-3. **Lopullinen konfiguraatio** — osoitteet ja nimet yhdistettynä, osoitteet
-   ESPHomelta ja nimet [CLAUDE.md](CLAUDE.md):n taulukosta
+1. **Flashaa [`onewire.yaml`](onewire.yaml) ennen kuin kolviin kosket.** Se
+   erottaa vikaluokat: jos konfiguraatio on todettu toimivaksi, ensimmäinen
+   tyhjä luettelo ei voi johtua siitä. Penkillä oikea tulos on että kaikki
+   anturit ovat `unavailable` — väylää ei ole.
+2. **Vie levy keskipisteeseen ja katso RSSI.** Varasto voi olla huono paikka
+   radiolle, ja SuperMinin keraaminen antenni on tunnetusti heikko. Aidonin
+   mittarikaapista on kirjattu −87…−90 dBm liian heikoksi.
+3. **Kaapeli ja pistoke** — neljä johdinta, vastus C3:n päähän
+4. **Kytke holkkiin** ja katso täyttyvätkö anturit
+
+**Osoitteet ovat jo konfiguraatiossa.** Ne on laskettu vanhan OWFS-kartan
+osoitteista eikä luettu väylältä, joten
+[`discovery.yaml`](discovery.yaml) on nyt varalla oleva työkalu eikä
+välttämätön vaihe: sitä tarvitaan vain jos jokin laskettu osoite ei vastaa
+mitään.
 
 **Käynnistä uudelleen pari kertaa ja vertaa luetteloa.** Yksi onnistunut
 luettelo ei todista mitään: tähtitopologian vika on nimenomaan se että osa
