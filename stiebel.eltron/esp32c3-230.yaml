@@ -11,12 +11,11 @@
 # shifting and the receive-stall bug. If it does not, the route dies here and
 # `wemos-mcp2515.yaml` stays as it is.
 #
-# So this node publishes **no sensors yet**. Decoding the bus into entities is
-# already done in wemos-mcp2515.yaml and duplicating 400 lines of dispatch here
-# would mean maintaining two copies of it to answer a yes/no question. What it
-# publishes instead is two counters, which is what the question needs. The
-# dispatch moves over once the receive test has passed and this node takes the
-# bus for good.
+# **That question is answered: 237 frames a minute at 20 kbps, measured at X27.**
+# So the decoding has moved here from wemos-mcp2515.yaml — moved, not copied.
+# The frame handler takes an identifier and seven bytes and knows nothing about
+# which controller delivered them, so it ported unchanged apart from the reject
+# counters. wemos-mcp2515.yaml keeps its copy as the rollback.
 #
 # Hardware: ESP32-C3 SuperMini + SN65HVD230 breakout, drawn in
 # wiring-phase2a.svg. Both board resistors are measured: R2 = 115 Ω so the
@@ -131,31 +130,84 @@ canbus:
         use_extended_id: false
         then:
           - lambda: |-
-              // The same shape check wemos-mcp2515.yaml applies before it
-              // decodes anything, and here it is the instrument rather than a
-              // guard. Its bounds come from the capture:
+              // Decode into the log rather than dumping hex, because the byte
+              // layout is now confirmed by capture (CLAUDE.md, "Prior art"):
               //
-              //   n != 7       not an Elster telegram at all
-              //   cmd > 5      system frames do not use this layout
-              //   x[2] > 0xFA  0xFA is the only defined marker
-              //   sender       every real identifier is a multiple of 0x080
-              //                plus 0-3
+              //   byte 0  receiver's high bits (>> 3) in the high nibble,
+              //           command in the low nibble
+              //   byte 1  receiver's low 7 bits — nonzero only for a
+              //           sub-addressed node such as 0x301
+              //   byte 2  element index, or 0xFA meaning "index in bytes 3-4"
               //
-              // On the MCP2515 node two frames in 95 000 failed it, and the
-              // flipped bits clustered in the low bits of adjacent bytes —
-              // which points at the SPI read path rather than at the wire.
-              // **TWAI has no SPI.** So the malformed counter below is the
-              // measurement that turns that prediction into a finding or
-              // kills it, and it is directly comparable with the recorded
-              // phase 1 logs because the bus repeats itself all day.
+              // Reading a capture then needs no mental arithmetic, which is
+              // the whole job of the next step: matching element indices
+              // against the published element list.
+              //
+              // Fixed buffers, no std::string: this runs once per frame and
+              // the ESP8266 heap does not want per-frame allocations.
               id(frame_count) += 1;
 
               const uint8_t n = x.size();
               const uint8_t cmd = n >= 1 ? (x[0] & 0x0F) : 0xFF;
-              const bool malformed =
-                  (n != 7 || cmd > 5 || x[2] > 0xFA || (can_id & 0x7F) > 3);
 
-              if (malformed) {
+              // Shape check before decoding, and the bounds come from the
+              // capture rather than from optimism:
+              //
+              //   n != 7      not an Elster telegram at all
+              //   cmd > 5     system frames (6, 7) do not use this layout —
+              //               their byte 1 carries 0x79, which is no address,
+              //               so decoding a receiver from it invents nodes
+              //   x[2] > 0xFA the only defined marker is 0xFA. A frame with
+              //               0xFB there appeared twice, seconds before a
+              //               receive stall, and decoded to nonsense
+              //   sender      the address scheme puts the node in the high
+              //               nibble and 0-3 in the low bits, so every real
+              //               identifier is a multiple of 0x080 plus 0-3.
+              //               An id outside that is not a node, and printing
+              //               it as one invents a device — see below
+              //
+              // Everything excluded is logged raw. A decoder that mis-decodes
+              // silently is worse than no decoder — raw hex in the log is how
+              // the first three cases were found in the first place.
+              //
+              // The sender check is the same rule the receiver already gets
+              // for free, applied to the other end of the frame. It exists
+              // because a frame arrived from id 0x078 once in eleven hours,
+              // carrying a byte-perfect `92 00 FA FE 1C 00 00` — a response
+              // to 0x480 that only 0x700 can send. The payload was intact and
+              // the identifier was not. In LISTENONLY the MCP2515 sends no
+              // error frame, so a frame corrupted on the wire is not
+              // destroyed: it lands in the buffer and arrives here. Two such
+              // frames in 95 000 is the price of not acknowledging, and the
+              // cost of not checking is a log line that reads like a seventh
+              // node on a bus that has six.
+              // **Two rejects, not one.** The first version of this node counted
+              // both as "malformed" and the number looked alarming: 21 in the
+              // first minutes, against the MCP2515's 2 in 95 000. The raw lines
+              // settled it — every one carried command 6 or 7 and three of them
+              // byte 1 = 0x79, which is this bus's system-frame signature and
+              // not an address. They are legitimate traffic that simply does
+              // not use the request/response layout.
+              //
+              // So they get their own counter. What is left in `malformed` is
+              // the genuinely implausible: a length that is not seven, a
+              // command above 7, a marker byte beyond 0xFA, or a sender that is
+              // not a multiple of 0x080 plus 0-3. That is the number that
+              // compares with phase 1's corruption rate, and mixing the two
+              // made it useless.
+              if (cmd == 6 || cmd == 7) {
+                id(system_count) += 1;
+                if (id(log_frames).state) {
+                  char raw[25] = {0};
+                  for (uint8_t i = 0; i < n && i < 8; i++)
+                    sprintf(raw + i * 3, "%02X ", x[i]);
+                  ESP_LOGI("can", "%03X sys dlc=%u  %s",
+                           (unsigned) can_id, (unsigned) n, raw);
+                }
+                return;
+              }
+
+              if (n != 7 || cmd > 5 || x[2] > 0xFA || (can_id & 0x7F) > 3) {
                 id(malformed_count) += 1;
                 char raw[25] = {0};
                 for (uint8_t i = 0; i < n && i < 8; i++)
@@ -165,16 +217,9 @@ canbus:
                 return;
               }
 
-              // Well-formed frames are counted and otherwise silent unless the
-              // switch is on. Per-frame logging over the API is what stalled
-              // the ESP8266 receiver at about four lines a second; the C3 has
-              // far more headroom, but volume is still not evidence and the
-              // counters answer the question on their own.
-              if (!id(log_frames).state)
-                return;
-
               static const char *const CMD[6] = {
                   "wr", "rd", "resp", "ack", "wack", "wres"};
+
               const uint16_t receiver =
                   ((uint16_t) (x[0] & 0xF0) << 3) | (x[1] & 0x7F);
               const bool ext = x[2] == 0xFA;
@@ -182,9 +227,461 @@ canbus:
                   ext ? ((uint16_t) x[3] << 8 | x[4]) : x[2];
               const uint16_t value = ext ? ((uint16_t) x[5] << 8 | x[6])
                                          : ((uint16_t) x[3] << 8 | x[4]);
-              ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X = %d",
-                       (unsigned) can_id, (unsigned) receiver, CMD[cmd],
-                       ext ? "ex" : "e", element, (int) (int16_t) value);
+
+              // A read request's value bytes are padding, so printing them
+              // would invent data that is not on the bus.
+              char val[24] = {0};
+              if (cmd != 1)
+                snprintf(val, sizeof(val), " = %d (0x%04X)",
+                         (int) (int16_t) value, value);
+
+              // The short form leaves bytes 5-6 outside the documented
+              // layout, and they are not always zero: 45 frames in a two-hour
+              // capture carried a small value in byte 6, unexplained. Show
+              // them rather than drop them.
+              char tail[16] = {0};
+              if (!ext && (x[5] || x[6]))
+                snprintf(tail, sizeof(tail), " +%02X%02X", x[5], x[6]);
+
+              // ---- publish the named elements ---------------------------
+              // Dispatch on sender AND element. The same index means
+              // different things on different devices, which is the main
+              // lesson of matching the capture against the element list:
+              // 0xFDF4 from 0x700 is a return temperature, and the list's
+              // name for that index is something else entirely.
+              //
+              // `handled` is what keeps the log honest once per-frame logging
+              // is off. Every branch below sets it, and anything that reaches
+              // the end without being claimed gets logged instead — so an
+              // element this configuration has never seen cannot be dropped
+              // silently. That matters most on exactly the night this is
+              // being run: a heating cycle is a state the capture never
+              // contained, and a new state is where new registers appear.
+              //
+              // The night has since run, and that last sentence was wrong.
+              // Two compressor cycles and a tank charge produced no element
+              // that had not already been seen — every one of the 85 was
+              // first sighted while the panel was being browsed, or within
+              // the hour after it. What the cycles gave instead was
+              // new *values* of known registers: 0x4E5E's bits, 0xFE1E's
+              // compressor-only 7 and 15, an 8 on 0xFE1C. Keep the fallback
+              // anyway — it is what found 0x4E5E, which is unclaimed for a
+              // different reason: the manager writes it to 0x100, not 0x700.
+              bool handled = false;
+
+              // ---- sentinels are not values -----------------------------
+              // 0x8000, 0x9000 and 0x8080 mark a parameter that is absent or
+              // unconfigured, and three nodes send them on this bus: 0x180
+              // on 0x01AE, 0x01AF and 0x01C0, 0x480 on 0x0679, 0x601 on
+              // 0x4EA7. As tenths they decode to -3276.8, -2867.2 and
+              // -3264.0 °C.
+              //
+              // None of those elements has a sensor today, which is exactly
+              // why this guard goes in before the menu walk rather than
+              // after it. The sensors that do exist read 0x180 — the outdoor
+              // temperature, the tank, the return, the DHW setpoint — and
+              // 0x180 is a node already observed answering "not present". A
+              // detached sensor is all it takes, and a bad sample in Home
+              // Assistant's history stays there.
+              //
+              // Not dropped silently: skipping the dispatch leaves the frame
+              // unclaimed, so it goes to the raw log below. Which element
+              // answered "not present" is worth knowing — it is a fault
+              // report, not noise. No real value collides: every element
+              // published here is a temperature in tenths or a 0-100 output.
+              // ---- energy counter assembly -------------------------------
+              // Five counters, each made of an MWh word, a kWh word and a day
+              // counter that the panel adds in. `seen` marks which parts have
+              // arrived; `need` is 0b111 for the four that have a day counter
+              // and 0b011 for the reheat, which has none.
+              //
+              // Function-local statics rather than globals: nothing outside
+              // this handler reads them, they are meaningless before the first
+              // complete set, and restoring a half-set from flash across a
+              // reboot could only ever produce a total that looks right and is
+              // not. Same reasoning as 0xFE4C's remembered value below.
+              struct Ctr { uint16_t mwh, kwh, day; uint8_t seen, need; };
+              static Ctr ctr[6] = {
+                  {0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0b111},
+                  {0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0b111},
+                  {0, 0, 0, 0, 0b011}, {0, 0, 0, 0, 0b011}};
+              auto part = [&](uint8_t i, uint8_t w, uint16_t v) {
+                Ctr &c = ctr[i];
+                if (w == 0) c.mwh = v; else if (w == 1) c.kwh = v; else c.day = v;
+                c.seen |= (uint8_t) (1 << w);
+                if (c.seen != c.need) return false;
+                c.seen = 0;
+                return true;
+              };
+              auto total = [&](uint8_t i) {
+                return ctr[i].mwh * 1000.0f + ctr[i].kwh + ctr[i].day;
+              };
+
+              const bool sentinel =
+                  value == 0x8000 || value == 0x9000 || value == 0x8080;
+
+              if (sentinel) {
+                // handled stays false — falls through to the raw log
+              } else if (cmd == 2 && can_id == 0x180) {
+                // et_dec_val: tenths, signed, negatives are legal
+                const float t = (int16_t) value / 10.0f;
+                handled = true;
+                switch (element) {
+                  case 0x0003: id(dhw_setpoint).publish_state(t); break;
+                  case 0x000C: id(outdoor_temp).publish_state(t); break;
+                  case 0x000E: id(dhw_temp).publish_state(t);     break;
+                  case 0x0016: id(return_temp).publish_state(t);  break;
+
+                  // ---- named by walking the panel, 2026-09-06 -------------
+                  // Every element below was read off a photographed screen
+                  // whose values matched the frames logged while it was up.
+                  // That is a stronger source than the element list, which is
+                  // wrong about this machine's 0xFDFx range — so where the two
+                  // ever disagree, the screen wins.
+                  //
+                  // These update only when someone is standing at the panel.
+                  // For a setting that is fine: a setpoint stays true until
+                  // it is changed. For the measurements below it is not, and
+                  // that is why they carry no state_class — a temperature
+                  // that Home Assistant would draw as a flat line for three
+                  // days is worse than one it refuses to draw at all.
+                  case 0x0013: id(dhw_comfort).publish_state(t);  break;
+                  case 0x0A06: id(dhw_eco).publish_state(t);      break;
+                  case 0x0028: id(max_return).publish_state(t);   break;
+                  case 0x01E8: id(max_flow).publish_state(t);     break;
+                  case 0x0A00: id(frost_protect).publish_state(t);break;
+                  case 0x02CA: id(room_temp_hc1).publish_state(t);break;
+                  case 0x06A1: id(flow_temp_hp).publish_state(t); break;
+                  case 0x06A0: id(flow_temp_nhz).publish_state(t);break;
+                  case 0x01D4: id(source_temp).publish_state(t);  break;
+                  case 0x01B0: id(source_temp_min).publish_state(t); break;
+                  case 0x0265: id(hot_gas_temp).publish_state(t); break;
+
+                  // Two pressure scalings, and the panel is what separates
+                  // them: 107 reads 10.7 bar on the process screen while 41
+                  // reads 0.41 bar on the source screen. Tenths for the
+                  // circuit, hundredths for the brine — different ranges, so
+                  // a single scaling would be wrong by a factor of ten
+                  // somewhere and there is no way to tell which from the
+                  // numbers alone.
+                  // Commissioning-menu settings, not live values: these are
+                  // the configured pump ceilings, both at 100 % on this
+                  // machine. Worth having because 0xFE1B and 0xFE1C are 0/100
+                  // outputs on the same machine and 0xFE1C also modulates
+                  // through 8 and 12 — a modulating pump command is the
+                  // reading those two have been missing, and these two rows
+                  // are the first evidence the machine has pumps described
+                  // that way at all. Not asserted: both read 100 here, so
+                  // nothing distinguishes which command drives which pump.
+                  case 0x070A: id(pump_power_heat).publish_state(value); break;
+                  case 0x070B: id(pump_power_dhw).publish_state(value); break;
+                  case 0x01A2: id(hp_sensor_max).publish_state(t); break;
+                  case 0x0268: id(pressure_high).publish_state(t); break;
+                  case 0x07A5: id(pressure_low).publish_state(t);  break;
+                  case 0x0675:
+                    id(source_pressure).publish_state((int16_t) value / 100.0f);
+                    break;
+
+                  // Hours are counts, not tenths. Nothing but the panel says
+                  // so — 2215 on the screen against 2215 on the bus.
+                  case 0x07FC: id(hours_heat).publish_state(value);      break;
+                  case 0x0802: id(hours_dhw).publish_state(value);       break;
+                  case 0x0259: id(hours_nhz1).publish_state(value);      break;
+                  case 0x025A: id(hours_nhz2).publish_state(value);      break;
+                  case 0x0805: id(hours_nhz_both).publish_state(value);  break;
+
+                  // ---- energy counters arrive in three pieces ------------
+                  // The panel shows a total the bus never sends. Each counter
+                  // is a stored base in MWh plus kWh, and a separate day
+                  // counter, and the screen adds them: 86.822 MWh + 27 kWh
+                  // displayed as 86.849. Four counters confirm it to the
+                  // kilowatt-hour, which is why this assembles the same sum
+                  // rather than publishing the base and quietly disagreeing
+                  // with the machine's own display.
+                  //
+                  // **The parts arrive in no fixed order.** An earlier version
+                  // of this published on the MWh word, on the reasoning that
+                  // it comes last — and on the very walk that identified these
+                  // elements, 0x0921 arrived seven frames before 0x0920 and
+                  // the total came out 135 kWh short. Replaying the capture
+                  // through this handler is what caught it; the panel
+                  // photograph is what proved which number was right.
+                  //
+                  // So each counter marks off the parts it has seen and
+                  // publishes only on a complete set, whichever part completes
+                  // it. The marks clear on publish, so a half-read screen
+                  // leaves the entity at its previous value instead of
+                  // dropping a too-low total into a total_increasing series,
+                  // where Home Assistant would read the next real value as a
+                  // counter reset.
+                  case 0x0931: if (part(0, 0, value)) id(energy_heat).publish_state(total(0)); break;
+                  case 0x0930: if (part(0, 1, value)) id(energy_heat).publish_state(total(0)); break;
+                  case 0x092F: if (part(0, 2, value)) id(energy_heat).publish_state(total(0)); break;
+                  case 0x092D: if (part(1, 0, value)) id(energy_dhw).publish_state(total(1)); break;
+                  case 0x092C: if (part(1, 1, value)) id(energy_dhw).publish_state(total(1)); break;
+                  case 0x092B: if (part(1, 2, value)) id(energy_dhw).publish_state(total(1)); break;
+                  case 0x0921: if (part(2, 0, value)) id(power_heat).publish_state(total(2)); break;
+                  case 0x0920: if (part(2, 1, value)) id(power_heat).publish_state(total(2)); break;
+                  case 0x091F: if (part(2, 2, value)) id(power_heat).publish_state(total(2)); break;
+                  case 0x091D: if (part(3, 0, value)) id(power_dhw).publish_state(total(3)); break;
+                  case 0x091C: if (part(3, 1, value)) id(power_dhw).publish_state(total(3)); break;
+                  case 0x091B: if (part(3, 2, value)) id(power_dhw).publish_state(total(3)); break;
+                  // The reheat's heat has no day counter on its screen, so
+                  // this one needs two parts and its day slot stays zero.
+                  // The reheat keeps two totals, on two pages of the same
+                  // screen, and only the first was found on the first walk.
+                  // NHZ LAMM SUMMA is heating, NHZ LV SUMMA is hot water, and
+                  // the second is the larger of the two by a factor of three.
+                  case 0x0929: if (part(4, 0, value)) id(energy_nhz_heat).publish_state(total(4)); break;
+                  case 0x0927: if (part(4, 1, value)) id(energy_nhz_heat).publish_state(total(4)); break;
+                  case 0x0925: if (part(5, 0, value)) id(energy_nhz_dhw).publish_state(total(5)); break;
+                  case 0x0923: if (part(5, 1, value)) id(energy_nhz_dhw).publish_state(total(5)); break;
+
+                  default: handled = false;
+                }
+              } else if (cmd == 2 && can_id == 0x601) {
+                // The mixer module holds the heating curve and the room
+                // setpoints — the parameters phase 2 exists to write. 0x601
+                // had no branch before the panel walk because it answers
+                // nothing unless a screen asks it.
+                //
+                // 0x4EA7 is deliberately absent: it is the minimum
+                // temperature, it reads POIS on the panel, and it answers
+                // with the 0x9000 sentinel every time. The guard above
+                // already stops it, and an entity that can only ever be
+                // unknown is the kind this file does not create.
+                handled = true;
+                switch (element) {
+                  case 0x0005: id(comfort_temp).publish_state((int16_t) value / 10.0f); break;
+                  case 0x0008: id(eco_temp).publish_state((int16_t) value / 10.0f); break;
+                  // et_cent_val: 23 is 0.23, and the panel agrees.
+                  case 0x010E: id(curve_slope).publish_state((int16_t) value / 100.0f); break;
+                  default: handled = false;
+                }
+              } else if (cmd == 2 && can_id == 0x301 && element == 0x0004) {
+                id(flow_setpoint).publish_state((int16_t) value / 10.0f);
+                handled = true;
+              } else if (cmd == 2 && can_id == 0x700) {
+                // Neither of these is in the element list, so both are named
+                // from behaviour and neither gets a scaling it has not
+                // earned. The list's tenths apply to et_dec_val elements;
+                // an element with no entry has no type either.
+                handled = true;
+                switch (element) {
+                  case 0xFE1D:
+                    // The compressor, but no longer the source of truth for
+                    // it. The manager commands 0 or 100 and the module reports
+                    // 1 or 98 back, and its on-window is the only one in the
+                    // capture that matches heat actually being made: tank
+                    // rising, flow and return at 53-54. Binary because 0 and
+                    // 100 are the only commands seen — if a middle value ever
+                    // appears this wants to become a percentage instead.
+                    //
+                    // **Seed only.** 0x4E5E bit 9 took this over: it changes
+                    // on the transition rather than on a poll. But that word
+                    // is written only when the state changes, so this fills
+                    // the entity in from the first poll after a boot and then
+                    // gets out of the way. Whichever arrives first is right;
+                    // they have never disagreed except at a transition, where
+                    // bit 9 is the earlier of the two.
+                    if (!id(compressor_from_status))
+                      id(compressor).publish_state(value > 50);
+                    break;
+                  // 0xFE1B is the command whose consequence 0xFE07 measures,
+                  // so identifying one needs the other visible. 0xFE1C is
+                  // here because it modulates (0, 8, 12, 100) and is the only
+                  // other output that moves. Raw, unnamed, diagnostic — the
+                  // same rule as 0xFE07.
+                  case 0xFE1B: id(elem_fe1b).publish_state((int16_t) value); break;
+                  case 0xFE1C: id(elem_fe1c).publish_state((int16_t) value); break;
+                  case 0xFE1E: id(elem_fe1e).publish_state((int16_t) value); break;
+
+                  // Tenths here but raw for 0xFE07, and the difference is
+                  // evidence rather than taste. 0xFDF4 is proven to be the
+                  // return temperature, and et_dec_val proven for its twin at
+                  // 0x180 — so its neighbours in the same index block, on the
+                  // same five-second cycle, in the same 26-54 range, are
+                  // temperatures on tenths too. 0xFE07 has no such sibling and
+                  // stays raw.
+                  case 0xFDF3: id(flow_temp_mod).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFDF4: id(return_temp_mod).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFDF5: id(flow_temp_nhz_mod).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFE09: id(elem_fe09).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFE0A: id(elem_fe0a).publish_state((int16_t) value / 10.0f); break;
+                  case 0xFE07:
+                    // Published raw, and named after nothing, because it is
+                    // not identified. What is known: 0xFE1B commands it and
+                    // this measures the result, inverted — commanding 0xFE1B
+                    // to 100 is what stops it. It has three operating points,
+                    // 0 and about 56 and about 52 with the compressor
+                    // running, and it takes ten seconds to move between them,
+                    // coasting down through 7 and overshooting to 59 on the
+                    // way up. Something with mass in it, so a pump or a flow.
+                    // Which pump and in what units is open; see CLAUDE.md,
+                    // and check the heat pump's own display first.
+                    id(elem_fe07).publish_state((int16_t) value);
+                    break;
+                  // 0xFE4C answered 18 in all 683 samples of the reference
+                  // capture. An entity for a constant is noise and so are 683
+                  // log lines saying so — but claiming it silently would mean
+                  // never learning that it moved, which is the one thing about
+                  // it worth knowing. So: claimed while it repeats, released
+                  // to the unclaimed-log path the moment it does not.
+                  case 0xFE4C: {
+                    static uint16_t last_fe4c = 0xFFFF;
+                    if (value != last_fe4c) {
+                      last_fe4c = value;
+                      handled = false;
+                    }
+                    break;
+                  }
+                  default: handled = false;
+                }
+              } else if ((cmd == 0 || cmd == 2) && can_id == 0x480) {
+                // The clock and the mode are et_little_endian: the number is
+                // the high byte and the low byte is padding. Writes count as
+                // well as responses here — the manager writes the minute
+                // every 60 s and is only asked for the date now and then.
+                const uint8_t n = value >> 8;
+                handled = true;
+                switch (element) {
+                  // 0x1388 is the machine's status code, and the panel writes
+                  // whatever it holds into the list it calls VIRHELUETTELO.
+                  // That name is misleading: the twelve entries on this
+                  // machine are all 8246, and **8246 is the EVU block** — the
+                  // load-control input, not a fault.
+                  //
+                  // On this installation Home Assistant drives that input from
+                  // the spot price, so the block is the owner's own automation
+                  // rather than the grid operator's. The log agrees: the
+                  // entries vary, one or two a day and none at all on two
+                  // days, which is a price threshold and not a contract.
+                  //
+                  // One block was captured whole: 8246 at 19:53:22, back to 0
+                  // before 20:01:58, compressor idle throughout.
+                  //
+                  // Full 16 bits, not `n`: 8246 is 0x2036 and the high byte
+                  // alone would read 32.
+                  //
+                  // Both entities are worth having, and the block is worth
+                  // having even though Home Assistant is the one asking for
+                  // it: what HA has never had is the *machine's* report that
+                  // the block arrived. Asking and taking effect are different
+                  // facts, and only the second says the wiring works. Phase 2
+                  // must not try to drive the machine during one either.
+                  // The raw code is what a real fault would arrive in, and
+                  // keeping it visible is the only way that would ever be
+                  // noticed.
+                  // DIAGNOSTIIKKA -> LAMPOP TILA shows this as JALJ LEPOAIKA,
+                  // the compressor's remaining minimum-off time. Zero when the
+                  // machine is free to start, which makes it the second half of
+                  // the "why is it not running" question the EVU block answers.
+                  case 0x0668: id(rest_time).publish_state(value); break;
+                  case 0x1388:
+                    id(status_code).publish_state(value);
+                    id(evu_block).publish_state(value == 8246);  // signal, not state — see the entity
+                    break;
+                  case 0x0112: {
+                    static const char *const MODE[6] = {
+                        "Emergency", "Standby", "Automatic",
+                        "Day", "Setback", "DHW only"};
+                    id(operating_mode).publish_state(n < 6 ? MODE[n] : "?");
+                    break;
+                  }
+                  // 0x4E5E is a status word and not a number: 17 distinct
+                  // values over a night, all of them small bit patterns.
+                  // Bit 9 rose in the same second as the compressor on both
+                  // starts and bit 0 is set in every frame ever seen; bits 4
+                  // to 7 move within a run and bit 14 flickers for a few
+                  // seconds at a time. Full sixteen bits, not `n` — this one
+                  // is not et_little_endian, and reading it as the high byte
+                  // would throw away exactly the bits that carry the state.
+                  //
+                  // Still published raw because bits 4 to 7 are not named. The
+                  // panel walk is the chance to name them, and it has to happen
+                  // while the compressor runs — the word only changes on a
+                  // transition, so a walk with the machine idle names nothing.
+                  //
+                  // **Bit 9 is the compressor, and it is the better source.**
+                  // Four cycles, set within seconds of every start and cleared
+                  // in the same second as every stop, no exceptions. 0xFE1D is
+                  // a commanded output polled every five to ten seconds; this
+                  // is a register that changes on the transition itself, and on
+                  // one stop it led the 0xFE1D-derived sensor by 19 s.
+                  case 0x4E5E:
+                    id(elem_4e5e).publish_state(value);
+                    id(compressor).publish_state((value >> 9) & 1);
+                    // From here on 0xFE1D stops publishing this entity. It
+                    // stays as the seed below, because this word is written
+                    // only on transitions — 62 frames in eleven hours — and
+                    // without a seed the entity would read unknown from every
+                    // boot until the compressor next changed state. With the
+                    // watchdog restarting the node that is not a rare event.
+                    id(compressor_from_status) = true;
+                    break;
+                  case 0x0122: id(clk_day)   = n; break;
+                  case 0x0123: id(clk_month) = n; break;
+                  case 0x0124: id(clk_year)  = n; break;
+                  case 0x0125: id(clk_hour)  = n; break;
+                  case 0x0126:
+                    id(clk_minute) = n;
+                    // The minute is the only part that arrives every minute,
+                    // so it is what triggers a publish. Publish only a date
+                    // that is actually a date: unknown is honest, and both
+                    // "2000-00-00" and a corrupt frame's "2026-255-05" are
+                    // not. Every part is refreshed whenever the panel polls,
+                    // so a rejected reading costs one minute, not a stuck
+                    // entity.
+                    if (id(clk_month) >= 1 && id(clk_month) <= 12 &&
+                        id(clk_day) >= 1 && id(clk_day) <= 31 &&
+                        id(clk_hour) <= 23 && id(clk_minute) <= 59 &&
+                        id(clk_year) <= 99) {
+                      char stamp[24];
+                      snprintf(stamp, sizeof(stamp),
+                               "20%02u-%02u-%02u %02u:%02u",
+                               id(clk_year), id(clk_month), id(clk_day),
+                               id(clk_hour), id(clk_minute));
+                      id(pump_clock).publish_state(stamp);
+                    }
+                    break;
+                  default: handled = false;
+                }
+              }
+
+              // Log the unclaimed. Per-frame logging is off by default
+              // because ~4 lines a second over the encrypted API was stalling
+              // the receiver, but silence and blindness are not the same
+              // thing: a frame no branch above claimed is precisely the one
+              // worth a line, because it is either an element this
+              // configuration has never met or a known one arriving from an
+              // unexpected node.
+              //
+              // Read requests are excluded by default — they carry no value,
+              // they are 44 % of all traffic, and a new element's *response*
+              // is logged anyway, which is where the data is.
+              //
+              // In the reference capture this fires for about 19 frames a
+              // minute against 221 total, so the cost is a fifth of a line a
+              // second. The switch forces every frame instead.
+              //
+              // `log_reads` is the middle setting, and it exists for walking
+              // the panel's menus. On a screen the panel *asks* for each
+              // value it shows, so the read request names the element even
+              // when the answer is a sentinel, arrives while the receiver is
+              // busy, or belongs to a node this file has never decoded. That
+              // mapping — screen to element — is the whole point of a walk,
+              // and it is the one thing the response alone cannot give.
+              //
+              // Prefer it over `log_frames` for that job. Every element found
+              // so far came through the unclaimed path with reads switched
+              // off, so full per-frame logging adds handled traffic and its
+              // stall risk for very little: it doubles the rate to catch the
+              // frames this configuration already understands.
+              if (id(log_frames).state ||
+                  (!handled && (cmd != 1 || id(log_reads).state)))
+                ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X%s%s",
+                         (unsigned) can_id, (unsigned) receiver, CMD[cmd],
+                         ext ? "ex" : "e", element, val, tail);
 
 
 globals:
@@ -193,7 +690,16 @@ globals:
     restore_value: false
     initial_value: "0"
 
+  # Frames the shape check rejected as implausible. Phase 1's comparable figure
+  # is 2 in 95 000.
   - id: malformed_count
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+  # Command 6 and 7 frames. Legitimate traffic in a different layout, counted
+  # apart so it cannot be mistaken for corruption again.
+  - id: system_count
     type: uint32_t
     restore_value: false
     initial_value: "0"
@@ -208,13 +714,41 @@ globals:
     restore_value: false
     initial_value: "0"
 
+  - id: compressor_from_status
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+  # Watchdog state. See "the silent stall" below.
+  - id: clk_day
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+  - id: clk_month
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+  - id: clk_year
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+  - id: clk_hour
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+  - id: clk_minute
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+
+
 
 # --------------------------------------------------------------- Stall notice
 # wemos-mcp2515.yaml restarts the node when frames stop, because the MCP2515
 # latches an overflow flag and then never receives again until it is reset.
-# **This file warns and does not restart**, on purpose: whether TWAI has that
-# failure mode at all is part of what this step is measuring, and a watchdog
-# that papers over a stall would destroy the evidence for it.
+# **This file warns and does not restart**, on purpose: the whole point of
+# moving to TWAI was that it does not have that failure mode, and a watchdog
+# that papers over a stall would destroy the evidence either way.
 #
 # Twenty seconds keeps the fourfold margin over the worst natural gap between
 # frames, which a two-hour capture measured at 4.7 s.
@@ -238,10 +772,14 @@ interval:
                 format: "No frames for 20 s - NOT restarting, this is the measurement"
 
 
+button:
+  - platform: restart
+    name: "Restart"
+    id: restart_button
+    entity_category: diagnostic
+
+
 sensor:
-  # The two numbers this step exists to produce. Compare both against the
-  # recorded phase 1 logs: the bus is stationary, so a run of comparable length
-  # is a fair comparison even though the nodes cannot be on it at the same time.
   - platform: template
     name: "CAN frames"
     id: can_frames
@@ -262,6 +800,16 @@ sensor:
     entity_category: diagnostic
     lambda: "return id(malformed_count);"
 
+  - platform: template
+    name: "System frames"
+    id: system_frames
+    accuracy_decimals: 0
+    update_interval: 10s
+    unit_of_measurement: "frames"
+    state_class: total_increasing
+    entity_category: diagnostic
+    lambda: "return id(system_count);"
+
   - platform: wifi_signal
     name: "Wi-Fi"
     update_interval: 60s
@@ -274,7 +822,330 @@ sensor:
     entity_category: diagnostic
 
 
+# ------------------------------------------------------------------ Sensors
+# The elements that matching the capture against the published element list
+# named with confidence. Entity names are English, matching this project's
+# documents rather than the list's German.
+#
+# All of these are `update_interval: never` and carry no lambda: they are
+# publish-only, and the frame handler pushes into them as values arrive on the
+# bus. Polling them would invent an update rate the bus does not have.
+#
+# Four of the five update on their own, because the panel polls 0x180 every
+# ten seconds without anyone touching the machine. **The two setpoints do
+# not** — they were asked for once in a two-hour capture, so they stay unknown
+# until something on the bus asks. That is worth knowing before wondering why
+# an entity is empty.
+#
+# Deliberately absent: IMPULSRATE, DYNAMIK and BRENNER. They are named in the
+# list, but each appeared once or twice in two hours, none has a verified
+# meaning on this machine, and an entity that is unknown forever is noise.
+# Also absent is everything from 0x700 — that range is not in the list at all.
+# The compressor is legible there anyway (0xFE07 and 0xFE1D switch together),
+# and it is one `case` away once those two are confirmed.
+
+  - platform: template
+    id: return_temp
+    name: "Return temperature"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  - platform: template
+    id: dhw_temp
+    name: "DHW tank temperature"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  - platform: template
+    id: dhw_setpoint
+    name: "DHW setpoint"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  - platform: template
+    id: flow_setpoint
+    name: "Flow setpoint"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  # Read the capture before trusting this one: it sat at exactly 15.3 °C for
+  # two hours without a tenth of movement. Either no outdoor sensor feeds this
+  # bus or the value is a placeholder — and heating curve control, which is
+  # what phase 2 is for, depends on the answer.
+  - platform: template
+    id: outdoor_temp
+    name: "Outdoor temperature"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: never
+
+  # No unit and no device class on purpose: 0xFE07 is not in the element list,
+  # so nothing is known about its scaling and the raw integer is the only
+  # honest thing to publish. Rename it the day it is identified.
+  #
+  # **Deliberately not median-filtered**, unlike the three 0x700 temperatures
+  # that get the same five-second traffic and the same stress artefacts. This
+  # one published 1584 once against a lifetime range of 0 and 51-58, so it has
+  # the problem — but its *transitions* are the open evidence about what it is:
+  # it coasts down through 7 to 0, overshoots to 59 on the way up, and steps
+  # from 56 to 52 when the compressor loads. A median of three would blunt
+  # exactly the shape that has to be watched, to clean up one sample that is
+  # obvious in the log anyway. Filter it the day it is named, not before.
+  - platform: template
+    id: elem_fe07
+    name: "Element 0xFE07"
+    state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+  - platform: template
+    id: elem_fe1b
+    name: "Element 0xFE1B"
+    state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+  - platform: template
+    id: elem_fe1c
+    name: "Element 0xFE1C"
+    state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+  - platform: template
+    id: elem_fe1e
+    name: "Element 0xFE1E"
+    state_class: measurement
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+  # The manager's status word, written to 0x100 rather than to 0x700 — which
+  # is why nothing claimed it and the unclaimed log is what found it. No
+  # state_class: a bitfield has no mean and no sum, and asking Home Assistant
+  # to draw statistics over one produces a chart of nonsense.
+  - platform: template
+    id: elem_4e5e
+    name: "Element 0x4E5E"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    update_interval: never
+
+# ------------------------------------- Named by the panel walk, 2026-09-06
+# Everything below was identified by photographing a screen and matching its
+# values against the frames logged while it was displayed. None of it is
+# guesswork from the element list.
+#
+# **All of it updates only when someone opens the screen.** That is the whole
+# character of this group and it decides how each entity is declared:
+#
+#   settings and counters  state_class, because a setpoint or an hour count
+#                          stays true between readings — stale means old, not
+#                          wrong, and a total that only steps when read is
+#                          still a total
+#   measurements           no state_class, because a source temperature from
+#                          last Tuesday drawn as a flat line is a lie about
+#                          the machine. Let Home Assistant show a number with
+#                          a timestamp instead of a graph.
+#
+# The measurements are here anyway because the panel is the only thing that
+# ever asks for them, and after a walk they answer questions nothing else on
+# this bus can: whether the brine loop is losing pressure, what the hot gas
+# reaches, how far apart high and low pressure sit.
+
+  # ---- settings: the heating curve and the room setpoints, from 0x601 ----
+  # These three are what phase 2 will write, and 0x010E already has its write
+  # frame on record.
+  - {platform: template, id: comfort_temp, name: "Comfort temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: eco_temp, name: "Eco temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: curve_slope, name: "Heating curve slope", state_class: measurement, accuracy_decimals: 2, update_interval: never}
+
+  # ---- settings: hot water and the limits, from 0x180 --------------------
+  - {platform: template, id: dhw_comfort, name: "DHW comfort temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: dhw_eco, name: "DHW eco temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: max_return, name: "Max return temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: max_flow, name: "Max flow temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: frost_protect, name: "Frost protection temperature", device_class: temperature, state_class: measurement, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+
+  # ---- measurements: no state_class, see the note above ------------------
+  # 0x06A1 is the flow temperature the panel labels WP, and it is the one
+  # quantity this configuration was missing: the return has been readable all
+  # along from two independent nodes, the flow from neither.
+  - {platform: template, id: flow_temp_hp, name: "Flow temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: flow_temp_nhz, name: "Flow temperature reheat", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: room_temp_hc1, name: "Room temperature HC1", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: source_temp, name: "Source temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  - {platform: template, id: source_temp_min, name: "Source temperature minimum", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hot_gas_temp, name: "Hot gas temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: pressure_high, name: "High pressure", device_class: pressure, unit_of_measurement: "bar", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: pressure_low, name: "Low pressure", device_class: pressure, unit_of_measurement: "bar", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: source_pressure, name: "Source pressure", device_class: pressure, unit_of_measurement: "bar", accuracy_decimals: 2, entity_category: diagnostic, update_interval: never}
+
+  # ---- running hours -----------------------------------------------------
+  # total_increasing rather than total: these only ever count up, and the
+  # panel offers no way to reset them.
+  - {platform: template, id: hours_heat, name: "Compressor hours heating", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hours_dhw, name: "Compressor hours DHW", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hours_nhz1, name: "Reheat hours stage 1", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hours_nhz2, name: "Reheat hours stage 2", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hours_nhz_both, name: "Reheat hours both stages", state_class: total_increasing, unit_of_measurement: "h", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+
+  # ---- named on the second walk -----------------------------------------
+  - {platform: template, id: pump_power_heat, name: "Heating pump power setting", unit_of_measurement: "%", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: pump_power_dhw, name: "DHW pump power setting", unit_of_measurement: "%", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: hp_sensor_max, name: "High pressure sensor maximum", device_class: pressure, unit_of_measurement: "bar", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: rest_time, name: "Remaining rest time", unit_of_measurement: "min", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+
+  # The machine's status code, raw. 0 in normal running; 8246 is the utility
+  # block. A real fault would arrive here too, which is the reason to keep a
+  # number nobody looks at most days.
+  - {platform: template, id: status_code, name: "Status code", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+
+  # ---- energy, assembled from three parts each ---------------------------
+  # Heat delivered against electricity consumed, which is the pair a seasonal
+  # COP is made of. The machine keeps both and has done since it was
+  # installed; nothing here computes a ratio, because a ratio of two numbers
+  # that update once per panel walk would be a number pretending to be a
+  # measurement.
+  - {platform: template, id: energy_heat, name: "Heat delivered heating (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: energy_dhw, name: "Heat delivered DHW (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: power_heat, name: "Electricity used heating (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: power_dhw, name: "Electricity used DHW (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: energy_nhz_heat, name: "Heat delivered reheat heating", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+  - {platform: template, id: energy_nhz_dhw, name: "Heat delivered reheat DHW", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
+
+  # The return temperature as the module reports it, independent of whether
+  # the panel is awake and polling 0x180. Same physical value as "Return
+  # temperature", read by a different node under a different index.
+  - platform: template
+    id: return_temp_mod
+    name: "Return temperature (module)"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+    # A single 0.0 °C landed here between two 26 °C readings during the panel
+    # walk, and the sentinel guard cannot catch it: 0x0000 is a legal value,
+    # just not a possible one for heating water at 26 °C. Zero such samples in
+    # eleven hours of clean running and three in 47 minutes of walking, all
+    # inside the window bracketed by two watchdog restarts — so it is receiver
+    # stress, not the bus, and it only appears in the mode that causes it.
+    #
+    # A median of three removes an isolated spike completely and invents no
+    # threshold, which a range check would have to. These arrive every five
+    # seconds, so the cost is about ten seconds of lag on a heating flow
+    # temperature — nothing depends on that. send_every must be set: the
+    # default is 5, which would also drop the update rate to once every 25 s.
+    filters:
+      - median:
+          window_size: 3
+          send_every: 1
+          send_first_at: 1
+
+  # Both are flow temperatures, and both are the *module's* reading — the one
+  # that keeps arriving every five seconds whether or not anyone is at the
+  # panel. Same relationship the return already has: 0x0016 from 0x180 needs a
+  # panel, 0xFDF4 from 0x700 does not. Prefer these two for anything that has
+  # to work at three in the morning.
+  - platform: template
+    id: flow_temp_mod
+    name: "Flow temperature (module)"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+    # A single 0.0 °C landed here between two 26 °C readings during the panel
+    # walk, and the sentinel guard cannot catch it: 0x0000 is a legal value,
+    # just not a possible one for heating water at 26 °C. Zero such samples in
+    # eleven hours of clean running and three in 47 minutes of walking, all
+    # inside the window bracketed by two watchdog restarts — so it is receiver
+    # stress, not the bus, and it only appears in the mode that causes it.
+    #
+    # A median of three removes an isolated spike completely and invents no
+    # threshold, which a range check would have to. These arrive every five
+    # seconds, so the cost is about ten seconds of lag on a heating flow
+    # temperature — nothing depends on that. send_every must be set: the
+    # default is 5, which would also drop the update rate to once every 25 s.
+    filters:
+      - median:
+          window_size: 3
+          send_every: 1
+          send_first_at: 1
+
+  - platform: template
+    id: flow_temp_nhz_mod
+    name: "Flow temperature reheat (module)"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+    # A single 0.0 °C landed here between two 26 °C readings during the panel
+    # walk, and the sentinel guard cannot catch it: 0x0000 is a legal value,
+    # just not a possible one for heating water at 26 °C. Zero such samples in
+    # eleven hours of clean running and three in 47 minutes of walking, all
+    # inside the window bracketed by two watchdog restarts — so it is receiver
+    # stress, not the bus, and it only appears in the mode that causes it.
+    #
+    # A median of three removes an isolated spike completely and invents no
+    # threshold, which a range check would have to. These arrive every five
+    # seconds, so the cost is about ten seconds of lag on a heating flow
+    # temperature — nothing depends on that. send_every must be set: the
+    # default is 5, which would also drop the update rate to once every 25 s.
+    filters:
+      - median:
+          window_size: 3
+          send_every: 1
+          send_first_at: 1
+
+  # The second handle on 0xFE07: it steps within seconds of it, so it is a
+  # temperature in the circuit 0xFE1B stops.
+  - platform: template
+    id: elem_fe09
+    name: "Element 0xFE09"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+
+  - platform: template
+    id: elem_fe0a
+    name: "Element 0xFE0A"
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    update_interval: never
+
+
+
 switch:
+  # Per-frame logging, off at every boot. See the frame handler for why.
   - platform: template
     id: log_frames
     name: "Log every frame"
@@ -282,8 +1153,81 @@ switch:
     restore_mode: ALWAYS_OFF
     entity_category: config
 
+  # The menu-walk switch: adds unclaimed read requests to the log, so a
+  # screen's elements are named by what the panel asks for and not only by
+  # what answers.
+  #
+  # RESTORE_DEFAULT_OFF and not ALWAYS_OFF like the one above, and the
+  # difference is the watchdog. A stall trips it, the node is back in 14
+  # seconds, and ALWAYS_OFF would have quietly switched the logging off in
+  # the meantime — which during a walk means writing down screens that no
+  # longer reach the log, and finding out afterwards. Restoring the state
+  # across a restart costs nothing and removes a whole class of lost session.
+  #
+  # It still boots off after a flash, which is what matters for the default.
+  # Leaving it on is wasteful rather than dangerous: read requests are 44 %
+  # of traffic, so about 1.3 lines a second against the ~4 that stalled the
+  # receiver. Turn it back off when the walk is done.
+  - platform: template
+    id: log_reads
+    name: "Log read requests"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
 
-button:
-  - platform: restart
-    name: "Restart"
+
+binary_sensor:
+  # Status code 8246, which marks the EVU load block. On this installation
+  # Home Assistant closes that input on the expensive spot hours, so this is
+  # the machine reporting back on a block HA asked for — the half of the loop
+  # HA has never been able to see.
+  #
+  # **It is a signal, not the block itself, and the arithmetic is what says
+  # so.** The configured delays make any block at least 20 minutes long. The
+  # register is written every 52 seconds without a gap, and across 211 writes
+  # in one night it read 8246 for at most 13 minutes 5 seconds — bounded by a
+  # 0 at 19:48:51 and the next 0 at 20:01:58. A code that clears while the
+  # block is still running cannot be the block's state.
+  #
+  # So the name says signal, and **the latching belongs in Home Assistant**,
+  # which knows its own delays. Encoding a 20-minute timer here would bake one
+  # installation's automation settings into a heat pump reader, and it would be
+  # wrong the day those settings change.
+  #
+  # Whether 8246 marks the request or the engagement is still open: the
+  # capture cannot separate them, because the compressor would not have run in
+  # that window either way.
+  #
+  # No device_class: `problem` would be wrong, because this is normal
+  # contracted operation, and `running` inverts the sense.
+  #
+  # And no `update_interval` either, unlike every publish-only sensor above:
+  # a template binary sensor is not a polling component, so the option that
+  # says "never poll" is rejected rather than ignored. With no lambda it is
+  # already publish-only, which is what the sensors need the option to say.
+  - platform: template
+    id: evu_block
+    name: "EVU signal"
+
+  # Named from behaviour rather than from the list — see the frame handler.
+  # Two sources feed it: 0x4E5E bit 9 from 0x480 once that word has been seen,
+  # and the polled 0xFE1D from 0x700 as the seed until then.
+  - platform: template
+    id: compressor
+    name: "Compressor"
+    device_class: running
+
+
+text_sensor:
+  - platform: template
+    id: operating_mode
+    name: "Operating mode"
+    update_interval: never
+
+  # Not decoration: this is how the eleven-minute clock drift was found, and
+  # it is how anyone notices it drifting again.
+  - platform: template
+    id: pump_clock
+    name: "Heat pump clock"
     entity_category: diagnostic
+    update_interval: never

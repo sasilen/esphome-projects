@@ -2725,10 +2725,33 @@ and logs; it writes nothing, and it is not the phase 2 configuration.
 
 The C3 node is [`esp32c3-230.yaml`](esp32c3-230.yaml), named after its hardware
 like the sniffer is — the phase split lives inside the file, so the same node
-listens now, asks in 2a and writes in 2b. Today it holds the receive test: no
-sensors and two counters, because the question it answers is yes or no. Does the
-built-in TWAI controller read this bus, and does it produce the malformed frames
-the SPI read path produces?
+listens now, asks in 2a and writes in 2b. It began as a receive test carrying two
+counters and no sensors; **now that the test has passed, the decoding has moved
+across** and it carries the full element dispatch, the entities and the panel-walk
+switches. Moved rather than copied: the frame handler takes an identifier and
+seven bytes and knows nothing about which controller delivered them, so it ported
+unchanged apart from the reject counters. The MCP2515 file keeps its copy as the
+rollback until the C3 has proven itself over more than an afternoon.
+
+**The reject counters are now two, and the split is a correction.** The first
+version counted every frame the shape check rejected as "malformed", which read
+alarmingly: 21 in the first minutes against phase 1's 2 in 95 000. The raw lines
+settled it — command 6 or 7 in every one, and `0x79` in byte 1 of three, which
+is this bus's system-frame signature and no address at all:
+
+```
+601 raw dlc=7  66 01 FE 01 00 00 00
+180 raw dlc=7  66 79 FE 01 00 00 00
+100 raw dlc=7  97 00 FE 01 00 00 00
+```
+
+They are legitimate traffic in a layout the decoder does not use, and they arrive
+in bursts rather than only at startup. **So `System frames` counts them and
+`Malformed frames` keeps only the genuinely implausible** — a length that is not
+seven, a command above 7, a marker beyond `0xFA`, or a sender that is not a
+multiple of 0x080 plus 0–3. On that definition the C3 has produced **zero** in
+the first 1 664 frames. Phase 1's figure to beat is 2 in 95 000, and the
+comparison still wants an overnight run.
 
 **It compiles, and that closes two open questions at once.** ESPHome accepts
 `mode: LISTENONLY` on `esp32_can`, so the C3 can join the live bus passively
