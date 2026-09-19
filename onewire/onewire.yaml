@@ -23,15 +23,20 @@ esp32:
   framework:
     type: esp-idf
 
-# **CONFIG eikä INFO.** Väylän luettelo löydetyistä osoitteista tulostuu
-# CONFIG-tason käynnistysvedoksessa, ja INFO vaientaisi juuri sen. Se luettelo
+# **DEBUG eikä INFO.** Väylän luettelo löydetyistä osoitteista tulostuu
+# CONFIG-tason viesteinä käynnistysvedoksessa, ja INFO vaientaa ne. Se luettelo
 # on ainoa tapa nähdä laitteet joita **ei** ole tässä konfiguraatiossa — kartta
 # on vuodelta 2020 ja verkko on kasvanut kerran jo sen jälkeen.
 #
-# CONFIG näyttää vedoksen mutta ei DEBUGin jatkuvaa jaarittelua, joten tämän voi
-# jättää pysyvästi päälle. Sama ansa piilotti stiebelin solmun IP-osoitteen.
+# **`level: CONFIG` ei kelpaa**, vaikka viestit ovat sen tasoisia: ESPHome
+# hyväksyy vain NONE, ERROR, WARN, INFO, DEBUG, VERBOSE ja VERY_VERBOSE. DEBUG
+# on siis matalin taso joka näyttää vedoksen.
+#
+# Hinta on jaarittelu: kaksikymmentä anturia minuutin välein tarkoittaa noin
+# kahtakymmentä riviä minuutissa. **Laske INFO:on kun osoitteet on vahvistettu**
+# — siihen asti luettelo on tärkeämpi kuin hiljaisuus.
 logger:
-  level: CONFIG
+  level: DEBUG
 
 api:
   encryption:

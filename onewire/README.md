@@ -193,7 +193,12 @@ luetteloi sen itse.
 kaikki väylältä löytyvät osoitteet, ei vain niitä joille on määritelty anturi.
 **Mikä tahansa ylimääräinen on lisätty vuoden 2020 kartan jälkeen** — ja
 esimerkiksi saunaa ei kummassakaan vanhassa lähteessä ole, vaikka sellainen
-voisi hyvin olla olemassa. Siksi lokitaso on `CONFIG` eikä `INFO`.
+voisi hyvin olla olemassa. Siksi lokitaso on `DEBUG` eikä `INFO`.
+
+Luettelo tulostuu CONFIG-tason viesteinä, mutta **`level: CONFIG` ei kelpaa
+asetukseksi** — ESPHome hyväksyy vain NONE, ERROR, WARN, INFO, DEBUG, VERBOSE
+ja VERY_VERBOSE. DEBUG on matalin taso joka näyttää vedoksen, ja sen voi laskea
+INFO:on kun osoitteet on vahvistettu.
 
 **Osoitteet ovat jo konfiguraatiossa.** Ne on laskettu vanhan OWFS-kartan
 osoitteista eikä luettu väylältä, joten

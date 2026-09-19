@@ -2921,6 +2921,10 @@ Two smaller findings from the same session:
   the startup config dump, which is a CONFIG-level message, so at INFO it never
   appears. Read it from the router or raise the level briefly — and prefer
   either to the `.local` name, which is exactly what goes stale here.
+  **Raise it to `DEBUG`, not `CONFIG`:** the messages are CONFIG-level but the
+  setting is not selectable. ESPHome accepts only NONE, ERROR, WARN, INFO,
+  DEBUG, VERBOSE and VERY_VERBOSE, so DEBUG is the lowest level that shows the
+  dump.
 
 **The bench result:** boots, joins WiFi at −62 dBm, API handshake in 0.1 s, both
 counters publishing zero. The stall notice firing on schedule is what proves the
