@@ -142,6 +142,29 @@ Raspberryn GPIO:sta kolmella johtimella. Se ratkaisee kolme asiaa kerralla:
 - **Vanha kaapeli on dokumentaatio.** Jos se löytyy, siitä lukee syöttöjohdin
   suoraan eikä mitään tarvitse päätellä konventioista.
 
+### Vanha toteutus: värit kertovat, ei nastanumerot
+
+Vanhasta Raspberry-kaapelista valokuvattuna kaksi asiaa, ja molemmat poistavat
+päättelyn tarpeen.
+
+**Kolme johdinta kahdeksasta paikasta, ja värit ovat anturin omat.** Musta,
+punainen ja keltainen ovat vedenkestävän DS18B20-sauvan vakiovärit:
+
+| Väri | Signaali |
+|---|---|
+| musta | GND |
+| punainen | VDD |
+| keltainen | DQ |
+
+Kaapeli on siis tehty anturin värikoodilla eikä Cat5e:n parivärillä. **Siksi
+nastanumeroita ei tarvitse päätellä**: uusi pistoke tehdään samoilla väreillä
+samoihin paikkoihin, vanha vieressä vertailukohtana. Se on luotettavampi kuin
+mikään konventiotaulukko, koska se on tämän talon oma asennus eikä yleinen tapa.
+
+**Ylösveto on isännän päässä.** Vastus on juotettu suoraan Raspberryn riman
+kahden nastan väliin. Verkossa itsessään ei siis ole ylösvetoa, ja uusi isäntä
+tarvitsee omansa.
+
 ### Ylösveto voi olla jo paikallaan
 
 Raspberryn `w1-gpio` vaatii ulkoisen 4,7 kΩ:n. Jos se on aikanaan asennettu
@@ -155,6 +178,11 @@ Yksi mittaus ennen kuin vastusta juotetaan mihinkään, kaikki jännitteet pois:
 |---|---|
 | ~4,7 kΩ | ylösveto on jo verkossa — älä lisää toista |
 | avoin | se oli Raspberryn päässä — lisää omasi |
+
+**Valokuvien perusteella jälkimmäinen pätee**, eli C3 tarvitsee oman
+ylösvetonsa. Mittaus jää silti listalle, koska se maksaa kymmenen sekuntia ja
+koska valokuva kertoo mitä yhdessä päässä on — ei sitä mitä keskipisteessä voi
+olla.
 
 Tästä seuraa menettely joka rajaa riskin nollaan: **todenna data ja paluu
 kahdella johtimella ennen kuin kytket kolmannen.** DS9490 ajaa väylää

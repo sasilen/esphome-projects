@@ -34,11 +34,17 @@ Kolme johdinta ja yksi vastus. **Ylösveto kuuluu isännän päähän**, datan j
 3,3 voltin väliin, ja niitä on yksi kappale koko verkolle — ei yhtä per haara,
 koska rinnakkaiset ylösvedot laskisivat yhteisvastuksen liian pieneksi.
 
-| C3 | | Keskipiste |
+| C3 | | Vanhan kaapelin väri |
 |---|---|---|
-| 3V3 | → | VDD |
-| GPIO4 | → | DQ, ja **4,7 kΩ tästä 3,3 V:iin** |
-| GND | → | GND |
+| 3V3 | → | **punainen** (VDD) |
+| GPIO4 | → | **keltainen** (DQ), ja **4,7 kΩ tästä 3,3 V:iin** |
+| GND | → | **musta** (GND) |
+
+**Kopioi värit, älä laske nastoja.** Vanha Raspberry-kaapeli on tehty anturin
+omalla värikoodilla — musta, punainen ja keltainen ovat vedenkestävän
+DS18B20-sauvan vakiovärit — ja kolme johdinta kahdeksasta paikasta on täytetty.
+Uusi pistoke tehdään samoilla väreillä samoihin paikkoihin, vanha vieressä.
+Se on luotettavampi kuin konventiotaulukko, koska se on tämän talon asennus.
 
 GPIO4 samasta syystä kuin stiebelin solmussa: SuperMinillä se on samalla
 reunalla kuin 3V3 ja GND, eikä se ole strappausnasta.
