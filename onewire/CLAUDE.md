@@ -512,18 +512,33 @@ kosteus, viisi kytkintuloa ja mahdolliset uunianturit jäisivät lukematta. Täm
 on tarkistettava asennetusta versiosta ennen kuin siihen nojaa, mutta suunta on
 selvä: jos ne halutaan mukaan, tarvitaan OWFS rinnalle tai tilalle.
 
-**Tämä on avoin suunnittelukysymys eikä tekninen este**, ja se kasvaa sitä
-mukaa kun väylältä löytyy muita perhekoodeja kuin `28` ja `10`. Kaksi tapaa:
+**Rajoite ei ole ESP32 vaan ESPHomen komponenttivalikoima**, ja se ero on
+olennainen. Sähköisesti ja protokollatasolla kaikki 1-Wire-laitteet ovat samalla
+väylällä samanarvoisia: sama ajoitus, sama ROM-haku, sama isäntä. Ero on vain
+siinä mitä komentoja laitteelle lähetetään ja miten vastaus tulkitaan — ja se on
+ohjelmistoa.
 
-- **Hyväksy osittainen kattavuus.** Lämpötilat ovat valtaosa ja se osa toimii
-  natiivisti ilman MQTT:tä, mikä on repon linja.
-- **Pidä OWFS rinnalla** jollain pienellä isännällä niitä laitteita varten
-  joita ESPHome ei lue. Silloin väylällä on kaksi isäntää, mikä ei käy —
-  ellei väylää haaroiteta niin että kumpikin isäntä saa omansa.
+Kolme tapaa saada loput samalle C3:lle:
 
-Jälkimmäinen on se tapaus jossa tähden haaroittaminen lakkaa olemasta
-vikakorjaus ja muuttuu rakenteeksi. Päätös kannattaa tehdä vasta kun
-käynnistysluettelo kertoo mitä väylällä oikeasti on.
+- **Ulkoinen komponentti.** `external_components` hakee koodin gitistä, ja tämä
+  repo käyttää sitä jo: aidon ajaa `psvanstrom/esphome-p1reader`-komponenttia.
+  Jos jollekin näistä piireistä on valmis komponentti, se on yhden lohkon
+  lisäys — ja silloin **muista kiinnittää `ref:`**, samasta syystä kuin
+  aidonissa.
+- **Oma komponentti tai lambda.** `one_wire`-väylä tarjoaa C++-rajapinnan, jota
+  voi ajaa omasta koodista. MAX31850:n luku on match ROM, muunnoskäsky `0x44`,
+  scratchpadin luku `0xBE` ja 14-bittisen lukeman irrotus — kolmisenkymmentä
+  riviä. DS2406:n kytkintulo on yksinkertaisempi; DS2438 työläin, koska siinä on
+  useita sivuja ja CRC per sivu.
+- **Tai jätä lukematta.** Jos uunianturia katsotaan kolmesti vuodessa, se ei ole
+  entiteetin arvoinen.
+
+**Toista isäntää ei tarvita**, eli väylää ei tarvitse jakaa OWFS:n ja ESPHomen
+kesken. Tässä luki hetken niin, ja se oli tarpeettoman monimutkainen ratkaisu
+ongelmaan joka on ohjelmistopuolella.
+
+Päätös kannattaa silti tehdä vasta kun käynnistysluettelo kertoo mitä väylällä
+oikeasti on: jos muita perhekoodeja ei löydy, kysymystä ei ole.
 
 ### Osoitemuoto muuntuu laskemalla
 
