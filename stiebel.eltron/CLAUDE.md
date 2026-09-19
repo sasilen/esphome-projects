@@ -2822,6 +2822,37 @@ CAN layer initialised: `esp32_can` accepted 20 kbps and `LISTENONLY` on real
 silicon and not only in the validator. What none of it proves is reception —
 every line of it would have looked identical on a node that never reads a frame.
 
+### And on the bus it reads: the route is settled
+
+**237 frames a minute at 20 kbps**, measured over 40 s at X27 with the D1 mini
+removed. The documented rate is "over 200 a minute", so the C3 sees the same bus
+the MCP2515 saw. **`esp32_can` is no longer a rejection in this file** — it is
+what this project runs on, and the MCP2515 goes with everything that came with
+it: the SPI wiring, the lifted pin, the crystal question, the level shifting and
+the receive stall.
+
+**The bus reads 63 Ω with the node fitted**, against 150 Ω before and a predicted
+65 Ω for 150 ∥ 115. That is the measurement that proves both ends are in the
+spring terminal rather than resting on insulation, and it puts the bus closer to
+CAN's canonical 60 Ω than it has ever been.
+
+**The malformed counter froze at 21 and stayed there** while the frame count ran
+on past 800. So the rejects are a startup artefact — a controller joining a live
+bus mid-traffic does not read the first frames whole — and the ongoing rate is
+zero. Two cautions on that number:
+
+- **It is 21 in the first two minutes and 0 in the 470 frames after**, which is
+  the figure that compares with the MCP2515's 2 in 95 000. A real comparison
+  needs an overnight run: at this rate 100 000 frames is about seven hours.
+- **The counter's name overstates what it counts.** The shape check rejects
+  everything that is not a request/response telegram, and system frames are
+  legitimate traffic that fails it. Whether those 21 were system frames or
+  synchronisation debris is unresolved; the raw lines in the log would say.
+
+**WiFi is −75 dBm at the installed position**, against −62 on the bench. Still
+workable — aidon is the documented problem case at −87…−90 — but 13 dB is a real
+drop, and OTA is the first thing that suffers from it.
+
 **The decoding itself moves rather than being copied.** The frame handler takes
 an identifier and seven bytes and knows nothing about which controller delivered
 them, so it ports unchanged — but it ports once the receive test has passed, and

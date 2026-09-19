@@ -17,7 +17,7 @@ muuten mDNS ei toimi eikä OTA löydä levyjä.
 | [aidon](aidon/) | Aidon 7410 -sähkömittari | HAN-portti (RJ12), EFS2 ASCII 115200 8N1 | Wemos D1 mini (ESP8266) | **Käytössä** |
 | [bestway.lay-z-spa](bestway.lay-z-spa/) | Bestway Lay-Z-SPA -poreallas | CIO/DSP-lattakaapeli → **MQTT** | ESP8266 + tasonsiirrin | **Käytössä**. Ei ESPHome, ks. alla |
 | [hirvirata](hirvirata/) | Liikkuva maalitaulurata | — (H-silta, PWM) | Wemos D1 mini + L298N + 12 V vaihdemoottori | Suunnittelu, YAML-luonnos valmis |
-| [stiebel.eltron](stiebel.eltron/) | Stiebel Eltron WPC 07 -lämpöpumppu | CAN 20 kbps | ESP8266/ESP32 + MCP2515 (5 V → 3,3 V -muutos) | Suunnittelu, rauta hankittu, kuuntelu-YAML valmis |
+| [stiebel.eltron](stiebel.eltron/) | Stiebel Eltron WPC 07 -lämpöpumppu | CAN 20 kbps | ESP32-C3 + SN65HVD230 (sisäinen TWAI) | **Kuuntelee väylää.** MCP2515 jäi tarpeettomaksi |
 | [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | Potentiaalivapaat koskettimet (ei Modbusia — ECC05) | — | **Ei toteuteta.** Perustelu kirjattu |
 | [axioma.effection](axioma.effection/) | Axioma Effectio / Qalcosonic W1 -vesimittari | Wireless M-Bus 868,95 MHz T1/C1 | ESP32 + CC1101 | Kuuntelee, mutta mittari on LoRaWAN-luennassa |
 

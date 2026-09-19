@@ -12,13 +12,17 @@ parameters the WPM exposes, straight from Home Assistant via ESPHome. No MQTT.
 existing on/off lever is the wrong shape, what each phase does, the one decision
 still open, and the four constraints that shape the rest.
 
-**Status: phase 1 works, and phase 2 is no longer waiting for parts.** The sniffer
-[`wemos-mcp2515.yaml`](wemos-mcp2515.yaml) is flashed and sitting on the bus
-at X27. The bit rate is confirmed at 20 kbps, frames are captured and decoded in
-the log, and the addresses in use are known. What is left in phase 1 is naming
-the elements against the published table and turning them into Home Assistant
-sensors. The transceiver writing needs is in the parts box, so phase 2 is blocked
-by work rather than by hardware.
+**Status: the C3 holds the bus, and the MCP2515 route is retired.**
+[`esp32c3-230.yaml`](esp32c3-230.yaml) sits at X27 in listen-only and reads
+237 frames a minute at 20 kbps, so ESPHome's built-in TWAI controller does this
+job and the SPI module is no longer needed. What it does not yet carry is the
+decoding — that moves across from
+[`wemos-mcp2515.yaml`](wemos-mcp2515.yaml), which is the rollback until it does.
+The D1 mini node did phase 1's work and its results stand: the bit rate is
+confirmed at 20 kbps, frames are captured and decoded in the log, and the
+addresses in use are known. What is left is moving that decoding onto the C3 and
+turning it into Home Assistant sensors. Phase 2 is blocked by work rather than by
+hardware.
 
 **Phase 1 needs no transmitter after all.** The bus polls itself at over 200
 frames a minute with no gap longer than five seconds, so a listen-only node sees
@@ -64,16 +68,19 @@ scratch.
 Stiebel WPC 07
         │  Elster protocol, 20 kbps, 11-bit ids — measured, not assumed
         ▼
-  MCP2515 + TJA1050        phase 1, listening: the module as it ships
-        │                  phase 2, writing: swap the bus side for an
-        │                  SN65HVD230 and lift one MCP2515 pin
-        │  SPI, all 3.3 V
+  SN65HVD230            native 3.3 V transceiver, terminator fitted
+        │               R2 = 115 Ω, R1 = 9.5 kΩ, both measured
+        │  CTX / CRX, all 3.3 V
         ▼
-  ESP8266 (Wemos D1 mini)
+  ESP32-C3 SuperMini    built-in TWAI controller — no SPI, no MCP2515
         │  ESPHome native API
         ▼
  Home Assistant
 ```
+
+The MCP2515 + D1 mini route did phase 1 and is kept as the rollback; it is drawn
+in [`wiring-phase1.svg`](wiring-phase1.svg) and described below, because its
+reasoning is what led here.
 
 ## Hardware
 
@@ -92,11 +99,10 @@ Stiebel WPC 07
   bus it takes the load to ≈ 66 Ω, near CAN's canonical 60. **R1 is 9.5 kΩ**, so
   the transceiver is already slope-limited, which is what 20 kbps wants. No
   rework. See [`CLAUDE.md`](CLAUDE.md).
-- **ESP32-C3 SuperMini, 6 pcs** — the phase 2 board, since ESPHome takes 20 kbps
-  on the C3's built-in controller but not on a plain ESP32.
-  [`esp32c3-230.yaml`](esp32c3-230.yaml) compiles, listen-only included, at
-  32 % RAM and 48.9 % flash — but it has not yet been on this bus, which is the
-  one thing it exists to settle
+- **ESP32-C3 SuperMini, 6 pcs** — the board this project now runs on. ESPHome
+  takes 20 kbps on the C3's built-in controller but not on a plain ESP32, and
+  [`esp32c3-230.yaml`](esp32c3-230.yaml) has read the live bus at X27: 237
+  frames a minute, 63 Ω with the node fitted, 32 % RAM and 48.9 % flash
 
 **Still needed — nothing, for either phase**
 
@@ -107,11 +113,12 @@ Stiebel WPC 07
 The RS-485 modules in stock are **not** a substitute; see [`CLAUDE.md`](CLAUDE.md)
 for why.
 
-The ESP32 was here for its built-in CAN controller, and that route is rejected
-(see below). What is left is RAM headroom — Stiebel's element lists run to
-hundreds of parameters, and 50–100 HA entities would get tight on an ESP8266.
-That is a phase 2 question. The ESP32 does **not** avoid the level-shifting
-work: it is a 3.3 V part too.
+The plain ESP32 was here for its built-in CAN controller, and for that it is
+still rejected — ESPHome refuses 20 kbps on the D0WD-V3 variant. **The C3 is not
+the same case:** the same component accepts 20 kbps there, and it has now read
+this bus. What the move also buys is RAM headroom — Stiebel's element lists run
+to hundreds of parameters, and 50–100 HA entities would get tight on an ESP8266,
+where the sniffer alone sat at 40 %.
 
 ## What the MCP2515 module actually provides
 
