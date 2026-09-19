@@ -91,6 +91,10 @@ bittiaikaan verrattuna. 10 kΩ olisi ollut rajatapaus.
 
 Komponentti: **psvanstrom/esphome-p1reader**, `protocol: ascii`.
 
+Koko konfiguraatio on [`aidon.yaml`](aidon.yaml). Alla oleva katkelma nostaa
+esiin ne kohdat jotka kaatavat asennuksen jos ne menevät väärin — se ei korvaa
+tiedostoa.
+
 Tunnukset `!secret`-viittauksina, ks. [`secrets.yaml.example`](secrets.yaml.example).
 Myös **AP-varayhteyden salasana** kuuluu sinne — se jäi alun perin kirjoitetuksi
 arvoksi konfiguraatioon, koska se tuntuu laitteen omalta asetukselta eikä verkon
@@ -132,7 +136,70 @@ Kolme kohtaa jotka kaatavat asennuksen jos ne unohtuvat:
 Sensorinimet ovat snake_case: `cumulative_active_import`,
 `momentary_active_import_l1`, `voltage_l1`, `current_l1`.
 
-Flash 46,8 %, RAM 53,3 %.
+Flash 46,8 %, RAM 53,3 %. **Luvut ovat ajalta ennen alla olevia poistoja** —
+lue uudet käännöksen tulosteesta.
+
+## Kaksi riviä jotka on poistettu, molemmat RAMin takia
+
+- **`web_server:`.** Se vie RAMia ja on neljäs yhtäaikainen asiakas API:n,
+  lokivirran ja OTA:n rinnalla — ja liika asiakasmäärä on tässä repossa kirjattu
+  syy katkenneeseen OTA:han. `captive_portal` ei riipu siitä vaan
+  `web_server_base`-komponentista, joten varayhteys toimii ilmankin.
+- **`esp8266_store_log_strings_in_flash: false`.** Oletus on `true`, eli
+  lokimerkkijonot pidetään flashissa ja RAM säästyy. Rivi käänsi sen toisin päin.
+  Se on tarpeen vain kirjastoilla jotka eivät osaa lukea merkkijonoja flashista;
+  **jos joskus tulee merkkijonoihin liittyvä kaatuminen, tämä on ensimmäinen
+  epäilty** ja rivi palautetaan.
+
+Molemmat koskevat juuri sitä laitetta jolla on repon tiukin virtabudjetti ja
+heikoin radio, eli se RAM on siellä missä siitä on eniten hyötyä.
+
+## Suodattimet: hetkellisiin tehoihin, ei kumulatiivisiin lukemiin
+
+Mittari lähettää sähkeen 10 sekunnin välein ja hetkellinen teho on pyöristämätön
+float. Ilman suodinta jokainen sähke on HA:lle uusi tila ja uusi rivi
+`states`-tauluun: mitattuna **27 800 riviä vuorokaudessa, 37 % koko
+kirjoitusmäärästä**.
+
+```yaml
+momentary_active_import:
+  name: "Teho"
+  filters: &teho_filter
+    - or:
+        - delta: 0.01      # 10 W
+        - heartbeat: 300s
+```
+
+Sama `*teho_filter` viisillä tehokentällä, väljemmät kynnykset jännitteille
+(`delta: 0.5`) ja virroille (`delta: 0.1`). Yhteisvaikutus **−17 250 riviä/vrk**.
+
+Kolme valintaa joilla on peruste:
+
+- **`delta` eikä `round`.** Kynnys julkaisee vasta aidosta muutoksesta mutta
+  säilyttää täyden tarkkuuden. Pyöristys menettäisi sen myös silloin kun muutos
+  on iso, eli juuri silloin kun lukema kiinnostaa.
+- **`heartbeat` deltan parina.** Pelkkä kynnys jättää lukeman roikkumaan, jos
+  teho ajelehtii kynnystä pienemmin askelin. Viiden minuutin sykäys julkaisee
+  arvon uudelleen, ja **muuttumaton arvo ei kirjoita kantaan riviä** — HA 2024.4:n
+  jälkeen muuttumaton tila on `state_reported`, ei `state_changed`. Vanhemmalla
+  HA:lla tämä perustelu ei päde, joten tarkista versio ennen kuin luotat siihen.
+- **Kumulatiivisiin kWh-lukemiin ei suodinta.** Ne ovat Energia-paneelin lähde.
+  Huomaa silti mitä tämä tarkoittaa kannan kannalta: kolmen kilowatin kuormalla
+  rekisteri kasvaa noin 0,008 kWh sähkettä kohden, eli millawattitunnin
+  tarkkuudella **arvo muuttuu lähes joka sähkeellä** ja tuottaa oman
+  ~8 600 rivin vuorokausiosuutensa. "Kasvaa hitaasti" pätee lukemaan, ei
+  rivimäärään. Jos ne joskus suodatetaan, sama `or`-kuvio on turvallinen —
+  pitkän aikavälin tilastot lasketaan tunneittain viimeisestä tilasta, ja
+  `heartbeat` pitää tilan tuoreena myös nollakuormalla.
+
+Jännitteet ja virrat eivät ole recorderin include-listalla, joten niiden
+suodattaminen ei pienennä kantaa lainkaan — se vähentää API-liikennettä ja HA:n
+tilankäsittelyä 10 sekunnin välein.
+
+**Ankkuri `&teho_filter` on määritelty ensimmäisen tehokentän alla.** Jos juuri
+se kenttä joskus poistetaan tai kommentoidaan pois, kaikki `*teho_filter`
+-viittaukset kaatuvat YAML-virheeseen — vika näyttää silloin tulevan väärästä
+kohdasta.
 
 ---
 
@@ -244,6 +311,21 @@ Tarkistettava onko korjattu uudemmassa ESPHome-versiossa.
 ## 3. Piirin kovetukset
 
 Diodi ja sarjavastus yllä.
+
+## 4. Komponenttiviittaus on kiinnitetty commitiin
+
+Aiemmin `external_components` osoitti p1readerin oletushaaraan ilman `ref:`-kenttää
+ja haki siitä uuden version vuorokauden välein. **Sama YAML olisi voinut kääntyä
+eri tavalla ilman että repossa muuttuu mitään** — sama ilmiö kuin ESPHome-kontin
+`AutoUpdate=registry`, jonka repon juuren CLAUDE.md kuvaa.
+
+Nyt `ref: bec7fc96…` ja `refresh: never`. Kiinnitys on **commitiin eikä tagiin,
+koska upstreamissa ei ole yhtään tagia.** ESPHome tukee sitä: `ref` menee
+sellaisenaan `git fetch origin <ref>` -komennolle, jonka perään tulee
+`reset --hard FETCH_HEAD`.
+
+Hinta on että päivitys pitää tehdä tietoisesti: vaihda SHA ja käännä uudelleen.
+Se on tarkoituskin — tämä on repon ainoa tuotannossa oleva mittausjärjestelmä.
 
 ---
 
