@@ -72,7 +72,9 @@ ylösvetoa.
 Raspberryn kaapeli jää paikalleen ja koskemattomaksi. C3:lle tehdään vastaava:
 
 1. **Uusi RJ45-pistoke**, samat kolme paikkaa kuin vanhassa. Väri saa olla mikä
-   tahansa — paikka ratkaisee, ei väri.
+   tahansa — paikka ratkaisee, ei väri. Liitä se verkkoon **RJ45-jatkoholkilla**:
+   rasiaa ei tarvitse avata, vaihto Raspberryn ja C3:n välillä on kahden
+   sekunnin operaatio, ja holkki pakottaa yhden isännän kerrallaan fyysisesti.
 2. **Toinen pää suoraan C3:een juotettuna.** Ei rimaa eikä dupont-liittimiä —
    sama peruste kuin stiebelin solmussa: katkeileva datakontakti lukee nollana
    antureita, eikä se erotu mitenkään muista syistä joilla väylä on hiljainen.

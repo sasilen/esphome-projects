@@ -207,11 +207,32 @@ eikä RJ45:n syötölle ole vakiintunutta paikkaa. **Mutta pistokkeessa on kolme
 johdinta kahdeksasta paikasta**, ja kun kaksi niistä on nastat 4 ja 5, kolmas
 on se mikä jää. Sen näkee katsomalla, ei mittaamalla.
 
-**Mikä kumoaisi tämän.** Jos DS9490:tä on käytetty sovitinkaapelin kautta joka
-siirtää nastoja, premissi 2 pettää. Jos Raspberryn kytkentä poikkeaa yleisestä
-mallista — esimerkiksi `dtoverlay=w1-gpio,gpiopin=17` — premissi 1 pettää.
-Ensimmäinen näkyy siitä onko sovittimessa erillinen sovitinkaapeli;
-jälkimmäinen `/boot/firmware/config.txt`:stä.
+**Premissi 2 on todettu kolmesti, ei kerran.** Sovitin on toiminut suoraan
+väylään kytkettynä, **rasian läpi** ja **RJ45-jatkoholkin läpi**. Holkki on
+nasta nastaan eikä siirrä mitään, ja rasian läpi toimiminen tarkoittaa että
+rasian johdotus säilyttää ne keskimmäiset paikat joihin RJ11-pistoke fyysisesti
+ylettyy. Se sulkee pois sen vaihtoehdon että jokin välikappale olisi siirtänyt
+nastoja.
+
+**Mikä kumoaisi tämän vielä.** Vain premissi 1: jos Raspberryn kytkentä poikkeaa
+yleisestä mallista — esimerkiksi `dtoverlay=w1-gpio,gpiopin=17` — data ei ole
+nastassa 7. Se näkyy `/boot/firmware/config.txt`:stä, eikä se muuta RJ45:n
+puolta vaan sen mitä vastaan mittaus tehdään.
+
+### Jatkoholkki on myös kytkentätapa
+
+Se että sovitin toimii holkin läpi ei ole pelkkä todiste vaan käyttökelpoinen
+tapa liittää uusi isäntä: **lyhyt punoskaapeli C3:lta RJ45-pistokkeeseen ja
+siitä holkin kautta verkkoon.** Rasiaa ei tarvitse avata eikä muuttaa.
+
+Kaksi etua seuraa samasta:
+
+- **Vaihto on kahden sekunnin operaatio.** Raspberryn pistoke ulos, C3:n
+  pistoke sisään — ja koska holkissa on vain yksi paikka kummallekin puolelle,
+  se myös **pakottaa yhden isännän kerrallaan** fyysisesti. Se sääntö ei jää
+  muistin varaan.
+- **Paluutie on olemassa.** Jos C3 osoittautuu huonommaksi, vanha toteutus on
+  yhden pistokkeen päässä.
 
 **Tämä ei korvaa mittausta vaan tekee siitä tarkistuksen.** Kolme
 jatkuvuusmittausta joko vahvistavat taulukon tai kumoavat sen, ja kumpikin
