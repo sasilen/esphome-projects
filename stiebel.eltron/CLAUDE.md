@@ -2155,6 +2155,60 @@ resolved by finding a screen that shows one of them alone: `0x01AC` and
 `0x01AD` both read −19.0, and the settings screen for the reheat asks only
 `0x01AC`, which names it and leaves `0x01AD` to the other row by elimination.
 
+### The third walk, on the C3: each counter is four elements, not three
+
+Run on 19 September 2026 with the C3 on the bus, `Log read requests` on, and
+thirty-four photographed screens. **1 474 read requests, 218 unclaimed responses,
+6 199 frames, zero malformed.** The heaviest load this bus can be given produced
+no implausible frame at all, which is the strongest evidence so far that the
+ported decoder behaves like the original.
+
+**The energy counters were never fully mapped, and the missing part is the
+sub-kilowatt-hour remainder of the day counter.** Two screens settle it:
+
+```
+LÄMPÖMÄÄRÄ      VD LÄMM PV      27.753 kWh      VD LÄMM YHT     87.301 MWh
+                VD LÄMMINV PV    4.033 kWh      VD LÄMMINV YHT  19.089 MWh
+TEHONKULUTUS    VD LÄMM PV       6.619 kWh      VD LÄMM YHT     18.230 MWh
+                VD LÄMMINV PV    1.588 kWh      VD LÄMMINV YHT   7.572 MWh
+```
+
+| Element | Value | Row |
+|---|---|---|
+| `0x092E` | 753 | heat delivered, heating, day remainder |
+| `0x092A` | 33 | heat delivered, DHW, day remainder |
+| `0x091E` | 619 | electricity, heating, day remainder |
+| `0x091A` | 588 | electricity, DHW, day remainder |
+
+So the layout per counter is **total MWh, total kWh, day kWh, day Wh** — four
+consecutive descending indices, of which this configuration reads three. The
+same reasoning explains `0x0928` and `0x0924` reading zero: they are the reheat
+counters' day parts, and the immersion heater has not run today.
+
+**This is precision rather than a defect, and the distinction matters.** The
+published total is `MWh × 1000 + kWh + day`, which is correct to the kilowatt
+hour and stays monotonic across midnight — the day counter resets as the total
+absorbs it. Reading the remainder would make the entity agree with the panel
+digit for digit and nothing else changes, so it is optional polish.
+
+**`0x0074` answered 1 and still has no entity.** It is `EVU_SPERRE_AKTIV`, its
+polarity is settled elsewhere in this file, and it is the machine's own report of
+the blocking contact's state. The `EVU signal` entity is currently derived from
+status code 8246, which this file argues is a signal and not the state — so
+0x0074 is the better source and costs one `case`.
+
+**0xFE09 and 0xFE0A are still unnamed, and the walk narrowed them by
+elimination.** They read 13.9 °C and 13.4 °C throughout, and no screen showed
+either: the source circuit is 5.9 °C with a −9.0 °C minimum and 0.39 bar, and the
+process screen carries 30.4 °C, 16.3 bar and 10.1 bar. **They are not the brine
+loop**, which was the standing guess.
+
+Most of the remaining unclaimed traffic is sentinels — `0x8000`, `0x9000` and
+`0x8080`, printed as −32768, −28672 and −32640 — on `0x01AE`, `0x01AF`, `0x01C0`,
+`0x4EA7`, `0x1411`, `0x1412` and a score of others. Those are unconfigured
+parameters, not readings, and the guard that lets them fall through to the
+unclaimed log is doing exactly what it was written for.
+
 ### What the walk named
 
 **Settings — the parameters phase 2 exists to write.** The first three are the
@@ -2750,8 +2804,10 @@ in bursts rather than only at startup. **So `System frames` counts them and
 `Malformed frames` keeps only the genuinely implausible** — a length that is not
 seven, a command above 7, a marker beyond `0xFA`, or a sender that is not a
 multiple of 0x080 plus 0–3. On that definition the C3 has produced **zero** in
-the first 1 664 frames. Phase 1's figure to beat is 2 in 95 000, and the
-comparison still wants an overnight run.
+6 199 frames, and those include a full panel walk — 1 474 read requests and 218
+unclaimed responses, which is the heaviest load this bus can be given. Phase 1's
+figure to beat is 2 in 95 000, so the comparison still wants an overnight run,
+but nothing so far suggests the C3 is dirtier than the MCP2515 was.
 
 **It compiles, and that closes two open questions at once.** ESPHome accepts
 `mode: LISTENONLY` on `esp32_can`, so the C3 can join the live bus passively
