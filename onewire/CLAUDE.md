@@ -311,6 +311,106 @@ väylää, kymmenen sekuntia eikä mitään tulkittavaa jälkikäteen.
 Kirjaa osoite ja sijainti pariksi heti kun se on todettu. Ilman sitä
 konfiguraatio on lista heksalukuja joiden merkitys on yhden ihmisen muistissa.
 
+## Palautettu inventaario: 25 laitetta nimettynä
+
+Vanhan Raspberryn levyltä löytyi OWFS-pohjainen toteutus vuosilta 2015–2020, ja
+siinä oli **valmis laitekartta**. Se korvaa koko sen kartoitustyön jota tämä
+tiedosto suunnitteli: osoitteet ovat nimettyinä huoneisiin ja asemiin.
+
+### 19 lämpötila-anturia
+
+| Osoite (OWFS) | Sijainti |
+|---|---|
+| `28.FF265A750400` | K ikkuna sisä |
+| `28.FF897B750400` | K ikkuna ulko |
+| `28.FFD0354C0400` | K sisä |
+| `28.FF94134D0400` | K sisä ovi katto |
+| `28.FF632E4E0400` | KHH sisä ovi katto |
+| `28.1EF457050000` | MH1 etelä sisä |
+| `28.58EF57050000` | MH1 länsi (piha) |
+| `28.FF12204E0400` | MH1 sisä ovi katto |
+| `28.FF5F18730400` | MH2 itä |
+| `28.FF7F35740400` | MH3 itä |
+| `28.FFEC79760400` | MH3 pohjoinen |
+| `28.65E657050000` | MH4 länsi (piha) |
+| `28.785317060000` | MH4 pohjoinen sisä |
+| `28.799CF6050000` | MH4 pohjoinen ulko |
+| `28.FFBA7B760400` | OH sisä |
+| `28.FFD4324C0400` | OH sisä ovi katto |
+| `28.FF807B750400` | OH ulko |
+| `28.FF4E78760400` | VH etelä sisä |
+| `28.FF8276750400` | VH etelä ulko |
+
+### Ja kuusi muuta laitetta
+
+| Osoite | Piiri | Mitä |
+|---|---|---|
+| `26.139121010000` | DS2438 | lämpötila **ja kosteus**, tekninen tila |
+| `12.BC37B6000000` | DS2406 | `latch.B`, varasto |
+| `12.A82DB6000000` | DS2406 | `latch.B`, varasto |
+| `12.892EB6000000` | DS2406 | `latch.B`, varasto |
+| `12.372EB6000000` | DS2406 | `latch.B`, varasto |
+| `12.2E30B6000000` | DS2406 | `latch.B`, varasto |
+
+### Mitä nimet kertovat
+
+**Nämä ovat rakenneantureita, eivät huoneilman antureita.** Nimissä toistuu
+pari *sisä* ja *ulko* samassa paikassa — "K ikkuna sisä" ja "K ikkuna ulko",
+"OH sisä" ja "OH ulko" — ja vanhan toteutuksen tageissa esiintyy *väliseinä*.
+Anturit on siis asennettu mittaamaan rakenteen lämpötilaa kahdelta puolelta,
+tyypillisesti ikkunan tai oven kohdalta, ja osa katonrajaan.
+
+Kolme seurausta:
+
+- **Lattialämmityksen jakotukkisuunnitelma ei muutu.** Nämä eivät ole valussa,
+  joten ne eivät korvaa stiebelin 25 anturin asennusta. Se kysymys on nyt
+  suljettu — ks. alla.
+- **Kosteusmittaus on jo olemassa** teknisessä tilassa, DS2438:lla. Repon
+  suunnitelmassa kaksi BME280:aa odottaa huoneisiin; tämä ei korvaa niitä,
+  mutta se kannattaa tietää ennen kuin niille etsitään paikkaa.
+- **Viisi kytkintuloa varastossa on selvittämättä.** `latch.B` on DS2406:n
+  digitaalitulo, ja mitä ne siellä valvovat ei käy nimestä ilmi.
+
+### ESPHome ei lue kaikkea tätä
+
+`dallas_temp` kattaa DS18B20:n ja DS18S20:n, eli **ne 19 lämpötila-anturia**.
+**DS2438 ja DS2406 eivät ole ESPHomen omissa komponenteissa**, joten kosteus ja
+viisi kytkintuloa jäisivät lukematta. Tämä on tarkistettava asennetusta
+versiosta ennen kuin siihen nojaa, mutta suunta on selvä: jos ne halutaan
+mukaan, tarvitaan OWFS rinnalle tai tilalle.
+
+Se on todellinen valinta eikä tekninen este: 19 anturia 25:stä on valtaosa, ja
+kosteus teknisessä tilassa on yksi lukema.
+
+### Osoitemuoto ei ole sama
+
+OWFS kirjoittaa osoitteen muodossa `28.FF265A750400` — perhekoodi, piste,
+sarjanumero. **ESPHome käyttää täyttä 64-bittistä ROM-osoitetta** muodossa
+`0x…28`, jossa perhekoodi on alimpana tavuna, sarjanumero käänteisessä
+järjestyksessä ja CRC ylimpänä.
+
+`28.FF265A750400` vastaa siis ESPHomessa osoitetta joka päättyy `FF28`:aan ja
+jonka keskeltä löytyy `04755A26` käänteisenä. **CRC ei ole OWFS-muodossa
+mukana**, joten täyttä osoitetta ei voi laskea — mutta sitä ei tarvitsekaan:
+ESPHome luetteloi löytämänsä osoitteet itse, ja nimi liitetään niihin
+täsmäämällä sarjanumeron numerot. Kartoitusajo tuottaa siis osoitteet ja tämä
+taulukko nimet.
+
+### Mitä vanhoista listauksista jäi
+
+Vuoden 2015 listaukset oli otettu haara kerrallaan ja tallennettu kumulatiivisina
+tiedostoina, mikä antaa haarakohtaisen ryhmittelyn: keittiö kuusi laitetta,
+makuuhuoneet kuusi lisää, olohuone kolme, neljäs haara seitsemän.
+
+Ne sisältävät myös kaksi laitetta joita PHP:n kartassa ei ole: **DS18S20
+`10.0ED2A0020800`** eli nimeämätön vanhemman polven lämpötila-anturi, ja
+`81.566632000000` joka on **DS2490 eli sovitin itse** — OWFS näyttää isännän
+väylän laitteena.
+
+Ja toisin päin: PHP:n kartassa on viisi osoitetta joita vuoden 2015 listauksissa
+ei ole. Verkko on siis kasvanut välissä, ja **PHP on niistä uudempi ja
+täydellisempi lähde.**
+
 ## Kytkös lattialämmitykseen
 
 Jos anturit ovat lattiavalussa, tämä projekti menee päällekkäin

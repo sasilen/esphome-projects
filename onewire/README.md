@@ -11,20 +11,27 @@ infrastruktuurista. Kaikki muut ovat alkaneet tyhjästä laatikosta.
 
 ## Tila
 
-**Kartoitus kesken.** Kolme asiaa on selvittämättä, ja ne ratkaisevat mitä tästä
-tulee:
+**Inventaario on palautettu, kytkentä on tekemättä.** Vanhan Raspberryn levyltä
+löytyi OWFS-toteutus vuosilta 2015–2020 ja siinä valmis laitekartta:
 
-| Kysymys | Miksi se ratkaisee |
+| | |
 |---|---|
-| Montako anturia väylällä on? | määrää levyvalinnan ja entiteettimäärän |
-| Missä ne fyysisesti ovat? | määrää onko tämä mittausprojekti vai uteliaisuus |
-| Miksi verkko ei ole käytössä? | jos se hylättiin epäluotettavana, syy on todennäköisesti topologia |
+| **19** | DS18B20-lämpötila-anturia, nimettyinä huoneisiin |
+| **1** | DS2438, lämpötila ja kosteus, tekninen tila |
+| **5** | DS2406-kytkintuloa varastossa, käyttötarkoitus tuntematon |
 
-Erityisesti kolmas: jos anturit ovat **lattiavalussa**, tämä muuttaa
-[stiebel.eltronin](../stiebel.eltron/) jakotukkisuunnitelman. Se 25 anturin
-asennus on olemassa nimenomaan siksi ettei lattian lämpötilaa pääse mittaamaan
-suoraan, ja jakotukin paluuanturit kiertopumpun seisokin aikana ovat kiertotie
-sen ympäri. Suora lattia-anturi on parempi mittaus, ja se olisi jo seinässä.
+Nimet kertovat mitä ne mittaavat: **rakennetta, eivät huoneilmaa.** Pareja
+*sisä* ja *ulko* samassa paikassa, ikkunoiden ja ovien kohdilla, osa
+katonrajaan. Taulukko osoitteineen on [CLAUDE.md](CLAUDE.md):ssä.
+
+Kaksi seurausta:
+
+- **Lattialämmityksen suunnitelma ei muutu.** Anturit eivät ole valussa, joten
+  ne eivät korvaa [stiebel.eltronin](../stiebel.eltron/) 25 anturin
+  jakotukkiasennusta. Se kysymys on suljettu.
+- **ESPHome lukee näistä 19.** DS2438 ja DS2406 eivät ole sen omissa
+  komponenteissa, joten kosteus ja viisi kytkintuloa jäisivät lukematta ilman
+  OWFS:ää. Tarkistettava, mutta ei este.
 
 ## Kytkentä
 
