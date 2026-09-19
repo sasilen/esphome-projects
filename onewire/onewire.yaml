@@ -570,6 +570,8 @@ interval:
       - lambda: 'id(d4).update();'   # Ovi A82DB6
       - delay: 200ms
       - lambda: 'id(d5).update();'   # Ovi 322EB6
+      - delay: 200ms
+      - lambda: 'id(b5).update();'   # Tuntematon tulo 322EB6 B
 
 
 
@@ -653,6 +655,29 @@ binary_sensor:
     name: "Ovi 322EB6"
     device_class: door
     channel: A
+    # **Ainoa ilman salpaa, ja se on pakko.** `ALR=1` nollaa *molempien*
+    # kanavien salvat — se todettiin siitä että ensimmäinen A-kanavan luku
+    # nollasi myös B:n salvan. Tällä piirillä B on se jota kannattaa vahtia,
+    # joten A luetaan ALR=0:lla eikä se häiritse B:n lukua.
+    latch: false
+    update_interval: never
+
+  - platform: ds2406
+    one_wire_id: bus_a
+    id: b5
+    address: 0xC0000000B62E3212      # sama piiri, toinen kanava
+    # **Tämä ei ole ovi.** PIOB vaihtaa tilaa itsestään viiden-kahdeksan
+    # minuutin välein, ja ovi ei tee niin. Se on jokin joka kytkeytyy päälle ja
+    # pois: pumppu, puhallin, termostaatti tai vastaava.
+    #
+    # Viidellä muulla latchilla PIOB on vakaasti korkealla eli kytkemättä.
+    # Tämä on ainoa jonka molemmat kanavat ovat käytössä — ja samalla se ainoa
+    # latch jota ei ole vuoden 2020 kartassa.
+    #
+    # **Nimi kertoo mitä tiedetään eikä mitä arvataan.** Rytmi tallentuu nyt
+    # HA:han, ja tunnistus käy vertaamalla mihin muuhun se osuu yksiin.
+    name: "Tuntematon tulo 322EB6 B"
+    channel: B
     latch: true
     update_interval: never
 
