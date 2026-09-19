@@ -1111,11 +1111,59 @@ objektinimen tai ei mitään. Aidonin `ref` on samasta syystä 40 merkkiä.
 **Lyhennetty sha näyttää dokumentissa siistimmältä ja rikkoo käännöksen**, eli
 se on juuri sellainen kauneusvirhe joka kannattaa kirjata.
 
-**Riski on versioero.** Komponentti on kirjoitettu ESPHome 2025.4:ää vasten ja
-laite ajaa 2026.9.0:aa — puolitoista vuotta ajautumista `one_wire`-rajapinnassa.
-Se voi kääntyä tai olla kääntymättä. Kääntymättömyys ei riko laitetta, mutta
-**se rikkoo toimivan konfiguraation käännöksen**, joten sitä ei kokeilla samaan
-aikaan minkään muun muutoksen kanssa.
+### Se ei käänny 2026.9.0:lla, ja tässä on mitä portti vaatii
+
+Versioero toteutui. Komponentti on kirjoitettu ESPHome 2025.4:ää vasten ja
+`one_wire`-rajapinta on muuttunut kolmesta kohdasta. Konfiguraatio palautettiin
+kääntyvään tilaan; tämä luku on se mitä portti vaatii, jotta se ei ole
+uudelleen selvitettävä.
+
+**1. `check_address_()` → `check_address_or_index_()`**
+
+```
+error: 'DallasPio' has no member named 'check_address_'
+```
+
+`OneWireDevice` tarjoaa nyt `check_address_or_index_()`. Komponentissa on myös
+oma `DallasPio::check_address()`-kääre joka kutsuu vanhaa nimeä — **pelkkä
+alaviivan poisto tekisi siitä ikuisen rekursion**, joten kääre poistetaan ja
+kutsut ohjataan suoraan perittyyn metodiin.
+
+**2. `bus_->reset()` → ei ole olemassa julkisena**
+
+```
+error: 'OneWireBus' has no member named 'reset'; did you mean 'reset_'?
+```
+
+`reset_()` on nykyään **protected**, eikä ulkopuolinen komponentti voi kutsua
+sitä. Se ei silti ole este: julkisia ovat `select(address)`, `write8`, `read8`,
+`write64`, `read64`, `skip()` ja `search()`, ja `OneWireDevice` tarjoaa
+`send_command_(cmd)` joka tekee resetin, MATCH ROMin ja käskyn kerralla.
+**Vanha `reset()` + käsin tehty osoitteenvalinta korvautuu yhdellä
+`send_command_`-kutsulla.**
+
+**3. `using EntityBase::set_name;` ei käänny**
+
+```
+error: 'set_name' has not been declared in 'class EntityBase'
+```
+
+`switch.h`:ssa. Koskee vain switch-alustaa — **ovisensorit tarvitsevat vain
+`binary_sensor`in**, joten switch-tiedostot voi jättää portista kokonaan pois.
+
+### Miten portti kannattaa tehdä
+
+**Ei paikallisena kopiona.** `vendor/` on gitignoressa, joten patch jäisi
+versionhallinnan ulkopuolelle ja katoaisi ensimmäisen koneen vaihdon mukana.
+
+**Haarukoi `tdy91/esphome`, korjaa nuo kolme ja osoita `ref:` omaan
+committiin.** Silloin konfiguraatio on toistettava ja repo pysyy puhtaana
+kolmannen osapuolen koodista, kuten sen säännön mukaan pitää.
+
+Vaihtoehto on **kirjoittaa vain se mitä tarvitaan**: DS2406:n tilan luku on
+`send_command_(0xF5)`, kaksi ohjaustavua ja yksi luettu tavu. Se on murto-osa
+`dallas_pio`:sta, joka kattaa kolme piiriä sekä luvun että kirjoituksen — ja
+tästä tarvitaan vain yhden piirin luku.
 
 ### Mutta ennen koodia: mitä ne mittaavat
 
