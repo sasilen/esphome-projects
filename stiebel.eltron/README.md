@@ -229,11 +229,12 @@ plugged into a different machine. That splits the first flash in two, exactly as
 it did for [`../aidon/`](../aidon/BUILDLOG.md) — compile there, write here. The
 work happens in the **ESPHome dashboard**, not on a command line:
 
-1. **New Device** → name it `wpc-can`. Choose the **empty configuration** if the
-   dialog offers one; otherwise run the wizard, pick ESP8266, and **Skip** the
-   install offer. *Import from file* is cleaner still, but only works when the
-   YAML is already in the host's `/config`. The board does not need to be
-   connected, and it does not need to be on this machine.
+1. **New Device** → choose the **empty configuration** if the dialog offers one;
+   otherwise run the wizard, pick the board — **ESP8266** for the D1 mini node,
+   **ESP32-C3** for the C3 — and **Skip** the install offer. *Import from file*
+   is cleaner still, but only works when the YAML is already in the host's
+   `/config`. The board does not need to be connected, and it does not need to be
+   on this machine.
 2. **Edit** the device and replace the wizard's file with this project's YAML.
    The wizard writes a literal `api:` key; move it to secrets as
    `api_encryption_key` so the file matches what is in the repo. The dashboard
@@ -243,9 +244,16 @@ work happens in the **ESPHome dashboard**, not on a command line:
    starts, so a rejected `mode:` shows up immediately either way.
 4. The same **Manual download** produces the binary once compilation succeeds.
 
-Note that the dashboard names the file after the device, so on the host it will
-be `wpc-can.yaml` while the repo names it `wemos-mcp2515.yaml` after the
-hardware it drives. Same content, two naming conventions.
+**Three names, and only one of them has consequences.** The dashboard names the
+file after its own device entry, which need not match the `esphome: name:` line
+inside it — on this host the C3's file came out as `wpc-07-can.yaml` — while the
+repo names the same content `esp32c3-230.yaml` after the hardware it drives.
+
+The one that matters is **`esphome: name:`**, because Home Assistant builds
+entity ids from it. Both of this project's configurations set it to `wpc-can` so
+that the C3 inherits the sniffer's entity ids and history when it takes the bus.
+Check that line after pasting a config over a wizard-generated one; the file name
+can be anything.
 
 **Try `Install → Plug into this computer` first.** It compiles on the server and
 then flashes over serial from the machine running the *browser*, which is exactly
@@ -260,8 +268,20 @@ a Chromium-based browser — that site is HTTPS, so WebSerial works — or with
 esptool:
 
 ```sh
+# D1 mini (ESP8266) — a bridge chip, so the port is ttyUSBn
 sudo esptool --port /dev/ttyUSB0 --baud 115200 write_flash 0x0 firmware.bin
+
+# C3 SuperMini — native USB, no bridge chip, so the port is ttyACMn
+sudo esptool --chip esp32c3 --port /dev/ttyACM0 --baud 115200 \
+  write_flash 0x0 firmware.factory.bin
 ```
+
+**The port name is how the two differ in practice.** A bridge chip enumerates as
+`ttyUSBn` and needs its driver; the C3 has no bridge at all and enumerates as
+`ttyACMn`, which is one of the reasons this repo settled on the C3 — the
+CH34x-versus-CP210x question stops existing. If the C3 does not appear at all,
+hold **BOOT** while plugging it in: GPIO9 is the strapping pin that forces the
+bootloader.
 
 Use the plain or `factory` binary, not `-ota.bin`. Drop to `--baud 57600` if the
 connection breaks. `Hash of data verified` means it took.
@@ -275,7 +295,12 @@ One thing differs from the aidon build: there is no wizard to generate the API
 key, so make one yourself with `openssl rand -base64 32` and put it in
 `secrets.yaml`. **No CH34x driver was needed** — the listing claimed a CH340G,
 but the board that was flashed carries an FT232R, which `ftdi_sio` already
-covers and which resets into the bootloader on its own.
+covers and which resets into the bootloader on its own. That whole class of
+surprise is absent on the C3, which has no bridge chip to be wrong about.
+
+What does carry over from the aidon build is **permissions**: the browser
+flasher's real failure there was `Permission denied` on the serial device, not
+the driver. It applies to `ttyACM0` exactly as it did to `ttyUSB0`.
 
 5. **Connect CANH, CANL and GND** to the bus and watch the `CAN frames` counter.
    Zero means the bit rate is wrong: edit `can_bit_rate`, re-flash, try again.
