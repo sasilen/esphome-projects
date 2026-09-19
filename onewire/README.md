@@ -46,11 +46,18 @@ Kolme johdinta ja yksi vastus. **Ylösveto kuuluu isännän päähän**, datan j
 3,3 voltin väliin, ja niitä on yksi kappale koko verkolle — ei yhtä per haara,
 koska rinnakkaiset ylösvedot laskisivat yhteisvastuksen liian pieneksi.
 
-| C3 | | Johdin |
+| RJ45 | Johdin | C3 |
 |---|---|---|
-| **5V** | → | punainen, VDD |
-| **GPIO4** | → | keltainen, data — ja **4,7 kΩ tästä 3V3:een** |
-| **GND** | → | musta ja valkoinen, kaksi maata |
+| **1** | musta | GND |
+| **2** | punainen | **5V** |
+| 3 | — | — |
+| **4** | keltainen | **GPIO4**, ja **4,7 kΩ tästä 3V3:een** |
+| **5** | valkoinen | GND |
+
+Data nastassa 4 ja sen maa nastassa 5 on **sininen pari**; syöttö nastassa 2 ja
+sen maa nastassa 1 on **oranssi pari**. Kumpikin signaali kulkee oman
+paluujohtimensa kanssa samassa kierteessä — pidä se niin myös uudessa
+kaapelissa.
 
 **Syöttö on 5 V ja ylösveto 3,3 V.** Se ei ole epäjohdonmukaisuus vaan se mikä
 on toiminut tässä talossa vuosia: anturit saavat täyden jännitteen pitkälle

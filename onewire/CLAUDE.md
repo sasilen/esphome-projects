@@ -163,6 +163,32 @@ Mitä valokuvasta jää voimaan:
 
 Mikä johdin on mikä, on kokonaan avoin.
 
+### Lopullinen nastakartta, luettuna pistokkeesta
+
+Kaikki päättely päättyy tähän, ja tämä on luettu eikä pääteltyä:
+
+| RJ45 | Johdin | Signaali | Raspberryn rima | Pari |
+|---|---|---|---|---|
+| **1** | musta | GND | 6 tai 9 | oranssi |
+| **2** | punainen | **5 V** | 2 | oranssi |
+| 3 | — | — | — | |
+| **4** | keltainen | **data** | 7 (GPIO4) | sininen |
+| **5** | valkoinen | GND | 6 tai 9 | sininen |
+| 6–8 | — | — | — | |
+
+**Parisuus toteutuu molemmissa pareissa.** Data ja sen maa ovat sinisessä
+parissa, syöttö ja sen maa oranssissa. Kumpikin signaali kulkee oman
+paluujohtimensa kanssa samassa kierteessä.
+
+**Neljä toisistaan riippumatonta reittiä päätyi samaan tulokseen:** DS9490:n
+RJ11-pistokkeen fyysinen ulottuvuus rasian keskimmäisiin nastoihin,
+parisuusperiaate, Raspberryn riman nastat ja lopulta pistokkeen suora luenta.
+Yksikään ei nojaa toiseen, ja ne kaikki sanovat että data on nastassa 4.
+
+Nastassa 3 ei ole johdinta. Riman puolella on viides juotospiste nastassa 1
+(3,3 V), jossa on vastuksen toinen pää eikä johdinta — 3,3 V:a ei viedä
+verkkoon.
+
 ### Riman nastat, luettuina
 
 Kuvista ja käyttäjän vahvistuksesta yhdessä:
