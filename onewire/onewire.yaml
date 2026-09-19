@@ -26,6 +26,25 @@
 # data GPIO4:ään, nastat 1 ja 5 ovat maita. Ylösveto 4,7 kΩ GPIO4:n ja 3V3:n
 # välissä, C3:n päässä — ei verkkoon.
 
+external_components:
+  # **Ovisensorit vaativat komponentin jota ESPHomessa ei ole.** dallas_pio on
+  # suljetusta PR:stä #8091 — se tukee DS2406:tta, DS2413:a ja DS2408:aa. PR
+  # suljettiin vanhentuneena, ei siksi ettei se toimisi.
+  #
+  # **Sha on kiinnitetty, eikä haaraa käytetä.** Tämä on yksityishenkilön haara
+  # suljetussa PR:ssä: se voi kadota tai rebasoitua milloin tahansa eikä kukaan
+  # ylläpidä sitä. Sama `@main`-ongelma jonka repo on kirjannut kolmesti, nyt
+  # pahimmassa muodossaan.
+  #
+  # **Riski on versioero.** Komponentti on kirjoitettu ESPHome 2025.4:ää vasten
+  # ja tämä ajaa 2026.9.0:aa. Jos käännös kaatuu, mitään ei mene laitteelle ja
+  # se jää nykyiseen firmwareensa — poista tämä lohko ja ovet, muu jää ennalleen.
+  - source:
+      type: git
+      url: https://github.com/tdy91/esphome
+      ref: 3e8806f7aace
+    components: [dallas_pio]
+
 esphome:
   name: onewire
   friendly_name: 1-Wire
@@ -490,6 +509,140 @@ interval:
       - lambda: 'id(t30).update();'   # Tuntematon 28 FFBADB
       - delay: 1s
       - lambda: 'id(t31).update();'   # Tuntematon 28 21270B
+      # Ovet samaan sarjaan: DS2406:n luku on lyhyt muttei ilmainen — sekin
+      # aloittaa reset-pulssilla, joka keskeyttäisi kesken olevan muunnoksen.
+      # Tämä on se sama vika joka juuri korjattiin, eikä sitä tuoda takaisin.
+      # Hinta on minuutin vasteaika ovelle.
+      - delay: 200ms
+      - lambda: 'id(d0).update();'   # Ovi 892EB6
+      - delay: 200ms
+      - lambda: 'id(d1).update();'   # Ovi 372EB6
+      - delay: 200ms
+      - lambda: 'id(d2).update();'   # Ovi BC37B6
+      - delay: 200ms
+      - lambda: 'id(d3).update();'   # Ovi 2E30B6
+      - delay: 200ms
+      - lambda: 'id(d4).update();'   # Ovi A82DB6
+      - delay: 200ms
+      - lambda: 'id(d5).update();'   # Ovi 322EB6
+
+
+# --------------------------------------------------------------- Ovisensorit
+# Kuusi DS2406:tta ovat **ovikoskettimia**. Se selittää myös sen mikä näytti
+# oudolta: yksi latch per asennusvaihe ei ollut erikoista, vaan huone
+# asennettiin kerralla — lämpötila-anturit ja oven kosketin samaan syssyyn.
+#
+# Viisi kuudesta täsmää vuoden 2015 listauksiin; kuudes ei ole kartassa ja on
+# myöhempi lisäys. **Nimenä on sarjanumero**, koska asennusvaihe kertoo milloin
+# eikä mitä ovea — ja "neljäs vaihe" lisäsi kaksi latchia kolmeen huoneeseen,
+# joten niitä ei voi kohdistaa. Oven avaaminen kertoo sen minuutissa.
+#
+# **`inverted:` on arvaus.** Kumpi taso on auki selviää avaamalla yksi ovi ja
+# katsomalla lokia. Jos kaikki näyttävät auki, käännä tämä.
+#
+# Komponentti lukee **tilan**, ei DS2406:n tapahtumasalpaa. Ovelle se riittää,
+# mutta nopea avaus ja sulkeminen kierrosten välissä voi jäädä huomaamatta —
+# vaikka piiri itse olisi sen muistanut.
+
+dallas_pio:
+  - name: "892EB6"
+    id: pio_d0
+    reference: DS2406
+    address: 0x3F000000B62E8912      # 12.892EB6000000 · keittiö
+    one_wire_id: bus_a
+  - name: "372EB6"
+    id: pio_d1
+    reference: DS2406
+    address: 0x2B000000B62E3712      # 12.372EB6000000 · makuuhuoneet
+    one_wire_id: bus_a
+  - name: "BC37B6"
+    id: pio_d2
+    reference: DS2406
+    address: 0xB6000000B637BC12      # 12.BC37B6000000 · olohuone
+    one_wire_id: bus_a
+  - name: "2E30B6"
+    id: pio_d3
+    reference: DS2406
+    address: 0x38000000B6302E12      # 12.2E30B6000000 · neljäs vaihe
+    one_wire_id: bus_a
+  - name: "A82DB6"
+    id: pio_d4
+    reference: DS2406
+    address: 0xF0000000B62DA812      # 12.A82DB6000000 · neljäs vaihe
+    one_wire_id: bus_a
+  - name: "322EB6"
+    id: pio_d5
+    reference: DS2406
+    address: 0xC0000000B62E3212      # 12.322EB6000000 · ei kartassa
+    one_wire_id: bus_a
+
+binary_sensor:
+  - platform: dallas_pio
+    name: "Ovi 892EB6"
+    id: d0
+    dallas_pio_id: pio_d0
+    device_class: door
+    update_interval: never
+    pin:
+      number: PIOA
+      mode:
+        input: true
+      inverted: true
+  - platform: dallas_pio
+    name: "Ovi 372EB6"
+    id: d1
+    dallas_pio_id: pio_d1
+    device_class: door
+    update_interval: never
+    pin:
+      number: PIOA
+      mode:
+        input: true
+      inverted: true
+  - platform: dallas_pio
+    name: "Ovi BC37B6"
+    id: d2
+    dallas_pio_id: pio_d2
+    device_class: door
+    update_interval: never
+    pin:
+      number: PIOA
+      mode:
+        input: true
+      inverted: true
+  - platform: dallas_pio
+    name: "Ovi 2E30B6"
+    id: d3
+    dallas_pio_id: pio_d3
+    device_class: door
+    update_interval: never
+    pin:
+      number: PIOA
+      mode:
+        input: true
+      inverted: true
+  - platform: dallas_pio
+    name: "Ovi A82DB6"
+    id: d4
+    dallas_pio_id: pio_d4
+    device_class: door
+    update_interval: never
+    pin:
+      number: PIOA
+      mode:
+        input: true
+      inverted: true
+  - platform: dallas_pio
+    name: "Ovi 322EB6"
+    id: d5
+    dallas_pio_id: pio_d5
+    device_class: door
+    update_interval: never
+    pin:
+      number: PIOA
+      mode:
+        input: true
+      inverted: true
 
 button:
   - platform: restart
