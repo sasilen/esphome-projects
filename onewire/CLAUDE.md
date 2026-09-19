@@ -111,6 +111,40 @@ tähden haaroittaminen vaatisi.
 yhtäkään sensoria; komponentti tulostaa löytyneet ROM-osoitteet
 käynnistysvedoksessa.
 
+## RJ45:n nastajärjestys, ja mitä siitä voi päätellä
+
+Verkko päättyy RJ45:een. **Data ja paluu ovat nastat 4 ja 5** — sininen pari —
+ja sille on mekaaninen peruste eikä pelkkä tapa.
+
+DS9490R kantaa 1-Wiren RJ11-liittimessään nastoissa 3 ja 4
+([datalehti](https://www.analog.com/media/en/technical-documentation/data-sheets/ds9490-ds9490r.pdf)).
+RJ11 on kuusipaikkainen ja kapeampi kuin RJ45, ja pistoke istuu rasian
+keskelle: sen nastat 1–6 osuvat kahdeksanpaikkaisen rasian nastoihin 2–7.
+RJ11:n nasta 3 on siis RJ45:n nasta 4, ja RJ11:n nasta 4 on RJ45:n nasta 5.
+
+Verkko jota on ajettu DS9490:llä noudattaa siis tätä, riippumatta siitä mitä
+asentaja ajatteli tekevänsä — pistoke määräsi sen.
+
+**Syöttö on eri asia.** VDD ei ole vakiintunut mihinkään nastaan: yleisiä ovat
+1, 2 ja 6. Se mitataan eikä päätellä, ja se on ainoa kohta tässä projektissa
+jossa virhe tuhoaa antureita sen sijaan että jättäisi väylän hiljaiseksi.
+
+Tästä seuraa menettely joka rajaa riskin nollaan: **todenna data ja paluu
+kahdella johtimella ennen kuin kytket kolmannen.** DS9490 ajaa väylää
+loiskäytöllä eikä anna syöttöä, joten se luetteloi koko verkon ilman että VDD:tä
+tarvitsee arvata. Jos anturit löytyvät nastoilla 4 ja 5, ne kaksi ovat oikein —
+ja vasta sitten etsitään syöttöjohdin.
+
+## Kaksi isäntää ei käy
+
+Ytimen `ds2490`-ajuri ja ESPHomen `one_wire` ovat molemmat isäntiä. **Vain
+toinen saa olla kiinni kerrallaan**, ja tämä koskee myös vanhaa syöttöä tai
+unohtunutta sovitinta jossain toisessa päässä — siksi verkon jännite mitataan
+ennen kuin siihen kytketään mitään.
+
+Linuxissa sama koskee OWFS:ää ja ytimen ajuria keskenään: jos `owserver` on
+ajossa, se varaa sovittimen eikä `/sys/bus/w1/devices/` täyty.
+
 ## Kaksi ansaa jotka on jo maksettu muualla
 
 **Lokitaso.** Osoiteluettelo on CONFIG-tason viesti. `level: INFO` vaientaa sen,
