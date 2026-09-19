@@ -32,6 +32,7 @@
 #
 # Kaksi syytä olla käyttämättä sitä valmista: se ei käänny 2026.9.0:lla, ja
 # **sen DS2406-luku näyttää kirjoittavan.** Perustelut ovat CLAUDE.md:ssä.
+#
 # **Tämä hakemisto on vietävä konttiin erikseen.** Kontin `/config` ei ole
 # tämä repo vaan hakemisto jossa on pelkkiä YAMLeja — polku ratkeaa sen
 # juuresta, eikä `components/` ole siellä ennen kuin se kopioidaan:
@@ -317,21 +318,21 @@ sensor:
     one_wire_id: bus_a
     id: t20
     address: 0x000000001916163B          # 3B.161619000000
-    name: "Tuntematon 3B 161619"
+    name: "Leivinuuni 1"
     update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
     id: t21
     address: 0xCC0000001915A13B          # 3B.A11519000000
-    name: "Tuntematon 3B A11519"
+    name: "Leivinuuni 2"
     update_interval: never
 
   - platform: dallas_temp
     one_wire_id: bus_a
     id: t22
     address: 0x6D0000001870913B          # 3B.917018000000
-    name: "Tuntematon 3B 917018"
+    name: "Leivinuuni 3"
     update_interval: never
 
 # ------------------------------------------------- Tuntemattomat DS18B20:t
@@ -488,11 +489,11 @@ interval:
       - delay: 1s
       - lambda: 'id(t19).update();'   # Nimeämätön DS18S20
       - delay: 1s
-      - lambda: 'id(t20).update();'   # Tuntematon 3B 161619
+      - lambda: 'id(t20).update();'   # Leivinuuni 1
       - delay: 1s
-      - lambda: 'id(t21).update();'   # Tuntematon 3B A11519
+      - lambda: 'id(t21).update();'   # Leivinuuni 2
       - delay: 1s
-      - lambda: 'id(t22).update();'   # Tuntematon 3B 917018
+      - lambda: 'id(t22).update();'   # Leivinuuni 3
       - delay: 1s
       - lambda: 'id(t23).update();'   # Tuntematon 28 FF90D8
       - delay: 1s

@@ -928,9 +928,14 @@ nelinkertainen, joten `raw / 16` on oikein eikä suodatinta tarvita.
 **0,25 °C on MAX31850:n termoparitarkkuus**, DS1825 antaisi 0,0625:n portaita.
 Perheen toinen piiri on siis poissuljettu mittaamalla eikä päättelemällä.
 
-Termopari tarkoittaa korkeaa lämpötilaa, mikä vahvistaa leivinuunioletusta
-muttei todista sitä. **Uunin lämmittäminen kymmeneksi minuutiksi todistaisi**,
-ja vasta sen jälkeen nämä nimetään — kerran, koska nimi synnyttää entity_id:n.
+Termopari tarkoittaa korkeaa lämpötilaa, ja **omistaja vahvisti että ne ovat
+leivinuunissa** — samalla tavalla kuin latchien käyttötarkoitus ja `VH`. Nimet
+ovat siksi nyt `Leivinuuni 1`, `2` ja `3`.
+
+**Numero on järjestysluku eikä sijainti.** Mikä niistä on pesässä, mikä
+savukanavassa ja mikä massassa, ei ole tiedossa; osoite kunkin vieressä
+erottaa ne toisistaan yksikäsitteisesti. Uunin lämmittäminen erottelisi ne
+nousunopeudella, ja vasta silloin numeroille voi antaa merkityksen.
 
 Ne saavat myös virtaa, toisin kuin ne neljätoista, eli ne ovat verkon
 syötetyssä osassa.
@@ -980,6 +985,46 @@ ja sisäpinnat eivät. Se on ilmainen varmistus jota kannatti odottaa.
 **Saunaa ei siis löytynyt.** Se oli avoin kysymys alusta asti, ja vastaus on
 joko ettei sitä ole väylällä tai ettei sitä ollut lämmitetty. Saunan
 lämmittäminen ratkaisee sen yhdellä kerralla.
+
+### Eräkoodi kertoo milloin ne on ostettu
+
+Ne eivät ole missään listauksessa eivätkä PHP-kartassa, mutta **osoite itse
+kertoo silti jotain.** DS18B20:n sarjanumeron kolme viimeistä tavua ovat
+eräkoodi: samasta pussista ostetuilla se on sama. Kun kaikki 28 ryhmitellään
+sen mukaan, yhdeksän jakautuu kahtia.
+
+**Viisi on jo talossa olevista eristä — samasta pussista, eri päivänä:**
+
+| Erä | Tuntematon | Samasta erästä tunnettuja |
+|---|---|---|
+| `050000` | `B23B66`, `BFF565` | MH1 etelä sisä, MH1 länsi, MH4 länsi, MH4 pohjoinen ulko |
+| `750400` | `FF90D8`, `FFBADB` | Keittiö ikkuna sisä ja ulko, Olohuone ulko, Vaatehuone etelä ulko |
+| `4E0400` | `FFC02B` | Kodinhoitohuone sisä ovi katto, Makuuhuone 1 sisä ovi katto |
+
+**Neljä on eristä joita ei ole missään muualla:**
+
+| Erä | Tuntematon |
+|---|---|
+| `531502` | `FFAC9D` |
+| `031502` | `FFEAE5` |
+| `651403` | `FFF083` |
+| `070000` | `21270B` |
+
+Kaksi ensimmäistä jakavat päätteen `1502`, eli ne ovat samaa ostoa. Muoto
+`1502` ja `1403` poikkeaa kaikesta vanhassa aineistossa, jossa erät ovat
+`…0400` ja `…0000`.
+
+**Yhdeksän ei siis ole yksi lisäys vaan vähintään kolme tai neljä.** Viisi on
+asennettu vanhoista ylijäämistä ja neljä ostettu myöhemmin.
+
+Yksi erä antaa myös vihjeen sijainnista: **`4E0400` on ovikattoerä**, jonka
+molemmat tunnetut jäsenet ovat "sisä ovi katto" -antureita. `FFC02B` on
+todennäköisesti kolmas sellainen, huoneessa jota kartta ei kata.
+
+Muut erät eivät auta samalla tavalla. `750400` on enimmäkseen ulkopintoja,
+mutta sen tuntemattomat lukevat sisälämpötiloja; `050000` on makuuhuoneita,
+mutta sen kaksi tuntematonta ovat koko verkon lämpimimmät. **Eräkoodi kertoo
+milloin, ei missä.**
 
 Kaksi havaintoa kannattaa merkitä:
 
