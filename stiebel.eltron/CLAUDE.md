@@ -2816,20 +2816,26 @@ and it accepts 20 kbps on this board, which until now had only been shown for
 `esp32-c3-devkitm-1` in a validation-only file. The bench bus remains the
 prerequisite for transmitting, which is a different question.
 
-The build figures, for the node as it stands — counters only, no dispatch:
+The build figures, and the third column is the one that answers the old worry:
 
-| | ESP8266 sniffer | C3 receive test |
-|---|---|---|
-| Flash | 45.2 % | 48.9 % of 1.8 MB |
-| RAM | 40.0 % | **32.0 % of 321 kB** |
-| RAM free | ~48 kB | **218 kB** |
+| | ESP8266 sniffer | C3, counters only | C3 with the full dispatch |
+|---|---|---|---|
+| Flash | 45.2 % | 48.9 % | **49.7 % of 1.8 MB** |
+| RAM | 40.0 % | 32.0 % | **33.1 % of 321 kB** |
+| RAM free | ~48 kB | 218 kB | **215 kB** |
 
 **The percentages are the misleading half and the absolute figures are the
 point.** The one documented reason to leave the ESP8266 was the read set
 growing — "50–100 HA entities would get tight" — and the C3 has roughly four and
-a half times the free memory to grow into. The comparison is not like for like,
-because this build carries no sensors yet and the dispatch will cost both flash
-and RAM; the headroom is what says that cost is affordable.
+a half times the free memory to grow into.
+
+**And the dispatch turned out to be cheap.** Moving 500 lines of frame handler
+and about fifty entities onto the node cost **15.6 kB of flash and 3.8 kB of
+RAM** against the counters-only build. Fifty entities at roughly 75 bytes each
+is not what anyone was afraid of; the fear was written for a part with 48 kB
+free in total, where the same fifty would have been an eighth of everything.
+Phase 2b can add its `number:` entities without anyone having to think about
+it.
 
 **Both configurations carry the same device name, `wpc-can`.** Home Assistant
 builds entity ids from it, so sharing it is what lets the C3 inherit this
