@@ -20,6 +20,7 @@ muuten mDNS ei toimi eikä OTA löydä levyjä.
 | [stiebel.eltron](stiebel.eltron/) | Stiebel Eltron WPC 07 -lämpöpumppu | CAN 20 kbps | ESP32-C3 + SN65HVD230 (sisäinen TWAI) | **Kuuntelee väylää.** MCP2515 jäi tarpeettomaksi |
 | [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | Potentiaalivapaat koskettimet (ei Modbusia — ECC05) | — | **Ei toteuteta.** Perustelu kirjattu |
 | [axioma.effection](axioma.effection/) | Axioma Effectio / Qalcosonic W1 -vesimittari | Wireless M-Bus 868,95 MHz T1/C1 | ESP32 + CC1101 | Kuuntelee, mutta mittari on LoRaWAN-luennassa |
+| [onewire](onewire/) | Talon oma 1-Wire-verkko, DS18B20-antureita | 1-Wire, tähtitopologia | ESP32-C3 | Kartoitus kesken. **Kaapelit ja anturit ovat jo paikoillaan** |
 
 ## Levyt ja varasto
 
@@ -28,9 +29,9 @@ kaikki lasketaan yhteen.
 
 | Levy | Käytössä | Varattu suunnitelmissa | Vapaana sen jälkeen |
 |---|---|---|---|
-| Wemos D1 mini (ESP8266-12F, CH340G, USB-C) | aidon, bestway.lay-z-spa, stiebel.eltron | — | **1** |
+| Wemos D1 mini (ESP8266-12F, CH340G, USB-C) | aidon, bestway.lay-z-spa | — | **2** |
 | ESP32 | — | axioma.effection, hirvirata | **1** |
-| ESP32-C3 SuperMini, 6 kpl | — | stiebel vaihe 2, kaksi jakotukkisolmua, puskurisolmu | **2** |
+| ESP32-C3 SuperMini, 6 kpl | stiebel.eltron | kaksi jakotukkisolmua, puskurisolmu, onewire | **1** |
 
 Kolme ESP32:ta ei ole kolme samanlaista, vaan 2 + 1:
 
@@ -44,11 +45,18 @@ jossa se on ainoa jolla on merkitystä: ohjausrasia on ulkona ja harjamoottorin
 kipinöinti häiritsee WiFiä, joten antenni kannattaa saada ulos kotelosta.
 Muualla printtiantenni riittää.
 
-Vapaita on nyt kaksi: **D1 mini** ja **yksi 30-nastainen DevKit**, joka
-vapautui kun pegasos päätettiin jättää toteuttamatta 13.9.2026. D1 mini on
-hirviradan pakotie siltä varalta ettei ulkoantennilevy toimi, ja varalevy
-stiebelin vaiheelle 1 — repon ainoalle käynnissä olevalle
-mittausjärjestelmälle.
+**D1 minejä on nyt kaksi vapaana**, koska stiebel siirtyi C3:lle ja sen
+MCP2515-solmu on irrotettu väylältä. Toinen niistä on hirviradan pakotie siltä
+varalta ettei ulkoantennilevy toimi.
+
+Molemmat ovat kuitenkin ensisijaisesti **aidonin vakuutus**, eikä sitä kannata
+käyttää muuhun kevyin perustein: aidon on repon ainoa käynnissä oleva
+tuotantojärjestelmä ja ainoa projekti jossa ESP8266 ei ole makuasia vaan pakko.
+Jos sen levy hajoaa, tilalle tarvitaan D1 mini samana päivänä. Sama peruste
+ohjasi [onewiren](onewire/) C3:lle vaikka D1 mini olisi tehnyt saman työn.
+
+Lisäksi vapaana on **yksi 30-nastainen DevKit**, joka vapautui kun pegasos
+päätettiin jättää toteuttamatta 13.9.2026.
 
 **Kuusi ESP32-C3:a on hyllyssä, ja se poisti levypulan.** Rajoitetta ei
 siis enää ole, ja kaksi jää yli senkin jälkeen kun stiebelin vaihe 2 ja
@@ -301,6 +309,12 @@ projektin [README:ssä](bestway.lay-z-spa/README.md).
 ## Kieli
 
 Dokumentit ovat osin suomeksi, osin englanniksi sen mukaan kumpi oli kätevämpi
-kirjoitushetkellä: aidon, hirvirata ja axioma.effection suomeksi, stiebel.eltron
-ja pegasos.enervent englanniksi. Kunkin projektin README on samalla kielellä kuin
-sen CLAUDE.md.
+kirjoitushetkellä: aidon, hirvirata, axioma.effection ja onewire suomeksi,
+stiebel.eltron ja pegasos.enervent englanniksi. Kunkin projektin README on
+samalla kielellä kuin sen CLAUDE.md.
+
+Jako ei ole sattumaa siltä osin kuin se on tietoinen: **stiebelin ja pegasoksen
+sisältö kiinnostaa muitakin** — Elster-protokolla ja Enerventin
+automaatiosukupolvet ovat yleisiä ongelmia, ja niistä on kirjoitettu blogit.
+Onewire on yhden talon kaapelikartoitus eikä sillä ole yleisöä repon
+ulkopuolella.
