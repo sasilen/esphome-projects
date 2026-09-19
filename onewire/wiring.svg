@@ -25,15 +25,17 @@
   <rect x="420" y="150" width="180" height="250" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
   <text x="510" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">RJ45-PISTOKE</text>
   <text x="510" y="192" font-size="10" fill="#5A6772" text-anchor="middle">uusi, C3:lle tehtävä</text>
+  <text x="510" y="392" font-size="9.5" fill="#5A6772" text-anchor="middle">4 ja 5 päätelty, syöttö luetaan</text>
+  <text x="510" y="404" font-size="9.5" fill="#5A6772" text-anchor="middle">vanhasta pistokkeesta</text>
   <g font-size="11" fill="#16212B">
     <text x="432" y="214">VDD</text>
     <text x="432" y="284">DQ</text>
     <text x="432" y="354">GND</text>
   </g>
-  <g font-size="10" font-weight="700" fill="#A3301F">
-    <text x="486" y="214">nasta ?</text>
-    <text x="486" y="284">nasta ?</text>
-    <text x="486" y="354">nasta ?</text>
+  <g font-size="10" font-weight="700">
+    <text x="486" y="214" fill="#A3301F">nasta ?</text>
+    <text x="486" y="284" fill="#0E6E7C">nasta 4</text>
+    <text x="486" y="354" fill="#16212B">nasta 5</text>
   </g>
 
   <!-- wires -->

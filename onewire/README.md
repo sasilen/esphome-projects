@@ -40,10 +40,21 @@ koska rinnakkaiset ylösvedot laskisivat yhteisvastuksen liian pieneksi.
 | GPIO4 | → | DQ-johdin, ja **4,7 kΩ tästä 3,3 V:iin** |
 | GND | → | GND-johdin |
 
-**Mikä johdin on mikä, on mitattava.** Johdinvärit ovat tässä asennuksessa
-sattumaa — kaapeli on se joka sattui olemaan käsillä — eivätkä ne tarkoita
-mitään. Sama pätee RJ45:n nastanumeroihin: ne ovat luultavasti 4 ja 5 datalle
-ja paluulle, mutta syöttöjohdinta ei voi päätellä mistään.
+**Johdinvärit ovat tässä asennuksessa sattumaa** — kaapeli on se joka sattui
+olemaan käsillä — eivätkä ne tarkoita mitään. Nastanumerot sen sijaan ovat
+pääteltävissä:
+
+| Signaali | RJ45 | Raspberryn rima |
+|---|---|---|
+| DQ | **4** | 7 (GPIO4) |
+| GND | **5** | 9 |
+| VDD | kolmas käytössä oleva paikka | 1 |
+
+Data ja paluu seuraavat siitä että **DS9490 on toiminut tässä verkossa**: sen
+RJ11-pistoke ylettyy vain rasian keskimmäisiin nastoihin, joten muualla ne eivät
+olisi olleet sovittimen ulottuvilla lainkaan. Syöttö ei seuraa siitä, mutta kun
+kaksi paikkaa kolmesta on tiedossa, **kolmas näkyy vanhasta pistokkeesta
+silmällä.** Koko ketju premisseineen on [CLAUDE.md](CLAUDE.md):ssä.
 
 **Vanha kaapeli on mittalaite.** Sen toisessa päässä on Raspberryn rima, jonka
 nastojen merkitys tiedetään: nasta 7 on GPIO4 eli data, nasta 1 on 3,3 V ja

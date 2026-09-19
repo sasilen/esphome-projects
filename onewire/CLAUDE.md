@@ -164,6 +164,59 @@ Mitä valokuvasta jää voimaan:
 
 Mikä johdin on mikä, on kokonaan avoin.
 
+### Päättelyketju RJ45:een asti
+
+Kaksi vahvistettua asiaa vievät päättelyn molempiin päihin asti, ja ketju on
+tässä auki niin että sen voi kumota jos jokin premissi pettää.
+
+**Premissi 1: Raspberryn kytkentä on se yleinen malli.** Kolme johdinta
+nastoihin 1, 7 ja 9 — kaikki parittomassa rivissä vieretysten — ja ylösveto
+nastasta 1 nastaan 7.
+
+| Rima | Merkitys |
+|---|---|
+| 1 | VDD, 3,3 V |
+| 7 | DQ, GPIO4 |
+| 9 | GND |
+
+Valokuva tukee tätä: vastus ylittää muutaman nastavälin **saman rivin sisällä**.
+Jos syöttö olisi nastassa 17, joka on toinen 3,3 V, vastus olisi selvästi
+pidempi. Riman päätä ei näy kuvassa, joten absoluuttista numerointia ei voi
+siitä laskea — mutta pituus sopii.
+
+**Premissi 2: DS9490 on toiminut tässä verkossa.** Tämä on vahvempi kuin mikään
+konventio, koska se on toiminnallinen vaatimus eikä tapa. Sovittimen RJ11-liitin
+kantaa 1-Wiren nastoissa 3 ja 4, ja RJ11-pistoke istuu RJ45-rasian keskelle
+niin että sen nastat osuvat rasian nastoihin 2–7. **Jos sovitin on toiminut,
+data ja paluu ovat RJ45:n nastoissa 4 ja 5** — muualla ne eivät olisi
+sovittimen ulottuvilla lainkaan.
+
+Suunta seuraa samasta: RJ11:n nasta 3 on data ja se osuu RJ45:n nastaan 4;
+RJ11:n nasta 4 on paluu ja se osuu nastaan 5.
+
+**Johtopäätös:**
+
+| Signaali | RJ45 | Rima | Varmuus |
+|---|---|---|---|
+| DQ | **4** | 7 | päätelty kahdesta premissistä |
+| GND | **5** | 9 | päätelty kahdesta premissistä |
+| VDD | **kolmas käytössä oleva paikka** | 1 | luettavissa pistokkeesta silmällä |
+
+Syöttöjohdin ei seuraa kummastakaan premissistä, koska DS9490 ei käytä sitä
+eikä RJ45:n syötölle ole vakiintunutta paikkaa. **Mutta pistokkeessa on kolme
+johdinta kahdeksasta paikasta**, ja kun kaksi niistä on nastat 4 ja 5, kolmas
+on se mikä jää. Sen näkee katsomalla, ei mittaamalla.
+
+**Mikä kumoaisi tämän.** Jos DS9490:tä on käytetty sovitinkaapelin kautta joka
+siirtää nastoja, premissi 2 pettää. Jos Raspberryn kytkentä poikkeaa yleisestä
+mallista — esimerkiksi `dtoverlay=w1-gpio,gpiopin=17` — premissi 1 pettää.
+Ensimmäinen näkyy siitä onko sovittimessa erillinen sovitinkaapeli;
+jälkimmäinen `/boot/firmware/config.txt`:stä.
+
+**Tämä ei korvaa mittausta vaan tekee siitä tarkistuksen.** Kolme
+jatkuvuusmittausta joko vahvistavat taulukon tai kumoavat sen, ja kumpikin
+lopputulos kestää viisi minuuttia.
+
 ### Vanha kaapeli on mittalaite
 
 Johtimet tunnistetaan mittaamalla, ja vanha kaapeli tekee siitä helppoa: sen
