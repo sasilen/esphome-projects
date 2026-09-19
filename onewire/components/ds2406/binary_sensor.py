@@ -50,7 +50,11 @@ async def to_code(config: ConfigType) -> None:
     await cg.register_component(var, config)
     await one_wire.register_one_wire_device(var, config)
 
-    control = config[CONF_CHANNEL]
+    # **`cv.enum` palauttaa avaimen, ei arvoa.** Se on merkkijonon aliluokka
+    # jolla on `.enum_value`, joten `config[CONF_CHANNEL]` on "A" eikä 0x44 —
+    # ja `|=` kaatuu siihen. Haku taulukosta on selvempi kuin sisäiseen
+    # attribuuttiin nojaaminen.
+    control = CHANNELS[config[CONF_CHANNEL]]
     if config[CONF_LATCH]:
         control |= ALR
     cg.add(var.set_control_byte(control))

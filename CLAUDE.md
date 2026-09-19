@@ -134,6 +134,47 @@ Kaksi asiaa seuraa tästä:
   paketit ja jaetut lohkot. Jos tiedostoon viitataan konfiguraatiosta, sen on
   oltava `/config`:n alla.
 
+### Kopioi sisältö, älä hakemistoa
+
+`podman cp` noudattaa `docker cp`:n sääntöä: **jos kohdehakemisto on olemassa,
+lähde kopioidaan sen sisään.** Sama komento toimii siis kerran ja hautaa
+toisella kerralla muutokset alihakemistoon `components/components/`, jolloin
+vanhat tiedostot jäävät käyttöön eikä mikään kaadu.
+
+**Käytä `/.`-muotoa**, joka kopioi sisällön ja on siksi toistettavissa:
+
+```sh
+podman cp onewire/components/. esphome:/config/components
+```
+
+### Ja käynnistä kontti uudelleen kun komponentti muuttuu
+
+Tiedoston vieminen ei riitä. ESPHome lataa `type: local` -komponentin
+Python-moduulina, ja **kerran tuotu moduuli jää prosessin muistiin** — uusi
+tiedosto levyllä ei vaikuta mihinkään. Oire näyttää koodivirheeltä:
+
+```
+[latch] is an invalid option for [binary_sensor.ds2406]
+```
+
+Skeema oli oikein; vanha versio oli muistissa. `podman restart esphome`
+korjasi sen.
+
+### Kuvio: vanhentunut tila näyttää aina koodivirheeltä
+
+Sama ilmiö esiintyi yhden illan aikana **neljällä eri tasolla**, ja jokainen
+niistä osoitti ensin väärään suuntaan:
+
+| Taso | Oire | Korjaus |
+|---|---|---|
+| ESP-IDF:n välimuisti | käännös kaatuu polkuristiriitaan | `esphome clean` |
+| Kontin `/config` | `Could not find directory` | vie tiedosto sinne |
+| `podman cp` | muutos ei vaikuta, mikään ei kaadu | `/.`-muoto |
+| Python-moduuli | kelvollinen avain on "invalid option" | `podman restart` |
+
+**Kun jokin näyttää mahdottomalta, epäile ympäristöä ennen koodia.** Se on
+halvempi tarkistaa ja se on ollut oikea vastaus joka kerta.
+
 ## Kontti päivittyy itsestään, ja se rikkoo käännöshakemiston
 
 Quadletissa on `AutoUpdate=registry`, eli image vaihtuu taustalla. Kerran se
