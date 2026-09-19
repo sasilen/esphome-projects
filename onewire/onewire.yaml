@@ -11,23 +11,16 @@
 # DS18S20 `10.0ED2A0020800`, joka oli isännän pään laite — samasta päästä
 # puuttuu myös DS2438, ja ne katosivat yhdessä.
 #
-# **Mutta vain viisi antaa lukeman; neljätoista palauttaa `nan`.** Loki nimeää
-# syyn: `dropping reading caused by sensor reset` eli rekisterissä on tasan
-# 85,0 °C ja tavu 6 on 0x0C. Anturi vastaa, CRC on kunnossa — **ne puhuvat
-# mutta eivät muunna.**
+# **Väylä lukee: 46 lukemaa 49:stä kolmen kierroksen yli.** Jokainen väylällä
+# oleva anturi raportoi.
 #
-# Jako on kategorinen eikä asteittainen: 21 kierrosta, 5/5 onnistui ja 14/14
-# epäonnistui, ei yhtään poikkeusta kumpaankaan suuntaan.
+# Näin ei ollut aluksi. Vain viisi luki ja neljätoista palautti tehdasarvon
+# 85 °C, ja syy oli **`dallas_temp`:n tapa olla lukitsematta väylää muunnoksen
+# ajaksi** — toisen anturin vuoro keskeytti edellisen kesken. Siksi anturit
+# ajetaan alempana sarjassa `interval`-lohkosta.
 #
-# **Isännän sähkö ei ole syy.** ESPHome jättää nastan OUTPUT-tilaan ajamaan
-# linjaa ylös push-pullina, eli vahva ylösveto on päällä koko muunnoksen ajan.
-#
-# **Isännän ohjelmisto voi silti olla.** `dallas_temp` ei lukitse väylää
-# muunnoksen ajaksi, joten toisen anturin `update()` keskeyttää sen — ja juuri
-# siinä on ero Raspberryyn, jonka w1-ajuri pitää mutexia. Anturit ajetaan nyt
-# sarjassa; perustelu on alempana sarjoituslohkossa.
-#
-# Koko päättelyketju kumottuine välivaiheineen on CLAUDE.md:ssä.
+# Kaapeli, syöttö ja ylösveto olivat koko ajan kunnossa. Koko päättelyketju
+# kumottuine välivaiheineen on CLAUDE.md:ssä.
 #
 # Kytkentä on wiring.svg:ssä. Neljä johdinta: RJ45:n nasta 2 on 5 V, nasta 4 on
 # data GPIO4:ään, nastat 1 ja 5 ovat maita. Ylösveto 4,7 kΩ GPIO4:n ja 3V3:n

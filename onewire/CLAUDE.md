@@ -850,28 +850,67 @@ tarjosi nimenomaan `strong_pullup()`-toimintoa, ja koodin omistaja kommentoi
 muunna, syy ei ole isännän vetovoimassa — eikä siinä mitä Raspberry teki eri
 tavalla, koska se teki saman asian.
 
-### Mikä jää selitykseksi
+### Syy oli väyläkilpailu, ja korjaus on YAML:ia
 
-Oire on tarkka: ne vastaavat, CRC täsmää, rekisterissä on tehdasarvo. **Ne
-puhuvat mutta eivät muunna** — ja puhuminen kulkee datalinjan varassa, muunnos
-ei.
+Oire oli tarkka: ne vastaavat, CRC täsmää, rekisterissä on tehdasarvo. **Ne
+puhuvat mutta eivät muunna.** Ratkaisu löytyi `dallas_temp`:n omasta
+`update()`-metodista:
 
-Todennäköisin jäljellä oleva selitys on **kelluva VDD**. Loiskäytössä VDD
-*sidotaan maahan*; se on kytkentä eikä puute. Jos johdin sen sijaan on poikki
-tai jäänyt kytkemättä, nasta kelluu — ja kelluva VDD on huonompi kuin maahan
-sidottu, koska piiri kommunikoi mutta ei toimi kunnolla. Se sopii myös siihen
-että vanha toteutus sai nämä *ajoittain* läpi.
+```cpp
+this->send_command_(DALLAS_COMMAND_START_CONVERSION);
+this->set_timeout(..., this->millis_to_wait_for_conversion_(), [this] { ... });
+```
 
-**Tätä ei voi tässä talossa todentaa.** Anturit ovat rakenteissa eikä VDD:tä
-pääse mittaamaan, joten selitys jää parhaaksi ehdokkaaksi eikä muutu
-todetuksi. Se on kirjattu tänne siksi, ettei seuraava lukija aloita samasta
-päästä uudelleen.
+**Väylää ei lukita.** CONVERT T lähetetään ja jatketaan `set_timeout`illa, joten
+niiden 750 ms:n aikana pääsilmukka pyörii normaalisti — ja jokainen toisen
+anturin `update()` aloittaa omalla `reset()`illään, joka vetää linjan alas
+480 µs:ksi. Se keskeyttää kesken olevan muunnoksen ja pudottaa vahvan
+ylösvedon samalla.
 
-| Vaihtoehto | Hinta |
-|---|---|
-| **Ota ne viisi ja kolme MAX31850:tä** | toimii nyt, kattaa kahdeksan laitetta |
-| Yksi anturi kerrallaan omalla käännöksellä | sulkisi pois väyläkilpailun; yksi flashaus per koe |
-| Vedä haaralle uusi kaapeli | ainoa varma korjaus, mutta se on rakennustyö |
+**Linuxin w1-alijärjestelmä pitää väylämutexia koko tapahtuman ajan.** Siinä on
+se ero Raspberryyn, jota haettiin koko ilta ylösvedosta, syötöstä ja
+kaapeloinnista. Ero oli isännän ohjelmistossa, ei sähkössä eikä talossa.
+
+Se selittää jälkikäteen molemmat aiemmat ristiriidat:
+
+- **21/21 determinismi.** `PollingComponent`-vaiheet lukitaan käynnistyksessä ja
+  toistuvat tasan 60 000 ms:n välein, joten samat parit törmäävät identtisesti
+  joka kierros.
+- **Miksi `resolution: 9` ei auttanut.** Jos törmäys osuu ikkunan alkuun, sen
+  lyhentäminen 750 ms:sta 94 ms:iin ei muuta mitään. Kokeen nollatulos ei siis
+  kumonnutkaan sitä mitä luulin sen kumoavan.
+
+Korjaus on `update_interval: never` jokaiselle ja yksi `interval`-lohko joka
+kutsuu ne läpi sekunnin välein. 23 anturia on 23 s, eli minuuttiin mahtuu.
+
+**Tulos ensimmäisestä ajosta: 46/49 kolmen kierroksen yli.** Jokainen väylällä
+oleva anturi lukee. Aiemmin 8/23 luki aina ja 14 ei koskaan.
+
+Jäljelle jäi noin 6 % ajoittaisia ohituksia — `Keittiö ikkuna ulko`,
+`Makuuhuone 3 pohjoinen` ja `Makuuhuone 4 pohjoinen ulko` hukkasivat kukin
+yhden kierroksen. **Se on sama ajoittaisuus jonka vanha Raspberry-toteutus
+näytti**, eli tähden oma signaalinlaatu. Sekunnin väliä voi kasvattaa jos se
+alkaa haitata.
+
+### Lukemat vahvistavat nimikartan itsenäisesti
+
+Rakenteen ulkopinnan anturit lukevat kylmempää kuin sisäpinnan, ja ulkona on
+14,7 °C stiebelin mittauksen mukaan:
+
+| Pari | sisä | ulko |
+|---|---|---|
+| Vaatehuone etelä | 21,7 | **16,2** |
+| Keittiö ikkuna | 22,7 | **19,5** |
+| Makuuhuone 4 pohjoinen | **16,3** | 21,2 |
+
+Kahdella parilla järjestys on oikea, ja se on riippumaton vahvistus koko
+PHP-kartasta johdetulle nimeämiselle — ei vain osoitteina vaan sijainteina.
+
+**Makuuhuone 4 pohjoinen on väärinpäin.** 16,3 on ulkoilman lukema, ei
+sisäpinnan. Todennäköisin selitys on että sisä ja ulko ovat vaihtuneet vanhassa
+kartassa juuri sen parin kohdalla. Nimiä ei silti vaihdeta vielä: yön aikana
+ulkoilma laskee ja ero kasvaa, jolloin kumpi on kumpi näkyy kiistatta — ja
+nimenvaihto synnyttää uuden entity_id:n, joten se tehdään kerran.
 
 ### Ne kolme 3B:tä ovat MAX31850:itä, ja se on mitattu
 

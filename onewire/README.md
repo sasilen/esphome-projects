@@ -11,22 +11,26 @@ infrastruktuurista. Kaikki muut ovat alkaneet tyhjästä laatikosta.
 
 ## Tila
 
-**Väylä on kytketty ja luetteloitu. Kahdeksan laitetta lukee, neljätoista ei.**
+**Väylä on kytketty ja se lukee.** 46 onnistunutta lukemaa 49:stä kolmen
+kierroksen yli, eli jokainen väylällä oleva anturi raportoi.
 
 | | |
 |---|---|
 | **38** | laitetta vastaa luetteloinnissa |
-| **5** | DS18B20:tä antaa lukeman — vuosien 2015 ja 2020 välillä lisätyt |
-| **3** | MAX31850-termoparia antaa lukeman, todennäköisesti leivinuunissa |
-| **14** | DS18B20:tä vastaa mutta ei muunna: rekisterissä on tehdasarvo 85 °C |
+| **19** | DS18B20:tä luettavissa, nimettyinä huoneisiin |
+| **3** | MAX31850-termoparia, todennäköisesti leivinuunissa |
+| **6** | DS2406-kytkintuloa joita ESPHome ei lue |
 
-**Ne neljätoista eivät ole rikki.** Ne vastaavat kutsuun ja niiden CRC täsmää —
-muunnos vain ei tapahdu. Isäntää on jo kokeiltu kahdella tavalla eikä se ole
-syy; paras jäljellä oleva selitys on kelluva VDD noilla haaroilla, eikä sitä
-pääse mittaamaan koska anturit ovat rakenteissa. Ketju on
-[CLAUDE.md](CLAUDE.md):ssä, kumotut välivaiheet mukaan lukien.
+**Korjaus oli yhden rivin asia, mutta se löytyi vasta neljäntenä.** Aluksi vain
+kahdeksan anturia luki ja neljätoista palautti tehdasarvon 85 °C. Syy ei ollut
+kaapelissa, syötössä eikä ylösvedossa vaan siinä että **`dallas_temp` ei lukitse
+väylää muunnoksen ajaksi**: toisen anturin vuoro keskeytti edellisen kesken.
+Linuxin w1-ajuri pitää mutexia, ESPHome ei — siinä oli koko ero vanhaan
+Raspberry-toteutukseen.
 
-**Konfiguraatiolla tätä ei korjata.** Seuraava askel olisi kaapelointi.
+Anturit ajetaan siksi sarjassa `interval`-lohkosta sekunnin välein.
+Päättelyketju kumottuine välivaiheineen on [CLAUDE.md](CLAUDE.md):ssä; se on
+tämän projektin opettavaisin osa.
 
 Vanhan Raspberryn levyltä löytyi OWFS-toteutus vuosilta 2015–2020, ja sen
 laitekartta on yhä se mistä nimet tulevat:
