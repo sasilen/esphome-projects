@@ -35,10 +35,10 @@
     <text x="466" y="348" text-anchor="end">CANH</text>
     <text x="466" y="384" text-anchor="end">CANL</text>
   </g>
-  <rect x="356" y="326" width="30" height="16" rx="2" fill="#FFF0EE" stroke="#A3301F"/>
-  <text x="371" y="339" font-size="9.5" font-weight="700" fill="#A3301F" text-anchor="middle">R1?</text>
-  <rect x="356" y="360" width="30" height="16" rx="2" fill="#FFF0EE" stroke="#A3301F"/>
-  <text x="371" y="373" font-size="9.5" font-weight="700" fill="#A3301F" text-anchor="middle">R2?</text>
+  <rect x="356" y="326" width="70" height="16" rx="2" fill="#FFFFFF" stroke="#0E6E7C"/>
+  <text x="391" y="339" font-size="9.5" font-weight="700" fill="#0E6E7C" text-anchor="middle">R1 9.5 k&#8486;</text>
+  <rect x="356" y="360" width="70" height="16" rx="2" fill="#FFFFFF" stroke="#0E6E7C"/>
+  <text x="391" y="373" font-size="9.5" font-weight="700" fill="#0E6E7C" text-anchor="middle">R2 115 &#8486;</text>
 
   <!-- X27 -->
   <rect x="590" y="150" width="120" height="250" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
@@ -92,11 +92,11 @@
 
   <line x1="20" y1="600" x2="740" y2="600" stroke="#A8B3BC"/>
 
-  <text x="50" y="628" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">THE TWO RESISTORS ARE STILL UNREAD, AND THEY ARE THE FIRST JOB</text>
-  <text x="50" y="650" font-size="11.5" fill="#16212B"><tspan font-weight="700">R2</tspan> sits between CANH and CANL. Marked <tspan font-weight="700">121</tspan> it is the 120 &#8486; terminator &#8212; and this bus measured</text>
-  <text x="50" y="668" font-size="11.5" fill="#16212B">150 &#8486;, i.e. unterminated, so leaving it fitted is probably right rather than a nuisance.</text>
-  <text x="50" y="690" font-size="11.5" fill="#16212B"><tspan font-weight="700">R1</tspan> sets the Rs slope mode. At 20 kbps slope limiting is a free EMC improvement in a cabinet</text>
-  <text x="50" y="708" font-size="11.5" fill="#16212B">that switches compressor contactors. Reading it also settles whether a separate TVS is needed.</text>
+  <text x="50" y="628" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">BOTH RESISTORS MEASURED &#183; NEITHER NEEDS REWORK</text>
+  <text x="50" y="650" font-size="11.5" fill="#16212B"><tspan font-weight="700">R2 measures 115 &#8486;</tspan> across CANH and CANL with the board off the bus, so the terminator is</text>
+  <text x="50" y="668" font-size="11.5" fill="#16212B">in circuit. Leave it: this bus measured 150 &#8486;, so adding it gives &#8776; 66 &#8486;, near CAN's own 60.</text>
+  <text x="50" y="690" font-size="11.5" fill="#16212B"><tspan font-weight="700">R1 measures 9.5 k&#8486;</tspan>, i.e. Rs (pin 8) goes to ground through a resistor and the driver is</text>
+  <text x="50" y="708" font-size="11.5" fill="#16212B">already slope-limited &#8212; free EMC at 20 kbps, and proof it is not stuck in standby.</text>
 
   <line x1="20" y1="730" x2="740" y2="730" stroke="#A8B3BC"/>
 
@@ -124,7 +124,7 @@
   <rect x="50" y="966" width="660" height="114" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
   <rect x="50" y="966" width="6" height="114" fill="#A3301F"/>
   <text x="74" y="992" font-size="12" font-weight="700" fill="#A3301F">BEFORE THIS TOUCHES THE HEAT PUMP</text>
-  <text x="74" y="1016" font-size="11.5" fill="#16212B"><tspan font-weight="700">Bench first:</tspan> two of these, 120 &#8486; at each end, nothing connected to the pump.</text>
+  <text x="74" y="1016" font-size="11.5" fill="#16212B"><tspan font-weight="700">Bench first:</tspan> two of these, nothing connected to the pump &#8212; each board brings its own 120 &#8486;.</text>
   <text x="74" y="1038" font-size="11.5" fill="#16212B"><tspan font-weight="700">X27 takes one node</tspan> &#8212; one conductor per pole, so this is a swap or a splice in the drop.</text>
   <text x="74" y="1060" font-size="11.5" fill="#16212B"><tspan font-weight="700">Listen-only on esp32_can is unverified</tspan> &#8212; confirm it before trusting a silent first test.</text>
 </svg>

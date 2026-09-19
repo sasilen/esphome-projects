@@ -105,9 +105,10 @@ Moduulit:
   [stiebel.eltronin CLAUDE.md:ssä](stiebel.eltron/CLAUDE.md), "The cap is
   removable".
 - **SN65HVD230 / VP230 CAN-lähetinvastaanotin, 5 kpl** (ARCELI)
-  → stiebel.eltron vaihe 2. **R1 ja R2 ovat yhä lukematta** — ne ratkaisevat
-  terminoinnin ja Rs-loivennuksen, eikä kytkentää kannata suunnitella loppuun
-  ennen kuin ne on luettu kortilta.
+  → stiebel.eltron vaihe 2. **Molemmat vastukset mitattu:** R2 on 115 Ω eli
+  terminaattori on piirissä ja jää paikalleen, ja R1 on 9,5 kΩ eli piiri on
+  valmiiksi loivennetussa tilassa. Kortille ei tehdä mitään. TVS-suojan tarve on
+  eri kysymys ja ratkeaa katsomalla onko kortilla suojadiodia.
 - **PN5180 NFC-lukija** (odottaa osia — ainoa erä joka on yhä matkalla)
   → axioma.effection. Ainoa halpa ISO 15693 -piiri; RC522 ei kelpaa.
 - **BME280-anturikortti, 2 kpl** (APKLVSR,

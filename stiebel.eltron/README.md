@@ -87,9 +87,11 @@ Stiebel WPC 07
 - 120 Ω resistors — not used at first. The bus measured 150 Ω de-energised, so it
   carries **no terminator**; start without one and reconsider only if traffic is
   unreliable
-- **SN65HVD230 (VP230) breakouts** for phase 2. Read **R1 and R2** off the board
-  before wiring anything: they settle the termination and the Rs slope mode. See
-  [`CLAUDE.md`](CLAUDE.md).
+- **SN65HVD230 (VP230) breakouts** for phase 2, and both resistors are measured.
+  **R2 is 115 Ω**, so the terminator is fitted and stays — on this unterminated
+  bus it takes the load to ≈ 66 Ω, near CAN's canonical 60. **R1 is 9.5 kΩ**, so
+  the transceiver is already slope-limited, which is what 20 kbps wants. No
+  rework. See [`CLAUDE.md`](CLAUDE.md).
 - **ESP32-C3 SuperMini, 6 pcs** — the phase 2 board, since ESPHome takes 20 kbps
   on the C3's built-in controller but not on a plain ESP32. Untested on this bus
 
@@ -336,8 +338,8 @@ machine. Do 2a first with the write path left out of the configuration.
 
 - **Build a two-node bench bus first.** Two modified modules, 120 Ω at each end,
   nothing connected to the heat pump. Prove a frame goes out and arrives *before*
-  joining a live system as an active participant. This is the only place those
-  120 Ω resistors get used.
+  joining a live system as an active participant. The loose 120 Ω resistors are
+  not needed — each VP230 carries its own, so two boards make the 60 Ω itself.
 - **Take 0x680 as the node's bus identity.** It is the only address in the
   published table that never appeared in two hours of capture. 0x301 is *not*
   free — a mixer module writes to it

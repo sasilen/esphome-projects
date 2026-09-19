@@ -334,7 +334,9 @@ Two things to check on the boards now that they are here: the **Rs pin (8)** wan
 a connection to ground, directly or through 10–100 kΩ for slope limiting, which at
 20 kbps is a free EMC improvement; and the **120 Ω** is usually soldered rather
 than switchable, so decide before installing rather than after. On this breakout
-both questions come down to **R1 and R2**, which are still unread.
+both questions come down to **R1 and R2**, and both are now measured: R2 at 115 Ω
+stays fitted, and R1 at 9.5 kΩ puts the transceiver in slope-limited mode. See
+"The board chosen" below.
 
 ### The board chosen
 
@@ -349,11 +351,33 @@ and a soldered joint outlasts a screw clamp in a permanent install anyway. Fit
 the supplied header on the logic side only, so the SPI-side jumpers stay
 serviceable while the bus side stays fixed.
 
-**The boards are in the parts box and the two resistors are still unread.** This
-is the first check to do on them, before any phase 2 wiring is committed to. **R2 sits between CANH and CANL** and should be marked `121` — that
-is the 120 Ω terminator, and on this unterminated bus leaving it in place is
-probably right. **R1** is the Rs slope-control resistor; its value decides whether
-the transceiver runs in high-speed or slope-limited mode.
+**R2 is fitted and in circuit: 115 Ω measured across CANH and CANL**, board off
+the bus. That is 120 Ω inside tolerance, so this breakout carries a real
+terminator — unlike the MCP2515 module, whose own `121` resistor measured 49 kΩ
+because neither jumper was shorted. The marking says what a part is; only the
+meter says whether it reaches the bus.
+
+**Leave it fitted.** The pump's bus measured 150 Ω de-energised, i.e. no
+terminator of its own. Adding this one in parallel gives **≈ 66 Ω**, which lands
+almost exactly on CAN's canonical 60 Ω load — closer to correct than the bus is
+today, and nowhere near the ~40 Ω that three terminators would have made.
+
+**R1 measures 9.5 kΩ, so the board ships in slope-limited mode.** That is a 10 kΩ
+part inside tolerance, tying Rs (pin 8) to ground through a resistor rather than
+directly. Three readings were possible and this is the best of them: a short to
+ground would have meant high-speed mode, and an open Rs would have meant
+**standby**, where the driver is off and the symptom is zero frames —
+indistinguishable from a wrong bit rate.
+
+**Nothing to modify.** 10 kΩ is the fast end of the 10–100 kΩ slope-control range,
+and at 20 kbps the bit time is 50 µs, so a slowed edge costs a fraction of a
+percent of it. The EMC benefit this file wanted in a cabinet full of compressor
+contactors is already fitted. If interference ever does appear, R1 is the knob —
+47–100 kΩ slows the edges further.
+
+**This does not settle the TVS question.** Bus protection is a separate part; look
+for a protection device on the board rather than inferring it from these two
+resistors.
 
 Having spares also means the phase 2 pin lift on the MCP2515 stops being the
 nervous operation it would be with one.
@@ -3131,8 +3155,9 @@ the frame says — and everything dangerous in this section lives in 2b.
   nothing connected to the heat pump. Prove you can send a frame and that the
   other node receives it *before* joining a live system as an active participant.
   A wrong bit rate or a transceiver stuck in standby is harmless on the bench and
-  is not harmless on the heat pump's bus. This is the only place the 120 Ω
-  resistors get used.
+  is not harmless on the heat pump's bus. **The loose 120 Ω resistors are not
+  needed for it** — each VP230 carries its own, measured, so two boards already
+  make the 60 Ω a bench bus wants.
 - Give the node a bus identity. Transmitting means leaving listen-only, so the bit
   rate has to be confirmed first and the node must address the WPM the way an FEK
   or ISG does — **using an identifier the phase 1 capture showed to be free.**
@@ -3251,9 +3276,9 @@ and being wrong in the other direction would have cost a controller board.
 - ✅ 120 Ω resistor (not used at first — the bus measured 150 Ω, i.e. unterminated,
   so termination is an open question rather than a settled no)
 - ✅ **SN65HVD230 (VP230) breakout, several.** A cooked one therefore costs
-  nothing. **R1 and R2 are still unread**; they decide the termination and the Rs
-  slope mode, so read them off the board before the phase 2 wiring is finalised —
-  see "The board chosen" above for what each one settles.
+  nothing. **R2 measures 115 Ω and stays fitted**, so each board brings its own
+  terminator, and **R1 measures 9.5 kΩ**, i.e. the transceiver is already in
+  slope-limited mode. Neither needs rework — see "The board chosen" above.
 - ✅ **ESP32-C3 SuperMini, 6 pcs.** The board the TWAI route needs; see "And the
   C3 takes it too" below. **It has never been on this bus** — validation is not
   reception.
