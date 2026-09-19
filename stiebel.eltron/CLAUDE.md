@@ -347,9 +347,28 @@ design with a screw terminal added and its 120 Ω soldered just the same.
 
 **No screw terminal, and that is fine.** Solder the bus wires straight into the
 CANH and CANL holes; 0.75 mm² solid is about the diameter a 2.54 mm hole takes,
-and a soldered joint outlasts a screw clamp in a permanent install anyway. Fit
-the supplied header on the logic side only, so the SPI-side jumpers stay
-serviceable while the bus side stays fixed.
+and a soldered joint outlasts a screw clamp in a permanent install anyway.
+
+**Whether to fit the supplied header on the logic side depends on which route
+the board serves, and the two answers are opposite.**
+
+- **MCP2515 route: fit it.** The logic side there is six SPI jumpers to a D1
+  mini, and one of them lands on a lifted pin. Keeping those serviceable is
+  worth a connector.
+- **C3 route: solder everything.** The logic side is four short wires between two
+  boards that will live together for the rest of their working lives, so the
+  serviceability argument buys nothing — and every connector is a contact that
+  can oxidise or work loose. **An intermittent CTX or CRX reads as zero frames**,
+  which in this project is indistinguishable from a wrong bit rate, from bad
+  wiring and from a quiet bus. Four soldered joints remove eight contact faces.
+  Spares make the trade easy: six C3s and several transceivers are on the shelf,
+  so desoldering a two-euro board is not the case worth optimising for.
+
+Use stranded wire between the boards rather than solid — solid fatigues at the
+joint and breaks where it cannot be seen — and tin those ends freely. The
+"never tin" rule applies to X27's spring terminal, not to a soldered joint. Give
+the bus wires strain relief where they leave the board; a through-hole pad lifts
+under a surprisingly small tug.
 
 **R2 is fitted and in circuit: 115 Ω measured across CANH and CANL**, board off
 the bus. That is 120 Ω inside tolerance, so this breakout carries a real
@@ -2711,22 +2730,87 @@ sensors and two counters, because the question it answers is yes or no. Does the
 built-in TWAI controller read this bus, and does it produce the malformed frames
 the SPI read path produces?
 
+**It compiles, and that closes two open questions at once.** ESPHome accepts
+`mode: LISTENONLY` on `esp32_can`, so the C3 can join the live bus passively
+rather than needing the two-node bench bus before it may be connected at all;
+and it accepts 20 kbps on this board, which until now had only been shown for
+`esp32-c3-devkitm-1` in a validation-only file. The bench bus remains the
+prerequisite for transmitting, which is a different question.
+
+The build figures, for the node as it stands — counters only, no dispatch:
+
+| | ESP8266 sniffer | C3 receive test |
+|---|---|---|
+| Flash | 45.2 % | 48.9 % of 1.8 MB |
+| RAM | 40.0 % | **32.0 % of 321 kB** |
+| RAM free | ~48 kB | **218 kB** |
+
+**The percentages are the misleading half and the absolute figures are the
+point.** The one documented reason to leave the ESP8266 was the read set
+growing — "50–100 HA entities would get tight" — and the C3 has roughly four and
+a half times the free memory to grow into. The comparison is not like for like,
+because this build carries no sensors yet and the dispatch will cost both flash
+and RAM; the headroom is what says that cost is affordable.
+
 **Both configurations carry the same device name, `wpc-can`.** Home Assistant
 builds entity ids from it, so sharing it is what lets the C3 inherit this
 project's entity ids, history and long-term statistics rather than starting a
 parallel `wpc_c3_*` set beside them. It is safe because X27 takes one conductor
 per pole: the two nodes can never be on the bus at the same time.
 
-Two operational consequences follow, and neither is technical:
+Three operational consequences follow, and none is technical:
 
 - **Never power both boards on the network at once.** Two devices claiming
   `wpc-can.local` is an mDNS collision, and an OTA would reach whichever
-  answered first — including the wrong board.
+  answered first — including the wrong board. Worse, the answer can be stale:
+  with the D1 mini unplugged, the dashboard still showed `wpc-can` online and
+  `esphome logs` still resolved the old address for minutes afterwards.
+- **Keep only one `wpc-can` in the ESPHome host's `/config`.** This is the one
+  the bus argument above does not cover, because **ESPHome names the build
+  directory after the device, not after the file**: both configurations compile
+  into `.esphome/build/wpc-can/`, and they are different platforms. The
+  dashboard's online indicator and every OTA target collapse onto the same name
+  too. The rule that follows is sequential rather than parallel — when the C3
+  takes the bus, the D1 mini's configuration leaves `/config` and lives in this
+  repo as the rollback.
 - **Delete the old device from Home Assistant before adopting the new one.** The
   C3 has a different MAC, so HA registers a new device; with the old config
   entry still present it resolves the entity id clash by appending `_2` to
   every entity, which is the exact outcome the shared name exists to prevent.
   Statistics are keyed on the entity id and survive the gap between the two.
+
+### Bringing the C3 up, and the one thing that looks like a dead board
+
+**A factory-fresh SuperMini re-enumerates every two seconds until it has a valid
+image.** With native USB every reset drops the USB connection, so `dmesg` fills
+with `cdc_acm … ttyACM0` followed by `USB disconnect` on a two-second cycle, and
+esptool fails with `No such file or directory` because the node it wants
+disappears between enumeration and open. It reads like a broken board or a
+charge-only cable. It is neither — the flash is empty, so the ROM tries to boot,
+fails and resets.
+
+**Hold BOOT while plugging in.** Download mode never starts the application, the
+cycle stops, and the port stays put long enough to flash. `esptool flash_id`
+then confirms the part: `ESP32-C3 (QFN32) revision v0.4, Embedded Flash 4MB`,
+which is the same check that overturned the "4MBit" claim in the aidon build.
+There are five more of these boards, and every one of them will look dead the
+first time it is plugged in.
+
+Two smaller findings from the same session:
+
+- **The C3's log goes to USB with no configuration.** `hardware_uart:
+  USB_SERIAL_JTAG` was not needed; a plain serial terminal on `/dev/ttyACM0`
+  shows the setup phase, which is the part the API never carries.
+- **`level: INFO` hides the node's own IP address.** The address is printed in
+  the startup config dump, which is a CONFIG-level message, so at INFO it never
+  appears. Read it from the router or raise the level briefly — and prefer
+  either to the `.local` name, which is exactly what goes stale here.
+
+**The bench result:** boots, joins WiFi at −62 dBm, API handshake in 0.1 s, both
+counters publishing zero. The stall notice firing on schedule is what proves the
+CAN layer initialised: `esp32_can` accepted 20 kbps and `LISTENONLY` on real
+silicon and not only in the validator. What none of it proves is reception —
+every line of it would have looked identical on a node that never reads a frame.
 
 **The decoding itself moves rather than being copied.** The frame handler takes
 an identifier and seven bytes and knows nothing about which controller delivered

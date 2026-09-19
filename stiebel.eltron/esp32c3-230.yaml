@@ -86,21 +86,21 @@ captive_portal:
 
 
 # ------------------------------------------------------------------------ CAN
-# `mode: LISTENONLY` is deliberately left in rather than commented out, and it
-# is the first half of this step's test.
+# `mode: LISTENONLY` was the first half of this step's test, and **it compiles.**
 #
 # A node in normal mode acknowledges frames and emits error frames even when it
 # sends nothing of its own, which makes it an active participant on the heat
-# pump's bus. Whether esp32_can exposes the option is the open question in
-# wiring-phase2a.svg, and `esphome config` answers it before anything is
-# soldered:
+# pump's bus. Whether esp32_can exposes the option at all was open until this
+# file was built; it does, so this node can join the live bus passively exactly
+# as phase 1 did, and the two-node bench bus is not a prerequisite for the
+# receive test.
 #
-#   validates -> listen-only exists, and this node can go on the live bus
-#                passively, exactly as phase 1 did
-#   rejected  -> it does not. Do NOT flash this against the pump. Build the
-#                two-node bench bus first and prove transmission there, because
-#                a node that cannot be silent is transmitting from the moment
-#                it is connected.
+# The bench bus is still the prerequisite for *transmitting* — see CLAUDE.md,
+# "2b — writes". Nothing below sends anything.
+#
+# One honest limit: compiling proves the option exists, not that the controller
+# is silent on the wire. The margin is narrow, because listen-only is a TWAI
+# hardware mode rather than a software convention, but it is not zero.
 #
 # can_id is the transmit identifier. Nothing is transmitted in this step, but
 # the schema requires it — and 0x680 is already the vetted choice: it never

@@ -93,8 +93,10 @@ Stiebel WPC 07
   the transceiver is already slope-limited, which is what 20 kbps wants. No
   rework. See [`CLAUDE.md`](CLAUDE.md).
 - **ESP32-C3 SuperMini, 6 pcs** — the phase 2 board, since ESPHome takes 20 kbps
-  on the C3's built-in controller but not on a plain ESP32. Untested on this bus;
-  [`esp32c3-230.yaml`](esp32c3-230.yaml) is the config that settles it
+  on the C3's built-in controller but not on a plain ESP32.
+  [`esp32c3-230.yaml`](esp32c3-230.yaml) compiles, listen-only included, at
+  32 % RAM and 48.9 % flash — but it has not yet been on this bus, which is the
+  one thing it exists to settle
 
 **Still needed — nothing, for either phase**
 
