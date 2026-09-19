@@ -132,10 +132,9 @@ jossa virhe tuhoaa antureita sen sijaan että jättäisi väylän hiljaiseksi.
 **Mutta tässä verkossa syöttö on jo vedetty**, koska sitä on ajettu myös
 Raspberryn GPIO:sta kolmella johtimella. Se ratkaisee kolme asiaa kerralla:
 
-- **Verkko on 3,3 voltin verkko.** Raspberryn 1-Wire on 3,3 V, joten syöttö ja
-  ylösveto ovat sillä tasolla. C3:n 3V3 on suoraan oikea, eikä datalinjassa voi
-  olla 5 V:a joka tappaisi GPIO:n — riski joka 5 voltin 1-Wire-verkossa olisi
-  todellinen.
+- **Kaksi jännitetasoa, ei yhtä.** Tässä luki hetken että verkko on 3,3 voltin
+  verkko koska Raspberry ajaa sitä. Se oli väärin: **syöttö on 5 V ja ylösveto
+  3,3 V.** Ks. nastataulukko alla.
 - **Tähti toimii tässä talossa.** Jos Raspberry luki verkkoa, topologia ei ole
   ollut este. Kysymys *miksi verkko ei ole käytössä* siirtyy siihen että isäntä
   poistui, ei siihen että verkko petti.
@@ -163,6 +162,50 @@ Mitä valokuvasta jää voimaan:
 - Verkko on **3,3 voltin verkko**, koska Raspberry ajaa sitä
 
 Mikä johdin on mikä, on kokonaan avoin.
+
+### Riman nastat, luettuina
+
+Kuvista ja käyttäjän vahvistuksesta yhdessä:
+
+| Nasta | Signaali | Johdin |
+|---|---|---|
+| 1 | 3,3 V | **vain vastus**, ei johdinta |
+| 2 | **5 V** | punainen |
+| 6 | GND | musta tai valkoinen |
+| 7 | GPIO4, data | **keltainen** |
+| 9 | GND | toinen niistä |
+
+**Syöttö on 5 V ja ylösveto 3,3 V**, eikä se ole epäjohdonmukaisuus vaan hyvä
+suunnittelu. Anturit saavat täyden jännitteen pitkälle vedolle, mutta koska
+DS18B20:n datanasta on avokollektori, **ylätason määrää yksin ylösveto** — ja
+3,3 V:iin vedettynä datalinja on turvallinen 3,3 voltin mikro-ohjaimelle.
+Raspberryn GPIO4 on selvinnyt vuosia juuri siksi.
+
+Se selittää myös nastan 1 paljaan juotospisteen: siinä on vastuksen toinen pää
+eikä johdinta, koska 3,3 V:a ei viedä verkkoon lainkaan.
+
+**Neljäs johdin on toinen maa.** Kaksi maata ja yksi syöttö ja yksi data — ei
+mitään tuntematonta. Kumpi maadoitusjohdin on kummassa nastassa on
+yhdentekevää.
+
+### C3 toistaa saman
+
+| C3 | Johdin |
+|---|---|
+| **5V** | punainen |
+| **GND** | musta ja valkoinen |
+| **GPIO4** | keltainen |
+| **4,7 kΩ GPIO4:stä 3V3:een** | ei verkkoon |
+
+SuperMinin 5V-nasta on USB:n VBUS:issa, joten se antaa saman viisi volttia kuin
+Raspberry. **Ylösveto menee 3V3:een eikä viiteen** — se on tämän kytkennän
+ainoa kohta jossa virhe tuhoaa GPIO:n, ja se on sama virhe jonka Raspberry
+välttää.
+
+Vaihtoehto olisi syöttää verkko 3,3 voltista, jolloin kaikki olisi yhdellä
+tasolla. Sitä ei tehdä: **5 V on se mikä on todistetusti toiminut tässä
+talossa**, ja pitkällä vedolla sen jännitehäviövara on merkitsevä. Yhden tason
+siisteys ei ole sen arvoinen.
 
 ### Päättelyketju RJ45:een asti
 

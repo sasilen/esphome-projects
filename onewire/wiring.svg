@@ -15,7 +15,7 @@
   <text x="140" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">ESP32-C3</text>
   <text x="140" y="192" font-size="10" fill="#5A6772" text-anchor="middle">SuperMini</text>
   <g font-size="11" fill="#16212B">
-    <text x="152" y="214">3V3</text>
+    <text x="158" y="214">5V</text>
     <text x="140" y="284">GPIO4</text>
     <text x="152" y="354">GND</text>
   </g>
@@ -44,7 +44,7 @@
   <g stroke="#16212B" stroke-width="1.5" fill="none"><line x1="230" y1="350" x2="420" y2="350"/></g>
 
   <g font-size="9.5" fill="#5A6772">
-    <text x="360" y="204" text-anchor="middle">3,3 V</text>
+    <text x="360" y="204" text-anchor="middle">5 V</text>
     <text x="360" y="274" text-anchor="middle">data</text>
     <text x="360" y="344" text-anchor="middle">maa</text>
   </g>
@@ -69,8 +69,8 @@
   <text x="696" y="304" font-size="9.5" fill="#5A6772">haara</text>
   <text x="696" y="364" font-size="9.5" fill="#5A6772">haara</text>
 
-  <text x="50" y="428" font-size="11.5" fill="#16212B"><tspan font-weight="700">Vastus kuuluu isännän päähän</tspan>, datan ja 3,3 voltin väliin &#8212; samoin kuin vanhassa</text>
-  <text x="50" y="446" font-size="11.5" fill="#16212B">Raspberry-toteutuksessa, ks. <tspan font-style="italic">rpi-pullup.jpg</tspan>. Verkossa itsessään ei ole ylösvetoa.</text>
+  <text x="50" y="428" font-size="11.5" fill="#16212B"><tspan font-weight="700">Vastus kuuluu isännän päähän, datan ja 3,3 voltin väliin</tspan> &#8212; ei viiteen, vaikka</text>
+  <text x="50" y="446" font-size="11.5" fill="#16212B">syöttö on 5 V. Ylätason määrää ylösveto, joten datalinja pysyy 3,3 voltissa.</text>
 
   <line x1="20" y1="468" x2="740" y2="468" stroke="#A8B3BC"/>
 
