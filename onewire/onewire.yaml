@@ -23,8 +23,15 @@ esp32:
   framework:
     type: esp-idf
 
+# **CONFIG eikä INFO.** Väylän luettelo löydetyistä osoitteista tulostuu
+# CONFIG-tason käynnistysvedoksessa, ja INFO vaientaisi juuri sen. Se luettelo
+# on ainoa tapa nähdä laitteet joita **ei** ole tässä konfiguraatiossa — kartta
+# on vuodelta 2020 ja verkko on kasvanut kerran jo sen jälkeen.
+#
+# CONFIG näyttää vedoksen mutta ei DEBUGin jatkuvaa jaarittelua, joten tämän voi
+# jättää pysyvästi päälle. Sama ansa piilotti stiebelin solmun IP-osoitteen.
 logger:
-  level: INFO
+  level: CONFIG
 
 api:
   encryption:

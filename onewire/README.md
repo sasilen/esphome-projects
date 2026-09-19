@@ -171,6 +171,12 @@ luetteloi sen itse.
 3. **Kaapeli ja pistoke** — neljä johdinta, vastus C3:n päähän
 4. **Kytke holkkiin** ja katso täyttyvätkö anturit
 
+**Vertaa luetteloa näihin kahteenkymmeneen.** ESPHome luetteloi käynnistyksessä
+kaikki väylältä löytyvät osoitteet, ei vain niitä joille on määritelty anturi.
+**Mikä tahansa ylimääräinen on lisätty vuoden 2020 kartan jälkeen** — ja
+esimerkiksi saunaa ei kummassakaan vanhassa lähteessä ole, vaikka sellainen
+voisi hyvin olla olemassa. Siksi lokitaso on `CONFIG` eikä `INFO`.
+
 **Osoitteet ovat jo konfiguraatiossa.** Ne on laskettu vanhan OWFS-kartan
 osoitteista eikä luettu väylältä, joten
 [`discovery.yaml`](discovery.yaml) on nyt varalla oleva työkalu eikä
