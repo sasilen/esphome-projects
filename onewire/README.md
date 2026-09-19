@@ -141,55 +141,45 @@ yleismittarilla ja yhteensä viisi minuuttia:
 **Maa ensin, ja se on tärkeysjärjestys eikä tapa.** DQ:n ja VDD:n sekoittaminen
 on toivuttavaa; maan ja VDD:n sekoittaminen ei ole.
 
-## Kartoitus kahdessa vaiheessa
-
-Verkko päättyy RJ45:een, ja talossa on ollut **DS9490-USB-sovitin**. Se muuttaa
-järjestyksen, koska sovitin on turvallisempi kartoitustyökalu kuin ESP.
+## Kartoitusajo
 
 ![RJ45-nastajärjestys](rj45.svg)
 
-### Vaihe 1 — kaksi johdinta, DS9490
+Verkko päättyy RJ45:een, ja nastakartta on luettu — arvattavaa ei ole. Aiemmin
+tässä oli kaksivaiheinen menettely, jossa DS9490-sovittimella luetteloitiin
+väylä **kahdella johtimella** ennen kuin kolmatta kytkettiin. Se oli
+turvallisuusrakennelma epävarmuutta vastaan: sovitin ajaa väylää loiskäytöllä
+eikä anna syöttöä, joten VDD:tä ei tarvinnut arvata. **Se epävarmuus on
+poissa**, joten kierros on tarpeeton.
 
-Sovitin ajaa väylää **loiskäytöllä**, eli se tarvitsee vain datan ja paluun. Se
-ei anna syöttöä, ja juuri siksi se on turvallinen: **VDD:tä ei tarvitse arvata
-lainkaan**, ja väärin arvattu VDD on ainoa virhe tässä projektissa joka tuhoaa
-antureita sen sijaan että jättäisi väylän hiljaiseksi.
+`discovery.yaml` jää voimaan mutta eri syystä kuin alun perin. Sitä ei tarvita
+selvittämään mitä väylällä on — se tiedetään, 25 laitetta nimineen. Se
+tarvitaan tuottamaan **osoitteet ESPHomen omassa muodossa**: käsillä on
+OWFS-muoto `28.FF265A750400`, ja ESPHome haluaa täyden 64-bittisen
+ROM-osoitteen CRC:n kanssa. Sitä ei voi laskea OWFS-muodosta, mutta ESPHome
+luetteloi sen itse.
 
-Data ja paluu ovat **RJ45:n nastat 4 ja 5** eli sininen pari. Se ei ole sattumaa:
-DS9490R:n RJ11-liitin kantaa 1-Wiren nastoissa 3 ja 4, ja RJ11-pistoke istuu
-RJ45-rasian keskelle niin että sen nastat osuvat rasian nastoihin 2–7.
+### Kolme askelta
 
-Linuxissa väylä luetteloituu ytimen omalla ajurilla:
+1. **Kaapeli ja pistoke** — neljä johdinta, vastus C3:n päähän
+2. **Flashaa [`discovery.yaml`](discovery.yaml)** — se luetteloi löytämänsä
+   osoitteet käynnistysvedoksessa
+3. **Lopullinen konfiguraatio** — osoitteet ja nimet yhdistettynä, osoitteet
+   ESPHomelta ja nimet [CLAUDE.md](CLAUDE.md):n taulukosta
 
-```sh
-sudo modprobe ds2490 wire
-ls /sys/bus/w1/devices/
-```
+**Käynnistä uudelleen pari kertaa ja vertaa luetteloa.** Yksi onnistunut
+luettelo ei todista mitään: tähtitopologian vika on nimenomaan se että osa
+antureista löytyy ja osa ei, ja löytyneet vaihtuvat ajojen välillä. **Sama
+luettelo kolmesti tarkoittaa että topologia ei ole tässä verkossa ongelma** —
+ja koska verkko on toiminut Raspberryllä, odotus on että se ei ole.
 
-Jokainen `28-`-alkuinen hakemisto on yksi DS18B20. **Tämä on koko vaiheen 1
-tulos:** montako anturia verkossa on ja mitkä ovat niiden osoitteet.
+**Älä laske lokitasoa INFO:on.** Osoiteluettelo tulostuu CONFIG-tason
+vedoksessa, ja INFO vaientaa juuri sen rivin jota ollaan hakemassa — tuloste
+näyttää silloin siltä ettei antureita löytynyt lainkaan. Sama mekanismi piilotti
+solmun IP-osoitteen stiebelin käyttöönotossa ja maksoi siellä yhden kierroksen.
 
-### Vaihe 2 — kolme johdinta, ESP
-
-Vasta kun data ja paluu on todettu oikeiksi, etsitään syöttöjohdin ja
-rakennetaan pysyvä solmu. Kytkentä on [`wiring.svg`](wiring.svg):ssä ja
-konfiguraatio [`discovery.yaml`](discovery.yaml):ssa.
-
-**VDD ei ole vakiintunut mihinkään nastaan.** Data ja paluu ovat, mutta
-syöttöjohdin voi olla 1, 2 tai 6 sen mukaan kuka kaapelin veti — se mitataan,
-ei pääteltä kaaviosta.
-
-Kummassakin vaiheessa sama sääntö: **käynnistä uudelleen pari kertaa ja vertaa
-luetteloa.** Yksi onnistunut luettelo ei todista mitään, koska tähtitopologian
-vika on nimenomaan se että löytyneet anturit vaihtuvat ajojen välillä. Sama
-luettelo kolmesti on se mikä todistaa.
-
-**ESPHomen lokitasosta:** älä laske sitä INFO:on. Osoiteluettelo tulostuu
-CONFIG-tason vedoksessa, ja INFO vaientaa juuri sen rivin jota ollaan hakemassa.
-Sama mekanismi piilotti solmun IP-osoitteen stiebelin käyttöönotossa.
-
-**Yksi isäntä kerrallaan.** Jos DS9490 on kiinni, ESP ei saa olla — eikä
-toisinpäin. Kaksi isäntää samalla väylällä rikkoo ajoituksen molemmilta.
+**Yksi isäntä kerrallaan.** Jos Raspberry on kiinni, C3 ei saa olla — eikä
+toisinpäin. Jatkoholkki pakottaa tämän fyysisesti.
 
 ## Jos mitään ei löydy
 
