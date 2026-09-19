@@ -322,7 +322,8 @@ eri tavalla ilman että repossa muuttuu mitään** — sama ilmiö kuin ESPHome-
 Nyt `ref: bec7fc96…` ja `refresh: never`. Kiinnitys on **commitiin eikä tagiin,
 koska upstreamissa ei ole yhtään tagia.** ESPHome tukee sitä: `ref` menee
 sellaisenaan `git fetch origin <ref>` -komennolle, jonka perään tulee
-`reset --hard FETCH_HEAD`.
+`reset --hard FETCH_HEAD`. **Todennettu käännöksellä** — kiinnityksen jälkeinen
+ensimmäinen käännös joutui hakemaan juuri sen commitin ja meni läpi.
 
 Hinta on että päivitys pitää tehdä tietoisesti: vaihda SHA ja käännä uudelleen.
 Se on tarkoituskin — tämä on repon ainoa tuotannossa oleva mittausjärjestelmä.
