@@ -2796,6 +2796,16 @@ which is the same check that overturned the "4MBit" claim in the aidon build.
 There are five more of these boards, and every one of them will look dead the
 first time it is plugged in.
 
+**The same symptom has a second cause, and it appears after soldering.** GPIO2 is
+GPIO3's immediate neighbour on the SuperMini, and it is a strapping pin. An
+accidental bridge between them is not read as a wiring fault but as a boot
+fault, because strapping pins are sampled at reset: the board comes up in the
+wrong mode or not at all, and `dmesg` shows the same two-second re-enumeration
+loop an empty flash produces. **If a board that worked on the bench stops
+booting after the iron has been near it, check that gap before suspecting the
+firmware or the cable.** A bridge between two ordinary data pins would only cost
+frames, which is a much easier fault to reason about.
+
 Two smaller findings from the same session:
 
 - **The C3's log goes to USB with no configuration.** `hardware_uart:

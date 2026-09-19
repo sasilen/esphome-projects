@@ -113,7 +113,12 @@ canbus:
     # two sit on the same edge as 3V3 and GND while GPIO5 is on the opposite
     # one — all four wires then leave the board from one side. Neither is a
     # strapping pin; GPIO2, GPIO8 and GPIO9 are, and GPIO8 also drives the LED.
-    # Watch the soldering: GPIO2 is the immediate neighbour of GPIO3.
+    #
+    # GPIO2 is GPIO3's immediate neighbour, which matters for how an accidental
+    # solder bridge between them would present. Strapping pins are sampled at
+    # reset, so the symptom is a board that will not boot rather than a bus that
+    # stays silent — the same two-second re-enumeration loop an empty flash
+    # produces. Check that gap before suspecting firmware.
     tx_pin: GPIO4
     rx_pin: GPIO3
     bit_rate: ${can_bit_rate}

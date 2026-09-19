@@ -118,8 +118,8 @@
     <text x="400" y="872"><tspan font-weight="700">0x680</tspan> never appeared in two</text>
     <text x="400" y="888">hours of capture. 0x301 did.</text>
   </g>
-  <text x="50" y="924" font-size="11.5" fill="#16212B"><tspan font-weight="700">GPIO4 and GPIO3 share an edge with 3V3 and GND</tspan>, so all four wires leave one side of the</text>
-  <text x="50" y="942" font-size="11.5" fill="#16212B">board. Neither is strapping — GPIO2, 8 and 9 are, and GPIO2 is GPIO3's neighbour. Mind the iron.</text>
+  <text x="50" y="924" font-size="11.5" fill="#16212B"><tspan font-weight="700">GPIO4 and GPIO3 share an edge with 3V3 and GND</tspan>, so all four wires leave one side. Neither</text>
+  <text x="50" y="942" font-size="11.5" fill="#16212B">is strapping; GPIO2 is, and a bridge from GPIO3 to it reads as a dead board, not a silent bus.</text>
 
   <rect x="50" y="966" width="660" height="114" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
   <rect x="50" y="966" width="6" height="114" fill="#A3301F"/>
