@@ -298,8 +298,9 @@ configuration changes that go with it.
 
 **It does not exist.** The SN65HVD230 was carried in this file as an already-owned
 part from the first commit onward, but it is in no order history and it is not in
-the parts box. The claim was wrong. **Phase 2 therefore needs a transceiver
-bought.**
+the parts box. The claim was wrong. **Phase 2 therefore needed a transceiver
+bought, and the bought ones are now in the box** — the board is the one described
+under "The board chosen" below.
 
 **If one is ever found, the question would be: breakout board or bare SO8 chip?**
 A module (the common blue VP230 board with VCC / GND / CANH / CANL / RXD / TXD)
@@ -329,10 +330,11 @@ CAN Pal's selling points have lost their value here:
   terminated already. It is not — so a soldered 120 Ω on the cheaper board is no
   longer a drawback, and might even be wanted as the bus's only terminator.
 
-Two things to check on a VP230 when it arrives: the **Rs pin (8)** wants a
-connection to ground, directly or through 10–100 kΩ for slope limiting, which at
+Two things to check on the boards now that they are here: the **Rs pin (8)** wants
+a connection to ground, directly or through 10–100 kΩ for slope limiting, which at
 20 kbps is a free EMC improvement; and the **120 Ω** is usually soldered rather
-than switchable, so decide before installing rather than after.
+than switchable, so decide before installing rather than after. On this breakout
+both questions come down to **R1 and R2**, which are still unread.
 
 ### The board chosen
 
@@ -347,13 +349,13 @@ and a soldered joint outlasts a screw clamp in a permanent install anyway. Fit
 the supplied header on the logic side only, so the SPI-side jumpers stay
 serviceable while the bus side stays fixed.
 
-On arrival, read the two resistors. **R2 sits between CANH and CANL** and should
-be marked `121` — that is the 120 Ω terminator, and on this unterminated bus
-leaving it in place is probably right. **R1** is the Rs slope-control resistor;
-its value decides whether the transceiver runs in high-speed or slope-limited
-mode.
+**The boards are in the parts box and the two resistors are still unread.** This
+is the first check to do on them, before any phase 2 wiring is committed to. **R2 sits between CANH and CANL** and should be marked `121` — that
+is the 120 Ω terminator, and on this unterminated bus leaving it in place is
+probably right. **R1** is the Rs slope-control resistor; its value decides whether
+the transceiver runs in high-speed or slope-limited mode.
 
-Three boards also means the phase 2 pin lift on the MCP2515 stops being the
+Having spares also means the phase 2 pin lift on the MCP2515 stops being the
 nervous operation it would be with one.
 
 **Isolation was considered and is not needed here.** The argument for an
@@ -496,6 +498,14 @@ an FEK. Phase 2 takes 0x680.
 
 X27 is a spring terminal. It accepts **solid conductor**, stripped 8–10 mm and
 inserted bare, or stranded wire with a bootlace ferrule crimped on.
+
+**One conductor per pole, so X27 carries one node.** A second node — a C3 tried
+against the running MCP2515 sniffer, say — is therefore a *swap* at the terminal
+or a *splice in the drop*, never a second pair pushed into the same holes. CAN is
+multi-drop and a short stub at 20 kbps is electrically fine, so the splice is
+available; note only that the VP230's soldered 120 Ω would then add termination
+this bus does not currently have, which is a change to a live system rather than
+a passive extra listener.
 
 **Never tin the end.** Solder cold-flows under the constant pressure of a clamp:
 the contact force bleeds away over months, resistance climbs, and the result is
@@ -3104,7 +3114,18 @@ is left:
 - **Re-capture once the watchdog window is two minutes**, to confirm the stall
   rate against a capture that is not two-thirds dead.
 
-## Phase 2 — write
+## Phase 2 — transmit
+
+Leaving listen-only unlocks **two capabilities at once**, and they are not the
+same risk. Splitting them is what turns phase 2 from one leap into two steps:
+
+- **2a — ask.** Send read requests and get answers on demand.
+- **2b — set.** Send write commands that change what the machine does.
+
+Same transceiver, same bus identity, same bench test. The only difference is what
+the frame says — and everything dangerous in this section lives in 2b.
+
+### Before either one
 
 - **Build a two-node bench bus first.** Two modified modules, 120 Ω at each end,
   nothing connected to the heat pump. Prove you can send a frame and that the
@@ -3112,26 +3133,104 @@ is left:
   A wrong bit rate or a transceiver stuck in standby is harmless on the bench and
   is not harmless on the heat pump's bus. This is the only place the 120 Ω
   resistors get used.
-- Identify the writable elements: heating curve slope, room setpoint
-  (comfort/ECO), DHW setpoint, operating mode.
+- Give the node a bus identity. Transmitting means leaving listen-only, so the bit
+  rate has to be confirmed first and the node must address the WPM the way an FEK
+  or ISG does — **using an identifier the phase 1 capture showed to be free.**
 - **Do not plan anything around floor circuit flow.** It is not on the bus as
   anything but the machine's own on/off, and the pump's speed is a dial — see
   "Which makes one phase 2 limit hard rather than open". Three levers, and this
   is not one of them.
+
+### 2a — requested reads
+
+**Passive capture only ever sees what the bus happens to carry.** The manager
+polls some elements on a cycle, but the DHW setpoint and the flow setpoint were
+each asked for exactly once in two hours — so those entities stay empty until the
+bus asks again. A node that can ask fills them on demand, and reaches the whole
+element list rather than the subset that happens to be in motion.
+
+**This is the ordinary traffic of this bus, not an intrusion.** Read requests are
+44 % of everything captured. The panel walk fired **771 of them across 85 distinct
+elements in one session** — which is also the standing proof that asking wears
+nothing: a read changes no stored value, so the WPM has nothing to persist. If
+requests wore the controller out, the machine's own panel would have destroyed it
+years ago.
+
+Two costs, neither of them wear:
+
+- **Bus time.** At 20 kbps a frame is roughly 6 ms and a request plus its answer
+  is two frames. Polling twenty elements every 30 s adds about 40 % on top of the
+  200 frames a minute already there. So **ask only for what the bus does not
+  already carry** — anything on the manager's own cycle is free by listening.
+- **Participation.** A transmitting node acknowledges frames and joins
+  arbitration. That is a protocol risk, and it is why 0x680 has to be genuinely
+  free rather than merely unseen.
+
+**Do 2a first, with the write path left out of the configuration entirely.** It
+delivers the panel's numbers on demand without changing anything in the machine,
+and it exercises the identity, the bit rate and the transceiver in the one
+direction that cannot damage the heat pump.
+
+### 2b — writes
+
+- Identify the writable elements: heating curve slope, room setpoint
+  (comfort/ECO), DHW setpoint, operating mode.
 - **The curve lever is blocked on work outside this project.** Writing it
   achieves nothing until the manifold's thermal actuators come off and the loops
   are balanced. DHW setpoint has no such prerequisite, which is the second
   reason it goes first.
-- Give the node a bus identity. Writing means leaving listen-only, so the bit rate
-  has to be confirmed first and the node must address the WPM the way an FEK or
-  ISG does — **using an identifier the phase 1 capture showed to be free.**
 - **Rate-limit the writes.** If the WPM persists these parameters, writing every
   few seconds is an EEPROM wear problem. Write on change only, with a deadband and
-  a minimum interval.
+  a minimum interval — see "Why the writes have to be rate-limited" below for the
+  arithmetic and for what the damage would actually be.
 - **Make the offset self-clearing.** If HA dies while the curve is raised, the
   house overheats and the surplus optimisation turns into a cost. The write path
   needs the same watchdog thinking as the Shelly's Auto-ON timer: the baseline has
   to come back without HA being alive to restore it.
+
+### Why the writes have to be rate-limited
+
+The parameters this project wants to move survive a power cut, so the WPM holds
+them in non-volatile memory. That memory has a **finite number of write cycles**,
+on the order of 100 000 per cell for EEPROM. Reading costs nothing; writing is the
+consumable.
+
+**These knobs are sized for a human.** Someone sets the DHW temperature from the
+panel maybe three times a year. Driving them from solar surplus points machine
+control at a control built for that duty cycle, and surplus moves with the clouds
+— so a controller that writes whenever production changes spends the endurance
+budget in weeks:
+
+| Write rate | Writes/day | 100 000 reached in |
+|---|---|---|
+| every 10 s | 8 640 | **12 days** |
+| every minute | 1 440 | 10 weeks |
+| every 15 min | 96 | 3 years |
+| on change only, ~20/day | 20 | **14 years** |
+
+**The damage lands in the heat pump, not in the node.** A worn cell costs the WPM
+the ability to store its own settings. That is a board this project does not open,
+outside warranty, and nothing on our side can be reflashed to undo it. The node is
+the cheap part of this system and the controller is not.
+
+Hence three rules on the write path:
+
+1. **On change only.** No periodic refresh, no writing a value that already equals
+   the last one written.
+2. **A deadband.** Changes below roughly half a degree are not worth a write;
+   without this, measurement noise alone generates traffic.
+3. **A minimum interval**, 15–30 minutes, even when conditions move faster. The
+   building mass is a slow store and does not notice the difference.
+
+**The shape that makes all three easy is steps, not a continuous track.** DHW at
+45 °C normally and 55 °C on surplus is a couple of writes a day rather than
+thousands, and the memory stops being a design constraint at all.
+
+**This is a precaution, not a measurement.** Whether the WPM commits every write
+immediately or buffers them is unknown — it cannot be probed without wearing the
+very part being probed, and Stiebel publishes no endurance figure. So the rule is
+built to make the answer irrelevant: it costs a quarter hour of control latency,
+and being wrong in the other direction would have cost a controller board.
 
 ---
 
@@ -3144,22 +3243,26 @@ is left:
 - ✅ Dupont wires
 - ✅ 120 Ω resistor (not used at first — the bus measured 150 Ω, i.e. unterminated,
   so termination is an open question rather than a settled no)
+- ✅ **SN65HVD230 (VP230) breakout, several.** A cooked one therefore costs
+  nothing. **R1 and R2 are still unread**; they decide the termination and the Rs
+  slope mode, so read them off the board before the phase 2 wiring is finalised —
+  see "The board chosen" above for what each one settles.
+- ✅ **ESP32-C3 SuperMini, 6 pcs.** The board the TWAI route needs; see "And the
+  C3 takes it too" below. **It has never been on this bus** — validation is not
+  reception.
+- ✅ **DS18B20, 25 pcs, waterproof probes on 1 m leads.** For the manifold return
+  measurement, not for the CAN work.
 
 ## Still Needed
 
-Nothing for phase 1, and phase 2's one purchase is now ordered.
+**Nothing.** Phase 2's one purchase is in the box, and phase 1 never needed
+anything.
 
-- **A 3.3 V CAN transceiver breakout** — **on order, waiting to arrive.** VP230
-  boards, several of them, so a cooked one costs nothing. The SN65HVD230 this
-  file used to claim was in stock did not exist; this replaces it. **Read R1
-  and R2 on arrival** — see "The board chosen" above for what each decides.
 - PESD1CAN or NUP2105L (SOT-23) — only if the chosen transceiver board carries no
-  bus protection
-- LM2596 or similar buck, if power is taken from the heat pump. Note that
-  hirvirata also wants one; the stock count is not recorded anywhere.
-
-Nothing is needed for phase 1 at all. Do **not** order until the bit rate is
-measured and the SN65HVD230 has been looked at.
+  bus protection. **Reading the arrived board settles this**, so it is a check
+  rather than an order.
+- LM2596 or similar buck, if power is taken from the heat pump. Five are in stock,
+  shared with hirvirata, which the repo README confirms is enough for both.
 
 ## Optional
 

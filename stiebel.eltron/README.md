@@ -8,12 +8,17 @@ onto the bus and decoding it. Part two covers writing.
 Read the heat pump's operating data over its CAN bus and — in phase 2 — write the
 parameters the WPM exposes, straight from Home Assistant via ESPHome. No MQTT.
 
-**Status: phase 1 works, phase 2 waits for one part.** The sniffer
+**The whole thing on one page:** [`what-and-why.svg`](what-and-why.svg) — why the
+existing on/off lever is the wrong shape, what each phase does, the one decision
+still open, and the four constraints that shape the rest.
+
+**Status: phase 1 works, and phase 2 is no longer waiting for parts.** The sniffer
 [`stiebel.eltron.yaml`](stiebel.eltron.yaml) is flashed and sitting on the bus
 at X27. The bit rate is confirmed at 20 kbps, frames are captured and decoded in
 the log, and the addresses in use are known. What is left in phase 1 is naming
 the elements against the published table and turning them into Home Assistant
-sensors. Writing needs a transceiver that is chosen but not yet in hand.
+sensors. The transceiver writing needs is in the parts box, so phase 2 is blocked
+by work rather than by hardware.
 
 **Phase 1 needs no transmitter after all.** The bus polls itself at over 200
 frames a minute with no gap longer than five seconds, so a listen-only node sees
@@ -82,14 +87,16 @@ Stiebel WPC 07
 - 120 Ω resistors — not used at first. The bus measured 150 Ω de-energised, so it
   carries **no terminator**; start without one and reconsider only if traffic is
   unreliable
+- **SN65HVD230 (VP230) breakouts** for phase 2. Read **R1 and R2** off the board
+  before wiring anything: they settle the termination and the Rs slope mode. See
+  [`CLAUDE.md`](CLAUDE.md).
+- **ESP32-C3 SuperMini, 6 pcs** — the phase 2 board, since ESPHome takes 20 kbps
+  on the C3's built-in controller but not on a plain ESP32. Untested on this bus
 
-**Still needed — nothing for phase 1**
+**Still needed — nothing, for either phase**
 
-- **An SN65HVD230 (VP230) breakout** for phase 2, €2–4, chosen and not yet in
-  hand. Not the Adafruit CAN Pal at €20: its 5 V generator solves a problem a
-  native 3.3 V transceiver does not have, and its switchable termination stopped
-  mattering once the bus measured unterminated. See [`CLAUDE.md`](CLAUDE.md).
-- PESD1CAN / NUP2105L TVS — only if the transceiver board carries no protection
+- PESD1CAN / NUP2105L TVS — only if the transceiver board carries no protection,
+  which reading the arrived board settles
 - LM2596 buck, if power is taken from the heat pump — five are in stock
 
 The RS-485 modules in stock are **not** a substitute; see [`CLAUDE.md`](CLAUDE.md)
@@ -142,7 +149,7 @@ level shifter and no second rail is needed anywhere.
 
 For phase 1 this costs nothing at all — the under-volted TJA1050 receives
 perfectly well, and a listening node never has to drive a dominant bit. The
-rework below belongs to phase 2, when the SN65HVD230 arrives:
+rework below belongs to phase 2, and the SN65HVD230 it needs is now in hand:
 
 - Module VCC → 3.3 V (MCP2515 is in spec at 2.7–5.5 V)
 - The on-board TJA1050 ends up under-volted and unused — its CANH/CANL terminals
@@ -321,23 +328,31 @@ to do:
   — see [`CLAUDE.md`](CLAUDE.md)
 - Re-capture now that the watchdog window is two minutes rather than thirty
 
-**Phase 2 — write**
+**Phase 2 — transmit, in two steps**
+
+Leaving listen-only unlocks both asking and setting. **Take them separately: 2a
+asks, 2b sets** — same hardware and same bus identity, but only 2b can harm the
+machine. Do 2a first with the write path left out of the configuration.
 
 - **Build a two-node bench bus first.** Two modified modules, 120 Ω at each end,
   nothing connected to the heat pump. Prove a frame goes out and arrives *before*
   joining a live system as an active participant. This is the only place those
   120 Ω resistors get used.
-- Identify the writable elements: heating curve slope, room setpoint
-  (comfort/ECO), DHW setpoint, operating mode
 - **Take 0x680 as the node's bus identity.** It is the only address in the
   published table that never appeared in two hours of capture. 0x301 is *not*
   free — a mixer module writes to it
+- **2a: ask for what the bus does not volunteer.** Values like the DHW and flow
+  setpoints were each requested once in two hours, so they stay empty until
+  something asks. Requesting costs bus time, not wear — see [`CLAUDE.md`](CLAUDE.md)
+- **2b: identify the writable elements** — heating curve slope, room setpoint
+  (comfort/ECO), DHW setpoint, operating mode
 - **Copy the machine's own write-then-verify pattern.** The manager writes four
   elements to 0x700 on a fixed cycle and reads each value back; those frames are
   on record in [`CLAUDE.md`](CLAUDE.md), so phase 2 imitates rather than invents
-- **Rate-limit the writes.** If the WPM persists these parameters, writing every
-  few seconds is an EEPROM wear problem. Write on change only, with a deadband and
-  a minimum interval.
+- **Rate-limit the writes.** On change only, with a deadband and a 15–30 minute
+  minimum interval — and drive the setpoints as two or three steps rather than
+  tracking surplus continuously. The wear arithmetic, and whose hardware pays for
+  getting it wrong, are in [`CLAUDE.md`](CLAUDE.md)
 - **Make the offset self-clearing.** If HA dies while the curve is raised, the
   house overheats and the surplus optimisation turns into a cost. The write path
   needs the same watchdog thinking as the Shelly's Auto-ON timer: the baseline has
