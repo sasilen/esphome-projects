@@ -188,6 +188,44 @@ eikä johdinta, koska 3,3 V:a ei viedä verkkoon lainkaan.
 mitään tuntematonta. Kumpi maadoitusjohdin on kummassa nastassa on
 yhdentekevää.
 
+### Maat ovat rinnan, eivät erillisiä
+
+Ne yhdistyvät **molemmissa päissä**. Raspberryn nastat 6 ja 9 ovat saman
+maatason nastoja, ja DS18B20:ssä on yksi GND-nasta — mikä tahansa maa joka
+anturille tulee, on siinä samassa solmussa. Sama koskee jokaista verkon
+laitetta.
+
+Kaksi maajohdinta ovat siis **rinnakkaisia vastuksia kahden saman pisteen
+välillä**, eivät toisistaan erotettuja paluuteitä. Se tarkentaa parisuuden
+hyödyn: virta jakautuu johtimien kesken resistanssin suhteessa eikä sen mukaan
+kumpi on signaalin "oma" pari.
+
+Todellinen hyöty tärkeysjärjestyksessä:
+
+1. **Puolittunut paluuresistanssi.** Kiistaton, ja merkitsee pitkällä vedolla
+   jossa parinkymmenen anturin yhteisvirta kulkee paluujohtimissa.
+   Lämpötilamuunnos vetää noin 1,5 mA per anturi.
+2. **Vierekkäisyys datan kanssa.** Reaalinen mutta pienempi kuin miltä
+   parisuusargumentti kuulostaa — 1-Wiren reunat ovat mikrosekunteja, joten
+   induktiivinen kytkeytyminen ei ole hallitseva ilmiö. Resistanssi ja
+   kapasitanssi ovat.
+3. **Vikasietoisuus.** Toisen maajohtimen katketessa verkko toimii silti.
+
+### Kytkentäohje uuteen kaapeliin
+
+- **Kytke molemmat maat.** Ei siksi että ne olisivat eri asioita vaan siksi
+  että ne ovat rinnan. Jos vain toinen tulee kytketyksi, mikään ei rikkoudu —
+  ja **juuri siksi virhe jäisi huomaamatta**, kunnes pitkän vedon jännitehäviö
+  alkaisi oireilla kaukaisimmalla anturilla.
+- **Älä hajota pareja.** Pidä data ja sen maa samassa kierretyssä parissa ja
+  syöttö ja sen maa toisessa. Jos data ja syöttö päätyvät samaan pariin,
+  kaapeli näyttää ulospäin samalta mutta menettää sen ominaisuuden jonka takia
+  parit ovat olemassa. Vanhassa asennuksessa data ja paluu ovat RJ45:n
+  nastoissa 4 ja 5 eli **sinisessä parissa** — sama mihin DS9490:n toimiminen
+  johti aivan eri päättelyä myöten.
+- **Ylösveto ei mene verkkoon.** Se on C3:n päässä GPIO4:n ja 3V3:n välissä, ja
+  verkkoon lähtee vain neljä johdinta.
+
 ### C3 toistaa saman
 
 | C3 | Johdin |

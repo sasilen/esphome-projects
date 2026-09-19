@@ -60,6 +60,12 @@ vain 3,3 volttiin ja on turvallinen C3:lle.
 **Ylösveto menee 3V3:een eikä viiteen.** Se on tämän kytkennän ainoa kohta jossa
 virhe tuhoaa GPIO:n.
 
+**Kytke molemmat maat, äläkä hajota pareja.** Maat ovat rinnan — ne yhdistyvät
+sekä Raspberryn maatasossa että jokaisen anturin GND-nastassa — joten toisen
+unohtaminen ei riko mitään, ja *juuri siksi* se jäisi huomaamatta kunnes pitkän
+vedon jännitehäviö alkaisi oireilla kaukaisimmalla anturilla. Pidä data ja sen
+maa samassa kierretyssä parissa ja syöttö ja sen maa toisessa.
+
 **Johdinvärit ovat tässä asennuksessa sattumaa** — kaapeli on se joka sattui
 olemaan käsillä — eivätkä ne tarkoita mitään. Nastanumerot sen sijaan ovat
 pääteltävissä:
