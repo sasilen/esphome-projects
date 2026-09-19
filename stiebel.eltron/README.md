@@ -1,7 +1,10 @@
 # Stiebel Eltron WPC 07 → Home Assistant (CAN bus)
 
-**Write-up:** [`BLOG-1-reading.md`](BLOG-1-reading.md) — part one of two, on getting
-onto the bus and decoding it. Part two covers writing.
+**Write-up:** [`BLOG-1-reading.md`](BLOG-1-reading.md) — getting onto the bus and
+decoding it. [`BLOG-2-swapping-the-controller.md`](BLOG-2-swapping-the-controller.md) —
+deleting the MCP2515 once the C3's own controller turned out to take 20 kbps.
+Writing is still to come, and it is part three rather than part two because the
+node changed underneath the plan.
 
 > **Overview.** Technical details and reasoning: [`CLAUDE.md`](CLAUDE.md).
 
