@@ -3,7 +3,7 @@
   <rect x="20" y="20" width="720" height="760" fill="none" stroke="#A8B3BC"/>
 
   <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">RJ45 &#8212; MIK&#196; NASTA ON MIK&#196;</text>
-  <text x="40" y="80" font-size="12" fill="#5A6772">Sininen pari kantaa 1-Wiren &#183; syöttö on se osa joka vaihtelee asennuksittain</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Sininen pari kantaa 1-Wiren &#183; oranssi pari syötön &#183; luettu vanhasta pistokkeesta</text>
   <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
 
   <text x="50" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">RJ45-RASIA EDESTÄ, SALPA ALASPÄIN</text>
@@ -73,15 +73,15 @@
 
   <line x1="20" y1="552" x2="740" y2="552" stroke="#A8B3BC"/>
 
-  <text x="50" y="580" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">SYÖTTÖ ON SE OSA JOTA EI VOI PÄÄTELLÄ</text>
-  <text x="50" y="602" font-size="11.5" fill="#16212B">Data ja paluu ovat vakiintuneet nastoihin 4 ja 5. <tspan font-weight="700">VDD ei ole vakiintunut mihinkään</tspan> —</text>
-  <text x="50" y="620" font-size="11.5" fill="#16212B">yleisiä ovat nastat 1, 2 ja 6, ja asentaja on voinut valita minkä tahansa. Kolmen johtimen</text>
-  <text x="50" y="638" font-size="11.5" fill="#16212B">kytkentä tehdään siis vasta kun syöttöjohdin on mitattu, ei kaavion perusteella.</text>
+  <text x="50" y="580" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">SYÖTTÖ ON NASTASSA 2, MAAT NASTOISSA 1 JA 5</text>
+  <text x="50" y="602" font-size="11.5" fill="#16212B">Tämän verkon kartta on luettu: <tspan font-weight="700">1 musta GND, 2 punainen 5 V, 4 keltainen data,</tspan></text>
+  <text x="50" y="620" font-size="11.5" fill="#16212B"><tspan font-weight="700">5 valkoinen GND.</tspan> Kaksi kokonaista paria: data maansa kanssa sinisessä, syöttö maansa</text>
+  <text x="50" y="638" font-size="11.5" fill="#16212B">kanssa oranssissa. VDD ei ole yleisesti vakiintunut &#8212; tässä se on luettu, ei oletettu.</text>
 
   <rect x="50" y="664" width="660" height="98" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
   <rect x="50" y="664" width="6" height="98" fill="#A3301F"/>
-  <text x="74" y="690" font-size="12" font-weight="700" fill="#A3301F">TOTEA KAHDELLA JOHTIMELLA ENNEN KUIN KYTKET KOLMANNEN</text>
-  <text x="74" y="714" font-size="11.5" fill="#16212B">Nastat 4 ja 5 riittävät luetteloimaan koko väylän loiskäytöllä. Jos anturit löytyvät niillä,</text>
-  <text x="74" y="732" font-size="11.5" fill="#16212B">data ja paluu ovat oikein &#8212; ja vasta sen jälkeen etsitään syöttöjohdin. Väärin arvattu</text>
-  <text x="74" y="750" font-size="11.5" fill="#16212B">VDD on ainoa virhe tässä projektissa joka tuhoaa antureita eikä vain jätä väylän hiljaiseksi.</text>
+  <text x="74" y="690" font-size="12" font-weight="700" fill="#A3301F">MAAT TUNNISTAA ILMAN MITÄÄN VIITETTÄ</text>
+  <text x="74" y="714" font-size="11.5" fill="#16212B">Kaksi maata soivat keskenään, koska ne yhdistyvät jokaisen anturin GND-nastassa. Jatkuvuus</text>
+  <text x="74" y="732" font-size="11.5" fill="#16212B">kahden RJ45-nastan välillä löytää ne siis pelkästä pistokkeesta, ilman viittausta isäntään.</text>
+  <text x="74" y="750" font-size="11.5" fill="#16212B">Data ja syöttö eivät soi mihinkään: toinen on avokollektorin, toinen antureiden VDD:n takana.</text>
 </svg>
