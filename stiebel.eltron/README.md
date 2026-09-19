@@ -19,10 +19,9 @@ job and the SPI module is no longer needed. What it does not yet carry is the
 decoding — that moves across from
 [`wemos-mcp2515.yaml`](wemos-mcp2515.yaml), which is the rollback until it does.
 The D1 mini node did phase 1's work and its results stand: the bit rate is
-confirmed at 20 kbps, frames are captured and decoded in the log, and the
-addresses in use are known. What is left is moving that decoding onto the C3 and
-turning it into Home Assistant sensors. Phase 2 is blocked by work rather than by
-hardware.
+confirmed at 20 kbps, the addresses in use are known, and the decoding it
+produced now runs on the C3 and publishes into Home Assistant on the bus's own
+cycle. Phase 2 is blocked by work rather than by hardware.
 
 **Phase 1 needs no transmitter after all.** The bus polls itself at over 200
 frames a minute with no gap longer than five seconds, so a listen-only node sees
@@ -353,10 +352,9 @@ to do:
   in two hours, and heating curve control depends on it being live
 - Work out what **0x100** is — it is one of the busiest nodes on this bus and it
   is not in the published address table
-- **Validate and flash the sensors.** Eleven entities are written — three
-  temperatures, two setpoints, the operating mode, the pump's own clock, the
-  compressor and one unidentified signal — and checked against the capture, but
-  not yet against ESPHome or the node itself
+- ~~**Validate and flash the sensors.**~~ Done — the dispatch runs on the C3 and
+  the entities publish on the bus's own cycle. Entity ids kept their old names,
+  so the history carries over
 - **Identify 0xFE07.** 0xFE1B commands it and 0xFE07 measures the result,
   inverted, with ten seconds of mechanical lag and three operating points: 0,
   about 56, and about 52 while the compressor runs. The panel shows nothing

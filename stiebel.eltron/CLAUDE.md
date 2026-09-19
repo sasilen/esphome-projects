@@ -3308,15 +3308,26 @@ is left:
   settled by correlation; the same method should reach 0xFDF3 and 0xFDF5 once a
   capture spans a heating cycle as well as a hot water one.
 - **Check whether `AUSSENTEMP` is a live sensor.** It never moved in two hours,
-  and heating curve control depends on it.
+  and heating curve control depends on it. **First evidence that it is:** it read
+  exactly 15.3 °C throughout that capture and 14.5 °C on the C3's first
+  afternoon, so it is not a placeholder frozen at one value. What settles it is a
+  day of history now that a node sits on the bus permanently — if it falls
+  overnight and rises in the afternoon, the question is closed and the curve
+  lever becomes usable.
 - **Explain 0x100.** It is not in the published address table, yet it is one of
   the two busiest talkers on this machine.
-- **Validate and flash the sensors.** Eleven entities are written and checked
-  against the capture on a host compiler, but not against ESPHome's schema and
-  not on the node. Check the flash and RAM figures while doing it — the sniffer
-  alone was 45.2 % and 40.0 %.
-- **Re-capture once the watchdog window is two minutes**, to confirm the stall
-  rate against a capture that is not two-thirds dead.
+- ~~**Validate and flash the sensors.**~~ **Done, on the C3.** The dispatch
+  compiles, runs and publishes: return, flow and reheat flow temperatures, the
+  tank, the outdoor reading, the compressor and the 0xFE0x elements all arrive
+  on the bus's own five- and ten-second cycles. Entity ids came through without
+  `_2` suffixes, so the shared device name did what it was chosen for and the
+  history continues.
+- ~~**Re-capture once the watchdog window is two minutes.**~~ **Moot.** That
+  window existed to bound the MCP2515's overflow latch, and the stall it guarded
+  against is a property of the part this project no longer uses. The C3 warns and
+  does not restart, so a capture from it is not two-thirds dead by construction.
+- **What is left is time rather than work:** an overnight run to put the
+  malformed rate against phase 1's 2 in 95 000, and a day of outdoor readings.
 
 ## Phase 2 — transmit
 
