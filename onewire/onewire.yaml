@@ -228,7 +228,52 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xA5000802A0D20E10          # 10.0ED2A0020800
+    # Ei löytynyt luetteloinnista. Jätetään silti tähän: sen `nan` erottaa
+    # "laitetta ei ole" -tapauksen siitä joukosta joka on väylällä muttei lue,
+    # ja se ero on juuri se mitä ylösvedon vaihdon jälkeen katsotaan.
     name: "Nimeämätön DS18S20"
+    update_interval: 60s
+
+# --------------------------------------------------------------- Perhe 3B
+# Kolme laitetta joita ei ole vuoden 2020 kartassa lainkaan. Perhe 0x3B on
+# **todennäköisesti leivinuunin anturit**, koska DS18B20 loppuu +125 °C:een
+# eikä uuni pysy siellä — mutta se on päättely, ei aineistoa, joten nimet ovat
+# toistaiseksi sarjanumeroita. Nimeäminen myöhemmin katkaisee HA:n historian,
+# joten se tehdään kerran ja vasta kun asia on varma.
+#
+# **`dallas_temp` lukee nämä ilman erillistä komponenttia.** Se erikoiskäsittelee
+# vain perheen 0x10 ja kohtelee kaikkea muuta DS18B20:nä — perhekoodia ei
+# tarkisteta lainkaan.
+#
+# Perheessä on kaksi eri piiriä. **DS1825** on DS18B20:n muotoinen mittari ja
+# toimii suoraan. **MAX31850** on termoparivahvistin, jonka rekisteri on 14
+# bittiä 0,25 °C:n askelin kaksi bittiä ylös siirrettynä — ja se osuu samaan
+# 1/16 °C:n asteikkoon, joten `raw / 16` antaa oikean lukeman kummallakin.
+#
+# **Todennus: uuni kylmänä näiden pitää lukea huoneenlämpöä.** Neljäsosa tai
+# nelinkertainen siitä tarkoittaa että skaalauspäättely oli väärin, ja korjaus
+# on `filters: - multiply:`.
+#
+# Yksi kohta jota ei voi koodista todeta: `setup()` lähettää Write Scratchpadin
+# jos tarkkuusrekisteri ei vastaa pyydettyä, eikä MAX31850 toteuta sitä käskyä.
+# Toteuttamaton käsky yleensä sivuutetaan.
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    address: 0x000000001916163B          # 3B.161619000000
+    name: "Tuntematon 3B 161619"
+    update_interval: 60s
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    address: 0xCC0000001915A13B          # 3B.A11519000000
+    name: "Tuntematon 3B A11519"
+    update_interval: 60s
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    address: 0x6D0000001870913B          # 3B.917018000000
+    name: "Tuntematon 3B 917018"
     update_interval: 60s
 
   - platform: wifi_signal
