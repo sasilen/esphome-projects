@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1020" width="760" height="1020" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="1020" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="980" fill="none" stroke="#A8B3BC"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">1-WIRE &#8212; KARTOITUSKYTKENT&#196;</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Kolme johdinta, yksi vastus &#183; verkko ja anturit ovat jo paikoillaan &#183; ei osaostoja</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <text x="50" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">IS&#196;NT&#196;</text>
+  <text x="432" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KESKIPISTE</text>
+  <text x="604" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">OLEMASSA OLEVA</text>
+
+  <!-- C3 -->
+  <rect x="50" y="150" width="180" height="250" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="140" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">ESP32-C3</text>
+  <text x="140" y="192" font-size="10" fill="#5A6772" text-anchor="middle">SuperMini</text>
+  <g font-size="11" fill="#16212B">
+    <text x="152" y="214">3V3</text>
+    <text x="140" y="284">GPIO4</text>
+    <text x="152" y="354">GND</text>
+  </g>
+  <text x="140" y="382" font-size="9.5" fill="#5A6772" text-anchor="middle">USB-C syöttö</text>
+
+  <!-- hub -->
+  <rect x="420" y="150" width="180" height="250" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="510" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">RIVILIITIN</text>
+  <text x="510" y="192" font-size="10" fill="#5A6772" text-anchor="middle">tähden keskipiste</text>
+  <g font-size="11" fill="#16212B">
+    <text x="432" y="214">VDD</text>
+    <text x="432" y="284">DQ</text>
+    <text x="432" y="354">GND</text>
+  </g>
+
+  <!-- wires -->
+  <g stroke="#A3301F" stroke-width="1.5" fill="none"><line x1="230" y1="210" x2="420" y2="210"/></g>
+  <g stroke="#0E6E7C" stroke-width="1.5" fill="none"><line x1="230" y1="280" x2="420" y2="280"/></g>
+  <g stroke="#16212B" stroke-width="1.5" fill="none"><line x1="230" y1="350" x2="420" y2="350"/></g>
+
+  <g font-size="9.5" fill="#5A6772">
+    <text x="360" y="204" text-anchor="middle">3,3 V</text>
+    <text x="360" y="274" text-anchor="middle">data</text>
+    <text x="360" y="344" text-anchor="middle">maa</text>
+  </g>
+
+  <!-- pull-up -->
+  <g stroke="#0E6E7C" stroke-width="1.5" fill="none">
+    <line x1="290" y1="210" x2="290" y2="228"/>
+    <line x1="290" y1="262" x2="290" y2="280"/>
+  </g>
+  <rect x="278" y="228" width="24" height="34" rx="2" fill="#FFFFFF" stroke="#0E6E7C" stroke-width="1.5"/>
+  <text x="252" y="250" font-size="11" font-weight="700" fill="#0E6E7C" text-anchor="end">4,7 k&#8486;</text>
+
+  <!-- star fan -->
+  <g stroke="#5A6772" stroke-width="1.2" fill="none">
+    <line x1="600" y1="240" x2="700" y2="180"/>
+    <line x1="600" y1="260" x2="700" y2="240"/>
+    <line x1="600" y1="280" x2="700" y2="300"/>
+    <line x1="600" y1="300" x2="700" y2="360"/>
+  </g>
+  <text x="696" y="184" font-size="9.5" fill="#5A6772">haara</text>
+  <text x="696" y="244" font-size="9.5" fill="#5A6772">haara</text>
+  <text x="696" y="304" font-size="9.5" fill="#5A6772">haara</text>
+  <text x="696" y="364" font-size="9.5" fill="#5A6772">haara</text>
+
+  <text x="50" y="428" font-size="11.5" fill="#16212B"><tspan font-weight="700">Vastus kuuluu isännän päähän</tspan>, datan ja 3,3 voltin väliin. Yksi kappale koko verkolle,</text>
+  <text x="50" y="446" font-size="11.5" fill="#16212B">ei yhtä per haara &#8212; rinnakkaiset ylösvedot laskisivat yhteisvastuksen liian pieneksi.</text>
+
+  <line x1="20" y1="468" x2="740" y2="468" stroke="#A8B3BC"/>
+
+  <!-- DS18B20 detail -->
+  <text x="50" y="496" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">ANTURIN NASTAJÄRJESTYS &#183; TO-92, LITTEÄ PUOLI EDESSÄ, JALAT ALASPÄIN</text>
+
+  <rect x="50" y="514" width="200" height="70" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <g font-size="11" fill="#16212B">
+    <text x="70" y="540">vasen</text>
+    <text x="70" y="558">keski</text>
+    <text x="70" y="576">oikea</text>
+  </g>
+  <g font-size="11" font-weight="700">
+    <text x="150" y="540" fill="#16212B">GND</text>
+    <text x="150" y="558" fill="#0E6E7C">DQ</text>
+    <text x="150" y="576" fill="#A3301F">VDD</text>
+  </g>
+
+  <text x="276" y="540" font-size="11.5" fill="#16212B">Valmiissa asennuksessa väri ei kerro mitään &#8212; se riippuu siitä</text>
+  <text x="276" y="558" font-size="11.5" fill="#16212B">kuka veti kaapelin. Tunnista johtimet mittaamalla.</text>
+  <text x="276" y="580" font-size="11.5" fill="#16212B"><tspan font-weight="700">Maa ensin.</tspan> DQ:n ja VDD:n sekoittaminen on toivuttavaa;</text>
+  <text x="276" y="598" font-size="11.5" fill="#16212B">maan ja VDD:n sekoittaminen ei ole.</text>
+
+  <line x1="20" y1="620" x2="740" y2="620" stroke="#A8B3BC"/>
+
+  <text x="50" y="648" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">ENNEN KUIN KYTKET ISÄNNÄN</text>
+  <text x="50" y="670" font-size="11.5" fill="#16212B"><tspan font-weight="700">1. Mittaa jännite.</tspan> Verkon pitäisi olla kuollut. Jos johtimissa on jännitettä, jossain on</text>
+  <text x="50" y="688" font-size="11.5" fill="#16212B">toinen isäntä tai vanha syöttö kiinni, ja se on löydettävä ennen kuin tähän lisätään toinen.</text>
+  <text x="50" y="710" font-size="11.5" fill="#16212B"><tspan font-weight="700">2. Etsi maa.</tspan> Se on johdin joka on yhteinen kaikille haaroille. Vastusmittaus haarojen</text>
+  <text x="50" y="728" font-size="11.5" fill="#16212B">välillä löytää sen: maa soi kaikkialle, DQ ja VDD eivät.</text>
+  <text x="50" y="750" font-size="11.5" fill="#16212B"><tspan font-weight="700">3. Tarkista oikosulku.</tspan> DQ ja maa eivät saa soida keskenään. Jos soivat, jossain on</text>
+  <text x="50" y="768" font-size="11.5" fill="#16212B">vaurioitunut anturi tai puristunut kaapeli, ja koko väylä on silloin hiljainen.</text>
+
+  <line x1="20" y1="790" x2="740" y2="790" stroke="#A8B3BC"/>
+
+  <rect x="50" y="814" width="660" height="164" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <rect x="50" y="814" width="6" height="164" fill="#A3301F"/>
+  <text x="74" y="840" font-size="12" font-weight="700" fill="#A3301F">KOLME SÄÄNTÖÄ JOTKA RATKAISEVAT TOIMIIKO SE</text>
+  <text x="74" y="866" font-size="11.5" fill="#16212B"><tspan font-weight="700">Kolme johdinta, ei loiskäyttöä.</tspan> Parasiittisessä kytkennässä anturi ottaa virtansa</text>
+  <text x="74" y="884" font-size="11.5" fill="#16212B">datalinjasta, ja muunnos vetää 1,5 mA. Pitkässä verkossa se ei riitä, ja muunnokset</text>
+  <text x="74" y="902" font-size="11.5" fill="#16212B">epäonnistuvat juuri silloin kun antureita on eniten.</text>
+  <text x="74" y="926" font-size="11.5" fill="#16212B"><tspan font-weight="700">Yksi isäntä kerrallaan.</tspan> Kaksi isäntää samalla väylällä rikkoo ajoituksen molemmilta.</text>
+  <text x="74" y="950" font-size="11.5" fill="#16212B"><tspan font-weight="700">Yksi ylösveto koko verkolle.</tspan> 4,7 kΩ on lähtöarvo; 2,2 kΩ auttaa nousuaikaan jos</text>
+  <text x="74" y="968" font-size="11.5" fill="#16212B">verkko on pitkä, mutta se ei korjaa heijastuksia eikä sitä pidä yrittää ensin.</text>
+</svg>
