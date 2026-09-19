@@ -1,6 +1,7 @@
 # Talon 1-Wire-väylä → Home Assistant
 
 > **Yleiskuva.** Tekniset tiedot ja perustelut: [CLAUDE.md](CLAUDE.md).
+> Rakennuskertomus: [BLOG-1](BLOG-1-the-bus-that-was-already-there.md).
 
 Talossa on **valmis 1-Wire-verkko jossa on DS18B20-antureita**, eikä se ole
 käytössä. Kaapelointi ja anturit ovat siis molemmat jo paikoillaan; puuttuu vain
