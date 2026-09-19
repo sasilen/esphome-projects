@@ -300,21 +300,37 @@ canbus:
               // complete set, and restoring a half-set from flash across a
               // reboot could only ever produce a total that looks right and is
               // not. Same reasoning as 0xFE4C's remembered value below.
-              struct Ctr { uint16_t mwh, kwh, day; uint8_t seen, need; };
+              //
+              // **A fourth part, and it deliberately does not gate the
+              // publish.** The third panel walk showed each counter to be four
+              // consecutive indices — total MWh, total kWh, day kWh and the
+              // day's watt-hour remainder — with 0x092E = 753 against a screen
+              // reading VD LÄMM PV 27.753 kWh, and three more like it.
+              //
+              // `rem` is stored whenever it arrives and is never added to
+              // `need`. Requiring it would invent a new way for an entity to
+              // stall: a screen that asks for three parts and not the fourth
+              // would leave the total unpublished forever. Unset it is zero,
+              // which is exactly the behaviour this file already had.
+              struct Ctr { uint16_t mwh, kwh, day, rem; uint8_t seen, need; };
               static Ctr ctr[6] = {
-                  {0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0b111},
-                  {0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0b111},
-                  {0, 0, 0, 0, 0b011}, {0, 0, 0, 0, 0b011}};
+                  {0, 0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0, 0b111},
+                  {0, 0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0, 0b111},
+                  {0, 0, 0, 0, 0, 0b011}, {0, 0, 0, 0, 0, 0b011}};
               auto part = [&](uint8_t i, uint8_t w, uint16_t v) {
                 Ctr &c = ctr[i];
-                if (w == 0) c.mwh = v; else if (w == 1) c.kwh = v; else c.day = v;
+                if (w == 0) c.mwh = v;
+                else if (w == 1) c.kwh = v;
+                else if (w == 2) c.day = v;
+                else { c.rem = v; return false; }
                 c.seen |= (uint8_t) (1 << w);
                 if (c.seen != c.need) return false;
                 c.seen = 0;
                 return true;
               };
               auto total = [&](uint8_t i) {
-                return ctr[i].mwh * 1000.0f + ctr[i].kwh + ctr[i].day;
+                return ctr[i].mwh * 1000.0f + ctr[i].kwh + ctr[i].day +
+                       ctr[i].rem / 1000.0f;
               };
 
               const bool sentinel =
@@ -417,15 +433,19 @@ canbus:
                   case 0x0931: if (part(0, 0, value)) id(energy_heat).publish_state(total(0)); break;
                   case 0x0930: if (part(0, 1, value)) id(energy_heat).publish_state(total(0)); break;
                   case 0x092F: if (part(0, 2, value)) id(energy_heat).publish_state(total(0)); break;
+                  case 0x092E: part(0, 3, value); break;
                   case 0x092D: if (part(1, 0, value)) id(energy_dhw).publish_state(total(1)); break;
                   case 0x092C: if (part(1, 1, value)) id(energy_dhw).publish_state(total(1)); break;
                   case 0x092B: if (part(1, 2, value)) id(energy_dhw).publish_state(total(1)); break;
+                  case 0x092A: part(1, 3, value); break;
                   case 0x0921: if (part(2, 0, value)) id(power_heat).publish_state(total(2)); break;
                   case 0x0920: if (part(2, 1, value)) id(power_heat).publish_state(total(2)); break;
                   case 0x091F: if (part(2, 2, value)) id(power_heat).publish_state(total(2)); break;
+                  case 0x091E: part(2, 3, value); break;
                   case 0x091D: if (part(3, 0, value)) id(power_dhw).publish_state(total(3)); break;
                   case 0x091C: if (part(3, 1, value)) id(power_dhw).publish_state(total(3)); break;
                   case 0x091B: if (part(3, 2, value)) id(power_dhw).publish_state(total(3)); break;
+                  case 0x091A: part(3, 3, value); break;
                   // The reheat's heat has no day counter on its screen, so
                   // this one needs two parts and its day slot stays zero.
                   // The reheat keeps two totals, on two pages of the same
@@ -576,6 +596,22 @@ canbus:
                   // the compressor's remaining minimum-off time. Zero when the
                   // machine is free to start, which makes it the second half of
                   // the "why is it not running" question the EVU block answers.
+                  // **The blocking contact as the machine itself reports it.**
+                  // 0x0074 is EVU_SPERRE_AKTIV, and its polarity is settled by
+                  // two readings against a known Shelly state: 1 permits, 0
+                  // blocks. So it tracks the contact rather than the block,
+                  // despite a name that reads the other way round.
+                  //
+                  // It is a better source than the `EVU signal` entity beside
+                  // it, which is derived from status code 8246 — and this file
+                  // argues at length that 8246 is a signal and not a state,
+                  // because it clears while a block is still running. Both are
+                  // kept: one is what the machine was told, the other is what
+                  // it reports back.
+                  //
+                  // Full 16 bits, not the high byte: this element is not
+                  // et_little_endian and `value` is already 0 or 1.
+                  case 0x0074: id(evu_permitted).publish_state(value == 1); break;
                   case 0x0668: id(rest_time).publish_state(value); break;
                   case 0x1388:
                     id(status_code).publish_state(value);
@@ -1024,10 +1060,10 @@ sensor:
   # installed; nothing here computes a ratio, because a ratio of two numbers
   # that update once per panel walk would be a number pretending to be a
   # measurement.
-  - {platform: template, id: energy_heat, name: "Heat delivered heating (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
-  - {platform: template, id: energy_dhw, name: "Heat delivered DHW (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
-  - {platform: template, id: power_heat, name: "Electricity used heating (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
-  - {platform: template, id: power_dhw, name: "Electricity used DHW (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, update_interval: never}
+  - {platform: template, id: energy_heat, name: "Heat delivered heating (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 3, update_interval: never}
+  - {platform: template, id: energy_dhw, name: "Heat delivered DHW (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 3, update_interval: never}
+  - {platform: template, id: power_heat, name: "Electricity used heating (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 3, update_interval: never}
+  - {platform: template, id: power_dhw, name: "Electricity used DHW (compressor)", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 3, update_interval: never}
   - {platform: template, id: energy_nhz_heat, name: "Heat delivered reheat heating", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
   - {platform: template, id: energy_nhz_dhw, name: "Heat delivered reheat DHW", device_class: energy, state_class: total_increasing, unit_of_measurement: "kWh", accuracy_decimals: 0, entity_category: diagnostic, update_interval: never}
 
@@ -1208,6 +1244,16 @@ binary_sensor:
   - platform: template
     id: evu_block
     name: "EVU signal"
+
+  # The contact as the machine reports it, from 0x0074. **ON means the pump is
+  # permitted to run**, which is the same counter-intuitive direction the Shelly
+  # relay has — see ../aidon/. The name says `permitted` rather than `block`
+  # precisely because an automation written against the wrong sense would stop
+  # the heating in January and look correct while doing it.
+  - platform: template
+    id: evu_permitted
+    name: "EVU permitted"
+    device_class: running
 
   # Named from behaviour rather than from the list — see the frame handler.
   # Two sources feed it: 0x4E5E bit 9 from 0x480 once that word has been seen,
