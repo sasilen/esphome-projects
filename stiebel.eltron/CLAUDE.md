@@ -2181,15 +2181,36 @@ TEHONKULUTUS    VD LÄMM PV       6.619 kWh      VD LÄMM YHT     18.230 MWh
 | `0x091A` | 588 | electricity, DHW, day remainder |
 
 So the layout per counter is **total MWh, total kWh, day kWh, day Wh** — four
-consecutive descending indices, of which this configuration reads three. The
+consecutive descending indices, of which this configuration read three.
+
+**And the panel's YHT row is not the total element: it already includes the
+day.** This is the trap, and it cost an hour of believing the counters were
+going backwards. Read with `Log every frame` on, one screen and one second
+apart:
+
+```
+0x0931 = 87   0x0930 = 274      base          87.274 MWh
+0x092F = 29   0x092E =  16      day           29.016 kWh
+                                VD LÄMM PV    29.016 kWh   ← the day, alone
+                                VD LÄMM YHT   87.303 MWh   ← base + day
+```
+
+The base appears on no screen at all. Comparing a photographed YHT against the
+0x0930 element therefore shows a deficit exactly the size of the day counter,
+which reads like a counter that has lost energy — and it is only two different
+quantities being held next to each other.
+
+**The published entity is now equal to the panel to the watt-hour:** 87303.016
+against 87.303 MWh, 19089.033 against 19.089, 3311 against 3.311. That agreement
+is what the remainder was added for, and it is also the check that says the
+whole four-element reading is right. The
 same reasoning explains `0x0928` and `0x0924` reading zero: they are the reheat
 counters' day parts, and the immersion heater has not run today.
 
 **This is precision rather than a defect, and the distinction matters.** The
-published total is `MWh × 1000 + kWh + day`, which is correct to the kilowatt
-hour and stays monotonic across midnight — the day counter resets as the total
-absorbs it. Reading the remainder would make the entity agree with the panel
-digit for digit and nothing else changes, so it is optional polish.
+published total is `MWh × 1000 + kWh + day`, which was already correct to the
+kilowatt hour and stays monotonic across midnight — the day counter resets as
+the base absorbs it. The remainder takes it from correct to exact.
 
 **`0x0074` answered 1 and still has no entity.** It is `EVU_SPERRE_AKTIV`, its
 polarity is settled elsewhere in this file, and it is the machine's own report of
