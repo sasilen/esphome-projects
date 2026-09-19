@@ -142,28 +142,48 @@ Raspberryn GPIO:sta kolmella johtimella. Se ratkaisee kolme asiaa kerralla:
 - **Vanha kaapeli on dokumentaatio.** Jos se löytyy, siitä lukee syöttöjohdin
   suoraan eikä mitään tarvitse päätellä konventioista.
 
-### Vanha toteutus: värit kertovat, ei nastanumerot
+### Vanha toteutus: värit eivät kerro mitään
 
-Vanhasta Raspberry-kaapelista valokuvattuna kaksi asiaa, ja molemmat poistavat
-päättelyn tarpeen.
+**Tässä tiedostossa luki hetken että johdinvärit ovat DS18B20:n vakiovärit ja
+että uuden kaapelin voi tehdä niiden mukaan. Se oli väärin.** Kaapeli on se
+joka sattui olemaan käsillä kun vanha toteutus tehtiin, eikä mustalla,
+punaisella tai keltaisella ole tässä asennuksessa mitään sovittua merkitystä.
 
-**Kolme johdinta kahdeksasta paikasta, ja värit ovat anturin omat.** Musta,
-punainen ja keltainen ovat vedenkestävän DS18B20-sauvan vakiovärit:
+Väite oli uskottava, koska juuri nuo kolme väriä ovat vedenkestävän
+DS18B20-sauvan vakiovärit. Se on sama virhemuoto joka on tässä repossa
+kirjattu MCP2515:n terminaattorista: **merkintä ehdottaa, mittari ratkaisee.**
+Siellä `121` oli painettu kortille eikä se silti yltänyt väylälle; täällä väri
+näyttää koodilta eikä se ole koodi.
 
-| Väri | Signaali |
-|---|---|
-| musta | GND |
-| punainen | VDD |
-| keltainen | DQ |
+Mitä valokuvasta jää voimaan:
 
-Kaapeli on siis tehty anturin värikoodilla eikä Cat5e:n parivärillä. **Siksi
-nastanumeroita ei tarvitse päätellä**: uusi pistoke tehdään samoilla väreillä
-samoihin paikkoihin, vanha vieressä vertailukohtana. Se on luotettavampi kuin
-mikään konventiotaulukko, koska se on tämän talon oma asennus eikä yleinen tapa.
+- **Kolme johdinta kahdeksasta paikasta** on käytössä
+- **Ylösveto on isännän päässä**, juotettuna Raspberryn riman kahden nastan
+  väliin — verkossa itsessään ei ole ylösvetoa
+- Verkko on **3,3 voltin verkko**, koska Raspberry ajaa sitä
 
-**Ylösveto on isännän päässä.** Vastus on juotettu suoraan Raspberryn riman
-kahden nastan väliin. Verkossa itsessään ei siis ole ylösvetoa, ja uusi isäntä
-tarvitsee omansa.
+Mikä johdin on mikä, on kokonaan avoin.
+
+### Vanha kaapeli on mittalaite
+
+Johtimet tunnistetaan mittaamalla, ja vanha kaapeli tekee siitä helppoa: sen
+toisessa päässä on Raspberryn rima, jonka nastojen merkitys on tiedossa.
+
+Jatkuvuus RJ45-pistokkeen nastoista riman nastoihin antaa taulukon suoraan:
+
+| Rima | Merkitys | ⇒ RJ45-nasta |
+|---|---|---|
+| 7 (GPIO4) | DQ | mitattava |
+| 1 | VDD, 3,3 V | mitattava |
+| 6 | GND | mitattava |
+
+**Tarkista `dtoverlay`-rivi ennen kuin luotat nastaan 7.** Jos
+`/boot/firmware/config.txt` sanoo `dtoverlay=w1-gpio,gpiopin=17` tai vastaavaa,
+data on muualla kuin GPIO4:ssä. Se tiedosto on dokumentaatio siinä missä
+kaapelikin.
+
+Kun taulukko on täytetty, uusi kaapeli tehdään **paikkojen mukaan** — väri saa
+olla mikä tahansa, kunhan RJ45:n nasta menee oikeaan nastaan C3:lla.
 
 ### Ylösveto voi olla jo paikallaan
 

@@ -30,10 +30,10 @@
     <text x="432" y="284">DQ</text>
     <text x="432" y="354">GND</text>
   </g>
-  <g font-size="10" font-weight="700">
-    <text x="486" y="214" fill="#A3301F">punainen</text>
-    <text x="486" y="284" fill="#8A6D1F">keltainen</text>
-    <text x="486" y="354" fill="#16212B">musta</text>
+  <g font-size="10" font-weight="700" fill="#A3301F">
+    <text x="486" y="214">nasta ?</text>
+    <text x="486" y="284">nasta ?</text>
+    <text x="486" y="354">nasta ?</text>
   </g>
 
   <!-- wires -->

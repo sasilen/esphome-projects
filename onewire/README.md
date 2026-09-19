@@ -34,43 +34,43 @@ Kolme johdinta ja yksi vastus. **Ylösveto kuuluu isännän päähän**, datan j
 3,3 voltin väliin, ja niitä on yksi kappale koko verkolle — ei yhtä per haara,
 koska rinnakkaiset ylösvedot laskisivat yhteisvastuksen liian pieneksi.
 
-| C3 | | Vanhan kaapelin väri |
+| C3 | | RJ45 |
 |---|---|---|
-| 3V3 | → | **punainen** (VDD) |
-| GPIO4 | → | **keltainen** (DQ), ja **4,7 kΩ tästä 3,3 V:iin** |
-| GND | → | **musta** (GND) |
+| 3V3 | → | VDD-johdin |
+| GPIO4 | → | DQ-johdin, ja **4,7 kΩ tästä 3,3 V:iin** |
+| GND | → | GND-johdin |
 
-**Kopioi värit, älä laske nastoja.** Vanha Raspberry-kaapeli on tehty anturin
-omalla värikoodilla — musta, punainen ja keltainen ovat vedenkestävän
-DS18B20-sauvan vakiovärit — ja kolme johdinta kahdeksasta paikasta on täytetty.
-Uusi pistoke tehdään samoilla väreillä samoihin paikkoihin, vanha vieressä.
-Se on luotettavampi kuin konventiotaulukko, koska se on tämän talon asennus.
+**Mikä johdin on mikä, on mitattava.** Johdinvärit ovat tässä asennuksessa
+sattumaa — kaapeli on se joka sattui olemaan käsillä — eivätkä ne tarkoita
+mitään. Sama pätee RJ45:n nastanumeroihin: ne ovat luultavasti 4 ja 5 datalle
+ja paluulle, mutta syöttöjohdinta ei voi päätellä mistään.
+
+**Vanha kaapeli on mittalaite.** Sen toisessa päässä on Raspberryn rima, jonka
+nastojen merkitys tiedetään: nasta 7 on GPIO4 eli data, nasta 1 on 3,3 V ja
+nasta 6 on maa. Jatkuvuus RJ45-pistokkeesta rimaan antaa taulukon suoraan.
 
 ### C3 tarvitsee oman kaapelinsa
 
 ![Ylösveto Raspberryn rimassa](rpi-pullup.jpg)
 
-**Kuva on vanhasta toteutuksesta**, ei siitä mitä rakennetaan. Se on
-dokumentaatio kahdesta asiasta: värikoodista ja siitä että **ylösveto on
-isännän päässä**, juotettuna suoraan riman kahden nastan väliin. Verkossa
-itsessään ei ole ylösvetoa.
+**Kuva on vanhasta toteutuksesta**, ei siitä mitä rakennetaan. Se dokumentoi
+yhden asian joka ei selviäisi mistään muualta: **ylösveto on isännän päässä**,
+juotettuna suoraan riman kahden nastan väliin. Verkossa itsessään ei ole
+ylösvetoa.
 
 Raspberryn kaapeli jää paikalleen ja koskemattomaksi. C3:lle tehdään vastaava:
 
-1. **Uusi RJ45-pistoke**, kolme johdinta samoissa paikoissa ja samoilla
-   väreillä kuin vanhassa. Vanha pistoke vieressä mallina.
+1. **Uusi RJ45-pistoke**, samat kolme paikkaa kuin vanhassa. Väri saa olla mikä
+   tahansa — paikka ratkaisee, ei väri.
 2. **Toinen pää suoraan C3:een juotettuna.** Ei rimaa eikä dupont-liittimiä —
    sama peruste kuin stiebelin solmussa: katkeileva datakontakti lukee nollana
    antureita, eikä se erotu mitenkään muista syistä joilla väylä on hiljainen.
-3. **4,7 kΩ keltaisen ja punaisen väliin** C3:n päässä, eli DQ:sta 3,3 V:iin.
+3. **4,7 kΩ DQ:n ja VDD:n väliin** C3:n päässä.
 4. **Vedonpoisto** siihen kohtaan mistä kaapeli lähtee levyltä.
 
 **Molemmat isännät eivät saa olla kiinni yhtä aikaa.** Kun C3:n pistoke menee
 rasiaan, Raspberryn pistoke tulee pois — tai päinvastoin. Kaksi isäntää samalla
 väylällä rikkoo ajoituksen molemmilta.
-
-GPIO4 samasta syystä kuin stiebelin solmussa: SuperMinillä se on samalla
-reunalla kuin 3V3 ja GND, eikä se ole strappausnasta.
 
 ## Ennen kuin kytket isännän
 
