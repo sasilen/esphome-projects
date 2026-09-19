@@ -100,25 +100,22 @@ one_wire:
 # vierashuoneeseen — lyhenne säilyy OWFS-kommentissa, jos se joskus osoittautuu
 # toiseksi.
 #
-# **`resolution: 9` on neljälletoista, ja se on koe.**
+# **`resolution: 9` kokeiltiin neljällätoista ja se ei auttanut.** Ei yhtään
+# lukemaa, ei yhtäkään kierrosta. Asetus on siksi poistettu: epäonnistunutta
+# koetta ei jätetä paikalleen, koska seuraava lukija luulisi sitä valinnaksi.
 #
-# Loiskäytössä anturi käy muunnoksen ajan sisäisen kondensaattorinsa varassa.
-# Ylösveto lataa sitä 0,7 mA:lla ja muunnos tyhjentää nopeammin, joten ratkaisee
-# **varaus eikä virta** — virta kertaa aika. 750 ms → 94 ms on kahdeksasosa
-# vaatimuksesta, ja Raspberry sai nämä ajoittain läpi jo 12 bitillä.
+# **Se kumosi varausmallin, ja se oli kokeen tarkoitus.** Ajattelin anturin
+# käyvän muunnoksen ajan sisäisen kondensaattorinsa varassa, jolloin 750 ms →
+# 94 ms olisi kahdeksasosa vaatimuksesta. Kondensaattori on liian pieni
+# puskuroidakseen mitään — **rajoite on virta eikä varaus**, eikä sitä voi
+# lyhentää ajallisesti.
 #
-# Ylösvedon laskeminen ei auta eikä sitä yritetä: jotta anturille jäisi ~3 V
+# Ylösvedon laskeminen ei auta samasta syystä: jotta anturille jäisi ~3 V
 # 1,5 mA:n vedolla, vastuksen olisi oltava alle 200 Ω, ja silloin isäntä nielisi
 # 16 mA joka kerta kun se vetää linjan alas. **Passiivinen vastus ei korvaa
 # vahvaa ylösvetoa** — juuri siksi vahva ylösveto on olemassa.
 #
-# **Ne viisi toimivaa jätetään 12 bittiin tarkoituksella.** Ne ovat muuttumaton
-# verrokki: jos jokin neljästätoista alkaa raportoida eikä viidessä tapahdu
-# mitään, syy on tässä muutoksessa. Jos koe onnistuu, `resolution: 10` on
-# seuraava askel takaisin tarkkuuteen päin.
-#
-# Puolen asteen askel on karkea, mutta nämä mittaavat rakenteen lämpötilaa —
-# ja nolla desimaalia on parempi kuin nolla lukemaa.
+# Jäljellä on siis vain vahva ylösveto, eikä ESPHomen `gpio`-väylässä ole sitä.
 #
 # `device_class`, `state_class`, `unit_of_measurement` ja `accuracy_decimals`
 # eivät ole tässä, koska **`dallas_temp` asettaa ne jo itse** — asteet,
@@ -130,14 +127,12 @@ sensor:
     one_wire_id: bus_a
     address: 0x0E0004755A26FF28          # 28.FF265A750400
     name: "Keittiö ikkuna sisä"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xAD0004757B89FF28          # 28.FF897B750400
     name: "Keittiö ikkuna ulko"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -162,14 +157,12 @@ sensor:
     one_wire_id: bus_a
     address: 0x8400000557F41E28          # 28.1EF457050000
     name: "Makuuhuone 1 etelä sisä"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x4F00000557EF5828          # 28.58EF57050000
     name: "Makuuhuone 1 länsi"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -182,49 +175,42 @@ sensor:
     one_wire_id: bus_a
     address: 0xA6000473185FFF28          # 28.FF5F18730400
     name: "Makuuhuone 2 itä"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xC9000474357FFF28          # 28.FF7F35740400
     name: "Makuuhuone 3 itä"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x8D00047679ECFF28          # 28.FFEC79760400
     name: "Makuuhuone 3 pohjoinen"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x1B00000557E66528          # 28.65E657050000
     name: "Makuuhuone 4 länsi"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x9300000617537828          # 28.785317060000
     name: "Makuuhuone 4 pohjoinen sisä"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xCB000005F69C7928          # 28.799CF6050000
     name: "Makuuhuone 4 pohjoinen ulko"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x830004767BBAFF28          # 28.FFBA7B760400
     name: "Olohuone sisä"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -237,7 +223,6 @@ sensor:
     one_wire_id: bus_a
     address: 0x5E0004757B80FF28          # 28.FF807B750400
     name: "Olohuone ulko"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -245,14 +230,12 @@ sensor:
     address: 0xB2000476784EFF28          # 28.FF4E78760400
     # VH = vaatehuone omistajan muistin mukaan, ei aineistosta
     name: "Vaatehuone etelä sisä"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x400004757682FF28          # 28.FF8276750400
     name: "Vaatehuone etelä ulko"
-    resolution: 9
     update_interval: 60s
 
   - platform: dallas_temp
@@ -275,18 +258,22 @@ sensor:
 # vain perheen 0x10 ja kohtelee kaikkea muuta DS18B20:nä — perhekoodia ei
 # tarkisteta lainkaan.
 #
-# Perheessä on kaksi eri piiriä. **DS1825** on DS18B20:n muotoinen mittari ja
-# toimii suoraan. **MAX31850** on termoparivahvistin, jonka rekisteri on 14
-# bittiä 0,25 °C:n askelin kaksi bittiä ylös siirrettynä — ja se osuu samaan
-# 1/16 °C:n asteikkoon, joten `raw / 16` antaa oikean lukeman kummallakin.
+# **Nämä lukevat, ja ne ovat MAX31850:itä.** Kolme kolmesta joka kierroksella,
+# 23,5–24,25 °C eli huoneenlämpöä. Skaalaus on siis oikein eikä `multiply`-
+# suodatinta tarvita.
 #
-# **Todennus: uuni kylmänä näiden pitää lukea huoneenlämpöä.** Neljäsosa tai
-# nelinkertainen siitä tarkoittaa että skaalauspäättely oli väärin, ja korjaus
-# on `filters: - multiply:`.
+# Piirin tunnistaa askeleesta. Lukemat liikkuvat **0,25 °C:n portain** —
+# 23,50 · 23,75 · 24,00 · 24,25 — kun taas 12 bitin DS18B20 antaa samassa
+# lokissa 25,0625. **0,25 °C on MAX31850:n termoparitarkkuus**; DS1825 antaisi
+# 0,0625:n portaita. Perheen toinen piiri on siis poissuljettu mittaamalla.
 #
-# Yksi kohta jota ei voi koodista todeta: `setup()` lähettää Write Scratchpadin
-# jos tarkkuusrekisteri ei vastaa pyydettyä, eikä MAX31850 toteuta sitä käskyä.
-# Toteuttamaton käsky yleensä sivuutetaan.
+# Termopari tarkoittaa korkeaa lämpötilaa — kukaan ei mittaa huoneilmaa
+# K-tyypin parilla — joten leivinuunioletus vahvistui. **Se ei silti ole vielä
+# todistettu.** Uunin lämmittäminen kymmeneksi minuutiksi todistaisi sen, ja
+# vasta sitten nämä nimetään kerran.
+#
+# Ne saavat myös virtaa, toisin kuin se neljätoista. Ne ovat siis verkon
+# syötetyssä osassa.
 
   - platform: dallas_temp
     one_wire_id: bus_a

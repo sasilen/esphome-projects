@@ -787,6 +787,92 @@ Järjestys halvimmasta alkaen:
 tiedetä kumpi auttoi — ja seuraavan kerran kun väylä oireilee, tieto puuttuu.
 Viisi toimivaa anturia on hyvä mittari: muutos on onnistunut kun luku kasvaa.
 
+### Loki nimeää vian, eikä se ole signaali
+
+`nan` ei kerro mitään yksinään, mutta sitä edeltävä rivi kertoo:
+
+```
+[D][dallas.temp.sensor:162]: dropping reading caused by sensor reset
+[D][dallas.temp.sensor:054]: 'Makuuhuone 3 itä': Got Temperature=nan°C
+```
+
+`dallas_temp` pudottaa lukeman vain yhdellä ehdolla: **lämpötilarekisterissä on
+tasan 85,0 °C ja scratchpadin tavu 6 on 0x0C** — DS18B20:n tehdasarvo, se mitä
+rekisterissä on ennen ensimmäistä muunnosta.
+
+Kolme asiaa seuraa yhtä aikaa. **Anturi vastaa** — scratchpad luettiin
+kokonaan. **CRC on kunnossa** — väärä tarkiste antaisi `checksum invalid`
+-varoituksen, ja niitä on kolme koko lokissa eikä neljäätoista kierroksessa.
+**Muunnos ei koskaan tapahtunut.**
+
+Kaapeli, liitokset ja ajoitus ovat siis kunnossa. Kyse on virrasta.
+
+### Jako on kategorinen, ja se sulkee pois marginaalin
+
+21 kierrosta, ei yhtään poikkeusta kumpaankaan suuntaan: **viisi onnistui
+21/21 ja neljätoista epäonnistui 0/21.** Marginaalivika välkkyisi — 294
+yritystä ilman ainuttakaan onnistumista ei ole marginaali vaan kaksi eri
+populaatiota.
+
+**Ja juuri siksi vanhan toteutuksen oireilu sopii tähän.** Raspberryn `w1-gpio`
+ei ole passiivinen: Linuxin w1-alijärjestelmä kytkee muunnoksen ajaksi saman
+GPIO:n ulostuloksi ja ajaa sen korkealle push-pull-tilassa. Vastus rimassa on
+vain lepotilan ylösveto. Se vahva ylösveto antoi loiskäyttöisille antureille
+virtaa sen verran että muunnos joskus ehti valmiiksi — siitä ne ajoittaiset
+numerot ja 85:t niiden välissä. **Sama populaatio, sama vika, eri isäntä.**
+
+### Koe joka kumosi oman mallinsa
+
+`resolution: 9` asetettiin neljälletoista ja viisi jätettiin 12 bittiin
+verrokiksi. Ajatus oli että loiskäyttöinen anturi käy muunnoksen ajan sisäisen
+kondensaattorinsa varassa, jolloin 750 ms → 94 ms olisi kahdeksasosa
+vaatimuksesta.
+
+**Tulos oli nolla.** Ei yhtään lukemaa neljästätoista, ei yhtäkään kierrosta,
+eivätkä verrokit muuttuneet.
+
+Se kumosi mallin puhtaasti: kondensaattori on liian pieni puskuroidakseen
+mitään, joten **rajoite on virta eikä varaus** — eikä virtavajetta voi lyhentää
+ajallisesti. Sama päättely kaataa ylösvedon laskemisen: jotta anturille jäisi
+~3 V 1,5 mA:n vedolla, vastuksen olisi oltava alle 200 Ω, ja silloin isäntä
+nielisi 16 mA joka kerta kun se vetää linjan alas.
+
+**Passiivinen vastus ei korvaa vahvaa ylösvetoa.** Asetus poistettiin, koska
+epäonnistunut koe paikalleen jätettynä luetaan myöhemmin valinnaksi.
+
+### Mitä jää, kun antureihin ei voi koskea
+
+Anturit ovat rakenteissa, joten VDD:n vieminen niille on pois laskuista.
+ESPHomen `gpio`-väylästä tarkistettiin lähdekoodi: linja ajetaan korkealle vain
+resetin jälkeen ja bittivälien päätteeksi, ei muunnoksen ajaksi. **Konfiguraa-
+tiomuutosta joka korjaisi tämän ei ole olemassa.**
+
+| Vaihtoehto | Hinta |
+|---|---|
+| Oma komponentti joka ajaa vahvan ylösvedon | toistaa sen mitä Linux teki; C++ |
+| Aja vanhaa puolta Raspberryllä | kaatuu yhden isännän sääntöön |
+| Ota ne viisi ja kolme MAX31850:tä | toimii nyt, kattaa kahdeksan laitetta |
+
+### Ne kolme 3B:tä ovat MAX31850:itä, ja se on mitattu
+
+Kolme kolmesta lukee joka kierroksella, 23,5–24,25 °C. Kaksi asiaa ratkeaa
+kerralla.
+
+**Skaalauspäättely piti.** Lukemat ovat huoneenlämpöä eivätkä sen neljäsosa tai
+nelinkertainen, joten `raw / 16` on oikein eikä suodatinta tarvita.
+
+**Piiri tunnistuu askeleesta.** Lukemat liikkuvat 0,25 °C:n portain — 23,50 ·
+23,75 · 24,00 · 24,25 — kun 12 bitin DS18B20 antaa samassa lokissa 25,0625.
+**0,25 °C on MAX31850:n termoparitarkkuus**, DS1825 antaisi 0,0625:n portaita.
+Perheen toinen piiri on siis poissuljettu mittaamalla eikä päättelemällä.
+
+Termopari tarkoittaa korkeaa lämpötilaa, mikä vahvistaa leivinuunioletusta
+muttei todista sitä. **Uunin lämmittäminen kymmeneksi minuutiksi todistaisi**,
+ja vasta sen jälkeen nämä nimetään — kerran, koska nimi synnyttää entity_id:n.
+
+Ne saavat myös virtaa, toisin kuin ne neljätoista, eli ne ovat verkon
+syötetyssä osassa.
+
 ## Kytkös lattialämmitykseen
 
 Jos anturit ovat lattiavalussa, tämä projekti menee päällekkäin
