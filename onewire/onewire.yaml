@@ -32,14 +32,19 @@
 #
 # Kaksi syytä olla käyttämättä sitä valmista: se ei käänny 2026.9.0:lla, ja
 # **sen DS2406-luku näyttää kirjoittavan.** Perustelut ovat CLAUDE.md:ssä.
-# **Polku on ESPHomen konfiguraatiojuuresta, ei tämän tiedoston vierestä.**
-# Kontti näkee tämän nimellä `/config/onewire/onewire.yaml`, joten `components`
-# yksinään etsisi `/config/components`:ia ja kaatuisi. Sama ansa kuin
-# lyhennetty sha: näyttää siistimmältä ja rikkoo käännöksen.
+# **Tämä hakemisto on vietävä konttiin erikseen.** Kontin `/config` ei ole
+# tämä repo vaan hakemisto jossa on pelkkiä YAMLeja — polku ratkeaa sen
+# juuresta, eikä `components/` ole siellä ennen kuin se kopioidaan:
+#
+#     podman cp onewire/components esphome:/config/components
+#
+# **Koodi on siis kahdessa paikassa ja ne voivat erkaantua.** Repo on se joka
+# on oikeassa; kontin kopio on käännösartefakti. Jos käännös käyttäytyy
+# oudosti muutoksen jälkeen, kopioi uudestaan ennen kuin epäilet koodia.
 external_components:
   - source:
       type: local
-      path: onewire/components
+      path: components
     components: [ds2406]
 
 esphome:

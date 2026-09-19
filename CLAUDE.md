@@ -105,6 +105,35 @@ oma konttinsa, `Network=host` pakollinen — muuten mDNS ei toimi eikä OTA löy
 levyjä. Tavoite kaikissa projekteissa on paikallinen ohjaus ilman pilveä ja
 ESPHome-projekteissa ilman MQTT:tä.
 
+### Kontin `/config` ei ole tämä repo
+
+Siellä on **pelkkiä YAMLeja**, vietynä sinne erikseen. Repo ei ole mountattuna,
+eikä mikään muu kuin konfiguraatiotiedosto ole siellä ennen kuin se kopioidaan.
+
+Se ei näy mitenkään ennen kuin jokin muu kuin YAML tarvitaan. Oma komponentti
+`external_components: type: local` -lohkossa kaatoi käännöksen kahdesti, koska
+polku ratkeaa kontin `/config`:sta eikä repon puolelta:
+
+```
+Could not find directory '/config/components'
+```
+
+**Vie hakemisto erikseen, ja polku on sen jälkeen `/config`:n suhteen:**
+
+```sh
+podman cp onewire/components esphome:/config/components
+```
+
+Kaksi asiaa seuraa tästä:
+
+- **Koodi on kahdessa paikassa ja ne voivat erkaantua.** Repo on se joka on
+  oikeassa; kontin kopio on käännösartefakti. Jos käännös käyttäytyy oudosti
+  muutoksen jälkeen, **kopioi uudestaan ennen kuin epäilet koodia** — se on
+  sama oire kuin vanhentunut käännöshakemisto alempana.
+- **Sama koskee kaikkea muutakin kuin YAMLia**: `secrets.yaml`, mahdolliset
+  paketit ja jaetut lohkot. Jos tiedostoon viitataan konfiguraatiosta, sen on
+  oltava `/config`:n alla.
+
 ## Kontti päivittyy itsestään, ja se rikkoo käännöshakemiston
 
 Quadletissa on `AutoUpdate=registry`, eli image vaihtuu taustalla. Kerran se
