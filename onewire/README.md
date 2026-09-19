@@ -24,6 +24,12 @@ Nimet kertovat mitä ne mittaavat: **rakennetta, eivät huoneilmaa.** Pareja
 *sisä* ja *ulko* samassa paikassa, ikkunoiden ja ovien kohdilla, osa
 katonrajaan. Taulukko osoitteineen on [CLAUDE.md](CLAUDE.md):ssä.
 
+**Myös haarakartta on tallessa.** Vuoden 2015 listaukset oli otettu haara
+kerrallaan ja nimetty sen mukaan — keittiö, makuuhuoneet, olohuone, neljäs —
+joten tiedetään mikä anturi on millä haaralla. Sillä on merkitystä vain jos
+tähti joskus haaroitetaan omille nastoilleen, mutta silloin se säästää koko
+selvitystyön.
+
 Kaksi seurausta:
 
 - **Lattialämmityksen suunnitelma ei muutu.** Anturit eivät ole valussa, joten

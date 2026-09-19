@@ -417,25 +417,44 @@ Toiseen suuntaan kaksi laitetta on nimeämättä: **DS18S20 `10.0ED2A0020800`**,
 vanhemman polven lämpötila-anturi, ja `81.566632000000` joka on **sovitin
 itse** — OWFS näyttää isännän väylän laitteena, joten se ei ole anturi.
 
-### Listaukset eivät kerro haaroja
+### Haarakartta, tiedostonimistä luettuna
 
-**Tässä tiedostossa luki hetken että kumulatiiviset listaukset antavat
-haarakohtaisen ryhmittelyn. Ne eivät anna, ja vertailu PHP:n nimiin on se joka
-sen paljasti.**
+**Tiedostonimet ovat haarojen nimiä.** `keuttii.txt` on keittiön haara yksin,
+`keuttiijamakkarit.txt` on se plus makuuhuoneiden haara, ja niin edelleen —
+kumulatiivinen sarja jossa haara kytkettiin kerrallaan ja listaus otettiin.
+Joukkoerotus antaa siis haarakohtaisen jäsenyyden suoraan.
 
-Jokainen kumulatiivinen askel tuo mukanaan yhden `varasto`-kytkintulon, ja
-ensimmäinen tuo teknisen tilan kosteusanturin keittiön antureiden mukana.
-Huonekohtaisessa haarassa niin ei kävisi. Todennäköisin selitys on että
-**DS2406:t ovat keskipisteessä varastossa**, yksi kutakin haaraa kohden, ja että
-tiedostot seuraavat asennuksen etenemistä eivätkä sitä mikä pistoke oli kiinni.
+| Haara | Laitteet |
+|---|---|
+| **keittiö** | `28.FF265A750400` K ikkuna sisä · `28.FF897B750400` K ikkuna ulko · `26.139121010000` tekninen tila, kosteus · `10.0ED2A0020800` nimeämätön DS18S20 · `12.892EB6000000` latch |
+| **makuuhuoneet** | `28.FFEC79760400` MH3 pohjoinen · `28.FF7F35740400` MH3 itä · `28.799CF6050000` MH4 pohjoinen ulko · `28.785317060000` MH4 pohjoinen sisä · `28.65E657050000` MH4 länsi · `12.372EB6000000` latch |
+| **olohuone** | `28.FFBA7B760400` OH sisä · `28.FF807B750400` OH ulko · `12.BC37B6000000` latch |
+| **neljäs** | `28.1EF457050000` MH1 etelä sisä · `28.58EF57050000` MH1 länsi · `28.FF5F18730400` MH2 itä · `28.FF4E78760400` VH etelä sisä · `28.FF8276750400` VH etelä ulko · `12.2E30B6000000` ja `12.A82DB6000000` latch |
 
-Lisäksi listaukset eivät ole identtisissä oloissa otettuja: sovitin ja DS2438
-ovat mukana listauksissa 1, 2 ja 4 mutta puuttuvat listauksesta 3. **Laitteen
-puuttuminen yhdestä listauksesta ei siis todista sen poissaoloa**, mikä on sama
-epävakaus jota tähtitopologiassa muutenkin epäillään.
+Sovitin `81.566632000000` esiintyy listauksissa mutta ei kuulu mihinkään
+haaraan — OWFS näyttää isännän väylän laitteena.
 
-**Haaratopologia on siis yhä tuntematon** ja se selviää vasta kartoitusajosta,
-tarvittaessa haara kerrallaan keskipisteessä.
+**Jokainen haara tuo mukanaan yhden `varasto`-kytkintulon.** Tämä näytti ensin
+todisteelta siitä ettei ryhmittely ole haarakohtainen, ja se päätelmä oli
+väärä: selitys on että **DS2406:t ovat keskipisteessä varastossa, yksi kutakin
+haaraa kohden.** Viisi latchia tarkoittaa silloin viittä haaraa, joista neljä
+on näissä listauksissa. Neljäs listaus tuo kaksi latchia, eli siinä kytkettiin
+kaksi haaraa kerralla tai viides on hubin oma.
+
+Ja tekninen tila on keittiön haarassa, ei omassaan.
+
+**Tämä on suunnittelutietoa eikä pelkkä historia.** Jos tähti joskus
+haaroitetaan omille GPIO-nastoilleen, taulukko kertoo mitä kullakin nastalla
+olisi — ja samalla sen, että **kytkintulot jakautuvat haaroille** eivätkä ole
+yhdessä nipussa.
+
+### Yksi varaus listauksiin
+
+Ne eivät ole identtisissä oloissa otettuja: sovitin ja DS2438 ovat mukana
+listauksissa 1, 2 ja 4 mutta puuttuvat listauksesta 3. **Laitteen puuttuminen
+yhdestä listauksesta ei siis todista sen poissaoloa**, mikä on sama epävakaus
+jota tähtitopologiassa muutenkin epäillään. Haarajäsenyys on luettu
+lisäyksistä, ei puuttumisista, joten tämä ei horjuta taulukkoa.
 
 ## Kytkös lattialämmitykseen
 
