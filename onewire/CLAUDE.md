@@ -1064,7 +1064,8 @@ kymmenen sekunnin välein ei ole se käyttötapaus.
 Haara on yhä olemassa ja komponentti täydellinen:
 
 ```
-tdy91/esphome @ feature_dallas_pio   3e8806f7aace   19.4.2025
+tdy91/esphome @ feature_dallas_pio
+3e8806f7aace402a19c85ff38918ff702da53132   19.4.2025
 ```
 
 ```yaml
@@ -1072,7 +1073,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/tdy91/esphome
-      ref: 3e8806f7aace      # kiinnitä, älä jätä haaraa
+      ref: 3e8806f7aace402a19c85ff38918ff702da53132   # täysi sha, ei lyhennettä
 
     components: [dallas_pio]
 
@@ -1097,6 +1098,18 @@ binary_sensor:
 yksityishenkilön haara suljetussa PR:ssä — se voi kadota tai rebasoitua milloin
 tahansa, eikä kukaan ylläpidä sitä. Tämä on sama `@main`-ongelma jonka repo on
 kirjannut jo kolmesti, nyt pahimmassa mahdollisessa muodossaan.
+
+**Ja sha on annettava kokonaisena.** Lyhennetty muoto kaatuu:
+
+```
+couldn't find remote ref 3e8806f7aace
+```
+
+ESPHome ei resolvoi lyhennettä vaan antaa sen gitille sellaisenaan, eikä
+`git`-protokolla tunne osittaisia viitteitä — palvelin joko tunnistaa täyden
+objektinimen tai ei mitään. Aidonin `ref` on samasta syystä 40 merkkiä.
+**Lyhennetty sha näyttää dokumentissa siistimmältä ja rikkoo käännöksen**, eli
+se on juuri sellainen kauneusvirhe joka kannattaa kirjata.
 
 **Riski on versioero.** Komponentti on kirjoitettu ESPHome 2025.4:ää vasten ja
 laite ajaa 2026.9.0:aa — puolitoista vuotta ajautumista `one_wire`-rajapinnassa.
