@@ -13,7 +13,7 @@ existing on/off lever is the wrong shape, what each phase does, the one decision
 still open, and the four constraints that shape the rest.
 
 **Status: phase 1 works, and phase 2 is no longer waiting for parts.** The sniffer
-[`stiebel.eltron.yaml`](stiebel.eltron.yaml) is flashed and sitting on the bus
+[`wemos-mcp2515.yaml`](wemos-mcp2515.yaml) is flashed and sitting on the bus
 at X27. The bit rate is confirmed at 20 kbps, frames are captured and decoded in
 the log, and the addresses in use are known. What is left in phase 1 is naming
 the elements against the published table and turning them into Home Assistant
@@ -93,7 +93,8 @@ Stiebel WPC 07
   the transceiver is already slope-limited, which is what 20 kbps wants. No
   rework. See [`CLAUDE.md`](CLAUDE.md).
 - **ESP32-C3 SuperMini, 6 pcs** — the phase 2 board, since ESPHome takes 20 kbps
-  on the C3's built-in controller but not on a plain ESP32. Untested on this bus
+  on the C3's built-in controller but not on a plain ESP32. Untested on this bus;
+  [`esp32c3-230.yaml`](esp32c3-230.yaml) is the config that settles it
 
 **Still needed — nothing, for either phase**
 
@@ -217,7 +218,7 @@ order to check things in. The board itself is in
    needs no soldering.** Repeat the 49 kΩ measurement if you use one of the other
    two modules — a reading near 120 Ω means R2 is hard-wired and has to come off.
 2. **The crystal is already known: 8 MHz**, so the `substitutions:` block in
-   [`stiebel.eltron.yaml`](stiebel.eltron.yaml) needs no edit. Check the marking
+   [`wemos-mcp2515.yaml`](wemos-mcp2515.yaml) needs no edit. Check the marking
    anyway if you grab a different module from the box.
 3. **Wire it at 3.3 V** — the whole module, single rail. Pin table in
    [`CLAUDE.md`](CLAUDE.md).
@@ -243,8 +244,8 @@ work happens in the **ESPHome dashboard**, not on a command line:
 4. The same **Manual download** produces the binary once compilation succeeds.
 
 Note that the dashboard names the file after the device, so on the host it will
-be `wpc-can.yaml` while the repo keeps `stiebel.eltron.yaml` to match its
-directory. Same content, two naming conventions.
+be `wpc-can.yaml` while the repo names it `wemos-mcp2515.yaml` after the
+hardware it drives. Same content, two naming conventions.
 
 **Try `Install → Plug into this computer` first.** It compiles on the server and
 then flashes over serial from the machine running the *browser*, which is exactly

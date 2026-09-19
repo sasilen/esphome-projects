@@ -215,7 +215,9 @@ Jokainen projekti on oma hakemistonsa:
 ├── README.md              yleiskuva
 ├── CLAUDE.md              tekniset tiedot ja perustelut
 ├── BUILDLOG.md            rakennuskertomus (vain rakennetuissa projekteissa)
-├── <projekti>.yaml        ESPHome-konfiguraatio (jos olemassa)
+├── <projekti>.yaml        ESPHome-konfiguraatio (jos olemassa). Jos projektilla
+│                         on useampi solmu, nimi kertoo raudan tai vaiheen —
+│                         esim. stiebelin wemos-mcp2515.yaml ja esp32c3-230.yaml
 ├── secrets.yaml.example   mallipohja salaisuuksille
 ├── *.svg                  kytkentäkuvat
 └── *.jpg                  valokuvat osista. Pienennä ja **poista metadata**

@@ -2700,8 +2700,40 @@ check exists so that neither of them can be mistaken for a device.
 
 # ESPHome Configuration
 
-The phase 1 sniffer is [`stiebel.eltron.yaml`](stiebel.eltron.yaml). It reads
+The phase 1 sniffer is [`wemos-mcp2515.yaml`](wemos-mcp2515.yaml), named after
+the hardware it drives because this project now has more than one node. It reads
 and logs; it writes nothing, and it is not the phase 2 configuration.
+
+The C3 node is [`esp32c3-230.yaml`](esp32c3-230.yaml), named after its hardware
+like the sniffer is — the phase split lives inside the file, so the same node
+listens now, asks in 2a and writes in 2b. Today it holds the receive test: no
+sensors and two counters, because the question it answers is yes or no. Does the
+built-in TWAI controller read this bus, and does it produce the malformed frames
+the SPI read path produces?
+
+**Both configurations carry the same device name, `wpc-can`.** Home Assistant
+builds entity ids from it, so sharing it is what lets the C3 inherit this
+project's entity ids, history and long-term statistics rather than starting a
+parallel `wpc_c3_*` set beside them. It is safe because X27 takes one conductor
+per pole: the two nodes can never be on the bus at the same time.
+
+Two operational consequences follow, and neither is technical:
+
+- **Never power both boards on the network at once.** Two devices claiming
+  `wpc-can.local` is an mDNS collision, and an OTA would reach whichever
+  answered first — including the wrong board.
+- **Delete the old device from Home Assistant before adopting the new one.** The
+  C3 has a different MAC, so HA registers a new device; with the old config
+  entry still present it resolves the entity id clash by appending `_2` to
+  every entity, which is the exact outcome the shared name exists to prevent.
+  Statistics are keyed on the entity id and survive the gap between the two.
+
+**The decoding itself moves rather than being copied.** The frame handler takes
+an identifier and seven bytes and knows nothing about which controller delivered
+them, so it ports unchanged — but it ports once the receive test has passed, and
+the copy in `wemos-mcp2515.yaml` stays as the rollback. If both files ever need
+it at once, that is the point to factor the sensors and globals into a shared
+`packages:` include rather than to maintain two copies.
 
 `board: d1_mini` assumes 4 MB of flash, and `esptool flash_id` confirms it:
 **Detected flash size: 4MB**, chip ESP8266EX. The listing said "4MBit", which

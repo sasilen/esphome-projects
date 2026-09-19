@@ -1,0 +1,279 @@
+# Stiebel Eltron WPC 07 — the ESP32-C3 + SN65HVD230 node
+#
+# Named after its hardware rather than after a phase, because **the phase split
+# is in this file and not in the wiring**: the same node listens today, asks for
+# values in 2a and writes setpoints in 2b. A name like `phase2a1.yaml` would
+# have gone stale the first time it grew.
+#
+# **What it does today is one question.** If ESPHome's built-in TWAI controller
+# reads the pump's 20 kbps bus cleanly, the MCP2515 disappears from this project
+# along with the SPI wiring, the lifted pin, the crystal question, the level
+# shifting and the receive-stall bug. If it does not, the route dies here and
+# `wemos-mcp2515.yaml` stays as it is.
+#
+# So this node publishes **no sensors yet**. Decoding the bus into entities is
+# already done in wemos-mcp2515.yaml and duplicating 400 lines of dispatch here
+# would mean maintaining two copies of it to answer a yes/no question. What it
+# publishes instead is two counters, which is what the question needs. The
+# dispatch moves over once the receive test has passed and this node takes the
+# bus for good.
+#
+# Hardware: ESP32-C3 SuperMini + SN65HVD230 breakout, drawn in
+# wiring-phase2a.svg. Both board resistors are measured: R2 = 115 Ω so the
+# terminator is fitted, R1 = 9.5 kΩ so the driver is slope-limited and not in
+# standby. USB-C powers it for this step — use a Class II supply, because the
+# bus reference is a floating SELV rail and an earthed supply would tie it to
+# protective earth.
+#
+# X27 takes one conductor per pole, so this node replaces the D1 mini at the
+# terminal rather than joining it. Leave that node assembled: swapping two
+# wires back is the rollback path.
+
+substitutions:
+  # Confirmed by two hours of capture on this machine, not assumed.
+  can_bit_rate: "20KBPS"
+
+# **The same device name as wemos-mcp2515.yaml, on purpose.** Entity ids in Home
+# Assistant are built from it, so reusing it is what lets this node inherit the
+# old one's entity ids, history and long-term statistics instead of starting a
+# parallel set of `wpc_c3_*` entities beside them. X27 takes one node, so the two
+# can never be on the bus together anyway.
+#
+# It costs two things, and both are operational rather than technical:
+#
+#   **Never power both boards on the network at once.** Two devices claiming
+#   wpc-can.local is an mDNS collision, and OTA would then reach whichever
+#   answered first — including the wrong board.
+#
+#   **Delete the old device from Home Assistant before adopting this one.** The
+#   new board has a different MAC, so HA sees a new device; with the old config
+#   entry still present it would resolve the entity id clash by appending `_2`
+#   to every entity, which is exactly the outcome this shared name exists to
+#   avoid. Statistics are keyed on the entity id and survive the gap.
+esphome:
+  name: wpc-can
+  friendly_name: WPC 07 CAN
+
+# The board line is the whole reason this file can exist. ESPHome tabulates
+# supported bit rates per variant: esp32dev refuses 20 kbps and the C3, C6 and
+# S3 accept it. See CLAUDE.md, "And the C3 takes it too".
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+logger:
+  # INFO, not DEBUG. At DEBUG the canbus component logs every frame itself, on
+  # top of the handler below, and this bus carries over 200 frames a minute.
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "WPC CAN fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+
+# ------------------------------------------------------------------------ CAN
+# `mode: LISTENONLY` is deliberately left in rather than commented out, and it
+# is the first half of this step's test.
+#
+# A node in normal mode acknowledges frames and emits error frames even when it
+# sends nothing of its own, which makes it an active participant on the heat
+# pump's bus. Whether esp32_can exposes the option is the open question in
+# wiring-phase2a.svg, and `esphome config` answers it before anything is
+# soldered:
+#
+#   validates -> listen-only exists, and this node can go on the live bus
+#                passively, exactly as phase 1 did
+#   rejected  -> it does not. Do NOT flash this against the pump. Build the
+#                two-node bench bus first and prove transmission there, because
+#                a node that cannot be silent is transmitting from the moment
+#                it is connected.
+#
+# can_id is the transmit identifier. Nothing is transmitted in this step, but
+# the schema requires it — and 0x680 is already the vetted choice: it never
+# appeared in two hours of capture, while 0x301 did.
+
+canbus:
+  - platform: esp32_can
+    id: can0
+    tx_pin: GPIO4
+    rx_pin: GPIO5
+    bit_rate: ${can_bit_rate}
+    mode: LISTENONLY
+    can_id: 0x680
+
+    on_frame:
+      - can_id: 0x000
+        can_id_mask: 0x000
+        use_extended_id: false
+        then:
+          - lambda: |-
+              // The same shape check wemos-mcp2515.yaml applies before it
+              // decodes anything, and here it is the instrument rather than a
+              // guard. Its bounds come from the capture:
+              //
+              //   n != 7       not an Elster telegram at all
+              //   cmd > 5      system frames do not use this layout
+              //   x[2] > 0xFA  0xFA is the only defined marker
+              //   sender       every real identifier is a multiple of 0x080
+              //                plus 0-3
+              //
+              // On the MCP2515 node two frames in 95 000 failed it, and the
+              // flipped bits clustered in the low bits of adjacent bytes —
+              // which points at the SPI read path rather than at the wire.
+              // **TWAI has no SPI.** So the malformed counter below is the
+              // measurement that turns that prediction into a finding or
+              // kills it, and it is directly comparable with the recorded
+              // phase 1 logs because the bus repeats itself all day.
+              id(frame_count) += 1;
+
+              const uint8_t n = x.size();
+              const uint8_t cmd = n >= 1 ? (x[0] & 0x0F) : 0xFF;
+              const bool malformed =
+                  (n != 7 || cmd > 5 || x[2] > 0xFA || (can_id & 0x7F) > 3);
+
+              if (malformed) {
+                id(malformed_count) += 1;
+                char raw[25] = {0};
+                for (uint8_t i = 0; i < n && i < 8; i++)
+                  sprintf(raw + i * 3, "%02X ", x[i]);
+                ESP_LOGW("can", "%03X raw dlc=%u  %s",
+                         (unsigned) can_id, (unsigned) n, raw);
+                return;
+              }
+
+              // Well-formed frames are counted and otherwise silent unless the
+              // switch is on. Per-frame logging over the API is what stalled
+              // the ESP8266 receiver at about four lines a second; the C3 has
+              // far more headroom, but volume is still not evidence and the
+              // counters answer the question on their own.
+              if (!id(log_frames).state)
+                return;
+
+              static const char *const CMD[6] = {
+                  "wr", "rd", "resp", "ack", "wack", "wres"};
+              const uint16_t receiver =
+                  ((uint16_t) (x[0] & 0xF0) << 3) | (x[1] & 0x7F);
+              const bool ext = x[2] == 0xFA;
+              const uint16_t element =
+                  ext ? ((uint16_t) x[3] << 8 | x[4]) : x[2];
+              const uint16_t value = ext ? ((uint16_t) x[5] << 8 | x[6])
+                                         : ((uint16_t) x[3] << 8 | x[4]);
+              ESP_LOGI("can", "%03X>%03X %-4s %2s=%04X = %d",
+                       (unsigned) can_id, (unsigned) receiver, CMD[cmd],
+                       ext ? "ex" : "e", element, (int) (int16_t) value);
+
+
+globals:
+  - id: frame_count
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+  - id: malformed_count
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+  # Stall-notice state; see the interval block below.
+  - id: last_seen_count
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: quiet_checks
+    type: uint8_t
+    restore_value: false
+    initial_value: "0"
+
+
+# --------------------------------------------------------------- Stall notice
+# wemos-mcp2515.yaml restarts the node when frames stop, because the MCP2515
+# latches an overflow flag and then never receives again until it is reset.
+# **This file warns and does not restart**, on purpose: whether TWAI has that
+# failure mode at all is part of what this step is measuring, and a watchdog
+# that papers over a stall would destroy the evidence for it.
+#
+# Twenty seconds keeps the fourfold margin over the worst natural gap between
+# frames, which a two-hour capture measured at 4.7 s.
+
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          if (id(frame_count) == id(last_seen_count)) {
+            id(quiet_checks) += 1;
+          } else {
+            id(quiet_checks) = 0;
+            id(last_seen_count) = id(frame_count);
+          }
+      - if:
+          condition:
+            lambda: "return id(quiet_checks) == 2;"
+          then:
+            - logger.log:
+                level: WARN
+                format: "No frames for 20 s - NOT restarting, this is the measurement"
+
+
+sensor:
+  # The two numbers this step exists to produce. Compare both against the
+  # recorded phase 1 logs: the bus is stationary, so a run of comparable length
+  # is a fair comparison even though the nodes cannot be on it at the same time.
+  - platform: template
+    name: "CAN frames"
+    id: can_frames
+    accuracy_decimals: 0
+    update_interval: 10s
+    unit_of_measurement: "frames"
+    state_class: total_increasing
+    entity_category: diagnostic
+    lambda: "return id(frame_count);"
+
+  - platform: template
+    name: "Malformed frames"
+    id: malformed_frames
+    accuracy_decimals: 0
+    update_interval: 10s
+    unit_of_measurement: "frames"
+    state_class: total_increasing
+    entity_category: diagnostic
+    lambda: "return id(malformed_count);"
+
+  - platform: wifi_signal
+    name: "Wi-Fi"
+    update_interval: 60s
+    entity_category: diagnostic
+
+  # The only line that distinguishes a reboot from a log client connecting.
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+
+
+switch:
+  - platform: template
+    id: log_frames
+    name: "Log every frame"
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    entity_category: config
+
+
+button:
+  - platform: restart
+    name: "Restart"
+    entity_category: diagnostic

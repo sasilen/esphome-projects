@@ -27,6 +27,11 @@ substitutions:
   # compile time — changing it is an edit and a re-flash, never a runtime knob.
   can_bit_rate: "20KBPS"
 
+# `esp32c3-230.yaml` carries this same device name deliberately, so that the C3
+# inherits these entity ids and their history when it takes the bus. Two
+# consequences: never power both boards on the network at once, and remove the
+# old device from Home Assistant before adopting the new one. Reasoning is in
+# that file's header.
 esphome:
   name: wpc-can
   friendly_name: WPC 07 CAN
