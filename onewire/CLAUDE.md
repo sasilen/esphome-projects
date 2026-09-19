@@ -1277,6 +1277,52 @@ Se vaatii toisen entiteetin per ovi tai yhdistetyn tilan, ja se on juuri se
 ominaisuus jonka takia DS2406 valittiin DS2413:n sijaan — **tässä verkossa se
 on ollut käyttämättä koko ajan.**
 
+### Salpa raportoidaan ennen nollausta, ja todiste tuli vahingossa
+
+`ALR=1` otettiin käyttöön, ja ensimmäisellä kierroksella PIOA:n salpa putosi
+ykkösestä nollaan kaikilla kuudella. Se **ei vielä todista mitään**: jos piiri
+nollaisi salvan ennen raportointia, tulos olisi tismalleen sama.
+
+Todiste tuli toiselta kanavalta. `322EB6`:n PIOB vaihtaa tilaa itsestään, ja
+kierroksella jolla se putosi ykkösestä nollaan **salpa raportoitiin ykkösenä
+samassa tavussa**:
+
+```
+22:01:26  0xE3   A: taso=0 salpa=0    B: taso=0 salpa=1
+```
+
+Salpa ei siis ehtinyt nollautua ennen raportointia. **Channel Info kertoo
+tilanteen ennen nollausta, ja `ALR=1` on oikea tapa lukea se.** PIOA:n nolla
+tarkoittaa siis oikeasti että ovi ei ole liikkunut.
+
+### `322EB6`:n toinen kanava on kytketty johonkin joka käy jaksoittain
+
+Viidellä latchilla PIOB on vakaasti korkealla, eli kytkemättä. **Kuudennella se
+liikkuu:**
+
+| klo | PIOB |
+|---|---|
+| 21:45 | korkea |
+| 21:48 | **matala** |
+| 21:49 | korkea |
+| 21:53 | **matala** |
+| 21:54 | korkea |
+| 22:01 | **matala** |
+
+Matalia jaksoja noin viiden–kahdeksan minuutin välein. **Se ei ole ovi** — ovi
+ei avaudu itsestään viiden minuutin välein. Se on jokin joka kytkeytyy päälle
+ja pois: pumppu, puhallin, termostaatti tai vastaava.
+
+**Näyte on kerran minuutissa**, joten todellinen jakso voi olla lyhyempi tai
+pidempi kuin taulukko antaa ymmärtää. Nopeampi pollaus tai salvan seuraaminen
+kertoisi sen tarkemmin.
+
+Kaksi asiaa tekee tästä merkittävän. `322EB6` on **se latch jota ei ole vuoden
+2020 kartassa** — myöhempi lisäys, sarjanumeroltaan makuuhuoneiden latchin
+naapuri. Ja se on ainoa jonka molemmat kanavat ovat käytössä. Mitä tahansa
+siihen on kytketty, se on asennettu kartan kirjoittamisen jälkeen eikä ole
+ovi.
+
 ### Mikä ne ovat, ja mikä päättely meni pieleen
 
 **Ne ovat ovikoskettimia**, omistajan mukaan.
