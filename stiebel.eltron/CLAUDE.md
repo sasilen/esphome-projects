@@ -3171,6 +3171,13 @@ delivers the panel's numbers on demand without changing anything in the machine,
 and it exercises the identity, the bit rate and the transceiver in the one
 direction that cannot damage the heat pump.
 
+The node is drawn in [`wiring-phase2a.svg`](wiring-phase2a.svg): C3, transceiver,
+X27 and the supply taken from pin 4 through the buck. It assumes the C3 route —
+if the bench test sends it the other way, the wiring is
+[`phase2-transceiver.svg`](phase2-transceiver.svg) instead and everything above
+about 2a still holds, because the split is in the configuration and not in the
+hardware.
+
 ### 2b — writes
 
 - Identify the writable elements: heating curve slope, room setpoint

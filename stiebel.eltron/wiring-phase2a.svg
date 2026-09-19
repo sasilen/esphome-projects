@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1120" width="760" height="1120" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="1120" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="1080" fill="none" stroke="#A8B3BC"/>
+
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">PHASE 2a &#8212; THE ASKING NODE</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">ESP32-C3 + SN65HVD230 &#183; no MCP2515, no SPI, no lifted pin &#183; same wiring serves the listen test</text>
+  <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
+
+  <text x="50" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">NODE</text>
+  <text x="332" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">TRANSCEIVER</text>
+  <text x="592" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">HEAT PUMP</text>
+
+  <!-- C3 -->
+  <rect x="50" y="150" width="180" height="250" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="140" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">ESP32-C3</text>
+  <text x="140" y="192" font-size="10" fill="#5A6772" text-anchor="middle">SuperMini</text>
+  <g font-size="11" fill="#16212B">
+    <text x="150" y="204">3V3</text>
+    <text x="150" y="240">GND</text>
+    <text x="126" y="276">GPIO4</text>
+    <text x="126" y="312">GPIO5</text>
+  </g>
+  <text x="140" y="372" font-size="11" font-weight="700" fill="#16212B" text-anchor="middle">5V</text>
+  <text x="140" y="388" font-size="9.5" fill="#5A6772" text-anchor="middle">from the buck below</text>
+
+  <!-- VP230 -->
+  <rect x="330" y="150" width="180" height="250" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="420" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">SN65HVD230</text>
+  <text x="420" y="192" font-size="10" fill="#5A6772" text-anchor="middle">VP230 breakout</text>
+  <g font-size="11" fill="#16212B">
+    <text x="340" y="204">3V3</text>
+    <text x="340" y="240">GND</text>
+    <text x="340" y="276">CTX</text>
+    <text x="340" y="312">CRX</text>
+    <text x="466" y="348" text-anchor="end">CANH</text>
+    <text x="466" y="384" text-anchor="end">CANL</text>
+  </g>
+  <rect x="356" y="326" width="30" height="16" rx="2" fill="#FFF0EE" stroke="#A3301F"/>
+  <text x="371" y="339" font-size="9.5" font-weight="700" fill="#A3301F" text-anchor="middle">R1?</text>
+  <rect x="356" y="360" width="30" height="16" rx="2" fill="#FFF0EE" stroke="#A3301F"/>
+  <text x="371" y="373" font-size="9.5" font-weight="700" fill="#A3301F" text-anchor="middle">R2?</text>
+
+  <!-- X27 -->
+  <rect x="590" y="150" width="120" height="250" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="650" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">X27</text>
+  <text x="650" y="192" font-size="10" fill="#5A6772" text-anchor="middle">board A2</text>
+  <g font-size="11" fill="#16212B">
+    <text x="602" y="348">1  H</text>
+    <text x="602" y="384">2  L</text>
+    <text x="602" y="240">3  &#9179;</text>
+  </g>
+  <rect x="598" y="404" width="104" height="30" rx="2" fill="#FFF0EE" stroke="#A3301F"/>
+  <text x="608" y="424" font-size="11" font-weight="700" fill="#A3301F">4  +12V</text>
+
+  <!-- wires -->
+  <g stroke="#0E6E7C" stroke-width="1.5" fill="none">
+    <line x1="230" y1="200" x2="330" y2="200"/>
+    <line x1="230" y1="272" x2="330" y2="272"/>
+    <line x1="510" y1="344" x2="590" y2="344"/>
+  </g>
+  <g stroke="#2E5F8A" stroke-width="1.5" fill="none">
+    <line x1="230" y1="308" x2="330" y2="308"/>
+    <line x1="510" y1="380" x2="590" y2="380"/>
+  </g>
+  <g stroke="#16212B" stroke-width="1.5" fill="none">
+    <line x1="230" y1="236" x2="590" y2="236"/>
+  </g>
+  <g font-size="9.5" fill="#5A6772">
+    <text x="280" y="194" text-anchor="middle">3.3 V</text>
+    <text x="280" y="266" text-anchor="middle">CTX</text>
+    <text x="280" y="302" text-anchor="middle">CRX</text>
+    <text x="410" y="230" text-anchor="middle">common ground &#8212; one net, three ends</text>
+    <text x="550" y="338" text-anchor="middle">H</text>
+    <text x="550" y="374" text-anchor="middle">L</text>
+  </g>
+
+  <text x="420" y="424" font-size="10.5" font-weight="700" fill="#0E6E7C" text-anchor="middle">native 3.3 V part &#8212; one rail, no level shifting</text>
+
+  <!-- power path -->
+  <rect x="330" y="470" width="180" height="60" rx="4" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <text x="420" y="494" font-size="12" font-weight="700" fill="#A3301F" text-anchor="middle">LM2596 buck</text>
+  <text x="420" y="512" font-size="10" fill="#16212B" text-anchor="middle">set to 5.0 V BEFORE the load</text>
+  <g stroke="#A3301F" stroke-width="1.5" fill="none">
+    <path d="M 650 434 L 650 500 L 510 500"/>
+    <path d="M 330 500 L 140 500 L 140 400"/>
+  </g>
+  <text x="580" y="464" font-size="9.5" fill="#A3301F" text-anchor="middle">17.4 V measured</text>
+  <text x="222" y="492" font-size="9.5" fill="#A3301F" text-anchor="middle">5 V to the board</text>
+
+  <text x="50" y="560" font-size="11.5" fill="#16212B"><tspan font-weight="700">Pin 4 never reaches the transceiver.</tspan> The legend says +12 V and the rail measures 17.4 V at light</text>
+  <text x="50" y="578" font-size="11.5" fill="#16212B">load, so the buck's output must be set with a meter before anything is connected to it.</text>
+
+  <line x1="20" y1="600" x2="740" y2="600" stroke="#A8B3BC"/>
+
+  <text x="50" y="628" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">THE TWO RESISTORS ARE STILL UNREAD, AND THEY ARE THE FIRST JOB</text>
+  <text x="50" y="650" font-size="11.5" fill="#16212B"><tspan font-weight="700">R2</tspan> sits between CANH and CANL. Marked <tspan font-weight="700">121</tspan> it is the 120 &#8486; terminator &#8212; and this bus measured</text>
+  <text x="50" y="668" font-size="11.5" fill="#16212B">150 &#8486;, i.e. unterminated, so leaving it fitted is probably right rather than a nuisance.</text>
+  <text x="50" y="690" font-size="11.5" fill="#16212B"><tspan font-weight="700">R1</tspan> sets the Rs slope mode. At 20 kbps slope limiting is a free EMC improvement in a cabinet</text>
+  <text x="50" y="708" font-size="11.5" fill="#16212B">that switches compressor contactors. Reading it also settles whether a separate TVS is needed.</text>
+
+  <line x1="20" y1="730" x2="740" y2="730" stroke="#A8B3BC"/>
+
+  <text x="50" y="758" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">CONFIGURATION</text>
+  <rect x="50" y="774" width="330" height="128" rx="4" fill="#FFFFFF" stroke="#A8B3BC"/>
+  <g font-size="11" fill="#16212B">
+    <text x="66" y="798">canbus:</text>
+    <text x="66" y="816">  - platform: esp32_can</text>
+    <text x="66" y="834">    tx_pin: GPIO4</text>
+    <text x="66" y="852">    rx_pin: GPIO5</text>
+    <text x="66" y="870">    can_id: 0x680</text>
+    <text x="66" y="888">    bit_rate: 20kbps</text>
+  </g>
+  <g font-size="11" fill="#16212B">
+    <text x="400" y="798"><tspan font-weight="700">The board line is what unlocks</tspan></text>
+    <text x="400" y="814">20 kbps. ESPHome tabulates the</text>
+    <text x="400" y="830">rate per variant and refuses it</text>
+    <text x="400" y="846">on the plain ESP32.</text>
+    <text x="400" y="872"><tspan font-weight="700">0x680</tspan> never appeared in two</text>
+    <text x="400" y="888">hours of capture. 0x301 did.</text>
+  </g>
+  <text x="50" y="924" font-size="11.5" fill="#16212B"><tspan font-weight="700">Pins are a proposal, not a reading of the board.</tspan> GPIO2, 8 and 9 are strapping pins and GPIO8</text>
+  <text x="50" y="942" font-size="11.5" fill="#16212B">also drives the SuperMini's LED, so the CAN pair stays away from all three.</text>
+
+  <rect x="50" y="966" width="660" height="114" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <rect x="50" y="966" width="6" height="114" fill="#A3301F"/>
+  <text x="74" y="992" font-size="12" font-weight="700" fill="#A3301F">BEFORE THIS TOUCHES THE HEAT PUMP</text>
+  <text x="74" y="1016" font-size="11.5" fill="#16212B"><tspan font-weight="700">Bench first:</tspan> two of these, 120 &#8486; at each end, nothing connected to the pump.</text>
+  <text x="74" y="1038" font-size="11.5" fill="#16212B"><tspan font-weight="700">X27 takes one node</tspan> &#8212; one conductor per pole, so this is a swap or a splice in the drop.</text>
+  <text x="74" y="1060" font-size="11.5" fill="#16212B"><tspan font-weight="700">Listen-only on esp32_can is unverified</tspan> &#8212; confirm it before trusting a silent first test.</text>
+</svg>

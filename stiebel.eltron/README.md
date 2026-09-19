@@ -343,7 +343,8 @@ machine. Do 2a first with the write path left out of the configuration.
   free — a mixer module writes to it
 - **2a: ask for what the bus does not volunteer.** Values like the DHW and flow
   setpoints were each requested once in two hours, so they stay empty until
-  something asks. Requesting costs bus time, not wear — see [`CLAUDE.md`](CLAUDE.md)
+  something asks. Requesting costs bus time, not wear — see [`CLAUDE.md`](CLAUDE.md).
+  The node is drawn in [`wiring-phase2a.svg`](wiring-phase2a.svg)
 - **2b: identify the writable elements** — heating curve slope, room setpoint
   (comfort/ECO), DHW setpoint, operating mode
 - **Copy the machine's own write-then-verify pattern.** The manager writes four

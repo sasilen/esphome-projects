@@ -100,9 +100,9 @@
   <rect x="50" y="846" width="6" height="116" fill="#0E6E7C"/>
   <text x="74" y="874" font-size="11.5" font-weight="700" fill="#0E6E7C">C3 RECEIVES &#8212; C3 TAKES IT</text>
   <g font-size="10.5" fill="#16212B">
-    <text x="74" y="902">the MCP2515 disappears:</text>
-    <text x="74" y="920">no SPI wiring, no lifted pin,</text>
-    <text x="74" y="938">no crystal question, no level</text>
+    <text x="74" y="902">wiring-phase2a.svg draws it:</text>
+    <text x="74" y="920">no SPI, no lifted pin, no</text>
+    <text x="74" y="938">crystal question, no level</text>
     <text x="74" y="954">shifting, no receive stall</text>
   </g>
 
