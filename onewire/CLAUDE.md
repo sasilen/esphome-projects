@@ -129,6 +129,33 @@ asentaja ajatteli tekevänsä — pistoke määräsi sen.
 1, 2 ja 6. Se mitataan eikä päätellä, ja se on ainoa kohta tässä projektissa
 jossa virhe tuhoaa antureita sen sijaan että jättäisi väylän hiljaiseksi.
 
+**Mutta tässä verkossa syöttö on jo vedetty**, koska sitä on ajettu myös
+Raspberryn GPIO:sta kolmella johtimella. Se ratkaisee kolme asiaa kerralla:
+
+- **Verkko on 3,3 voltin verkko.** Raspberryn 1-Wire on 3,3 V, joten syöttö ja
+  ylösveto ovat sillä tasolla. C3:n 3V3 on suoraan oikea, eikä datalinjassa voi
+  olla 5 V:a joka tappaisi GPIO:n — riski joka 5 voltin 1-Wire-verkossa olisi
+  todellinen.
+- **Tähti toimii tässä talossa.** Jos Raspberry luki verkkoa, topologia ei ole
+  ollut este. Kysymys *miksi verkko ei ole käytössä* siirtyy siihen että isäntä
+  poistui, ei siihen että verkko petti.
+- **Vanha kaapeli on dokumentaatio.** Jos se löytyy, siitä lukee syöttöjohdin
+  suoraan eikä mitään tarvitse päätellä konventioista.
+
+### Ylösveto voi olla jo paikallaan
+
+Raspberryn `w1-gpio` vaatii ulkoisen 4,7 kΩ:n. Jos se on aikanaan asennettu
+keskipisteeseen tai kaapeliin Raspberryn pään sijaan, **se on yhä siellä** — ja
+toinen ylösveto C3:lla laittaisi ne rinnan, jolloin yhteisvastus olisi 2,35 kΩ.
+Se ei riko mitään, mutta se ei ole tarkoitus eikä sitä huomaa mistään.
+
+Yksi mittaus ennen kuin vastusta juotetaan mihinkään, kaikki jännitteet pois:
+
+| DQ ↔ VDD | Päätelmä |
+|---|---|
+| ~4,7 kΩ | ylösveto on jo verkossa — älä lisää toista |
+| avoin | se oli Raspberryn päässä — lisää omasi |
+
 Tästä seuraa menettely joka rajaa riskin nollaan: **todenna data ja paluu
 kahdella johtimella ennen kuin kytket kolmannen.** DS9490 ajaa väylää
 loiskäytöllä eikä anna syöttöä, joten se luetteloi koko verkon ilman että VDD:tä

@@ -58,6 +58,10 @@ yleismittarilla ja yhteensä viisi minuuttia:
 3. **Tarkista oikosulku.** DQ ja maa eivät saa soida keskenään. Jos soivat,
    jossain on vaurioitunut anturi tai puristunut kaapeli — ja koko väylä on
    silloin hiljainen riippumatta siitä mitä isäntä tekee.
+4. **Mittaa DQ:n ja VDD:n väli.** Verkkoa on ajettu myös Raspberryn GPIO:sta,
+   joka vaatii ulkoisen 4,7 kΩ:n ylösvedon — ja jos se asennettiin keskipisteeseen
+   eikä Raspberryn päähän, se on yhä siellä. **~4,7 kΩ tarkoittaa ettei toista
+   lisätä**; avoin tarkoittaa että omansa tarvitaan.
 
 **Maa ensin, ja se on tärkeysjärjestys eikä tapa.** DQ:n ja VDD:n sekoittaminen
 on toivuttavaa; maan ja VDD:n sekoittaminen ei ole.
