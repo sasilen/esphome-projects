@@ -93,30 +93,49 @@ silmällä.** Koko ketju premisseineen on [CLAUDE.md](CLAUDE.md):ssä.
 nastojen merkitys tiedetään: nasta 7 on GPIO4 eli data, nasta 1 on 3,3 V ja
 nasta 6 on maa. Jatkuvuus RJ45-pistokkeesta rimaan antaa taulukon suoraan.
 
-### C3 tarvitsee oman kaapelinsa
+### Kaapeli siirretään, ei tehdä uutta
 
 ![Ylösveto Raspberryn rimassa](rpi-pullup.jpg)
 
-**Kuva on vanhasta toteutuksesta**, ei siitä mitä rakennetaan. Se dokumentoi
-yhden asian joka ei selviäisi mistään muualta: **ylösveto on isännän päässä**,
-juotettuna suoraan riman kahden nastan väliin. Verkossa itsessään ei ole
-ylösvetoa.
+**Kuva on vanhasta toteutuksesta.** Se dokumentoi yhden asian joka ei selviäisi
+mistään muualta: **ylösveto on isännän päässä**, juotettuna suoraan riman
+kahden nastan väliin. Verkossa itsessään ei ole ylösvetoa.
 
-Raspberryn kaapeli jää paikalleen ja koskemattomaksi. C3:lle tehdään vastaava:
+Kaapeli on tehty kerran ja se toimii, joten se siirretään sellaisenaan
+Raspberrystä C3:lle — ei uutta pistoketta eikä jatkoholkkia. Neljä johdinta
+irti rimasta ja kiinni C3:een.
 
-1. **Uusi RJ45-pistoke**, samat kolme paikkaa kuin vanhassa. Väri saa olla mikä
-   tahansa — paikka ratkaisee, ei väri. Liitä se verkkoon **RJ45-jatkoholkilla**:
-   rasiaa ei tarvitse avata, vaihto Raspberryn ja C3:n välillä on kahden
-   sekunnin operaatio, ja holkki pakottaa yhden isännän kerrallaan fyysisesti.
-2. **Toinen pää suoraan C3:een juotettuna.** Ei rimaa eikä dupont-liittimiä —
-   sama peruste kuin stiebelin solmussa: katkeileva datakontakti lukee nollana
-   antureita, eikä se erotu mitenkään muista syistä joilla väylä on hiljainen.
-3. **4,7 kΩ DQ:n ja VDD:n väliin** C3:n päässä.
-4. **Vedonpoisto** siihen kohtaan mistä kaapeli lähtee levyltä.
+1. **Flashaa C3 ennen kuin kolviin kosket.** Minuutin työ, ja konfiguraatio
+   putoaa epäiltyjen listalta pysyvästi. Penkillä oikea tulos on että kaikki
+   kaksikymmentä anturia ovat `unavailable` — väylää ei ole.
+2. **Rima C3:een.** Alkuperäinen kaapeli on juotettu suoraan riman nastoihin,
+   joten sama rakenne on jatkumoa eikä poikkeus. Jos käytät dupontia riman
+   päällä, muista että **katkeileva datakontakti lukee nollana antureita** eikä
+   erotu mitenkään muista syistä joilla väylä on hiljainen.
+3. **Vastus GPIO4:n ja 3V3:n väliin.** Rimassa se on nastojen 1 ja 7 välissä;
+   C3:lla asento on eri mutta tehtävä sama. **3V3, ei 5V** — tämä on kytkennän
+   ainoa kohta jossa virhe tuhoaa GPIO:n.
+4. **Neljä johdinta:** punainen 5V, keltainen GPIO4, musta ja valkoinen GND.
+5. **Vedonpoisto.** Kaapeli on tähän asti roikkunut Raspberryn painon varassa;
+   C3 on kymmenesosa siitä eikä pidä sitä paikallaan.
 
-**Molemmat isännät eivät saa olla kiinni yhtä aikaa.** Kun C3:n pistoke menee
-rasiaan, Raspberryn pistoke tulee pois — tai päinvastoin. Kaksi isäntää samalla
-väylällä rikkoo ajoituksen molemmilta.
+**Palautus on juotostyö, ei pistokkeen vaihto.** Se on tämän valinnan hinta:
+uusi kaapeli ja jatkoholkki olisivat tehneet vaihdosta kahden sekunnin
+operaation. Vastapainona ei tarvita uutta pistoketta eikä oteta riskiä siitä
+että uusi puristus on huono.
+
+Palautusta varten riittää tämä taulukko, ja se on kuvaa parempi lähde — kuva
+näyttää missä johtimet olivat, taulukko sanoo mitä ne ovat:
+
+| Raspberryn nasta | Signaali | Johdin |
+|---|---|---|
+| 1 | 3,3 V | vain vastus, ei johdinta |
+| 2 | 5 V | punainen |
+| 6 ja 9 | GND | musta ja valkoinen |
+| 7 | GPIO4, data | keltainen |
+
+**Yksi isäntä kerrallaan.** Kun kaapeli on siirretty, Raspberryllä ei ole enää
+väylää — mikä on tässä ratkaisussa automaattista eikä muistin varassa.
 
 ## Ennen kuin kytket isännän
 
@@ -159,17 +178,16 @@ OWFS-muoto `28.FF265A750400`, ja ESPHome haluaa täyden 64-bittisen
 ROM-osoitteen CRC:n kanssa. Sitä ei voi laskea OWFS-muodosta, mutta ESPHome
 luetteloi sen itse.
 
-### Neljä askelta, ja flashaus on ensimmäinen
+### Kolme askelta, ja flashaus on ensimmäinen
 
 1. **Flashaa [`onewire.yaml`](onewire.yaml) ennen kuin kolviin kosket.** Se
    erottaa vikaluokat: jos konfiguraatio on todettu toimivaksi, ensimmäinen
-   tyhjä luettelo ei voi johtua siitä. Penkillä oikea tulos on että kaikki
-   anturit ovat `unavailable` — väylää ei ole.
+   tyhjä luettelo ei voi johtua siitä.
 2. **Vie levy keskipisteeseen ja katso RSSI.** Varasto voi olla huono paikka
    radiolle, ja SuperMinin keraaminen antenni on tunnetusti heikko. Aidonin
    mittarikaapista on kirjattu −87…−90 dBm liian heikoksi.
-3. **Kaapeli ja pistoke** — neljä johdinta, vastus C3:n päähän
-4. **Kytke holkkiin** ja katso täyttyvätkö anturit
+3. **Siirrä kaapeli Raspberrystä C3:een** — ks. alla — ja katso täyttyvätkö
+   anturit
 
 **Vertaa luetteloa näihin kahteenkymmeneen.** ESPHome luetteloi käynnistyksessä
 kaikki väylältä löytyvät osoitteet, ei vain niitä joille on määritelty anturi.
