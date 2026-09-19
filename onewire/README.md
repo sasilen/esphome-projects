@@ -46,6 +46,29 @@ DS18B20-sauvan vakiovärit — ja kolme johdinta kahdeksasta paikasta on täytet
 Uusi pistoke tehdään samoilla väreillä samoihin paikkoihin, vanha vieressä.
 Se on luotettavampi kuin konventiotaulukko, koska se on tämän talon asennus.
 
+### C3 tarvitsee oman kaapelinsa
+
+![Ylösveto Raspberryn rimassa](rpi-pullup.jpg)
+
+**Kuva on vanhasta toteutuksesta**, ei siitä mitä rakennetaan. Se on
+dokumentaatio kahdesta asiasta: värikoodista ja siitä että **ylösveto on
+isännän päässä**, juotettuna suoraan riman kahden nastan väliin. Verkossa
+itsessään ei ole ylösvetoa.
+
+Raspberryn kaapeli jää paikalleen ja koskemattomaksi. C3:lle tehdään vastaava:
+
+1. **Uusi RJ45-pistoke**, kolme johdinta samoissa paikoissa ja samoilla
+   väreillä kuin vanhassa. Vanha pistoke vieressä mallina.
+2. **Toinen pää suoraan C3:een juotettuna.** Ei rimaa eikä dupont-liittimiä —
+   sama peruste kuin stiebelin solmussa: katkeileva datakontakti lukee nollana
+   antureita, eikä se erotu mitenkään muista syistä joilla väylä on hiljainen.
+3. **4,7 kΩ keltaisen ja punaisen väliin** C3:n päässä, eli DQ:sta 3,3 V:iin.
+4. **Vedonpoisto** siihen kohtaan mistä kaapeli lähtee levyltä.
+
+**Molemmat isännät eivät saa olla kiinni yhtä aikaa.** Kun C3:n pistoke menee
+rasiaan, Raspberryn pistoke tulee pois — tai päinvastoin. Kaksi isäntää samalla
+väylällä rikkoo ajoituksen molemmilta.
+
 GPIO4 samasta syystä kuin stiebelin solmussa: SuperMinillä se on samalla
 reunalla kuin 3V3 ja GND, eikä se ole strappausnasta.
 
