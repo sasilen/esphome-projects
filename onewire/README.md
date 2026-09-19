@@ -24,11 +24,10 @@ Nimet kertovat mitä ne mittaavat: **rakennetta, eivät huoneilmaa.** Pareja
 *sisä* ja *ulko* samassa paikassa, ikkunoiden ja ovien kohdilla, osa
 katonrajaan. Taulukko osoitteineen on [CLAUDE.md](CLAUDE.md):ssä.
 
-**Myös haarakartta on tallessa.** Vuoden 2015 listaukset oli otettu haara
-kerrallaan ja nimetty sen mukaan — keittiö, makuuhuoneet, olohuone, neljäs —
-joten tiedetään mikä anturi on millä haaralla. Sillä on merkitystä vain jos
-tähti joskus haaroitetaan omille nastoilleen, mutta silloin se säästää koko
-selvitystyön.
+**Myös ryhmittely huoneittain on tallessa.** Asennus eteni vuonna 2015 huone
+kerrallaan ja listaus otettiin joka vaiheessa, joten kunkin askeleen uudet
+osoitteet ovat sen huoneen antureita. Ryhmittely täsmää PHP:n nimiin ilman
+yhtään ristiriitaa — kaksi riippumatonta lähdettä samasta asennuksesta.
 
 Kaksi seurausta:
 
