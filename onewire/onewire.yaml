@@ -313,6 +313,82 @@ sensor:
     name: "Tuntematon 3B 917018"
     update_interval: never
 
+# ------------------------------------------------- Tuntemattomat DS18B20:t
+# Yhdeksän anturia joita **ei ole vuoden 2020 kartassa lainkaan**. Verkkoa on
+# siis laajennettu senkin jälkeen, ja tämä on kolmas kasvuvaihe: 2015 asennus,
+# 2015–2020 ovikattolisäys, ja nämä.
+#
+# **Nimenä on sarjanumero, koska sijaintia ei tiedetä.** Tunnistaminen käy
+# lämmittämällä tai jäähdyttämällä yksi kerrallaan ja katsomalla kumpi liikkuu
+# — mutta se vaatii pääsyn anturille, eivätkä kaikki ole käsillä. Sauna ja
+# muut puuttuvat tilat ovat todennäköisimmin näiden joukossa.
+#
+# Nimeäminen synnyttää entity_id:n, joten se tehdään kerran ja vasta kun
+# sijainti on varma.
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t23
+    address: 0x03000475D890FF28          # 28.FF90D8750400
+    name: "Tuntematon 28 FF90D8"
+    update_interval: never
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t24
+    address: 0x160215539DACFF28          # 28.FFAC9D531502
+    name: "Tuntematon 28 FFAC9D"
+    update_interval: never
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t25
+    address: 0x1A03146583F0FF28          # 28.FFF083651403
+    name: "Tuntematon 28 FFF083"
+    update_interval: never
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t26
+    address: 0x2F000005663BB228          # 28.B23B66050000
+    name: "Tuntematon 28 B23B66"
+    update_interval: never
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t27
+    address: 0x6D00000565F5BF28          # 28.BFF565050000
+    name: "Tuntematon 28 BFF565"
+    update_interval: never
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t28
+    address: 0x7000044E2BC0FF28          # 28.FFC02B4E0400
+    name: "Tuntematon 28 FFC02B"
+    update_interval: never
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t29
+    address: 0xAC021503E5EAFF28          # 28.FFEAE5031502
+    name: "Tuntematon 28 FFEAE5"
+    update_interval: never
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t30
+    address: 0xCE000475DBBAFF28          # 28.FFBADB750400
+    name: "Tuntematon 28 FFBADB"
+    update_interval: never
+
+  - platform: dallas_temp
+    one_wire_id: bus_a
+    id: t31
+    address: 0xD80000070B272128          # 28.21270B070000
+    name: "Tuntematon 28 21270B"
+    update_interval: never
+
   - platform: wifi_signal
     name: "Wi-Fi"
     update_interval: 60s
@@ -396,6 +472,24 @@ interval:
       - lambda: 'id(t21).update();'   # Tuntematon 3B A11519
       - delay: 1s
       - lambda: 'id(t22).update();'   # Tuntematon 3B 917018
+      - delay: 1s
+      - lambda: 'id(t23).update();'   # Tuntematon 28 FF90D8
+      - delay: 1s
+      - lambda: 'id(t24).update();'   # Tuntematon 28 FFAC9D
+      - delay: 1s
+      - lambda: 'id(t25).update();'   # Tuntematon 28 FFF083
+      - delay: 1s
+      - lambda: 'id(t26).update();'   # Tuntematon 28 B23B66
+      - delay: 1s
+      - lambda: 'id(t27).update();'   # Tuntematon 28 BFF565
+      - delay: 1s
+      - lambda: 'id(t28).update();'   # Tuntematon 28 FFC02B
+      - delay: 1s
+      - lambda: 'id(t29).update();'   # Tuntematon 28 FFEAE5
+      - delay: 1s
+      - lambda: 'id(t30).update();'   # Tuntematon 28 FFBADB
+      - delay: 1s
+      - lambda: 'id(t31).update();'   # Tuntematon 28 21270B
 
 button:
   - platform: restart
