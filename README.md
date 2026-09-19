@@ -17,7 +17,7 @@ muuten mDNS ei toimi eikä OTA löydä levyjä.
 | [aidon](aidon/) | Aidon 7410 -sähkömittari | HAN-portti (RJ12), EFS2 ASCII 115200 8N1 | Wemos D1 mini (ESP8266) | **Käytössä** |
 | [bestway.lay-z-spa](bestway.lay-z-spa/) | Bestway Lay-Z-SPA -poreallas | CIO/DSP-lattakaapeli → **MQTT** | ESP8266 + tasonsiirrin | **Käytössä**. Ei ESPHome, ks. alla |
 | [hirvirata](hirvirata/) | Liikkuva maalitaulurata | — (H-silta, PWM) | Wemos D1 mini + L298N + 12 V vaihdemoottori | Suunnittelu, YAML-luonnos valmis |
-| [stiebel.eltron](stiebel.eltron/) | Stiebel Eltron WPC 07 -lämpöpumppu | CAN 20 kbps | ESP8266/ESP32 + MCP2515 (5 V → 3,3 V -muutos) | Suunnittelu, rauta osin hankittu, kuuntelu-YAML valmis |
+| [stiebel.eltron](stiebel.eltron/) | Stiebel Eltron WPC 07 -lämpöpumppu | CAN 20 kbps | ESP8266/ESP32 + MCP2515 (5 V → 3,3 V -muutos) | Suunnittelu, rauta hankittu, kuuntelu-YAML valmis |
 | [pegasos.enervent](pegasos.enervent/) | Enervent Pegasos Eco ECE -IV-kone | Potentiaalivapaat koskettimet (ei Modbusia — ECC05) | — | **Ei toteuteta.** Perustelu kirjattu |
 | [axioma.effection](axioma.effection/) | Axioma Effectio / Qalcosonic W1 -vesimittari | Wireless M-Bus 868,95 MHz T1/C1 | ESP32 + CC1101 | Kuuntelee, mutta mittari on LoRaWAN-luennassa |
 
@@ -30,7 +30,7 @@ kaikki lasketaan yhteen.
 |---|---|---|---|
 | Wemos D1 mini (ESP8266-12F, CH340G, USB-C) | aidon, bestway.lay-z-spa, stiebel.eltron | — | **1** |
 | ESP32 | — | axioma.effection, hirvirata | **1** |
-| ESP32-C3 SuperMini, 6 kpl (odottaa osia) | — | stiebel vaihe 2, kaksi jakotukkisolmua, puskurisolmu | **2** |
+| ESP32-C3 SuperMini, 6 kpl | — | stiebel vaihe 2, kaksi jakotukkisolmua, puskurisolmu | **2** |
 
 Kolme ESP32:ta ei ole kolme samanlaista, vaan 2 + 1:
 
@@ -50,9 +50,9 @@ hirviradan pakotie siltä varalta ettei ulkoantennilevy toimi, ja varalevy
 stiebelin vaiheelle 1 — repon ainoalle käynnissä olevalle
 mittausjärjestelmälle.
 
-**Kuusi ESP32-C3:a odottaa saapumista, ja se poistaa levypulan.** Rajoitetta ei
+**Kuusi ESP32-C3:a on hyllyssä, ja se poisti levypulan.** Rajoitetta ei
 siis enää ole, ja kaksi jää yli senkin jälkeen kun stiebelin vaihe 2 ja
-lattialämmityksen kolme mittaussolmua on katettu. Tilatut ovat **SuperMini**-
+lattialämmityksen kolme mittaussolmua on katettu. Saapuneet ovat **SuperMini**-
 mallia, jossa on kaksi asiaa tiedettävänä ennen asennusta: **GPIO8 ajaa levyn
 LEDiä**, ja mallin keraaminen antenni on tunnetusti heikko. Jälkimmäinen osuu
 ikävästi lattialämmityksen käyttöön, koska jakotukkikaappi on usein upotettu
@@ -99,16 +99,17 @@ Moduulit:
   ja **868 MHz omniantenni SMA:lla, 2 kpl** → axioma.effection. ESP32:n oma
   2,4 GHz u.FL -antenni ja kaapeli tulivat DevKitC-setin mukana. Levylle tulee
   siis kaksi eri antennia — älä sekoita niitä.
-- **DS18B20**, vedenkestävä sauva metrin kaapelilla, **25 kpl** (odottaa osia)
+- **DS18B20**, vedenkestävä sauva metrin kaapelilla, **25 kpl**
   → lattialämmityksen kaksi jakotukkia ja puskurivaraaja. Jako on 11 + 1
   paluuta ja menoa alatukkiin, 10 + 1 ylätukkiin, 2 puskuriin. Perustelu on
   [stiebel.eltronin CLAUDE.md:ssä](stiebel.eltron/CLAUDE.md), "The cap is
   removable".
-- **SN65HVD230 / VP230 CAN-lähetinvastaanotin, 5 kpl** (ARCELI, odottaa osia)
-  → stiebel.eltron vaihe 2. **Lue R1 ja R2 saapuessa** — ne ratkaisevat
-  terminoinnin ja Rs-loivennuksen.
-- **PN5180 NFC-lukija** (odottaa osia) → axioma.effection. Ainoa halpa
-  ISO 15693 -piiri; RC522 ei kelpaa.
+- **SN65HVD230 / VP230 CAN-lähetinvastaanotin, 5 kpl** (ARCELI)
+  → stiebel.eltron vaihe 2. **R1 ja R2 ovat yhä lukematta** — ne ratkaisevat
+  terminoinnin ja Rs-loivennuksen, eikä kytkentää kannata suunnitella loppuun
+  ennen kuin ne on luettu kortilta.
+- **PN5180 NFC-lukija** (odottaa osia — ainoa erä joka on yhä matkalla)
+  → axioma.effection. Ainoa halpa ISO 15693 -piiri; RC522 ei kelpaa.
 - **BME280-anturikortti, 2 kpl** (APKLVSR,
   [kuva](pegasos.enervent/gybmep-sensor.jpg)). Molemmat pegasoksen laatikossa,
   samannäköisiä. **Käyttötarkoitus on nyt olemassa:** kahteen huoneeseen
@@ -121,8 +122,8 @@ Moduulit:
 **SN65HVD230:aa ei ollut.** Se oli stiebel.eltronin osalistalla varastossa
 olevana ensimmäisestä commitista asti, mutta sitä ei ollut tilaushistoriassa
 eikä laatikossa. Väite oli virheellinen, ja seuraus oli että stiebelin vaihe 2
-tarvitsi ostetun lähetinvastaanottimen. **Kortti odottaa nyt saapumista**, eli
-puute korjataan ostamalla eikä löytämällä.
+tarvitsi ostetun lähetinvastaanottimen. **Kortit ovat nyt hyllyssä**, eli puute
+korjattiin ostamalla eikä löytämällä.
 
 **RS-485-moduuli ei korvaa sitä**, vaikka sekin on differentiaalinen pari.
 CAN vaatii että recessiivinen tila *päästetään irti* — siihen perustuu sekä
@@ -136,7 +137,7 @@ Läpikäynti projekteittain. Vain ne osat joita ei ole kirjattu varastoon.
 
 | Projekti | Puuttuu | Estääkö aloituksen |
 |---|---|---|
-| stiebel.eltron | — **odottaa osia**: lähetinvastaanotin ja C3 | Ei |
+| stiebel.eltron | — kaikki osat hyllyssä | Ei |
 | axioma.effection | — **odottaa PN5180:tä** | Ei enää osa, vaan asennus mittarin viereen |
 | pegasos.enervent | — projektia ei toteuteta | — |
 | hirvirata | 2020-profiili, eksentriset välikkeet, M5-pultit, sulake + pidike, DC-jakki | Kyllä |
@@ -168,7 +169,7 @@ CH34x-vastaan-CP210x-ajurikysymys poistuu, ja siinä on noin kymmenkertainen
 käyttömuisti D1 miniin verrattuna. Levytaulukko sanoo että D1 minejä on vapaana
 nolla; C3 on halvin tapa korjata sekin.
 
-**Kuusi on tulossa.** Perustelu laajeni matkalla: stiebelin
+**Kuusi on nyt hyllyssä.** Perustelu laajeni matkalla: stiebelin
 vaiheen lisäksi ne kattavat lattialämmityksen mittaussolmut, ja kaksi jää
 varalle — mikä on ensimmäinen kerta kun tässä repossa on varalevy jolle on
 käyttöä useammassa kuin yhdessä projektissa.
