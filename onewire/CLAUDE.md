@@ -520,11 +520,11 @@ kodinhoitohuone, MH1–MH4 makuuhuoneet ja OH olohuone; "sisä", "ulko", "itä" 
 kannata tulkita uudelleen. Alkuperäinen lyhennemuoto säilyy jokaisen anturin
 OWFS-kommentissa.
 
-**VH on jätetty laajentamatta.** Se voi olla vaatehuone tai vierashuone, ja
-molemmat sopivat aineistoon yhtä hyvin: anturit ovat eteläseinän sisä- ja
-ulkoparina, mikä ei erottele. Arvaus päätyisi Home Assistantin
-entiteettitunnuksiin asti, ja niiden muuttaminen jälkikäteen on kalliimpaa kuin
-lyhenne.
+**VH on laajennettu vaatehuoneeksi omistajan muistin mukaan, ei aineistosta.**
+Anturit ovat eteläseinän sisä- ja ulkoparina, mikä sopisi yhtä hyvin
+vierashuoneeseen — aineisto ei erottele näitä mitenkään. Tämä on ainoa nimi
+listassa joka nojaa muistiin eikä tiedostoon, ja lyhenne `VH` säilyy
+OWFS-kommentissa siltä varalta että se osoittautuu toiseksi.
 
 **Yksi epävarmuus jää, ja se on tavujärjestys.** Päättely nojaa siihen että
 OWFS kirjoittaa sarjatavut vähiten merkitsevä ensin — mikä näkyy siitä että

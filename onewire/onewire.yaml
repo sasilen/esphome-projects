@@ -64,8 +64,10 @@ one_wire:
 # Pari "sisä" ja "ulko" samassa paikassa tarkoittaa rakenteen kahta puolta, ei
 # huoneilmaa. Alkuperäinen lyhennemuoto on kunkin anturin OWFS-kommentissa.
 #
-# **VH on jätetty laajentamatta**, koska se voi olla vaatehuone tai vierashuone
-# eikä kumpikaan seuraa aineistosta. Arvaus päätyisi entiteettitunnuksiin asti.
+# **VH on laajennettu vaatehuoneeksi omistajan muistin mukaan**, ei aineistosta.
+# Anturit ovat eteläseinän sisä- ja ulkoparina, mikä sopisi yhtä hyvin
+# vierashuoneeseen — lyhenne säilyy OWFS-kommentissa, jos se joskus osoittautuu
+# toiseksi.
 #
 # Muunnosnopeus on 750 ms per anturi täydellä 12 bitin tarkkuudella, ja näitä
 # on kaksikymmentä. Jos väyläaika alkaa painaa, `resolution: 11` puolittaa sen
@@ -246,8 +248,8 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0xB2000476784EFF28          # 28.FF4E78760400
-    # VH laajentamatta: vaatehuone vai vierashuone, ei pääteltävissä
-    name: "VH etelä sisä"
+    # VH = vaatehuone omistajan muistin mukaan, ei aineistosta
+    name: "Vaatehuone etelä sisä"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
@@ -257,7 +259,7 @@ sensor:
   - platform: dallas_temp
     one_wire_id: bus_a
     address: 0x400004757682FF28          # 28.FF8276750400
-    name: "VH etelä ulko"
+    name: "Vaatehuone etelä ulko"
     device_class: temperature
     state_class: measurement
     unit_of_measurement: "°C"
