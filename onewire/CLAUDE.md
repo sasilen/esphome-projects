@@ -587,6 +587,9 @@ Kolme tapaa saada loput samalle C3:lle:
   Jos jollekin näistä piireistä on valmis komponentti, se on yhden lohkon
   lisäys — ja silloin **muista kiinnittää `ref:`**, samasta syystä kuin
   aidonissa.
+
+  **Latcheille sellainen on olemassa, ja se on kirjattava tänne koska sitä ei
+  löydä hakemalla.** Katso alempi luku.
 - **Oma komponentti tai lambda.** `one_wire`-väylä tarjoaa C++-rajapinnan, jota
   voi ajaa omasta koodista. DS2406:n kytkintulo on näistä yksinkertaisin; DS2438
   työläin, koska siinä on useita sivuja ja CRC per sivu.
@@ -931,6 +934,91 @@ ja vasta sen jälkeen nämä nimetään — kerran, koska nimi synnyttää entit
 
 Ne saavat myös virtaa, toisin kuin ne neljätoista, eli ne ovat verkon
 syötetyssä osassa.
+
+## Latchit: kuusi DS2406:tta, joista viisi on kartassa
+
+Perhettä 0x12 on väylällä kuusi. Osoitteet on käännetty takaisin OWFS-muotoon,
+ja **viisi kuudesta täsmää vuoden 2015 listauksiin merkilleen**:
+
+| OWFS | ESPHome | 2015-listaus |
+|---|---|---|
+| `12.372EB6000000` | `0x2B000000B62E3712` | makuuhuoneet |
+| `12.2E30B6000000` | `0x38000000B6302E12` | neljäs |
+| `12.892EB6000000` | `0x3F000000B62E8912` | keittiö |
+| `12.BC37B6000000` | `0xB6000000B637BC12` | olohuone |
+| `12.A82DB6000000` | `0xF0000000B62DA812` | neljäs |
+| **`12.322EB6000000`** | `0xC0000000B62E3212` | **ei kartassa** |
+
+Tämä on **kolmas riippumaton vahvistus osoitemuunnokselle**: viisi latchia
+laskettiin oikein ilman että niitä oli tarkoituskaan lukea.
+
+Kuudennen sarjanumero on `322E` siinä missä makuuhuoneiden on `372E` —
+vierekkäisestä erästä, eli lisätty myöhemmin samasta pussista.
+
+Väylällä on lisäksi yksi **DS2413** (`0x59000000182A3D3A`, perhe 0x3A), jota ei
+ole vanhassa kartassa lainkaan.
+
+### Valmis komponentti on olemassa, mutta se ei ole ESPHomessa
+
+[PR #8091](https://github.com/esphome/esphome/pull/8091), `dallas_pio` —
+tukee DS2413:a, DS2406:tta ja DS2408:aa ja tarjoaa niille sekä
+`binary_sensor`- että `switch`-alustan. **PR suljettiin vanhentuneena**
+lokakuussa 2025, ei siksi ettei se toimisi: huomautukset koskivat
+arkkitehtuuria ja tiheän pollauksen suorituskykyä. Latchin lukeminen
+kymmenen sekunnin välein ei ole se käyttötapaus.
+
+Haara on yhä olemassa ja komponentti täydellinen:
+
+```
+tdy91/esphome @ feature_dallas_pio   3e8806f7aace   19.4.2025
+```
+
+```yaml
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tdy91/esphome
+      ref: 3e8806f7aace      # kiinnitä, älä jätä haaraa
+
+    components: [dallas_pio]
+
+dallas_pio:
+  - id: latch_keittio
+    reference: DS2406
+    address: 0x3F000000B62E8912
+    one_wire_id: bus_a
+
+binary_sensor:
+  - platform: dallas_pio
+    name: "Latch keittiö"
+    dallas_pio_id: latch_keittio
+    pin:
+      number: PIOA
+      mode:
+        input: true
+    update_interval: 10s
+```
+
+**`ref:` on tässä tärkeämpi kuin missään muualla repossa.** Se on
+yksityishenkilön haara suljetussa PR:ssä — se voi kadota tai rebasoitua milloin
+tahansa, eikä kukaan ylläpidä sitä. Tämä on sama `@main`-ongelma jonka repo on
+kirjannut jo kolmesti, nyt pahimmassa mahdollisessa muodossaan.
+
+**Riski on versioero.** Komponentti on kirjoitettu ESPHome 2025.4:ää vasten ja
+laite ajaa 2026.9.0:aa — puolitoista vuotta ajautumista `one_wire`-rajapinnassa.
+Se voi kääntyä tai olla kääntymättä. Kääntymättömyys ei riko laitetta, mutta
+**se rikkoo toimivan konfiguraation käännöksen**, joten sitä ei kokeilla samaan
+aikaan minkään muun muutoksen kanssa.
+
+### Mutta ennen koodia: mitä ne mittaavat
+
+**Yksi latch per asennusvaihe on outo kuvio.** Ovikoskettimet seuraisivat ovia,
+eivät asennuspäiviä. Todennäköisempää on että DS2406:t ovat haarakohtaisia,
+jolloin ne kertoisivat jotain tähden rakenteesta eivätkä talon tapahtumista.
+
+Komponentin kääntäminen ei vastaa tähän. **Selvitä ensin mihin ne on kytketty**,
+ja vasta sitten päätä kannattaako niitä lukea — muuten syntyy kuusi entiteettiä
+joiden arvoa kukaan ei osaa tulkita.
 
 ## Kytkös lattialämmitykseen
 
