@@ -13,13 +13,17 @@
 #
 # **Mutta vain viisi antaa lukeman; neljätoista palauttaa `nan`.** Loki nimeää
 # syyn: `dropping reading caused by sensor reset` eli rekisterissä on tasan
-# 85,0 °C ja tavu 6 on 0x0C. Anturi vastaa, CRC on kunnossa — **muunnos ei vain
-# koskaan tapahdu.** Ne neljätoista ovat loiskäytöllä eivätkä saa virtaa
-# muunnoksen ajaksi.
+# 85,0 °C ja tavu 6 on 0x0C. Anturi vastaa, CRC on kunnossa — **ne puhuvat
+# mutta eivät muunna.**
 #
 # Jako on kategorinen eikä asteittainen: 21 kierrosta, 5/5 onnistui ja 14/14
-# epäonnistui, ei yhtään poikkeusta kumpaankaan suuntaan. Perustelut ovat
-# CLAUDE.md:ssä.
+# epäonnistui, ei yhtään poikkeusta kumpaankaan suuntaan.
+#
+# **Isännästä se ei johdu.** ESPHome jättää nastan OUTPUT-tilaan ajamaan linjaa
+# ylös push-pullina, eli vahva ylösveto on päällä koko muunnoksen ajan. Paras
+# jäljellä oleva selitys on kelluva VDD noilla haaroilla — mutta anturit ovat
+# rakenteissa eikä sitä pääse mittaamaan, joten se jää ehdokkaaksi.
+# Koko päättelyketju kumottuine välivaiheineen on CLAUDE.md:ssä.
 #
 # Kytkentä on wiring.svg:ssä. Neljä johdinta: RJ45:n nasta 2 on 5 V, nasta 4 on
 # data GPIO4:ään, nastat 1 ja 5 ovat maita. Ylösveto 4,7 kΩ GPIO4:n ja 3V3:n
@@ -104,18 +108,12 @@ one_wire:
 # lukemaa, ei yhtäkään kierrosta. Asetus on siksi poistettu: epäonnistunutta
 # koetta ei jätetä paikalleen, koska seuraava lukija luulisi sitä valinnaksi.
 #
-# **Se kumosi varausmallin, ja se oli kokeen tarkoitus.** Ajattelin anturin
-# käyvän muunnoksen ajan sisäisen kondensaattorinsa varassa, jolloin 750 ms →
-# 94 ms olisi kahdeksasosa vaatimuksesta. Kondensaattori on liian pieni
-# puskuroidakseen mitään — **rajoite on virta eikä varaus**, eikä sitä voi
-# lyhentää ajallisesti.
+# **Älä myöskään laske ylösvetoa.** Se oli tässä ohjeena kahdesti ja on kumottu:
+# ESPHome ajaa linjaa ylös push-pullina muunnoksen ajan, joten isäntä ei ole
+# se joka jättää virtaa antamatta. Pienempi vastus ei lisäisi mitään.
 #
-# Ylösvedon laskeminen ei auta samasta syystä: jotta anturille jäisi ~3 V
-# 1,5 mA:n vedolla, vastuksen olisi oltava alle 200 Ω, ja silloin isäntä nielisi
-# 16 mA joka kerta kun se vetää linjan alas. **Passiivinen vastus ei korvaa
-# vahvaa ylösvetoa** — juuri siksi vahva ylösveto on olemassa.
-#
-# Jäljellä on siis vain vahva ylösveto, eikä ESPHomen `gpio`-väylässä ole sitä.
+# Kumpikin kokeiltava on siis käytetty. Se mitä väylälle jää tehtäväksi on
+# kaapelointia, ei konfiguraatiota.
 #
 # `device_class`, `state_class`, `unit_of_measurement` ja `accuracy_decimals`
 # eivät ole tässä, koska **`dallas_temp` asettaa ne jo itse** — asteet,

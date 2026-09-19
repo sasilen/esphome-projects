@@ -588,10 +588,13 @@ Kolme tapaa saada loput samalle C3:lle:
   lisäys — ja silloin **muista kiinnittää `ref:`**, samasta syystä kuin
   aidonissa.
 - **Oma komponentti tai lambda.** `one_wire`-väylä tarjoaa C++-rajapinnan, jota
-  voi ajaa omasta koodista. MAX31850:n luku on match ROM, muunnoskäsky `0x44`,
-  scratchpadin luku `0xBE` ja 14-bittisen lukeman irrotus — kolmisenkymmentä
-  riviä. DS2406:n kytkintulo on yksinkertaisempi; DS2438 työläin, koska siinä on
-  useita sivuja ja CRC per sivu.
+  voi ajaa omasta koodista. DS2406:n kytkintulo on näistä yksinkertaisin; DS2438
+  työläin, koska siinä on useita sivuja ja CRC per sivu.
+
+  **MAX31850 ei enää kuulu tähän listaan.** `dallas_temp` lukee sen sellaisenaan,
+  koska se ei tarkista perhekoodia ja koska piirin rekisteriformaatti osuu samaan
+  1/16 °C:n asteikkoon. Se on todettu mittaamalla, ei päättelemällä — kolme
+  laitetta lukee huoneenlämpöä 0,25 asteen portain.
 - **Tai jätä lukematta.** Jos uunianturia katsotaan kolmesti vuodessa, se ei ole
   entiteetin arvoinen.
 
@@ -769,23 +772,15 @@ scratchpad-luku epäonnistuvat. Haku on yksinkertaista bittiliikennettä;
 lukeminen ei ole. **Vika on siis signaalin laadussa, ei laitteissa eikä
 osoitteissa.**
 
-**Ratkaiseva vihje on vanha isäntä.** DS9490 ajoi tätä samaa tähteä vuosia, eli
-verkko on ajettavissa. Muuttunut ei ole topologia vaan vetovoima: **DS9490R
-käyttää aktiivista ylösvetoa**, joka vetää linjan ylös transistorilla, kun taas
-tässä on passiivinen 4,7 kΩ. 38 laitteen kapasitanssi tekee nousureunasta liian
-loivan kaukaisimmille haaroille, ja ESPHome ei osaa aktiivista ylösvetoa.
+**Yksi muutos kerrallaan.** Jos kaksi asiaa vaihdetaan yhtä aikaa, ei tiedetä
+kumpi auttoi — ja seuraavan kerran kun väylä oireilee, tieto puuttuu. Viisi
+toimivaa anturia on hyvä mittari: muutos on onnistunut kun luku kasvaa.
 
-Järjestys halvimmasta alkaen:
-
-1. **Ylösveto 2,2 kΩ:iin, tarvittaessa 1,5 kΩ:iin.** 3,3 V / 1,5 kΩ = 2,2 mA,
-   selvästi ESP32:n nielun sisällä.
-2. **`resolution: 11`** puolittaa muunnosajan.
-3. **Mittaa että 5 V yltää kaukaiselle haaralle.** Jos ei, anturit ovat
-   loiskäytöllä ja kohta 1 ei ole optimointi vaan välttämättömyys.
-
-**Yksi muutos kerrallaan.** Jos vastus ja tarkkuus vaihdetaan yhtä aikaa, ei
-tiedetä kumpi auttoi — ja seuraavan kerran kun väylä oireilee, tieto puuttuu.
-Viisi toimivaa anturia on hyvä mittari: muutos on onnistunut kun luku kasvaa.
+> **Tässä kohtaa oli kaksi väärää selitystä peräkkäin.** Ensin ylösvedon
+> heikkous, sitten loiskäyttö. Molemmat on kumottu alempana — ensimmäinen
+> kokeella, toinen lähdekoodilla — ja ne on jätetty näkyviin vain siltä osin
+> kuin niiden kumoaminen tuotti tietoa. **Korjaus ei ole ylösvedossa eikä
+> tarkkuudessa.**
 
 ### Loki nimeää vian, eikä se ole signaali
 
@@ -805,7 +800,8 @@ kokonaan. **CRC on kunnossa** — väärä tarkiste antaisi `checksum invalid`
 -varoituksen, ja niitä on kolme koko lokissa eikä neljäätoista kierroksessa.
 **Muunnos ei koskaan tapahtunut.**
 
-Kaapeli, liitokset ja ajoitus ovat siis kunnossa. Kyse on virrasta.
+Kaapeli, liitokset ja käskyjen perillemeno ovat siis kunnossa. Vika on siinä
+mitä anturi tekee sen jälkeen kun käsky on vastaanotettu.
 
 ### Jako on kategorinen, ja se sulkee pois marginaalin
 
@@ -813,13 +809,6 @@ Kaapeli, liitokset ja ajoitus ovat siis kunnossa. Kyse on virrasta.
 21/21 ja neljätoista epäonnistui 0/21.** Marginaalivika välkkyisi — 294
 yritystä ilman ainuttakaan onnistumista ei ole marginaali vaan kaksi eri
 populaatiota.
-
-**Ja juuri siksi vanhan toteutuksen oireilu sopii tähän.** Raspberryn `w1-gpio`
-ei ole passiivinen: Linuxin w1-alijärjestelmä kytkee muunnoksen ajaksi saman
-GPIO:n ulostuloksi ja ajaa sen korkealle push-pull-tilassa. Vastus rimassa on
-vain lepotilan ylösveto. Se vahva ylösveto antoi loiskäyttöisille antureille
-virtaa sen verran että muunnos joskus ehti valmiiksi — siitä ne ajoittaiset
-numerot ja 85:t niiden välissä. **Sama populaatio, sama vika, eri isäntä.**
 
 ### Koe joka kumosi oman mallinsa
 
@@ -829,29 +818,60 @@ kondensaattorinsa varassa, jolloin 750 ms → 94 ms olisi kahdeksasosa
 vaatimuksesta.
 
 **Tulos oli nolla.** Ei yhtään lukemaa neljästätoista, ei yhtäkään kierrosta,
-eivätkä verrokit muuttuneet.
+eivätkä verrokit muuttuneet. Asetus poistettiin: epäonnistunut koe paikalleen
+jätettynä luetaan myöhemmin valinnaksi.
 
-Se kumosi mallin puhtaasti: kondensaattori on liian pieni puskuroidakseen
-mitään, joten **rajoite on virta eikä varaus** — eikä virtavajetta voi lyhentää
-ajallisesti. Sama päättely kaataa ylösvedon laskemisen: jotta anturille jäisi
-~3 V 1,5 mA:n vedolla, vastuksen olisi oltava alle 200 Ω, ja silloin isäntä
-nielisi 16 mA joka kerta kun se vetää linjan alas.
+### ESPHome ajaa vahvan ylösvedon jo, ja se kaataa loiskäyttöselityksen
 
-**Passiivinen vastus ei korvaa vahvaa ylösvetoa.** Asetus poistettiin, koska
-epäonnistunut koe paikalleen jätettynä luetaan myöhemmin valinnaksi.
+Tämä tiedosto väitti kahdessa kohdassa että ESPHomen `gpio`-väylässä ei ole
+vahvaa ylösvetoa ja että korjaus vaatisi oman komponentin. **Molemmat olivat
+väärin**, ja väite nojasi tiivistelmään lähdekoodista eikä lähdekoodiin.
 
-### Mitä jää, kun antureihin ei voi koskea
+```cpp
+void GPIOOneWireBus::write_bit_(bool bit) {
+  this->pin_.digital_write(false);      // veto alas
+  delayMicroseconds(delay0);
+  this->pin_.digital_write(true);       // OUTPUT-tilassa: ajaa ylös
+  delayMicroseconds(delay1);
+}
+```
 
-Anturit ovat rakenteissa, joten VDD:n vieminen niille on pois laskuista.
-ESPHomen `gpio`-väylästä tarkistettiin lähdekoodi: linja ajetaan korkealle vain
-resetin jälkeen ja bittivälien päätteeksi, ei muunnoksen ajaksi. **Konfiguraa-
-tiomuutosta joka korjaisi tämän ei ole olemassa.**
+Nasta on `FLAG_OUTPUT`-tilassa koko kirjoituksen ajan, joten `digital_write(true)`
+**ajaa linjan ylös push-pullina** eikä vapauta sitä vastukselle. `write8()`
+päättyy siihen, eikä mikään koske väylään `CONVERT T`:n ja scratchpad-luvun
+välissä — **vahva ylösveto on siis päällä koko muunnoksen ajan**, rakenteen
+sivutuotteena.
+
+Sama vahvistuu ulkopuolelta: ESPHomen PR [#8077](https://github.com/esphome/esphome/pull/8077)
+tarjosi nimenomaan `strong_pullup()`-toimintoa, ja koodin omistaja kommentoi
+"the current one wire component already does this". PR suljettiin vanhentuneena.
+
+**Isäntä tarjoaa siis virran jota anturi tarvitsee.** Jos anturit eivät silti
+muunna, syy ei ole isännän vetovoimassa — eikä siinä mitä Raspberry teki eri
+tavalla, koska se teki saman asian.
+
+### Mikä jää selitykseksi
+
+Oire on tarkka: ne vastaavat, CRC täsmää, rekisterissä on tehdasarvo. **Ne
+puhuvat mutta eivät muunna** — ja puhuminen kulkee datalinjan varassa, muunnos
+ei.
+
+Todennäköisin jäljellä oleva selitys on **kelluva VDD**. Loiskäytössä VDD
+*sidotaan maahan*; se on kytkentä eikä puute. Jos johdin sen sijaan on poikki
+tai jäänyt kytkemättä, nasta kelluu — ja kelluva VDD on huonompi kuin maahan
+sidottu, koska piiri kommunikoi mutta ei toimi kunnolla. Se sopii myös siihen
+että vanha toteutus sai nämä *ajoittain* läpi.
+
+**Tätä ei voi tässä talossa todentaa.** Anturit ovat rakenteissa eikä VDD:tä
+pääse mittaamaan, joten selitys jää parhaaksi ehdokkaaksi eikä muutu
+todetuksi. Se on kirjattu tänne siksi, ettei seuraava lukija aloita samasta
+päästä uudelleen.
 
 | Vaihtoehto | Hinta |
 |---|---|
-| Oma komponentti joka ajaa vahvan ylösvedon | toistaa sen mitä Linux teki; C++ |
-| Aja vanhaa puolta Raspberryllä | kaatuu yhden isännän sääntöön |
-| Ota ne viisi ja kolme MAX31850:tä | toimii nyt, kattaa kahdeksan laitetta |
+| **Ota ne viisi ja kolme MAX31850:tä** | toimii nyt, kattaa kahdeksan laitetta |
+| Yksi anturi kerrallaan omalla käännöksellä | sulkisi pois väyläkilpailun; yksi flashaus per koe |
+| Vedä haaralle uusi kaapeli | ainoa varma korjaus, mutta se on rakennustyö |
 
 ### Ne kolme 3B:tä ovat MAX31850:itä, ja se on mitattu
 

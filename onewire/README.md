@@ -11,14 +11,35 @@ infrastruktuurista. Kaikki muut ovat alkaneet tyhjästä laatikosta.
 
 ## Tila
 
-**Inventaario on palautettu, kytkentä on tekemättä.** Vanhan Raspberryn levyltä
-löytyi OWFS-toteutus vuosilta 2015–2020 ja siinä valmis laitekartta:
+**Väylä on kytketty ja luetteloitu. Kahdeksan laitetta lukee, neljätoista ei.**
+
+| | |
+|---|---|
+| **38** | laitetta vastaa luetteloinnissa |
+| **5** | DS18B20:tä antaa lukeman — vuosien 2015 ja 2020 välillä lisätyt |
+| **3** | MAX31850-termoparia antaa lukeman, todennäköisesti leivinuunissa |
+| **14** | DS18B20:tä vastaa mutta ei muunna: rekisterissä on tehdasarvo 85 °C |
+
+**Ne neljätoista eivät ole rikki.** Ne vastaavat kutsuun ja niiden CRC täsmää —
+muunnos vain ei tapahdu. Isäntää on jo kokeiltu kahdella tavalla eikä se ole
+syy; paras jäljellä oleva selitys on kelluva VDD noilla haaroilla, eikä sitä
+pääse mittaamaan koska anturit ovat rakenteissa. Ketju on
+[CLAUDE.md](CLAUDE.md):ssä, kumotut välivaiheet mukaan lukien.
+
+**Konfiguraatiolla tätä ei korjata.** Seuraava askel olisi kaapelointi.
+
+Vanhan Raspberryn levyltä löytyi OWFS-toteutus vuosilta 2015–2020, ja sen
+laitekartta on yhä se mistä nimet tulevat:
 
 | | |
 |---|---|
 | **19** | DS18B20-lämpötila-anturia, nimettyinä huoneisiin |
-| **1** | DS2438, lämpötila ja kosteus, tekninen tila |
+| **1** | DS2438, lämpötila ja kosteus, tekninen tila — **ei enää vastaa** |
 | **5** | DS2406-kytkintuloa varastossa, käyttötarkoitus tuntematon |
+
+**Osoitteet oli laskettu oikein.** 19 kartan 20 osoitteesta löytyi väylältä
+sellaisenaan, eli tavujärjestys ja CRC8 oli johdettu ilman virhettä koskematta
+väylään. Puuttuva on isännän pään DS18S20, ja samasta päästä katosi DS2438.
 
 Nimet kertovat mitä ne mittaavat: **rakennetta, eivät huoneilmaa.** Pareja
 *sisä* ja *ulko* samassa paikassa, ikkunoiden ja ovien kohdilla, osa
@@ -34,9 +55,10 @@ Kaksi seurausta:
 - **Lattialämmityksen suunnitelma ei muutu.** Anturit eivät ole valussa, joten
   ne eivät korvaa [stiebel.eltronin](../stiebel.eltron/) 25 anturin
   jakotukkiasennusta. Se kysymys on suljettu.
-- **ESPHome lukee näistä 19.** DS2438 ja DS2406 eivät ole sen omissa
-  komponenteissa, joten kosteus ja viisi kytkintuloa jäisivät lukematta ilman
-  OWFS:ää. Tarkistettava, mutta ei este.
+- **DS2406:tta ESPHome ei lue.** Kuusi kytkintuloa jää siis lukematta. DS2438 ei
+  enää vastaa väylälle lainkaan, joten se kysymys ratkesi itsestään.
+  **MAX31850:n se sen sijaan lukee** ilman erillistä komponenttia — `dallas_temp`
+  ei tarkista perhekoodia, ja piirin asteikko osuu DS18B20:n kanssa yksiin.
 
 ## Kytkentä
 
