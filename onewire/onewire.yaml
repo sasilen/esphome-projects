@@ -32,10 +32,14 @@
 #
 # Kaksi syytä olla käyttämättä sitä valmista: se ei käänny 2026.9.0:lla, ja
 # **sen DS2406-luku näyttää kirjoittavan.** Perustelut ovat CLAUDE.md:ssä.
+# **Polku on ESPHomen konfiguraatiojuuresta, ei tämän tiedoston vierestä.**
+# Kontti näkee tämän nimellä `/config/onewire/onewire.yaml`, joten `components`
+# yksinään etsisi `/config/components`:ia ja kaatuisi. Sama ansa kuin
+# lyhennetty sha: näyttää siistimmältä ja rikkoo käännöksen.
 external_components:
   - source:
       type: local
-      path: components
+      path: onewire/components
     components: [ds2406]
 
 esphome:
