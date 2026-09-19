@@ -935,6 +935,72 @@ ja vasta sen jälkeen nämä nimetään — kerran, koska nimi synnyttää entit
 Ne saavat myös virtaa, toisin kuin ne neljätoista, eli ne ovat verkon
 syötetyssä osassa.
 
+## Ensimmäinen täysi lukema, ja mitä se kertoo
+
+Kun ne yhdeksän tuntematonta lisättiin, **jokainen väylän lämpötilalaite
+luki** — 28 DS18B20:tä ja 3 MAX31850:tä. Lukematta jäävät enää kuusi DS2406:tta
+ja yksi DS2413.
+
+Tämä on lähtötaso, mitattu 19.9. klo 21:04, ulkoilma 14,7 °C.
+
+### Ulkopinnat erottuvat tiukkana ryhmänä
+
+| | |
+|---|---|
+| 16,19 | Vaatehuone etelä ulko |
+| **16,31** | **Makuuhuone 4 pohjoinen sisä** |
+| 16,56 | Olohuone ulko |
+| 19,50 | Keittiö ikkuna ulko |
+
+Jokainen muu anturi on 20,9–25,9 °C. Kolme ulkopintaa istuu neljästä viiteen
+astetta kaiken muun alapuolella, mikä on **riippumaton vahvistus koko
+PHP-kartasta johdetulle nimeämiselle** — ei vain osoitteina vaan sijainteina.
+
+**Ja se paljastaa yhden virheen.** `Makuuhuone 4 pohjoinen sisä` istuu
+ulkoryhmässä ja sen pari `ulko` lukee 21,13 eli sisäryhmässä. Kolme paria on
+oikein päin, tämä yksi väärin — **sisä ja ulko ovat vaihtuneet vanhassa
+kartassa juuri sen parin kohdalla.**
+
+Nimiä ei silti vaihdettu heti: nimenvaihto synnyttää uuden entity_id:n, ja yön
+jäähtymiskäyrä tekee asiasta kiistattoman, koska ulkopinnat seuraavat ulkoilmaa
+ja sisäpinnat eivät. Se on ilmainen varmistus jota kannatti odottaa.
+
+### Ne yhdeksän tuntematonta ovat kaikki sisällä
+
+```
+25,88  BFF565      23,81  FFBADB
+25,88  B23B66      23,69  FFC02B
+25,38  21270B      23,38  FFF083
+24,06  FFAC9D      22,94  FFEAE5
+23,75  FF90D8
+```
+
+**Yksikään ei ole ulkopinta eikä kuuma piste.** Kaikki ovat välillä 22,9–25,9.
+
+**Saunaa ei siis löytynyt.** Se oli avoin kysymys alusta asti, ja vastaus on
+joko ettei sitä ole väylällä tai ettei sitä ollut lämmitetty. Saunan
+lämmittäminen ratkaisee sen yhdellä kerralla.
+
+Kaksi havaintoa kannattaa merkitä:
+
+- **`BFF565` ja `B23B66` lukevat täsmälleen saman**, 25,875 °C eli 1/16 asteen
+  tarkkuudella identtisen. Ne ovat samassa tilassa tai vierekkäin. Sarjanumerot
+  ovat samasta `050000`-erästä kuin vuoden 2015 makuuhuoneanturit.
+- **Kolme lämpimintä ovat lämpimämpiä kuin yksikään nimetty huoneanturi**
+  kattorajan antureita lukuun ottamatta. Ne ovat siis todennäköisesti
+  kattorajassa tai lämmönlähteen lähellä.
+
+### Kolme keinoa tunnistaa loput
+
+| Keino | Mitä erottaa |
+|---|---|
+| Yön jäähtymiskäyrä | ulkopinnat sisäpinnoista — tapahtuu itsestään |
+| Uunin lämmitys 10 min | todistaa ne kolme MAX31850:tä |
+| Saunan lämmitys | löytyykö sauna näiden yhdeksän joukosta lainkaan |
+
+Lämpötilaero on tässä paras tunnistusväline, koska se ei vaadi pääsyä
+anturille — ja anturit ovat rakenteissa.
+
 ## Latchit: kuusi DS2406:tta, joista viisi on kartassa
 
 Perhettä 0x12 on väylällä kuusi. Osoitteet on käännetty takaisin OWFS-muotoon,
@@ -955,8 +1021,36 @@ laskettiin oikein ilman että niitä oli tarkoituskaan lukea.
 Kuudennen sarjanumero on `322E` siinä missä makuuhuoneiden on `372E` —
 vierekkäisestä erästä, eli lisätty myöhemmin samasta pussista.
 
+### DS2413 on eri piiri, ja ero on juuri se latch
+
 Väylällä on lisäksi yksi **DS2413** (`0x59000000182A3D3A`, perhe 0x3A), jota ei
 ole vanhassa kartassa lainkaan.
+
+Sekä DS2406 että DS2413 ovat osoitteellisia kytkimiä: kaksi avokollektorikanavaa
+jotka voi vetää alas tai vapauttaa, ja joiden tila voi lukea takaisin. Yhdellä
+väylällä ne näyttävät samankaltaisilta. Ero on siinä mikä antoi latcheille
+nimensä:
+
+| | DS2406 (0x12) | DS2413 (0x3A) |
+|---|---|---|
+| Kanavia | 1 tai 2 | 2 |
+| **Tapahtumasalpa** | **on** | **ei ole** |
+| EPROM | 1 kbit | ei |
+| Kotelo | TO-92 / TSOC-6 | TSOC-6 |
+
+**DS2406 muistaa että tila muuttui, vaikka se olisi jo palannut ennalleen.**
+Se on se `latch`-ominaisuus jonka OWFS näyttää ja jonka mukaan vanhan
+toteutuksen listaukset on nimetty. Isäntä nollaa salvan lukiessaan, ja seuraava
+lukukerta kertoo taas tapahtuiko välissä mitään.
+
+**DS2413:ssa sitä ei ole.** Se kertoo vain tilan sillä hetkellä kun sitä
+kysytään. Jos nämä ovat ovi- tai ikkunakoskettimia ja niitä pollataan kymmenen
+sekunnin välein, **DS2406 huomaa nopean avaus-sulkemisen ja DS2413 ei.**
+
+Se tekee DS2413:sta huonomman valinnan tähän käyttöön — ja sitä kautta se on
+vihje siitä, että se **ei ole samaa tarkoitusta varten** kuin ne kuusi. Se on
+myös myöhempi lisäys, kuten kuudes DS2406 ja ne yhdeksän tuntematonta
+lämpötila-anturia.
 
 ### Valmis komponentti on olemassa, mutta se ei ole ESPHomessa
 
