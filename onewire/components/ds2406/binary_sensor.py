@@ -13,9 +13,10 @@ DS2406BinarySensor = ds2406_ns.class_(
 )
 
 CONF_CHANNEL = "channel"
+CONF_LATCH = "latch"
 
 # Channel Control Byte 1:  ALR IM TOG IC CHS1 CHS0 CRC1 CRC0
-#   ALR = 0   älä nollaa tapahtumasalpaa
+#   ALR = 0   älä nollaa tapahtumasalpaa  (`latch: true` asettaa tämän)
 #   IM  = 1   **lukutila** — tämä bitti erottaa luvun kirjoituksesta
 #   TOG = 0   kiinteä tila
 #   IC  = 0
@@ -26,11 +27,17 @@ CHANNELS = {
     "B": 0x48,
 }
 
+ALR = 0x80
+
 CONFIG_SCHEMA = (
     binary_sensor.binary_sensor_schema(DS2406BinarySensor)
     .extend(
         {
             cv.Optional(CONF_CHANNEL, default="A"): cv.enum(CHANNELS, upper=True),
+            # Ota tapahtumasalpa mukaan tilaan. Piiri muistaa muutoksen jota
+            # pollaus ei ehtinyt nähdä, ja ALR=1 nollaa salvan luvun jälkeen —
+            # joten tila tarkoittaa silloin *päällä nyt tai ollut välissä*.
+            cv.Optional(CONF_LATCH, default=False): cv.boolean,
         }
     )
     .extend(one_wire.one_wire_device_schema())
@@ -42,4 +49,9 @@ async def to_code(config: ConfigType) -> None:
     var = await binary_sensor.new_binary_sensor(config)
     await cg.register_component(var, config)
     await one_wire.register_one_wire_device(var, config)
-    cg.add(var.set_control_byte(config[CONF_CHANNEL]))
+
+    control = config[CONF_CHANNEL]
+    if config[CONF_LATCH]:
+        control |= ALR
+    cg.add(var.set_control_byte(control))
+    cg.add(var.set_use_latch(config[CONF_LATCH]))

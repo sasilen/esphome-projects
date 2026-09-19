@@ -48,18 +48,27 @@ void DS2406BinarySensor::update() {
   // CHANNEL INFO BYTE
   //  b7 syöttö · b6 kanavien määrä · b5 PIOB salpa · b4 PIOA salpa
   //  b3 PIOB taso · b2 PIOA taso · b1 PIOB Q · b0 PIOA Q
-  const bool level = (this->control_byte_ & 0x08) != 0 ? ((info & 0x08) != 0)   // CHS1 → PIOB
-                                                       : ((info & 0x04) != 0);  // muuten PIOA
+  const bool is_b = (this->control_byte_ & 0x08) != 0;  // CHS1 → PIOB
+  const bool level = is_b ? ((info & 0x08) != 0) : ((info & 0x04) != 0);
+  const bool latch = is_b ? ((info & 0x20) != 0) : ((info & 0x10) != 0);
 
-  ESP_LOGD(TAG, "'%s': info=0x%02X level=%s", this->get_name().c_str(), info, YESNO(level));
+  // **Salpa muistaa muutoksen jota pollaus ei ehtinyt nähdä.** Kun se on
+  // käytössä, ohjaustavussa on ALR=1 ja piiri nollaa salvan tämän luvun
+  // jälkeen — jolloin seuraava kierros vastaa kysymykseen "liikkuiko tämän
+  // jälkeen". Julkaistu tila on silloin *auki nyt tai ollut auki välissä*.
+  const bool state = this->use_latch_ ? (level || latch) : level;
+
+  ESP_LOGD(TAG, "'%s': info=0x%02X level=%s latch=%s -> %s", this->get_name().c_str(), info, YESNO(level),
+           YESNO(latch), YESNO(state));
   this->status_clear_warning();
-  this->publish_state(level);
+  this->publish_state(state);
 }
 
 void DS2406BinarySensor::dump_config() {
   LOG_BINARY_SENSOR("", "DS2406 Binary Sensor", this);
   LOG_ONE_WIRE_DEVICE(this);
   ESP_LOGCONFIG(TAG, "  Channel: %s", (this->control_byte_ & 0x08) != 0 ? "B" : "A");
+  ESP_LOGCONFIG(TAG, "  Latch: %s (control byte 0x%02X)", ONOFF(this->use_latch_), this->control_byte_);
   LOG_UPDATE_INTERVAL(this);
 }
 

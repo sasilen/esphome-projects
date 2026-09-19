@@ -585,10 +585,20 @@ interval:
 #
 # **`inverted:` on arvaus.** Kumpi taso on auki selviää avaamalla yksi ovi.
 #
-# Komponentti lukee Channel Info -tavun bitin 2, eli PIOA:n aistitun tason.
-# Se ei lue DS2406:n tapahtumasalpaa: ovelle taso riittää, mutta **nopea avaus
-# ja sulkeminen kierrosten välissä voi jäädä huomaamatta** vaikka piiri itse
-# olisi sen muistanut.
+# **`latch: true` poistaa minuutin sokean hetken.** Sarjoituksen takia ovia
+# pollataan kerran kierroksessa, joten nopea avaus ja sulkeminen jäisi
+# huomaamatta — mutta piiri muistaa sen. Ohjaustavussa on silloin ALR=1, joka
+# palauttaa salvan tilan ja **nollaa sen samalla**, jolloin jokainen kierros
+# vastaa kysymykseen "liikkuiko ovi edellisen jälkeen".
+#
+# Julkaistu tila tarkoittaa siis **auki nyt tai ollut auki välissä**. Se on
+# ovelle oikea merkitys: yhden kierroksen mittainen "auki" on totta jostakin
+# hetkestä sen sisällä, ja vaihtoehto olisi ettei tapahtumaa näy lainkaan.
+#
+# **Yksi asia varmistuu vasta ensimmäisellä ajolla.** Datalehden mukaan Channel
+# Info lähetetään ennen nollausta, eli salvan tilan pitäisi näkyä. Jos
+# `latch=NO` on jatkuvasti vaikka ovia liikutellaan, nollaus tapahtuukin ennen
+# raportointia — ja silloin tämä ominaisuus ei toimi tällä tavalla.
 
 binary_sensor:
   - platform: ds2406
@@ -598,6 +608,7 @@ binary_sensor:
     name: "Ovi 892EB6"
     device_class: door
     channel: A
+    latch: true
     update_interval: never
   - platform: ds2406
     one_wire_id: bus_a
@@ -606,6 +617,7 @@ binary_sensor:
     name: "Ovi 372EB6"
     device_class: door
     channel: A
+    latch: true
     update_interval: never
   - platform: ds2406
     one_wire_id: bus_a
@@ -614,6 +626,7 @@ binary_sensor:
     name: "Ovi BC37B6"
     device_class: door
     channel: A
+    latch: true
     update_interval: never
   - platform: ds2406
     one_wire_id: bus_a
@@ -622,6 +635,7 @@ binary_sensor:
     name: "Ovi 2E30B6"
     device_class: door
     channel: A
+    latch: true
     update_interval: never
   - platform: ds2406
     one_wire_id: bus_a
@@ -630,6 +644,7 @@ binary_sensor:
     name: "Ovi A82DB6"
     device_class: door
     channel: A
+    latch: true
     update_interval: never
   - platform: ds2406
     one_wire_id: bus_a
@@ -638,6 +653,7 @@ binary_sensor:
     name: "Ovi 322EB6"
     device_class: door
     channel: A
+    latch: true
     update_interval: never
 
 button:

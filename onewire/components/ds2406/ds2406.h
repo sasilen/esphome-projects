@@ -20,11 +20,15 @@ class DS2406BinarySensor : public PollingComponent,
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::DATA; }
 
-  /// Channel Control Byte 1, valmiiksi laskettuna kanavan mukaan.
+  /// Channel Control Byte 1, valmiiksi laskettuna kanavan ja salvan mukaan.
   void set_control_byte(uint8_t b) { this->control_byte_ = b; }
+
+  /// Ota tapahtumasalpa mukaan julkaistavaan tilaan.
+  void set_use_latch(bool b) { this->use_latch_ = b; }
 
  protected:
   uint8_t control_byte_{0x44};
+  bool use_latch_{false};
 };
 
 }  // namespace ds2406
