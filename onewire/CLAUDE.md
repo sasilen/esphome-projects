@@ -1234,15 +1234,67 @@ Vaihtoehto on **kirjoittaa vain se mitä tarvitaan**: DS2406:n tilan luku on
 `dallas_pio`:sta, joka kattaa kolme piiriä sekä luvun että kirjoituksen — ja
 tästä tarvitaan vain yhden piirin luku.
 
-### Mutta ennen koodia: mitä ne mittaavat
+### Ensimmäinen lukema, ja Channel Info kertoo neljä asiaa kerralla
 
-**Yksi latch per asennusvaihe on outo kuvio.** Ovikoskettimet seuraisivat ovia,
-eivät asennuspäiviä. Todennäköisempää on että DS2406:t ovat haarakohtaisia,
-jolloin ne kertoisivat jotain tähden rakenteesta eivätkä talon tapahtumista.
+Kuusi kuudesta lukee, nolla varoitusta. Kaikki palauttavat `0xDB` tai `0xFB`,
+ja ero on vain PIOB:n tapahtumasalvassa.
 
-Komponentin kääntäminen ei vastaa tähän. **Selvitä ensin mihin ne on kytketty**,
-ja vasta sitten päätä kannattaako niitä lukea — muuten syntyy kuusi entiteettiä
-joiden arvoa kukaan ei osaa tulkita.
+```
+0xDB = 1101 1011      0xFB = 1111 1011
+       ││││ ││││             ││││ ││││
+       │││└─┼┼┼┴── PIOA: taso 0, salpa 1, Q 1
+       ││└──┼┼──── PIOB: taso 1, salpa 0/1
+       │└───┼┼──── kanavia: 2
+       └────┴┴──── syöttö: on
+```
+
+**PIOA on matalalla kaikilla kuudella.** Ovikosketin vetää maihin kun ovi on
+kiinni, joten kaikki kuusi ovea ovat kiinni — mikä perjantai-iltana on täysin
+uskottavaa. `device_class: door` näyttää sen `Closed`-tilana ilman
+inversiota, eli `channel: A` osui oikeaan eikä `invert`-suodatinta tarvita.
+
+**PIOB on korkealla kaikilla kuudella.** Kytkemätön PIO kelluu ylös, eli
+toinen kanava on vapaa. Nämä ovat siis kaksikanavaisia TSOC-6-koteloita, ei
+yksikanavaisia TO-92:ia — **jokaisessa latchissa on käyttämätön tulo.**
+
+**Syöttöbitti on ykkösenä.** Nämä kuusi saavat käyttöjännitteen eivätkä ole
+loiskäytöllä. Se on riippumaton havainto siitä että VDD-johdin yltää niille
+haaroille joilla latchit ovat.
+
+### Tapahtumasalpa poistaisi minuutin sokean hetken
+
+PIOA:n salpa on ykkösenä kaikilla, koska sitä ei koskaan nollata: luku tehdään
+`ALR=0`:lla, joka jättää salvan rauhaan.
+
+**Se on tässä hukkaan heitetty ominaisuus.** Ovia pollataan minuutin välein
+sarjoituksen takia, joten nopea avaus ja sulkeminen jää huomaamatta — mutta
+piiri itse muistaa sen. `ALR=1` eli ohjaustavu `0xC4` palauttaisi salvan tilan
+**ja nollaisi sen samalla**, jolloin jokainen kierros vastaisi kysymykseen
+"liikkuiko ovi edellisen kierroksen jälkeen" riippumatta siitä missä asennossa
+se nyt on.
+
+Se vaatii toisen entiteetin per ovi tai yhdistetyn tilan, ja se on juuri se
+ominaisuus jonka takia DS2406 valittiin DS2413:n sijaan — **tässä verkossa se
+on ollut käyttämättä koko ajan.**
+
+### Mikä ne ovat, ja mikä päättely meni pieleen
+
+**Ne ovat ovikoskettimia**, omistajan mukaan.
+
+Tämä tiedosto piti aiemmin outona sitä että latcheja on yksi per asennusvaihe,
+ja päätteli siitä että ne olisivat haarakohtaisia — että ne kertoisivat tähden
+rakenteesta eivätkä talon tapahtumista. **Se oli väärä päättely.** Kuvio ei
+ollut erikoinen lainkaan: huone asennettiin kerralla, eli lämpötila-anturit ja
+oven kosketin samaan syssyyn.
+
+Opetus on yleisempi kuin tämä tapaus. Aineistossa näkyi *asennusjärjestys*, ja
+siitä luettiin *toiminnallinen ryhmittely*. Ne ovat eri asioita, ja vain
+omistaja tiesi kumpi oli kyseessä.
+
+Kohdistus yksittäiseen oveen on yhä auki: asennusvaihe kertoo milloin eikä
+mitä ovea, ja neljäs vaihe lisäsi kaksi latchia kolmeen huoneeseen. **Yksi oven
+avaus nimeää yhden anturin**, ja se on ensimmäinen tunnistuskeino tässä
+projektissa joka ei nojaa lämpötilaan.
 
 ## Kytkös lattialämmitykseen
 
