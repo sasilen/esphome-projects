@@ -44,6 +44,13 @@ vendor/
 s/
 inbox/
 
+# Sama koskee kuvia jotka putoavat suoraan juureen kameran omalla nimellä —
+# ne eivät ole käyneet convert-putken läpi. Polku on ankkuroitu juureen, jotta
+# projektihakemistojen käsitellyt kuvat eivät osu tähän.
+/PXL_*
+/IMG_*
+/DSC*
+
 # Keskeneräinen selainlataus. ESPHomen "Install -> Manual download" pudottaa
 # .bin-tiedoston, joka on jo yllä — mutta kesken jäänyt lataus on .crdownload
 # eikä osu siihen, ja päätyi kerran committiin asti.

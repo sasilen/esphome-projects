@@ -3,7 +3,7 @@
   <rect x="20" y="20" width="720" height="860" fill="none" stroke="#A8B3BC"/>
 
   <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">1-WIRE &#8212; KYTKENT&#196;</text>
-  <text x="40" y="80" font-size="12" fill="#5A6772">Nelj&#228; johdinta, kaksi paria, yksi vastus &#183; nastakartta luettu vanhasta pistokkeesta</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Nelj&#228; johdinta, kaksi paria, yksi vastus &#183; nastat luettu vanhasta pistokkeesta, v&#228;rit T568B</text>
   <line x1="20" y1="98" x2="740" y2="98" stroke="#A8B3BC"/>
 
   <text x="50" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">IS&#196;NT&#196;</text>
@@ -26,10 +26,10 @@
     <text x="482" y="371">7</text><text x="482" y="391">8</text>
   </g>
   <g font-size="10.5" font-weight="700">
-    <text x="506" y="196" fill="#16212B">musta</text>
-    <text x="506" y="226" fill="#A3301F">punainen</text>
-    <text x="506" y="286" fill="#8A6D1F">keltainen</text>
-    <text x="506" y="316" fill="#5A6772">valkoinen</text>
+    <text x="506" y="196" fill="#C2601F">valko-oranssi</text>
+    <text x="506" y="226" fill="#C2601F">oranssi</text>
+    <text x="506" y="286" fill="#1F5FA8">sininen</text>
+    <text x="506" y="316" fill="#1F5FA8">valkosininen</text>
   </g>
   <g font-size="10" fill="#5A6772">
     <text x="600" y="196">GND</text>
@@ -42,33 +42,33 @@
     <text x="600" y="391">&#8212;</text>
   </g>
 
-  <g stroke="#A3301F" stroke-width="1.5" fill="none">
+  <g stroke="#C2601F" stroke-width="1.5" fill="none">
     <path d="M 662 188 L 670 188 L 670 218 L 662 218"/>
   </g>
-  <text x="676" y="207" font-size="9.5" font-weight="700" fill="#A3301F">oranssi</text>
-  <g stroke="#0E6E7C" stroke-width="1.5" fill="none">
+  <text x="676" y="207" font-size="9.5" font-weight="700" fill="#C2601F">pari</text>
+  <g stroke="#1F5FA8" stroke-width="1.5" fill="none">
     <path d="M 662 278 L 670 278 L 670 308 L 662 308"/>
   </g>
-  <text x="676" y="297" font-size="9.5" font-weight="700" fill="#0E6E7C">sininen</text>
+  <text x="676" y="297" font-size="9.5" font-weight="700" fill="#1F5FA8">pari</text>
 
   <g stroke="#16212B" stroke-width="1.5" fill="none">
     <line x1="230" y1="192" x2="470" y2="192"/>
     <path d="M 380 192 L 380 312 L 470 312"/>
   </g>
-  <g stroke="#A3301F" stroke-width="1.5" fill="none">
+  <g stroke="#C2601F" stroke-width="1.5" fill="none">
     <line x1="230" y1="222" x2="470" y2="222"/>
   </g>
-  <g stroke="#8A6D1F" stroke-width="1.5" fill="none">
+  <g stroke="#1F5FA8" stroke-width="1.5" fill="none">
     <line x1="230" y1="272" x2="470" y2="272"/>
   </g>
 
-  <g stroke="#0E6E7C" stroke-width="1.5" fill="none">
+  <g stroke="#7A3FA8" stroke-width="1.5" fill="none">
     <line x1="300" y1="272" x2="300" y2="296"/>
     <line x1="300" y1="330" x2="300" y2="352"/>
     <line x1="230" y1="352" x2="300" y2="352"/>
   </g>
-  <rect x="288" y="296" width="24" height="34" rx="2" fill="#FFFFFF" stroke="#0E6E7C" stroke-width="1.5"/>
-  <text x="322" y="318" font-size="11" font-weight="700" fill="#0E6E7C">4,7 k&#8486;</text>
+  <rect x="288" y="296" width="24" height="34" rx="2" fill="#FFFFFF" stroke="#7A3FA8" stroke-width="1.5"/>
+  <text x="322" y="318" font-size="11" font-weight="700" fill="#7A3FA8">4,7 k&#8486;</text>
 
   <text x="50" y="428" font-size="11.5" fill="#16212B"><tspan font-weight="700">Molemmat maat kytket&#228;&#228;n.</tspan> Ne ovat rinnan &#8212; yhdistyv&#228;t C3:n GND-nastassa ja jokaisen</text>
   <text x="50" y="446" font-size="11.5" fill="#16212B">anturin GND-nastassa &#8212; joten toisen unohtaminen ei riko mit&#228;&#228;n eik&#228; siksi n&#228;y mitenk&#228;&#228;n,</text>
@@ -85,10 +85,10 @@
   <line x1="20" y1="616" x2="740" y2="616" stroke="#A8B3BC"/>
 
   <text x="50" y="644" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">PARISUUS &#8212; PID&#196; SE</text>
-  <text x="50" y="666" font-size="11.5" fill="#16212B">Data ja sen maa ovat <tspan font-weight="700">sinisess&#228; parissa</tspan> (4 ja 5), sy&#246;tt&#246; ja sen maa <tspan font-weight="700">oranssissa</tspan> (1 ja 2).</text>
-  <text x="50" y="684" font-size="11.5" fill="#16212B">Kumpikin signaali kulkee oman paluujohtimensa kanssa samassa kierteess&#228;. Jos data ja</text>
-  <text x="50" y="702" font-size="11.5" fill="#16212B">sy&#246;tt&#246; p&#228;&#228;tyv&#228;t samaan pariin, kaapeli n&#228;ytt&#228;&#228; samalta mutta menett&#228;&#228; sen ominaisuuden</text>
-  <text x="50" y="720" font-size="11.5" fill="#16212B">jonka takia parit ovat olemassa.</text>
+  <text x="50" y="666" font-size="11.5" fill="#16212B">Data ja sen maa ovat <tspan font-weight="700">sinisess&#228; parissa</tspan> (4 ja 5), sy&#246;tt&#246; ja sen maa nastoissa 1 ja 2.</text>
+  <text x="50" y="684" font-size="11.5" fill="#16212B"><tspan font-weight="700">Standardikaapelissa parisuus toteutuu itsest&#228;&#228;n:</tspan> 1&#8211;2 ja 4&#8211;5 ovat pareja sek&#228; T568A:ssa</text>
+  <text x="50" y="702" font-size="11.5" fill="#16212B">ett&#228; T568B:ss&#228;. Vain v&#228;rit vaihtuvat &#8212; nastat 1 ja 2 ovat B:ll&#228; oranssi pari, A:lla vihre&#228;.</text>
+  <text x="50" y="720" font-size="11.5" fill="#16212B">Reunimmainen johdin kertoo kumman: <tspan font-weight="700">oranssi on B, vihre&#228; on A.</tspan> Sininen on sama molemmissa.</text>
 
   <rect x="50" y="748" width="660" height="114" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
   <rect x="50" y="748" width="6" height="114" fill="#A3301F"/>

@@ -252,14 +252,76 @@ Todellinen hyöty tärkeysjärjestyksessä:
 - **Ylösveto ei mene verkkoon.** Se on C3:n päässä GPIO4:n ja 3V3:n välissä, ja
   verkkoon lähtee vain neljä johdinta.
 
+### Kaapeli tehdään tehdaspistokkeesta, eikä vanhaa pureta
+
+Uusi kaapeli syntyy **valmiista patch-kaapelista jonka toinen pää leikataan
+irti**. Tehdaspuristus jää rasian päähän ja neljä johdinta juotetaan C3:n
+rimaan. Kaksi asiaa seuraa siitä, ja kumpikin on parempi kuin siirtovaihtoehto:
+
+- **Palautus on pistokkeen vaihto, ei juotostyö.** Raspberryn kaapeli jää
+  ehjänä paikalleen, joten vanhan toteutuksen palauttaminen on kahden sekunnin
+  operaatio. Se on sama etu jonka jatkoholkki tarjoaisi, ilman holkkia — ja se
+  on se ominaisuus joka siirtosuunnitelmassa menetettiin.
+- **Rasian puoleinen liitos ei ole itse tehty.** Puristus on se kohta jossa
+  käsityö tyypillisimmin pettää, ja tässä se ohitetaan kokonaan.
+
+**Yksi isäntä kerrallaan säilyy fyysisenä pakkona.** Kummallakin kaapelilla on
+oma pistokkeensa mutta verkolla vain yksi paikka, joten molemmat eivät mahdu
+kiinni yhtä aikaa. Sääntö ei jää muistin varaan.
+
+#### Johtimet valitaan nastanumerolla, ei värillä
+
+Patch-kaapeli on suora, eli nasta N yhdessä päässä on nasta N toisessa.
+Tarvittavat neljä ovat siis nastat 1, 2, 4 ja 5 riippumatta siitä miltä ne
+näyttävät.
+
+**Sininen pari on nastoissa 4 ja 5 sekä T568A:ssa että T568B:ssä**, joten
+datapari on väriltäänkin varma. Nastat 1 ja 2 sen sijaan ovat B:llä oranssi
+pari ja A:lla vihreä. Kaapelin standardin erottaa reunimmaisesta johtimesta:
+oranssi tarkoittaa B:tä, vihreä A:ta.
+
+Parisuus toteutuu automaattisesti kummassakin, koska nastat 1–2 ja 4–5 ovat
+pareja molemmissa standardeissa. **Parisuus ei siis ole kiinni standardista
+lainkaan — vain värinimet ovat.**
+
+Jatkuvuusmittaus kuoritusta johtimesta pistokkeen nastaan ohittaa koko
+kysymyksen ja kattaa samalla sen epätodennäköisen tapauksen että kaapeli on
+ristiin kytketty. Tässä talossa väri ei ole ollut kertaakaan luotettava viite.
+
+Neljä käyttämätöntä johdinta katkaistaan eri mittaan tai eristetään.
+
+#### Isännän pätkä pidetään lyhyenä
+
+Kaapelista ei tehdä pitkää. **Isännän ja rasian väli on ainoa segmentti joka on
+sarjassa koko tähden kanssa** — haaraan lisätty metri koskee sen haaran
+antureita, tähän lisätty metri lisätään jokaisen 25 laitteen matkaan yhtä aikaa.
+
+Kapasitanssi on se joka maksaa: Cat5 on noin 50 pF/m, joten kymmenen metriä
+tuo 500 pF lisää 4,7 kΩ:n ylösvedon kuormaksi. Nousuaika on silloin jo
+mikrosekunteja, ja 1-Wiren lukuikkuna on ~15 µs putoavasta reunasta. Marginaali
+kuluu ennen kuin yhtäkään haaraa on otettu mukaan — ja tähti on jo valmiiksi
+topologioista vaikein.
+
+Ainoa todellinen syy viedä C3 kauas rasiasta on pistorasian tai kentän puute,
+ja kumpikin ratkeaa halvemmalla:
+
+- **Virta:** pitkä USB-kaapeli. Metrit USB:n puolella eivät maksa väylälle
+  mitään. Siirrä virtaongelma, älä väyläongelmaa.
+- **Kenttä:** mitattava ennen kuin kaapeli leikataan. `Wi-Fi`-anturi on
+  konfiguraatiossa juuri tätä varten. Jos kenttä on huono, oikea korjaus on
+  silti pitää C3 keskittimellä ja korjata radio — ulkoinen antenni tai toistin.
+  **Radion voi korjata jälkikäteen, väylän kapasitanssia ei.**
+
 ### C3 toistaa saman
 
-| C3 | Johdin |
-|---|---|
-| **5V** | punainen |
-| **GND** | musta ja valkoinen |
-| **GPIO4** | keltainen |
-| **4,7 kΩ GPIO4:stä 3V3:een** | ei verkkoon |
+Värit ovat T568B:n mukaiset; A:lla oranssin tilalla on vihreä.
+
+| C3 | RJ45-nasta | Johdin |
+|---|---|---|
+| **5V** | 2 | oranssi |
+| **GND** | 1 ja 5 | valko-oranssi ja valkosininen |
+| **GPIO4** | 4 | sininen |
+| **4,7 kΩ GPIO4:stä 3V3:een** | — | ei verkkoon |
 
 SuperMinin 5V-nasta on USB:n VBUS:issa, joten se antaa saman viisi volttia kuin
 Raspberry. **Ylösveto menee 3V3:een eikä viiteen** — se on tämän kytkennän

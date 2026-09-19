@@ -46,7 +46,7 @@ Kolme johdinta ja yksi vastus. **Ylösveto kuuluu isännän päähän**, datan j
 3,3 voltin väliin, ja niitä on yksi kappale koko verkolle — ei yhtä per haara,
 koska rinnakkaiset ylösvedot laskisivat yhteisvastuksen liian pieneksi.
 
-| RJ45 | Johdin | C3 |
+| RJ45 | Vanhan kaapelin johdin | C3 |
 |---|---|---|
 | **1** | musta | GND |
 | **2** | punainen | **5V** |
@@ -54,10 +54,13 @@ koska rinnakkaiset ylösvedot laskisivat yhteisvastuksen liian pieneksi.
 | **4** | keltainen | **GPIO4**, ja **4,7 kΩ tästä 3V3:een** |
 | **5** | valkoinen | GND |
 
+**Nastat ovat pysyviä, värit eivät.** Taulukon värisarake kuvaa vanhaa
+kaapelia; uuden patch-kaapelin värit ovat alempana.
+
 Data nastassa 4 ja sen maa nastassa 5 on **sininen pari**; syöttö nastassa 2 ja
 sen maa nastassa 1 on **oranssi pari**. Kumpikin signaali kulkee oman
-paluujohtimensa kanssa samassa kierteessä — pidä se niin myös uudessa
-kaapelissa.
+paluujohtimensa kanssa samassa kierteessä — ja standardikaapelissa se toteutuu
+itsestään, koska 1–2 ja 4–5 ovat pareja molemmissa nastajärjestyksissä.
 
 **Syöttö on 5 V ja ylösveto 3,3 V.** Se ei ole epäjohdonmukaisuus vaan se mikä
 on toiminut tässä talossa vuosia: anturit saavat täyden jännitteen pitkälle
@@ -93,7 +96,7 @@ silmällä.** Koko ketju premisseineen on [CLAUDE.md](CLAUDE.md):ssä.
 nastojen merkitys tiedetään: nasta 7 on GPIO4 eli data, nasta 1 on 3,3 V ja
 nasta 6 on maa. Jatkuvuus RJ45-pistokkeesta rimaan antaa taulukon suoraan.
 
-### Kaapeli siirretään, ei tehdä uutta
+### Uusi kaapeli tehdaspistokkeesta, vanha jää paikalleen
 
 ![Ylösveto Raspberryn rimassa](rpi-pullup.jpg)
 
@@ -101,31 +104,49 @@ nasta 6 on maa. Jatkuvuus RJ45-pistokkeesta rimaan antaa taulukon suoraan.
 mistään muualta: **ylösveto on isännän päässä**, juotettuna suoraan riman
 kahden nastan väliin. Verkossa itsessään ei ole ylösvetoa.
 
-Kaapeli on tehty kerran ja se toimii, joten se siirretään sellaisenaan
-Raspberrystä C3:lle — ei uutta pistoketta eikä jatkoholkkia. Neljä johdinta
-irti rimasta ja kiinni C3:een.
+C3:lle tehdään oma kaapeli **valmiista patch-kaapelista leikkaamalla toinen pää
+irti**. Tehdaspuristus jää rasian päähän, ja Raspberryn kaapeli jää koskematta.
 
 1. **Flashaa C3 ennen kuin kolviin kosket.** Minuutin työ, ja konfiguraatio
    putoaa epäiltyjen listalta pysyvästi. Penkillä oikea tulos on että kaikki
    kaksikymmentä anturia ovat `unavailable` — väylää ei ole.
-2. **Rima C3:een.** Alkuperäinen kaapeli on juotettu suoraan riman nastoihin,
-   joten sama rakenne on jatkumoa eikä poikkeus. Jos käytät dupontia riman
-   päällä, muista että **katkeileva datakontakti lukee nollana antureita** eikä
-   erotu mitenkään muista syistä joilla väylä on hiljainen.
-3. **Vastus GPIO4:n ja 3V3:n väliin.** Rimassa se on nastojen 1 ja 7 välissä;
+2. **Mittaa kenttä ennen kuin leikkaat.** Se on ainoa tieto joka voisi muuttaa
+   sijoituspaikkaa, ja sijoituspaikka määrää kaapelin pituuden.
+3. **Leikkaa lyhyeksi.** Puoli metriä jos asennus sallii. Löysää ei jätetä
+   varmuuden vuoksi: **tämä pätkä on sarjassa koko verkon kanssa**, toisin kuin
+   yksittäinen haara.
+4. **Tunnista neljä johdinta jatkuvuudella**, ei värillä. Kuorittu johdin ↔
+   pistokkeen nasta. Tarvitaan nastat 1, 2, 4 ja 5.
+5. **Vastus GPIO4:n ja 3V3:n väliin.** Rimassa se on nastojen 1 ja 7 välissä;
    C3:lla asento on eri mutta tehtävä sama. **3V3, ei 5V** — tämä on kytkennän
    ainoa kohta jossa virhe tuhoaa GPIO:n.
-4. **Neljä johdinta:** punainen 5V, keltainen GPIO4, musta ja valkoinen GND.
-5. **Vedonpoisto.** Kaapeli on tähän asti roikkunut Raspberryn painon varassa;
-   C3 on kymmenesosa siitä eikä pidä sitä paikallaan.
+6. **Juota neljä johdinta.** Loput neljä katkaistaan eri mittaan tai
+   eristetään. Jos käytät dupontia riman päällä, muista että **katkeileva
+   datakontakti lukee nollana antureita** eikä erotu mitenkään muista syistä
+   joilla väylä on hiljainen.
+7. **Vedonpoisto.** C3 ei pidä kaapelia paikallaan omalla painollaan.
 
-**Palautus on juotostyö, ei pistokkeen vaihto.** Se on tämän valinnan hinta:
-uusi kaapeli ja jatkoholkki olisivat tehneet vaihdosta kahden sekunnin
-operaation. Vastapainona ei tarvita uutta pistoketta eikä oteta riskiä siitä
-että uusi puristus on huono.
+Nastat ovat samat molemmilla standardeilla; vain värit vaihtuvat. **Sininen
+pari on nastoissa 4 ja 5 kummassakin**, joten datapari on varma:
 
-Palautusta varten riittää tämä taulukko, ja se on kuvaa parempi lähde — kuva
-näyttää missä johtimet olivat, taulukko sanoo mitä ne ovat:
+| RJ45-nasta | T568B | T568A | C3 |
+|---|---|---|---|
+| 1 | valko-oranssi | valkovihreä | GND |
+| 2 | oranssi | vihreä | 5V |
+| 4 | sininen | sininen | GPIO4, data |
+| 5 | valkosininen | valkosininen | GND |
+
+Reunimmainen johdin kertoo kumpi standardi: oranssi on B, vihreä on A.
+
+**Palautus on pistokkeen vaihto.** Raspberryn kaapeli on ehjä ja paikallaan,
+joten vanhaan toteutukseen palataan irrottamalla C3:n pistoke ja työntämällä
+vanha tilalle.
+
+**Yksi isäntä kerrallaan** seuraa samasta: verkolla on yksi paikka, joten
+molemmat kaapelit eivät mahdu kiinni yhtä aikaa. Sääntö ei jää muistin varaan.
+
+Vanha kaapeli pysyy siis myös mittalaitteena. Sen kartta on tässä siltä
+varalta että se joskus irrotetaan:
 
 | Raspberryn nasta | Signaali | Johdin |
 |---|---|---|
@@ -133,9 +154,6 @@ näyttää missä johtimet olivat, taulukko sanoo mitä ne ovat:
 | 2 | 5 V | punainen |
 | 6 ja 9 | GND | musta ja valkoinen |
 | 7 | GPIO4, data | keltainen |
-
-**Yksi isäntä kerrallaan.** Kun kaapeli on siirretty, Raspberryllä ei ole enää
-väylää — mikä on tässä ratkaisussa automaattista eikä muistin varassa.
 
 ## Ennen kuin kytket isännän
 
