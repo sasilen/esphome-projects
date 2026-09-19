@@ -3594,6 +3594,39 @@ very part being probed, and Stiebel publishes no endurance figure. So the rule i
 built to make the answer irrelevant: it costs a quarter hour of control latency,
 and being wrong in the other direction would have cost a controller board.
 
+## The tank sensor lags the compressor by about nine minutes
+
+A DHW charge on 19 September makes the delay measurable, and it is large enough
+to invert a reading taken too early:
+
+| | |
+|---|---|
+| 19:41:31 | `Compressor` → ON |
+| 19:43 | reheat flow crosses 45 °C, still climbing fast |
+| **19:50** | **tank finally starts to move**, 47.1 °C |
+| 20:08:23 | `Compressor` → OFF |
+| 20:11 | tank settles at 50.4 °C and stays there |
+
+**A flat tank is not evidence that nothing is being charged.** Fifteen minutes
+into that run this file's working assumption was that the tank was untouched at
+47.0 °C and therefore the run had to be space heating. It was a DHW charge the
+whole time; the sensor simply had not caught up. The same mistake is available
+to anyone reading a live log rather than a finished curve.
+
+The delay is physical rather than electrical — the sensor sits where the tank
+stratifies, so it reports only once the charged layer reaches it.
+
+### Which signal separates a legionella cycle from a normal charge
+
+Not the reheat flow. It reached 57 °C in an ordinary charge, so a threshold
+there fires on everything.
+
+**The tank does separate them.** A normal charge stopped at 50.4 °C; a
+legionella cycle has to pass 60 °C to do its job. A watcher set at 55 °C sits
+in the gap with room on both sides, and `stiebel.eltron/watch-dhw.sh` is that
+watcher — it polls the log rather than the device, so it adds no API client and
+cannot interfere with an OTA.
+
 ---
 
 # Hardware Summary
