@@ -1810,6 +1810,58 @@ precise names.
 should become a temperature in tenths named for frost protection, and
 `Element 0xFDF3` a flow temperature. The raw values are in the log either way.
 
+### A second capture reproduces the load step and unsettles the polarity
+
+A later capture on the C3 node covers an idle afternoon and one compressor start,
+and it is the first recording where the compressor's state is **observed rather
+than inferred** — the `Compressor` binary sensor publishes `ON` at a known
+second, 87 s before anything thermal moves.
+
+0xFE07 lands on the documented operating points without adjustment:
+
+| Compressor | n | Median | Range | Earlier capture |
+|---|---|---|---|---|
+| off | 234 | 56 | 55 – 58 | mean 56.3, 55 – 59 |
+| **on** | 184 | **52** | 51 – 54 | mean 52.3, 51 – 54 |
+
+**The load step is therefore real and repeatable**, and it survives the one
+methodological doubt the first capture carried. The anti-correlation reproduces
+too: 0xFE07 goes non-zero within 4 s of 0xFE1B going to 0, at both transitions.
+
+**What does not survive is the reading of which state means "running".** The
+frost protection story above rests on 0xFE1B = 100 being the circulating state.
+Averaged by ten-minute bucket, the flow-minus-return spread says the opposite:
+
+| 0xFE1B | Flow − return | Flow |
+|---|---|---|
+| 0 | **+3.4 to +3.6 K** | rising, 24.5 → 30.5 |
+| 100 | +0.2 to +0.6 K | drifting down, 24.4 → 24.0 |
+
+A circuit moving heat has a spread across it; an idle one does not. **On this
+evidence 0xFE1B = 0 is the running state**, which inverts the sentence "frost
+protection armed exactly when the floor circuit is standing still" into its
+opposite. Either that closure is wrong, or the spread has another explanation —
+but the closure can no longer be treated as settled.
+
+One more observation that does not fit a simple heating run: during the
+compressor start at 19:41 **both 0xFE1B and 0xFE1C read 0**, the tank sits at
+47.0 °C without moving a tenth for fifteen minutes, and flow and return climb
+together to 55 °C only ~2 K apart. That is not the tank charge the prediction
+above describes, so the prediction remains untested.
+
+**And the afternoon run had no compressor at all.** Between 16:52 and 17:11 the
+flow rose 24.5 → 30.5 °C with a +3.5 K spread while the `Compressor` sensor
+stayed silent — and since it published `ON` at 19:41, its prior state was off.
+Something other than the compressor added that heat. The reheat flow sensor
+tracked the flow within 0.4 K throughout, which is not what a heater sitting
+between them would do, so the source is not identified.
+
+**A caution this file has now earned twice.** Reading 0xFE07's step as a pump or
+a flow was withdrawn once as over-confident; the same reading was reached again
+from this capture, from less data, before the earlier withdrawal was consulted.
+The behaviour genuinely looks mechanical. That is precisely why the name has to
+come from a source outside the capture, and `FROSTSCHUTZ` still is one.
+
 ### The hydraulics are now known from the installation, and one premise above is wrong
 
 The section above reasons from "the tank is charged by the heat pump and the
