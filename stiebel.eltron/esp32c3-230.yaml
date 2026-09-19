@@ -312,6 +312,14 @@ canbus:
               // stall: a screen that asks for three parts and not the fourth
               // would leave the total unpublished forever. Unset it is zero,
               // which is exactly the behaviour this file already had.
+              //
+              // **It is consumed by the publish it arrived for**, and that is
+              // not tidiness. Because it does not gate anything, a remainder
+              // read an hour ago would otherwise be added to a total whose
+              // other three parts are fresh — a number assembled from two
+              // different moments, which is the same fault the `seen` mask
+              // exists to prevent for the other parts. Zeroing it on use
+              // bounds the error to "absent", never to "stale".
               struct Ctr { uint16_t mwh, kwh, day, rem; uint8_t seen, need; };
               static Ctr ctr[6] = {
                   {0, 0, 0, 0, 0, 0b111}, {0, 0, 0, 0, 0, 0b111},
@@ -329,8 +337,10 @@ canbus:
                 return true;
               };
               auto total = [&](uint8_t i) {
-                return ctr[i].mwh * 1000.0f + ctr[i].kwh + ctr[i].day +
-                       ctr[i].rem / 1000.0f;
+                const float t = ctr[i].mwh * 1000.0f + ctr[i].kwh +
+                                ctr[i].day + ctr[i].rem / 1000.0f;
+                ctr[i].rem = 0;
+                return t;
               };
 
               const bool sentinel =
