@@ -34,16 +34,11 @@ logger:
 
 api:
   encryption:
-    # **Laitekohtainen nimi, toisin kuin muissa projekteissa.** Kontin
-    # `/config` on litteä ja siellä on yksi jaettu `secrets.yaml`, joten
-    # nimien on oltava globaalisti uniikkeja — `api_encryption_key` on jo
-    # varattu stiebelille ja onewirelle eri arvolla.
-    #
-    # Aidon oli ajossa ennen kuin se otettiin versionhallintaan, ja sillä on
-    # oma avaimensa. Jaettuun nimeen siirtyminen vaihtaisi avaimen ja
-    # **katkaisisi HA:n yhteyden** kunnes se annetaan uudelleen. Sitä ei
-    # kannata tehdä pelkän nimen siistimiseksi.
-    key: !secret aidon_api_key
+    # Jaettu avain kaikkien laitteiden kesken, kontin /config/secrets.yaml:sta.
+    # **Aidon oli ajossa omalla avaimellaan ennen versionhallintaa**, joten
+    # ensimmäinen flashaus tällä vaihtaa sen — ja HA tarvitsee uuden avaimen
+    # ennen kuin entiteetit palaavat. Se on kertaluonteinen ja tiedossa.
+    key: !secret api_encryption_key
 
 ota:
   - platform: esphome

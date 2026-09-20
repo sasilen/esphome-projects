@@ -61,18 +61,18 @@ Jokaisella ESPHome-konfiguraation omaavalla projektilla on `secrets.yaml.example
 samalla kun YAML syntyy; `bestway.lay-z-spa` ei ole ESPHome-projekti eikä
 kuulu tämän piiriin.
 
-**Kontin `/config` on litteä ja siellä on yksi jaettu `secrets.yaml`.** Repon
-projektikohtaiset `secrets.yaml.example`-tiedostot kuvaavat siis rakennetta
-joka ei toteudu ajossa, ja siitä seuraa yksi sääntö: **nimen on oltava
-globaalisti uniikki jos arvo on laitekohtainen.**
+**Kontin `/config` on litteä ja siellä on yksi jaettu `secrets.yaml`.**
+Kaikki laitteet käyttävät samoja arvoja: `wifi_ssid`, `wifi_password`,
+`ap_password`, `api_encryption_key` ja `ota_password`.
 
-`api_encryption_key` on varattu stiebelille ja onewirelle, jotka jakavat
-saman avaimen. Aidon oli ajossa ennen versionhallintaa ja sillä on omansa,
-joten se käyttää nimeä `aidon_api_key`. Jaettuun nimeen siirtyminen vaihtaisi
-avaimen ja **katkaisisi HA:n yhteyden** kunnes se annetaan uudelleen — sitä ei
-kannata tehdä pelkän siisteyden vuoksi.
+Repon projektikohtaiset `secrets.yaml.example`-tiedostot kuvaavat siis saman
+jaetun tiedoston sisältöä, eivät laitekohtaisia kopioita. **Niiden
+paikanpitäjien pitäisi olla keskenään samat**, koska arvot ovat.
 
-Wifi-tunnukset ja `ap_password` voivat olla jaettuja, koska ne *ovat* samat.
+Yksi seuraus kannattaa tietää etukäteen: **laite joka on ollut ajossa omalla
+avaimellaan menettää HA-yhteytensä** kun se ensimmäisen kerran flashataan
+jaetulla `api_encryption_key`:llä. Laite toimii, mutta entiteetit ovat
+`unavailable` kunnes HA saa uuden avaimen. Se on kertaluonteinen eikä vika.
 
 YAMLissa käytetään aina `!secret`-viittauksia, ei kirjoitettuja arvoja.
 **Tämä koskee myös AP-varayhteyden salasanaa** — se unohtuu helposti, koska se
