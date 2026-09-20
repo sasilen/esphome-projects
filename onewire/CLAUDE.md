@@ -982,9 +982,23 @@ ja sisäpinnat eivät. Se on ilmainen varmistus jota kannatti odottaa.
 
 **Yksikään ei ole ulkopinta eikä kuuma piste.** Kaikki ovat välillä 22,9–25,9.
 
-**Saunaa ei siis löytynyt.** Se oli avoin kysymys alusta asti, ja vastaus on
-joko ettei sitä ole väylällä tai ettei sitä ollut lämmitetty. Saunan
-lämmittäminen ratkaisee sen yhdellä kerralla.
+**Sauna löytyi lämmittämällä.** Se oli avoin kysymys alusta asti, eikä
+lämpötila erottanut sitä mitenkään: lämmittämättömänä se luki huoneenlämpöä
+siinä missä kaikki muutkin.
+
+```
+10:26:14  FFBADB  23,44
+10:27:14  FFBADB  30,06   +6,62   eikä yksikään muu liikkunut
+```
+
+`FFBADB` on siis **sauna**, ja se on erästä `750400` — samasta kuin keittiön
+ikkuna-anturit ja olohuoneen ulkopinta.
+
+**Mutta eräkoodia ei pidä lukea asennuspaikaksi.** Omistajan mukaan tämä on
+eri mallia kuin muut, anturi joka sattui sopimaan tähän paikkaan, ja sarjat
+ovat muutenkin sekaisin. Eräkoodi kertoo **milloin piiri on tehty**, ei sitä
+mihin se päätyi — ja yllä oleva ryhmittely kertoo siis oston ajankohdasta,
+ei asennuksesta.
 
 ### Eräkoodi kertoo milloin ne on ostettu
 

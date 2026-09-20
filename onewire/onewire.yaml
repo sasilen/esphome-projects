@@ -451,7 +451,13 @@ sensor:
     one_wire_id: bus_a
     id: t30
     address: 0xCE000475DBBAFF28          # 28.FFBADB750400
-    name: "Tuntematon 28 FFBADB"
+    # **Sauna**, todennettu lämmittämällä 20.9. klo 10:27: seisoi 23,44:ssä
+    # kuusi kierrosta ja hyppäsi 30,06:een, eikä yksikään muu liikkunut.
+    #
+    # Omistajan mukaan tämä on **eri mallia kuin muut** — anturi joka sattui
+    # sopimaan tähän paikkaan. Eräkoodi kertoo siis milloin piiri on tehty,
+    # ei sitä mihin se päätyi.
+    name: "Sauna"
     update_interval: never
     filters: *lampo
 
@@ -561,7 +567,7 @@ interval:
       - delay: 1s
       - lambda: 'id(t29).update();'   # Tuntematon 28 FFEAE5
       - delay: 1s
-      - lambda: 'id(t30).update();'   # Tuntematon 28 FFBADB
+      - lambda: 'id(t30).update();'   # Sauna
       - delay: 1s
       - lambda: 'id(t31).update();'   # Tuntematon 28 21270B
       # Ovet samaan sarjaan. DS2406:n luku on lyhyt muttei ilmainen: sekin
