@@ -1034,16 +1034,41 @@ kumpaakaan tarvitsee etsiä.
 
 `BFF565` on **järjestelmällisesti 0,12–0,19 °C lämpimämpi** kuin `B23B66`
 koko yön, eikä kertaakaan toisin päin. Kerrostuma on siis mitattavissa
-kymmenen sentin matkalla. **`BFF565` on ylempi**, `B23B66` alempi, ja ne on
-nimetty sen mukaan.
+kymmenen sentin matkalla — ja siitä pääteltiin että `BFF565` on ylempi.
+
+**Se oli väärin, ja lämmittäminen osoitti sen.** Omistaja lämmitti 20.9. ensin
+ylemmän ja minuuttia myöhemmin alemman:
+
+```
+10:11:10  B23B66   23,19 -> 30,75   +7,56    ensimmäisenä = ylempi
+10:12:11  BFF565   23,38 -> 28,25   +4,88    toisena     = alempi
+```
+
+Päättely oli oikea muodoltaan ja **väärä etumerkiltään.** Lämpimämpi ylös
+pätee lataukseen: kuuma vesi nousee ja kerrostuu yläosaan. Yön yli seisova
+varaaja jäähtyy, ja silloin **yläosa luovuttaa lämpöä nopeammin** — sinne
+johtavat putkiliitokset ja sinne lämpö nousee kadotakseen.
+
+0,15 asteen ero oli siis tosi, mutta sen merkki riippuu siitä lataako vai
+jäähtyykö varaaja. Tulkitsin sen kuin lataus olisi käynnissä, vaikka
+aineisto oli seisovasta yöstä.
+
+**Kolmen minuutin koe kumosi kymmenen tunnin päättelyn**, ja se oli
+tiedossa: yllä lukee että anturit saa irti ja että se korvaa päättelyn
+suoralla havainnolla.
 
 Se myös selittää sen mikä oli eilen pelkkä kummallisuus: ne lukivat tasan
 saman lukeman `25,875 °C`. Kaksi anturia samassa vesitilavuudessa tekee niin.
 
-**Ja tämä on todennettavissa, toisin kuin muut nimeämiset.** Anturit saa
-irti, joten yhden vetäminen ulos erottaa ne kertaheitolla: irrotettu hyppää
-huoneenlämpöön ja toinen jää paikalleen. Se on kolmenkymmenen sekunnin koe ja
-se korvaa 0,15 asteen päättelyn suoralla havainnolla.
+**Ja tämä oli todennettavissa, toisin kuin muut nimeämiset** — mikä osoittautui
+tarpeelliseksi eikä vain mukavaksi.
+
+Varaajassa on lisäksi **kolmas anturi alhaalla**, ja omistaja lämmitti senkin.
+Se ei näkynyt 1-Wire-väylällä eikä CAN-väylällä: kaikkien elementtien joukosta
+liikkui vain kello. Se on siis todennäköisesti Stiebelin oma anturi jonka
+elementtiä ei kysytä eikä manageri lähetä. **Paneelikävely löytäisi sen** —
+lämmitä sitä samalla kun lämpötilanäyttö on auki, ja se elementti joka liikkuu
+on se.
 
 Sama menetelmä pätee mihin tahansa käsille saatavaan anturiin, ja se on tässä
 projektissa harvinaista: **melkein kaikki muut ovat rakenteissa.** Siksi

@@ -409,8 +409,10 @@ sensor:
     one_wire_id: bus_a
     id: t26
     address: 0x2F000005663BB228          # 28.B23B66050000
-    # **Alempi anturi**, 10 cm ylemmän alapuolella.
-    name: "Lattiavaraaja ala"
+    # **Ylempi anturi**, 10 cm alemman yläpuolella. Todennettu lämmittämällä
+    # 20.9. klo 10:11 — ensimmäisenä lämmitetty nousi +7,6 °C yhdessä
+    # kierroksessa, eikä siinä ole tulkinnanvaraa.
+    name: "Lattiavaraaja ylä"
     update_interval: never
     filters: *lampo
 
@@ -418,10 +420,14 @@ sensor:
     one_wire_id: bus_a
     id: t27
     address: 0x6D00000565F5BF28          # 28.BFF565050000
-    # **Ylempi anturi.** Järjestelmällisesti 0,12–0,19 °C lämpimämpi kuin
-    # alempi koko yön eikä kertaakaan toisin päin — se on 10 cm:n kerrostuma
-    # varaajan yläosassa. Omistajan mukaan molemmat ovat lattiavaraajassa.
-    name: "Lattiavaraaja ylä"
+    # **Alempi anturi**, todennettu lämmittämällä 20.9. klo 10:12.
+    #
+    # Tämä oli nimetty ylemmäksi kerrostuman perusteella: se oli
+    # järjestelmällisesti 0,12–0,19 °C lämpimämpi koko yön eikä kertaakaan
+    # toisin päin. **Päättely oli väärä etumerkiltään.** Lämpimämpi ylös
+    # pätee lataukseen; yön yli seisova varaaja jäähtyy ylhäältä, koska sinne
+    # johtavat putkiliitokset ja siellä lämpö nousee kadotakseen.
+    name: "Lattiavaraaja ala"
     update_interval: never
     filters: *lampo
 
