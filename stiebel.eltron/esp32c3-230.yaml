@@ -413,9 +413,18 @@ canbus:
                   // the full sixteen bits would make "on" look like 256.
                   // Captured as a live write: the panel sent 0 -> 256 while
                   // ANTILEGIONELLAKÄSITT went from POIS to on.
-                  case 0x0101:
-                    id(legionella_on) = ((value >> 8) == 1);
+                  case 0x0101: {
+                    const bool nyt = ((value >> 8) == 1);
+                    // **Varoitus, ei info.** Tätä lippua vahditaan nyt
+                    // tarkoituksella: se asetettiin 20.9. ja kysymys on kuka
+                    // sen poistaa. Muutos on harvinainen ja kiinnostava,
+                    // joten se saa erottua pitkästä lokista.
+                    if (id(legionella_seen) && nyt != id(legionella_on))
+                      ESP_LOGW("can", "legionella 0x0101: %s -> %s",
+                               ONOFF(id(legionella_on)), ONOFF(nyt));
+                    id(legionella_on) = nyt;
                     id(legionella_seen) = true;
+                  }
                     id(legionella_sw).publish_state(id(legionella_on));
                     break;
 
@@ -930,6 +939,23 @@ interval:
   #
   # Elements below 0x100 go straight into byte 2; larger ones need the 0xFA
   # marker and shift the index into bytes 3-4.
+  # **Legionellalippu erikseen ja tiheämmin.** Se on tällä hetkellä kokeen
+  # kohde: lippu asetettiin 20.9. klo 08:10 ja kysymys on kuka sen nollaa.
+  # Vartin tarkkuus ei riitä yhdistämään nollausta siihen mitä koneessa
+  # tapahtui sillä hetkellä; kahden minuutin riittää.
+  #
+  # Kaksi kehystä kahdessa minuutissa on olematonta 200 minuuttikehyksen
+  # rinnalla, ja **luku ei kuluta EEPROMia** — vain kirjoitus kuluttaa.
+  # Tämän voi palauttaa vartin pollaukseen kun kysymys on ratkennut.
+  - interval: 2min
+    then:
+      - if:
+          condition:
+            switch.is_on: poll_setpoints
+          then:
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
+
   - interval: 15min
     then:
       - if:
