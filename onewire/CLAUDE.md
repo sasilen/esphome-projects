@@ -1040,6 +1040,16 @@ nimetty sen mukaan.
 Se myös selittää sen mikä oli eilen pelkkä kummallisuus: ne lukivat tasan
 saman lukeman `25,875 °C`. Kaksi anturia samassa vesitilavuudessa tekee niin.
 
+**Ja tämä on todennettavissa, toisin kuin muut nimeämiset.** Anturit saa
+irti, joten yhden vetäminen ulos erottaa ne kertaheitolla: irrotettu hyppää
+huoneenlämpöön ja toinen jää paikalleen. Se on kolmenkymmenen sekunnin koe ja
+se korvaa 0,15 asteen päättelyn suoralla havainnolla.
+
+Sama menetelmä pätee mihin tahansa käsille saatavaan anturiin, ja se on tässä
+projektissa harvinaista: **melkein kaikki muut ovat rakenteissa.** Siksi
+lämpötilaero on ollut ainoa tunnistusväline — ei siksi että se olisi paras,
+vaan siksi ettei muuhun ole päästy.
+
 ### Ja ne todistivat stiebelin avoimen kysymyksen
 
 Varaajaa ladattiin klo 23:07, ja tapahtuma näkyy **kahdessa toisistaan
