@@ -936,6 +936,13 @@ interval:
           condition:
             switch.is_on: poll_setpoints
           then:
+            # **Oma lähetys ei näy `on_frame`-käsittelijässä.** Solmu ei
+            # vastaanota omia kehyksiään, joten ilman tätä riviä pollauksesta
+            # ei jää lokiin jälkeäkään — ja vastauskin vaikenee, koska
+            # `log_frames` päästää läpi vain purkamattomat kehykset ja nämä
+            # kaikki puretaan. Hiljainen loki näyttäisi silloin rikkinäiseltä
+            # vaikka kaikki toimisi.
+            - lambda: 'ESP_LOGI("can", "poll: seitseman pyyntoa lahtee");'
             # 0x180 / 0x0013 EINSTELL_SPEICHERSOLLTEMP — DHW comfort setpoint
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x31, 0x00, 0x13, 0x00, 0x00, 0x00, 0x00]}
