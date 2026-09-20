@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1450" width="760" height="1450" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
-  <rect width="760" height="1450" fill="#E9ECEF"/>
-  <rect x="20" y="20" width="720" height="1410" fill="none" stroke="#A8B3BC"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1546" width="760" height="1546" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="760" height="1546" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="720" height="1506" fill="none" stroke="#A8B3BC"/>
 
   <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">PHASE 2a &#8212; THE ASKING NODE</text>
   <text x="40" y="80" font-size="12" fill="#5A6772">ESP32-C3 + SN65HVD230 &#183; no MCP2515, no SPI, no lifted pin &#183; same wiring serves the listen test</text>
@@ -102,62 +102,68 @@
   <text x="222" y="492" font-size="9.5" fill="#A3301F" text-anchor="middle">5 V to the board</text>
   <text x="486" y="566" font-size="9.5" font-weight="700" fill="#16212B" text-anchor="end">IN&#8722; and OUT&#8722;</text>
 
-  <text x="50" y="596" font-size="11.5" fill="#16212B"><tspan font-weight="700">Four wires, not two.</tspan> The LM2596 is <tspan font-weight="700">not isolated</tspan>: its IN&#8722; and OUT&#8722; are the same node, and</text>
-  <text x="50" y="614" font-size="11.5" fill="#16212B">that node is this ground. A buck with only its + connected passes no current at all — the</text>
-  <text x="50" y="632" font-size="11.5" fill="#16212B">return path is not optional, it is half the circuit.</text>
+  <text x="50" y="596" font-size="11.5" fill="#16212B"><tspan font-weight="700">Four terminals, three wires.</tspan> The LM2596 is <tspan font-weight="700">not isolated</tspan>: IN&#8722; and OUT&#8722; are the same node</text>
+  <text x="50" y="614" font-size="11.5" fill="#16212B">inside the module, so <tspan font-weight="700">one wire to ground serves both</tspan> and no separate return runs from the</text>
+  <text x="50" y="632" font-size="11.5" fill="#16212B">buck to the board — the ESP32 already reaches it through the common ground drawn above.</text>
+  <text x="50" y="650" font-size="11.5" fill="#16212B">What is <tspan font-weight="700">not</tspan> optional is that the ground exists: a buck with only its + connected passes no</text>
+  <text x="50" y="668" font-size="11.5" fill="#16212B">current at all, because the return path is half the circuit.</text>
+  <text x="50" y="694" font-size="11.5" fill="#16212B">The cost of sharing is that the node's supply current — a couple of hundred milliamps in a WiFi</text>
+  <text x="50" y="712" font-size="11.5" fill="#16212B">burst — flows in the same conductor that serves as the CAN reference. Over a short, thick wire</text>
+  <text x="50" y="730" font-size="11.5" fill="#16212B">that is a few millivolts and does not matter. <tspan font-weight="700">If the buck ends up far from the board</tspan>, run its</text>
+  <text x="50" y="748" font-size="11.5" fill="#16212B">&#8722; alongside its + as a pair instead: same node, smaller loop, and the reference stays quiet.</text>
 
-  <text x="50" y="660" font-size="11.5" fill="#16212B"><tspan font-weight="700">And CAN needs the same ground for a second reason.</tspan> The pair is differential, but CANH and</text>
-  <text x="50" y="678" font-size="11.5" fill="#16212B">CANL are still measured against something. Without a shared reference the common-mode voltage</text>
-  <text x="50" y="696" font-size="11.5" fill="#16212B">can drift outside the transceiver's window, and the failure is intermittent rather than silent.</text>
+  <text x="50" y="756" font-size="11.5" fill="#16212B"><tspan font-weight="700">And CAN needs the same ground for a second reason.</tspan> The pair is differential, but CANH and</text>
+  <text x="50" y="774" font-size="11.5" fill="#16212B">CANL are still measured against something. Without a shared reference the common-mode voltage</text>
+  <text x="50" y="792" font-size="11.5" fill="#16212B">can drift outside the transceiver's window, and the failure is intermittent rather than silent.</text>
 
-  <text x="50" y="724" font-size="11.5" fill="#16212B"><tspan font-weight="700">Take it from X27 pin 3, not from elsewhere.</tspan> Every ground in the machine is the same net, so</text>
-  <text x="50" y="742" font-size="11.5" fill="#16212B">any point works electrically — but the supply return for this node draws up to a couple of</text>
-  <text x="50" y="760" font-size="11.5" fill="#16212B">hundred milliamps, and that current should not travel through a different path than the one the</text>
-  <text x="50" y="778" font-size="11.5" fill="#16212B">CAN reference uses. One connector, one node, no current between two pick-up points.</text>
+  <text x="50" y="820" font-size="11.5" fill="#16212B"><tspan font-weight="700">Take it from X27 pin 3, not from elsewhere.</tspan> Every ground in the machine is the same net, so</text>
+  <text x="50" y="838" font-size="11.5" fill="#16212B">any point works electrically — but the supply return for this node draws up to a couple of</text>
+  <text x="50" y="856" font-size="11.5" fill="#16212B">hundred milliamps, and that current should not travel through a different path than the one the</text>
+  <text x="50" y="874" font-size="11.5" fill="#16212B">CAN reference uses. One connector, one node, no current between two pick-up points.</text>
 
-  <text x="50" y="806" font-size="11.5" fill="#16212B"><tspan font-weight="700">The transceiver board is connected twice on purpose.</tspan> Its GND pad on the logic header and its</text>
-  <text x="50" y="824" font-size="11.5" fill="#16212B">GND on the bus side are one plane — the two wires are not redundant, they bring <tspan font-weight="700">two different</tspan></text>
-  <text x="50" y="842" font-size="11.5" fill="#16212B"><tspan font-weight="700">external grounds onto it</tspan>: the ESP32's on one side and the heat pump's on the other. That is what</text>
-  <text x="50" y="860" font-size="11.5" fill="#16212B">makes them common, and it is the whole job of the third wire.</text>
+  <text x="50" y="902" font-size="11.5" fill="#16212B"><tspan font-weight="700">The transceiver board is connected twice on purpose.</tspan> Its GND pad on the logic header and its</text>
+  <text x="50" y="920" font-size="11.5" fill="#16212B">GND on the bus side are one plane — the two wires are not redundant, they bring <tspan font-weight="700">two different</tspan></text>
+  <text x="50" y="938" font-size="11.5" fill="#16212B"><tspan font-weight="700">external grounds onto it</tspan>: the ESP32's on one side and the heat pump's on the other. That is what</text>
+  <text x="50" y="956" font-size="11.5" fill="#16212B">makes them common, and it is the whole job of the third wire.</text>
 
-  <text x="50" y="888" font-size="11.5" fill="#16212B"><tspan font-weight="700">Pin 4 never reaches the transceiver.</tspan> The legend says +12 V and the rail measures 17.4 V at light</text>
-  <text x="50" y="906" font-size="11.5" fill="#16212B">load, so the buck's output must be set with a meter before anything is connected to it.</text>
+  <text x="50" y="984" font-size="11.5" fill="#16212B"><tspan font-weight="700">Pin 4 never reaches the transceiver.</tspan> The legend says +12 V and the rail measures 17.4 V at light</text>
+  <text x="50" y="1002" font-size="11.5" fill="#16212B">load, so the buck's output must be set with a meter before anything is connected to it.</text>
 
-  <line x1="20" y1="930" x2="740" y2="930" stroke="#A8B3BC"/>
+  <line x1="20" y1="1026" x2="740" y2="1026" stroke="#A8B3BC"/>
 
-  <text x="50" y="958" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">BOTH RESISTORS MEASURED &#183; NEITHER NEEDS REWORK</text>
-  <text x="50" y="980" font-size="11.5" fill="#16212B"><tspan font-weight="700">R2 measures 115 &#8486;</tspan> across CANH and CANL with the board off the bus, so the terminator is</text>
-  <text x="50" y="998" font-size="11.5" fill="#16212B">in circuit. Leave it: this bus measured 150 &#8486;, so adding it gives &#8776; 66 &#8486;, near CAN's own 60.</text>
-  <text x="50" y="1020" font-size="11.5" fill="#16212B"><tspan font-weight="700">R1 measures 9.5 k&#8486;</tspan>, i.e. Rs (pin 8) goes to ground through a resistor and the driver is</text>
-  <text x="50" y="1038" font-size="11.5" fill="#16212B">already slope-limited &#8212; free EMC at 20 kbps, and proof it is not stuck in standby.</text>
+  <text x="50" y="1054" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">BOTH RESISTORS MEASURED &#183; NEITHER NEEDS REWORK</text>
+  <text x="50" y="1076" font-size="11.5" fill="#16212B"><tspan font-weight="700">R2 measures 115 &#8486;</tspan> across CANH and CANL with the board off the bus, so the terminator is</text>
+  <text x="50" y="1094" font-size="11.5" fill="#16212B">in circuit. Leave it: this bus measured 150 &#8486;, so adding it gives &#8776; 66 &#8486;, near CAN's own 60.</text>
+  <text x="50" y="1116" font-size="11.5" fill="#16212B"><tspan font-weight="700">R1 measures 9.5 k&#8486;</tspan>, i.e. Rs (pin 8) goes to ground through a resistor and the driver is</text>
+  <text x="50" y="1134" font-size="11.5" fill="#16212B">already slope-limited &#8212; free EMC at 20 kbps, and proof it is not stuck in standby.</text>
 
-  <line x1="20" y1="1060" x2="740" y2="1060" stroke="#A8B3BC"/>
+  <line x1="20" y1="1156" x2="740" y2="1156" stroke="#A8B3BC"/>
 
-  <text x="50" y="1088" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">CONFIGURATION</text>
-  <rect x="50" y="1104" width="330" height="128" rx="4" fill="#FFFFFF" stroke="#A8B3BC"/>
+  <text x="50" y="1184" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">CONFIGURATION</text>
+  <rect x="50" y="1200" width="330" height="128" rx="4" fill="#FFFFFF" stroke="#A8B3BC"/>
   <g font-size="11" fill="#16212B">
-    <text x="66" y="1128">canbus:</text>
-    <text x="66" y="1146">  - platform: esp32_can</text>
-    <text x="66" y="1164">    tx_pin: GPIO4</text>
-    <text x="66" y="1182">    rx_pin: GPIO3</text>
-    <text x="66" y="1200">    can_id: 0x680</text>
-    <text x="66" y="1218">    bit_rate: 20kbps</text>
+    <text x="66" y="1224">canbus:</text>
+    <text x="66" y="1242">  - platform: esp32_can</text>
+    <text x="66" y="1260">    tx_pin: GPIO4</text>
+    <text x="66" y="1278">    rx_pin: GPIO3</text>
+    <text x="66" y="1296">    can_id: 0x680</text>
+    <text x="66" y="1314">    bit_rate: 20kbps</text>
   </g>
   <g font-size="11" fill="#16212B">
-    <text x="400" y="1128"><tspan font-weight="700">The board line is what unlocks</tspan></text>
-    <text x="400" y="1144">20 kbps. ESPHome tabulates the</text>
-    <text x="400" y="1160">rate per variant and refuses it</text>
-    <text x="400" y="1176">on the plain ESP32.</text>
-    <text x="400" y="1202"><tspan font-weight="700">0x680</tspan> never appeared in two</text>
-    <text x="400" y="1218">hours of capture. 0x301 did.</text>
+    <text x="400" y="1224"><tspan font-weight="700">The board line is what unlocks</tspan></text>
+    <text x="400" y="1240">20 kbps. ESPHome tabulates the</text>
+    <text x="400" y="1256">rate per variant and refuses it</text>
+    <text x="400" y="1272">on the plain ESP32.</text>
+    <text x="400" y="1298"><tspan font-weight="700">0x680</tspan> never appeared in two</text>
+    <text x="400" y="1314">hours of capture. 0x301 did.</text>
   </g>
-  <text x="50" y="1254" font-size="11.5" fill="#16212B"><tspan font-weight="700">GPIO4 and GPIO3 share an edge with 3V3 and GND</tspan>, so all four wires leave one side. Neither</text>
-  <text x="50" y="1272" font-size="11.5" fill="#16212B">is strapping; GPIO2 is, and a bridge from GPIO3 to it reads as a dead board, not a silent bus.</text>
+  <text x="50" y="1350" font-size="11.5" fill="#16212B"><tspan font-weight="700">GPIO4 and GPIO3 share an edge with 3V3 and GND</tspan>, so all four wires leave one side. Neither</text>
+  <text x="50" y="1368" font-size="11.5" fill="#16212B">is strapping; GPIO2 is, and a bridge from GPIO3 to it reads as a dead board, not a silent bus.</text>
 
-  <rect x="50" y="1296" width="660" height="114" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
-  <rect x="50" y="1296" width="6" height="114" fill="#A3301F"/>
-  <text x="74" y="1322" font-size="12" font-weight="700" fill="#A3301F">BEFORE THIS TOUCHES THE HEAT PUMP</text>
-  <text x="74" y="1346" font-size="11.5" fill="#16212B"><tspan font-weight="700">Bench first:</tspan> two of these, nothing connected to the pump &#8212; each board brings its own 120 &#8486;.</text>
-  <text x="74" y="1368" font-size="11.5" fill="#16212B"><tspan font-weight="700">X27 takes one node</tspan> &#8212; one conductor per pole, so this is a swap or a splice in the drop.</text>
-  <text x="74" y="1390" font-size="11.5" fill="#16212B"><tspan font-weight="700">Listen-only on esp32_can exists</tspan> &#8212; it compiles, so this node can join the bus passively.</text>
+  <rect x="50" y="1392" width="660" height="114" fill="#FFFFFF" stroke="#A3301F" stroke-width="1.5"/>
+  <rect x="50" y="1392" width="6" height="114" fill="#A3301F"/>
+  <text x="74" y="1418" font-size="12" font-weight="700" fill="#A3301F">BEFORE THIS TOUCHES THE HEAT PUMP</text>
+  <text x="74" y="1442" font-size="11.5" fill="#16212B"><tspan font-weight="700">Bench first:</tspan> two of these, nothing connected to the pump &#8212; each board brings its own 120 &#8486;.</text>
+  <text x="74" y="1464" font-size="11.5" fill="#16212B"><tspan font-weight="700">X27 takes one node</tspan> &#8212; one conductor per pole, so this is a swap or a splice in the drop.</text>
+  <text x="74" y="1486" font-size="11.5" fill="#16212B"><tspan font-weight="700">Listen-only on esp32_can exists</tspan> &#8212; it compiles, so this node can join the bus passively.</text>
 </svg>
