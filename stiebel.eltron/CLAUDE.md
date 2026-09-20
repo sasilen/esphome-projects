@@ -3566,6 +3566,33 @@ Two costs, neither of them wear:
   arbitration. That is a protocol risk, and it is why 0x680 has to be genuinely
   free rather than merely unseen.
 
+### 2a is being taken without the bench bus, and here is what that trades
+
+The bench bus was kept as the prerequisite for transmitting after `LISTENONLY`
+removed it for receiving. That requirement is now dropped deliberately, and the
+argument is that two of its three purposes are already served:
+
+| What the bench would prove | Status |
+|---|---|
+| Bit rate | **Proven live** — 237 frames a minute, 0 malformed in 6,199 |
+| Free identity | **Proven live** — 0x680 absent from two hours of capture |
+| Transmit path | **Untested** — reception works with the driver disabled |
+
+Only the third is open, and **CAN confines that failure by design.** A node
+whose driver is dead never sees an acknowledgement, its transmit error counter
+climbs, and at 256 it enters bus-off and removes itself. The exposure is a few
+seconds of error frames, not an indefinite flood.
+
+So the substitute is **one button that sends one frame** — no timer, no loop —
+targeted at an element whose value is already known from passive capture:
+`AUSSENTEMP`, element 0x000C on device 0x180, published continuously as
+"Outdoor temperature". If the reply matches that sensor, every layer worked at
+once: transceiver, bit rate, identity, addressing and decoding.
+
+**A polling loop would not be a reasonable substitute**, because it converts a
+single bounded failure into a repeating one. The loop comes after the single
+frame has answered.
+
 **Do 2a first, with the write path left out of the configuration entirely.** It
 delivers the panel's numbers on demand without changing anything in the machine,
 and it exercises the identity, the bit rate and the transceiver in the one

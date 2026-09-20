@@ -125,7 +125,25 @@ canbus:
     tx_pin: GPIO4
     rx_pin: GPIO3
     bit_rate: ${can_bit_rate}
-    mode: LISTENONLY
+    # **LISTENONLY is gone: this node can now transmit.** That is the whole of
+    # phase 2a's risk, and the reason it is taken without the two-node bench
+    # bus the original plan required.
+    #
+    # The bench bus would have proven three things. Two are already proven on
+    # the live bus: the bit rate, by 237 frames a minute with zero malformed
+    # in 6,199, and the identity, because 0x680 never appeared in two hours of
+    # capture. Only the transceiver's *transmit* path is untested — reception
+    # works even with the driver disabled.
+    #
+    # **CAN confines that failure itself.** A node whose driver is dead gets no
+    # acknowledgement, its transmit error counter climbs, and at 256 it enters
+    # bus-off and removes itself. The exposure is a few seconds of error
+    # frames, not an indefinite flood — which is why one button that sends one
+    # frame is a reasonable substitute for a bench, and a polling loop is not.
+    #
+    # **There is no write path in this file.** Command nibble 0 is writing and
+    # it appears nowhere; the only frame this node can emit is the read request
+    # below. Phase 2b changes that deliberately, not by accident.
     can_id: 0x680
 
     on_frame:
@@ -827,6 +845,41 @@ button:
     name: "Restart"
     id: restart_button
     entity_category: diagnostic
+
+  # ----------------------------------------------------- phase 2a, one frame
+  # **The first transmission this project has ever made.** One button, one
+  # frame, no timer and no loop — so that a dead transmit path shows up as a
+  # single failed attempt rather than a repeating one.
+  #
+  # The target is chosen so the answer can be checked against something already
+  # known: `AUSSENTEMP` is element 0x000C on device 0x180, and its value is
+  # published continuously as "Outdoor temperature" from the manager's own
+  # polling. **If the reply matches that sensor, every layer worked.**
+  #
+  #   byte 0  0x31 = receiver 0x180 (0x30 << 3), command nibble 1 = read
+  #   byte 1  0x00
+  #   byte 2  0x0C — short form, because elements below 0x100 skip the 0xFA
+  #           marker and put the index straight here
+  #   3-6     zero; a request carries no value
+  #
+  # This is byte-for-byte the frame the comfort panel at 0x100 sends, with only
+  # the sender changed — and the sender is the CAN identifier, not the payload.
+  # The expected answer is `0x180 -> D2 00 0C 00 xx xx 00`, addressed back to
+  # 0x680.
+  #
+  # Turn on `Log every frame` before pressing, or the reply is indistinguishable
+  # from the manager's own traffic.
+  - platform: template
+    name: "Ask outdoor temperature"
+    id: ask_outdoor
+    entity_category: config
+    on_press:
+      - lambda: 'ESP_LOGW("can", "TX 0x680: 31 00 0C 00 00 00 00  (read 0x000C from 0x180)");'
+      - canbus.send:
+          canbus_id: can0
+          can_id: 0x680
+          use_extended_id: false
+          data: [0x31, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00]
 
 
 sensor:
