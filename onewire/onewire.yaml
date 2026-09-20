@@ -409,7 +409,8 @@ sensor:
     one_wire_id: bus_a
     id: t26
     address: 0x2F000005663BB228          # 28.B23B66050000
-    name: "Tuntematon 28 B23B66"
+    # **Alempi anturi**, 10 cm ylemmän alapuolella.
+    name: "Lattiavaraaja ala"
     update_interval: never
     filters: *lampo
 
@@ -417,7 +418,10 @@ sensor:
     one_wire_id: bus_a
     id: t27
     address: 0x6D00000565F5BF28          # 28.BFF565050000
-    name: "Tuntematon 28 BFF565"
+    # **Ylempi anturi.** Järjestelmällisesti 0,12–0,19 °C lämpimämpi kuin
+    # alempi koko yön eikä kertaakaan toisin päin — se on 10 cm:n kerrostuma
+    # varaajan yläosassa. Omistajan mukaan molemmat ovat lattiavaraajassa.
+    name: "Lattiavaraaja ylä"
     update_interval: never
     filters: *lampo
 
@@ -543,9 +547,9 @@ interval:
       - delay: 1s
       - lambda: 'id(t25).update();'   # Tuntematon 28 FFF083
       - delay: 1s
-      - lambda: 'id(t26).update();'   # Tuntematon 28 B23B66
+      - lambda: 'id(t26).update();'   # Lattiavaraaja ala
       - delay: 1s
-      - lambda: 'id(t27).update();'   # Tuntematon 28 BFF565
+      - lambda: 'id(t27).update();'   # Lattiavaraaja ylä
       - delay: 1s
       - lambda: 'id(t28).update();'   # Tuntematon 28 FFC02B
       - delay: 1s

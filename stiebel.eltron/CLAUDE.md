@@ -1639,6 +1639,15 @@ between them with mechanical lag.
 polarity is inverted, and the thing has inertia and a load-dependent operating
 point. That is the behaviour of a pump or a flow, not of a status word.
 
+> **Settled from outside this project.** The house's separate 1-Wire network
+> has two sensors in the floor-heating buffer tank, and on 20 September they
+> caught a charge in progress: `0xFE1C` and `0xFE1B` both went to **0** at
+> 23:07, the machine's own flow temperature climbed a minute later, and the
+> buffer started warming a minute after that — then cooled again when 0xFE1B
+> returned to 100. **`0xFE1B = 0` is the running state.** The frost protection
+> closure below, which assumes the opposite, is therefore wrong. Detail:
+> [`../onewire/CLAUDE.md`](../onewire/CLAUDE.md).
+
 **What is not:** which pump, and in what units. The inversion is the oddity —
 commanding 0xFE1B *to* 100 is what stops it. That fits a blocking or diverting
 output better than a run command, and it is the reason this is not being named
@@ -1791,7 +1800,13 @@ knows about.
 0xFE09 and 0xFE0A move by tenths through all of it, so they are outside this
 path entirely — source side or ambient.
 
-**It also closes the frost protection story.** 0xFE07 reads 0 whenever 0xFE1B is
+**This closure is wrong, and the correction is above.** The 1-Wire buffer tank
+sensors show that 0xFE1B = 0 is the running state, which inverts everything in
+this paragraph. It is left standing because the reasoning that produced it was
+sound given the polarity assumed at the time — and because the assumption is
+exactly the kind that hides inside a conclusion rather than next to it.
+
+0xFE07 reads 0 whenever 0xFE1B is
 running and 5.6 °C whenever it is not — frost protection armed exactly when the
 floor circuit is standing still, which is exactly when a floor loop can freeze.
 The anti-correlation that took a whole evening to characterise turns out to be

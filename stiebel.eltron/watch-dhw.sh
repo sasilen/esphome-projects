@@ -7,7 +7,8 @@
 # **Varaaja on oikea signaali, ei jälkilämmityksen meno.** Meno nousee 55
 # asteeseen myös tavallisessa lämmitysajossa, joten se ei erota
 # legionellakäsittelyä mistään. Varaaja erottaa: tavallinen lataus pysähtyy
-# 50 asteen tienoille, käsittely vie 60:n yli.
+# 50 asteen tienoille, käsittely vie 60:n yli. **Raja on 52** eikä 55: yön
+# 20.9. ajo pysähtyi 54,3:een, eli väli on kapeampi kuin ensin arvioitiin.
 #
 # **Varaaja-anturi laahaa.** 19.9. kompressori käynnistyi 19:41 ja varaaja
 # lähti nousuun vasta 19:50 — yhdeksän minuuttia. Älä siis tulkitse tasaista
@@ -16,7 +17,7 @@
 set -eu
 
 LOG="${1:?anna lokitiedosto}"
-RAJA="${2:-55}"
+RAJA="${2:-52}"
 TUNNIT="${3:-10}"
 
 LOPPU=$(( $(date +%s) + TUNNIT * 3600 ))

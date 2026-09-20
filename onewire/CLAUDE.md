@@ -1026,6 +1026,72 @@ mutta sen tuntemattomat lukevat sisälämpötiloja; `050000` on makuuhuoneita,
 mutta sen kaksi tuntematonta ovat koko verkon lämpimimmät. **Eräkoodi kertoo
 milloin, ei missä.**
 
+### Yön käyrä: kaksi niistä on lattiavaraajassa
+
+Omistajan mukaan **kaksi tuntematonta on lattiavaraajassa**, 10 cm:n
+korkeuserolla varaajan yläosassa. Aineisto kertoo kumpi on kumpi ilman että
+kumpaakaan tarvitsee etsiä.
+
+`BFF565` on **järjestelmällisesti 0,12–0,19 °C lämpimämpi** kuin `B23B66`
+koko yön, eikä kertaakaan toisin päin. Kerrostuma on siis mitattavissa
+kymmenen sentin matkalla. **`BFF565` on ylempi**, `B23B66` alempi, ja ne on
+nimetty sen mukaan.
+
+Se myös selittää sen mikä oli eilen pelkkä kummallisuus: ne lukivat tasan
+saman lukeman `25,875 °C`. Kaksi anturia samassa vesitilavuudessa tekee niin.
+
+### Ja ne todistivat stiebelin avoimen kysymyksen
+
+Varaajaa ladattiin klo 23:07, ja tapahtuma näkyy **kahdessa toisistaan
+riippumattomassa järjestelmässä minuutin välein oikeassa järjestyksessä**:
+
+```
+23:07:11   0xFE1C → 0          lämpöpumpun pumput
+23:07:43   0xFE1B → 0
+23:08:03   meno 25,1 → 27,3    lämpöpumpun oma anturi
+23:08:51   varaaja nousuun     1-Wire
+23:27:12   0xFE1B → 100        pumput seis
+23:29      varaaja laskuun
+```
+
+Pumppu, meno, varaaja — ja sama järjestys takaperin kun se loppuu.
+
+**Se ratkaisee `0xFE1B`:n polariteetin.** Stiebelin dokumentti päätteli
+pakkassuojaperustelunsa siitä että `0xFE1B = 100` olisi käyntitila. Meno-paluu-
+ero antoi jo eilen päinvastaisen tuloksen, ja nyt **täysin erillinen
+anturijärjestelmä vahvistaa sen**: `0xFE1B = 0` on se tila jolloin vettä
+liikkuu ja varaaja lämpenee.
+
+Tämä on ensimmäinen kerta kun nämä kaksi projektia mittaavat samaa asiaa, ja
+ne mittaavat sitä eri päästä.
+
+### Yön käyrä ei vahvistanut MH4:n käännöstä
+
+Päinvastoin. Varmistetut ulkopinnat viilenivät yön aikana ja se kylmä
+MH4-anturi **lämpeni**:
+
+| | 22:00 | 06:00 | |
+|---|---|---|---|
+| Vaatehuone etelä ulko | 16,12 | 15,94 | **−0,19** |
+| Olohuone ulko | 16,50 | 16,31 | **−0,19** |
+| Makuuhuone 4 pohjoinen **sisä** | 16,38 | 16,56 | **+0,19** |
+
+Se ei siis käyttäydy ulkopinnan tavoin lainkaan: se on kylmä mutta
+lämpötilaltaan vakaa. **Sisä ja ulko eivät ole vaihtuneet** — tai jos ovat,
+tämä ei ole se todiste. Hyvä ettei nimiä vaihdettu.
+
+### Eivätkä ne yhdeksän ole yhtä tilaa
+
+Yön muutos hajautui välille −0,56 … +0,25, eli **ne eivät jäähtyneet yhdessä.**
+Yksi haara ne voivat silti olla, mutta se haara kattaa useita tiloja.
+
+Lisäksi **yksi niistä on sauna**, omistajan mukaan. Sitä ei voi vielä osoittaa:
+lämmittämätön sauna lukee huoneenlämpöä siinä missä muutkin. Yksi lämmitys
+erottaa sen kertaheitolla.
+
+Leivinuunin kolme anturia olivat **tasan liikkumatta** koko yön, mikä sopii
+massaan eikä ilmaan.
+
 ### Omistajan oletus: alakerran dokumentoimaton haara
 
 Nämä yhdeksän ovat todennäköisesti **alakerran haara, jota ei ole
