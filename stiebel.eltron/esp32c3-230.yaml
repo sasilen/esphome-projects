@@ -1333,6 +1333,13 @@ sensor:
     accuracy_decimals: 0
     entity_category: diagnostic
     update_interval: never
+    # **delta 2, ei 0.2** — tämä on raakaluku eikä asteita. Kohina on
+    # ±1 (51/52/53 ja 56/57) ja merkitsevät askeleet ovat 0↔52 ja 52↔56,
+    # joten kahden yksikön kynnys poistaa kohinan ja säilyttää molemmat.
+    filters:
+      - or:
+          - delta: 2
+          - heartbeat: 15min
 
   - platform: template
     id: elem_fe1b
@@ -1481,6 +1488,17 @@ sensor:
           window_size: 3
           send_every: 1
           send_first_at: 1
+      # **Mediaani ensin, sitten delta.** Järjestys ratkaisee: piikki 26 -> 0,0
+      # on deltalle iso muutos ja menisi suoraan läpi, mutta mediaani poistaa
+      # sen ennen kuin delta näkee sen. Toisin päin suodatin julkaisisi juuri
+      # sen arvon jonka takia se on olemassa.
+      #
+      # **Kuusi entiteettiä julkaisi viiden sekunnin välein** eli 1226 kertaa
+      # kahdessa tunnissa kukin. Se on 0x700:n pollausjakso eikä mittauksen
+      # nopeus — arvot eivät muutu sitä tahtia, ne vain kysytään sitä tahtia.
+      - or: &muutos_or
+          - delta: 0.2
+          - heartbeat: 15min
 
   # Both are flow temperatures, and both are the *module's* reading — the one
   # that keeps arriving every five seconds whether or not anyone is at the
@@ -1513,6 +1531,7 @@ sensor:
           window_size: 3
           send_every: 1
           send_first_at: 1
+      - or: *muutos_or
 
   - platform: template
     id: flow_temp_nhz_mod
@@ -1540,6 +1559,7 @@ sensor:
           window_size: 3
           send_every: 1
           send_first_at: 1
+      - or: *muutos_or
 
   # The second handle on 0xFE07: it steps within seconds of it, so it is a
   # temperature in the circuit 0xFE1B stops.
@@ -1552,6 +1572,8 @@ sensor:
     accuracy_decimals: 1
     entity_category: diagnostic
     update_interval: never
+    filters:
+      - or: *muutos_or
 
   - platform: template
     id: elem_fe0a
@@ -1562,6 +1584,8 @@ sensor:
     accuracy_decimals: 1
     entity_category: diagnostic
     update_interval: never
+    filters:
+      - or: *muutos_or
 
 
 
