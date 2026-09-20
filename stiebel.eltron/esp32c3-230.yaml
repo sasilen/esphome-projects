@@ -50,6 +50,28 @@ substitutions:
 #   to every entity, which is exactly the outcome this shared name exists to
 #   avoid. Statistics are keyed on the entity id and survive the gap.
 esphome:
+  on_boot:
+    # **Kysy asetusarvot heti, älä odota ensimmäistä varttia.** Muuten
+    # entiteetit ovat tuntemattomia viisitoista minuuttia joka käynnistyksen
+    # jälkeen, ja uudelleenkäynnistyksiä tulee joka flashauksesta.
+    #
+    # 30 s viive: väylä ja WiFi ehtivät nousta, eikä pyyntö osu siihen
+    # ruuhkaan jonka oma käynnistys aiheuttaa.
+    - priority: -100
+      then:
+        - delay: 30s
+        - if:
+            condition:
+              switch.is_on: poll_setpoints
+            then:
+              - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                              data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
+              - delay: 500ms
+              - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                              data: [0x31, 0x00, 0x13, 0x00, 0x00, 0x00, 0x00]}
+              - delay: 500ms
+              - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                              data: [0xC1, 0x01, 0xFA, 0x01, 0x0E, 0x00, 0x00]}
   name: wpc-can
   friendly_name: WPC 07 CAN
 
@@ -387,6 +409,7 @@ canbus:
                   // ANTILEGIONELLAKÄSITT went from POIS to on.
                   case 0x0101:
                     id(legionella_on) = ((value >> 8) == 1);
+                    id(legionella_seen) = true;
                     id(legionella_sw).publish_state(id(legionella_on));
                     break;
 
@@ -766,6 +789,15 @@ globals:
   # Legionella enable, mirrored from the bus so the switch shows what the
   # machine holds rather than what Home Assistant last asked for.
   - id: legionella_on
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+  # **Onko konetta koskaan kuultu.** Ilman tätä kytkin väittää "pois" siitä
+  # hetkestä kun laite käynnistyy siihen asti kun pollaus ensimmäisen kerran
+  # kysyy — ja "pois" on väärä vastaus kysymykseen johon ei ole vielä
+  # vastattu. `optional<bool>` erottaa ne kaksi; alkuarvo ei erota.
+  - id: legionella_seen
     type: bool
     restore_value: false
     initial_value: "false"
@@ -1361,7 +1393,13 @@ switch:
     name: "Legionella treatment"
     id: legionella_sw
     icon: mdi:water-boiler
-    lambda: "return id(legionella_on);"
+    # Tuntematon kunnes kone on vastannut. HA näyttää sen `unknown`-tilana
+    # eikä "pois"-tilana, mikä on ainoa rehellinen vaihtoehto ennen kuin
+    # elementti 0x0101 on luettu kertaakaan.
+    lambda: |-
+      if (!id(legionella_seen))
+        return {};
+      return id(legionella_on);
     turn_on_action:
       - lambda: |-
           const uint32_t now = millis();
