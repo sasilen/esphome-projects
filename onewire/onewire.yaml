@@ -576,6 +576,16 @@ interval:
       - lambda: 'id(d5).update();'   # Ovi 322EB6
       - delay: 200ms
       - lambda: 'id(b5).update();'   # Tuntematon tulo 322EB6 B
+      - delay: 200ms
+      - lambda: 'id(b0).update();'   # Tuntematon tulo 892EB6 B
+      - delay: 200ms
+      - lambda: 'id(b1).update();'   # Tuntematon tulo 372EB6 B
+      - delay: 200ms
+      - lambda: 'id(b2).update();'   # Tuntematon tulo BC37B6 B
+      - delay: 200ms
+      - lambda: 'id(b3).update();'   # Tuntematon tulo 2E30B6 B
+      - delay: 200ms
+      - lambda: 'id(b4).update();'   # Tuntematon tulo A82DB6 B
 
 
 
@@ -683,6 +693,65 @@ binary_sensor:
     name: "Tuntematon tulo 322EB6 B"
     channel: B
     latch: true
+    update_interval: never
+
+
+# ------------------------------------------------- B-kanavat, koeluontoisesti
+# **Viiden oven PIOA ei liikkunut kertaakaan.** 360 lukemaa kukin yön aikana ja
+# nolla salpaa, eikä myöskään silloin kun ulko-ovea käytettiin. PIOA on
+# pysyvästi matalalla, mikä sopii kiinni olevaan koskettimeen — mutta myös
+# siihen ettei siinä ole kosketinta lainkaan.
+#
+# Nämä viisi lukevat saman piirin **toisen kanavan**, jotta yksi oven avaus
+# testaa molemmat nastat kerralla. Jos kosketin onkin PIOB:ssä ylösvedon
+# kanssa, korkea tarkoittaa kiinni ja avaus vetää sen alas.
+#
+# **`latch: false` on pakko.** `ALR=1` nollaa molempien kanavien salvat, ja
+# A-kanava luetaan tässä ensin — B:n salpa olisi siis aina nolla. Tasolukema
+# riittää kokeeseen: pidä ovi auki yli minuutin, niin pollaus osuu varmasti.
+#
+# **Nämä ovat koe eivätkä kalusto.** Jos PIOB osoittautuu tyhjäksi, ne
+# poistetaan — ja jos se on se oikea kanava, nimet vaihtuvat kerran.
+
+  - platform: ds2406
+    one_wire_id: bus_a
+    id: b0
+    address: 0x3F000000B62E8912      # 892EB6 · keittiö
+    name: "Tuntematon tulo 892EB6 B"
+    channel: B
+    latch: false
+    update_interval: never
+  - platform: ds2406
+    one_wire_id: bus_a
+    id: b1
+    address: 0x2B000000B62E3712      # 372EB6 · makuuhuoneet
+    name: "Tuntematon tulo 372EB6 B"
+    channel: B
+    latch: false
+    update_interval: never
+  - platform: ds2406
+    one_wire_id: bus_a
+    id: b2
+    address: 0xB6000000B637BC12      # BC37B6 · olohuone
+    name: "Tuntematon tulo BC37B6 B"
+    channel: B
+    latch: false
+    update_interval: never
+  - platform: ds2406
+    one_wire_id: bus_a
+    id: b3
+    address: 0x38000000B6302E12      # 2E30B6 · neljäs vaihe
+    name: "Tuntematon tulo 2E30B6 B"
+    channel: B
+    latch: false
+    update_interval: never
+  - platform: ds2406
+    one_wire_id: bus_a
+    id: b4
+    address: 0xF0000000B62DA812      # A82DB6 · neljäs vaihe
+    name: "Tuntematon tulo A82DB6 B"
+    channel: B
+    latch: false
     update_interval: never
 
 button:
