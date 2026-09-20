@@ -300,8 +300,18 @@ Ikävä kytkös: heikolla signaalilla ESP lähettää täydellä teholla ja uusi
 paketteja, mikä nostaa virrankulutusta juuri kun ollaan portin 280 mA:n rajoilla.
 Heikko radio voi siis laukaista hikkaustilan, ja oire näyttää virtaongelmalta.
 
-Ratkaisut halvimmasta ylöspäin: `power_save_mode: NONE` → levy kaapin ulkopuolelle
-(+10 dB) → D1 mini Pro ja u.FL-antenni → tukiasema lähemmäs.
+Ratkaisut halvimmasta ylöspäin: levy kaapin ulkopuolelle (+10 dB) → D1 mini Pro
+ja u.FL-antenni → tukiasema lähemmäs.
+
+**`power_save_mode: NONE` luki tässä aiemmin ensimmäisenä, ja se oli turha
+neuvo.** ESPHomen oletus on piirikohtainen: ESP32:lla `LIGHT`, mutta
+**ESP8266:lla `NONE` jo valmiiksi**. Tämä laite on D1 mini, joten asetus oli
+voimassa koko ajan eikä sen kirjoittaminen olisi muuttanut mitään.
+
+Ohje oli oikea mutta osoitettu väärälle piirille. Se seisoi listan kärjessä
+halvimpana ratkaisuna kunnes oletus tarkistettiin ESPHomen lähdekoodista —
+eli halvin ratkaisu ei ollut ratkaisu lainkaan, ja oikeasti halvin on levyn
+siirtäminen kaapista ulos.
 
 ## 2. Loistehokentät pois käytöstä
 
