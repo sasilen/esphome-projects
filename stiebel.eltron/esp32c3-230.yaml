@@ -1112,6 +1112,17 @@ interval:
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0xC1, 0x01, 0x08, 0x00, 0x00, 0x00, 0x00]}
             - delay: 500ms
+            # **0x0074 EVU-kosketin managerilta 0x480.** Tämä entiteetti ei
+            # ollut julkaissut kertaakaan: manageri ei kysy elementtiä itse,
+            # eikä kuuntelu siis näe sitä koskaan. `device_class: running`
+            # sai HA:n nimeämään tyhjän tilan "Not running" -tilaksi, mikä
+            # näytti toteutuneelta ajalta eikä puuttuvalta arvolta.
+            #
+            # Vastaanottaja 0x480 on `91 00` — sama muoto kuin muilla, vain
+            # eri osoite. Alle 0x100:n elementti menee suoraan tavuun 2.
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x91, 0x00, 0x74, 0x00, 0x00, 0x00, 0x00]}
+            - delay: 500ms
             # 0x180 / 0x0101 legionella enable — so the switch is not stale
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
