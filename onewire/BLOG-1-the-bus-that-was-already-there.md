@@ -32,9 +32,9 @@ ainoa lähde omalle asialleen. Vertailu ei tuottanut yhtään ristiriitaa vaan
 aikajanan: väylällä oli 22 laitetta vuonna 2015 ja PHP:ssä 25 vuonna 2020, ja
 ne viisi lisättyä ovat kaikki samaa tyyppiä — ovikattoantureita.
 
-Listausten tiedostonimet olivat kumulatiivisia: `keuttii.txt`,
-`keuttiijamakkarit.txt` ja niin edelleen. **Asennus eteni huone kerrallaan**, ja
-kunkin askeleen uudet osoitteet ovat sen huoneen antureita.
+Listaukset olivat kumulatiivisia ja nimetty sen mukaan mitkä huoneet olivat
+kulloinkin mukana. **Asennus eteni siis huone kerrallaan**, ja kunkin askeleen
+uudet osoitteet ovat sen huoneen antureita.
 
 ## Osoitteet laskettiin koskematta väylään
 
@@ -183,11 +183,20 @@ Jokainen muu anturi oli 20,9–25,9 °C. Kolme paria neljästä oli oikein päin
 se on **riippumaton vahvistus koko PHP-kartasta johdetulle nimeämiselle** — ei
 vain osoitteina vaan sijainteina.
 
-Neljäs pari on väärinpäin. `Makuuhuone 4 pohjoinen sisä` istuu ulkoryhmässä ja
-sen `ulko`-pari sisäryhmässä: **sisä ja ulko ovat vaihtuneet vanhassa
-kartassa.** Nimiä ei silti vaihdettu heti — nimenvaihto synnyttää uuden
-entity_id:n ja katkaisee historian, ja yön jäähtymiskäyrä tekee asiasta
-kiistattoman ilmaiseksi.
+Neljäs pari näytti väärinpäin: `Makuuhuone 4 pohjoinen sisä` istuu
+ulkoryhmässä ja sen `ulko`-pari sisäryhmässä. Ilmeinen selitys oli että sisä ja
+ulko ovat vaihtuneet vanhassa kartassa.
+
+**Nimiä ei silti vaihdettu**, koska nimenvaihto synnyttää uuden entity_id:n ja
+katkaisee historian — ja koska yön jäähtymiskäyrä ratkaisisi asian ilmaiseksi.
+
+Se kannatti odottaa. Yön aikana varmistetut ulkopinnat **viilenivät** 0,19
+astetta ja se kylmä MH4-anturi **lämpeni** saman verran. Se ei siis käyttäydy
+ulkopinnan tavoin lainkaan: se on kylmä mutta lämpötilaltaan vakaa, ja
+vaihdosoletus jäi vahvistamatta.
+
+Yhden yön odottaminen esti väärän nimeämisen, jonka korjaaminen olisi maksanut
+juuri sen historian jolla virhe olisi myöhemmin huomattu.
 
 ## Leivinuuni tunnistui askelkoosta
 

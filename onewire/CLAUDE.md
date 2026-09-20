@@ -677,10 +677,10 @@ itse** — OWFS näyttää isännän väylän laitteena, joten se ei ole anturi.
 
 ### Mitä listaukset kertovat
 
-Tiedostot ovat kumulatiivisia ja nimetty sen mukaan mitä niissä on mukana:
-`keuttii.txt`, `keuttiijamakkarit.txt` ja niin edelleen. Asennus eteni huone
-kerrallaan — asennettiin, testattiin, otettiin listaus — ja **kunkin askeleen
-uudet osoitteet ovat sen huoneen antureita joka nimeen lisättiin.**
+Listaukset ovat kumulatiivisia, ja kukin nimi kertoo mitkä huoneet olivat
+siinä vaiheessa mukana. Asennus eteni siis huone kerrallaan — asennettiin,
+testattiin, otettiin listaus — ja **kunkin askeleen uudet osoitteet ovat sen
+huoneen antureita joka nimeen lisättiin.**
 
 | Askel | Uudet anturit | Latch |
 |---|---|---|
