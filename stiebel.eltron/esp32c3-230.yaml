@@ -446,7 +446,8 @@ canbus:
                   case 0x0028: id(max_return).publish_state(t);   break;
                   case 0x01E8: id(max_flow).publish_state(t);     break;
                   case 0x0A00: id(frost_protect).publish_state(t);break;
-                  case 0x02CA: id(room_temp_hc1).publish_state(t);break;
+                  case 0x02CA: id(buffer_temp).publish_state(t);break;
+                  case 0x0078: id(elem_0078).publish_state(t); break;
                   case 0x06A1: id(flow_temp_hp).publish_state(t); break;
                   case 0x06A0: id(flow_temp_nhz).publish_state(t);break;
                   case 0x01D4: id(source_temp).publish_state(t);  break;
@@ -1154,6 +1155,15 @@ interval:
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x91, 0x00, 0x74, 0x00, 0x00, 0x00, 0x00]}
             - delay: 500ms
+            # **0x02CA ja 0x0078 — lattiavaraaja.** Kumpaakaan ei kysytä
+            # väylällä muuten kuin silloin kun joku seisoo paneelin äärellä,
+            # ja tämä on se lämpötila jota lämmityspiiri säätää vasten.
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x02, 0xCA, 0x00, 0x00]}
+            - delay: 500ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00]}
+            - delay: 500ms
             # 0x180 / 0x0101 legionella enable — so the switch is not stale
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
@@ -1418,7 +1428,23 @@ sensor:
   # along from two independent nodes, the flow from neither.
   - {platform: template, id: flow_temp_hp, name: "Flow temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
   - {platform: template, id: flow_temp_nhz, name: "Flow temperature reheat", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
-  - {platform: template, id: room_temp_hc1, name: "Room temperature HC1", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+  # **Not a room temperature — it is the floor-heating buffer tank**, and that
+  # was settled by hand. On 20 September the owner warmed a sensor low in the
+  # buffer and the panel's TOSILÄMPÖ LÄMMITYKSESSÄ rose with it; 0x02CA rose
+  # 24.8 -> 27.5 -> 24.9 over three minutes, which is a hand and not a room.
+  #
+  # The old name was a guess from the element list and this file already
+  # doubted it: there is no room sensor anywhere in the installation. The
+  # correction matters beyond tidiness — **this is the temperature the heating
+  # circuit regulates against**, so it is the feedback any surplus-energy
+  # control would close its loop on.
+  - {platform: template, id: buffer_temp, name: "Buffer tank (heating actual)", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
+
+  # 0x0078 tracks 0x02CA within ~0.2 K and moved in the same three minutes, so
+  # it reads the same sensor by a second path. Kept raw and undecided: two
+  # elements for one probe usually means one is the measurement and the other
+  # what the controller uses, but nothing here says which is which.
+  - {platform: template, id: elem_0078, name: "Element 0x0078", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
   - {platform: template, id: source_temp, name: "Source temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, update_interval: never}
   - {platform: template, id: source_temp_min, name: "Source temperature minimum", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}
   - {platform: template, id: hot_gas_temp, name: "Hot gas temperature", device_class: temperature, unit_of_measurement: "°C", accuracy_decimals: 1, entity_category: diagnostic, update_interval: never}

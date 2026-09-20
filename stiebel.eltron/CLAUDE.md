@@ -836,6 +836,48 @@ Check whether the installed ESPHome version exposes listen-only on the mcp2515
 component. If it does not, verify the bit rate independently (logic analyser or
 scope) before connecting, rather than trusting the 20 kbps assumption.
 
+## 0x02CA is the floor-heating buffer, not a room temperature
+
+**Settled by warming a sensor with a hand.** On 20 September the owner heated a
+probe low in the floor-heating buffer tank and watched the panel: `TOSILÄMPÖ
+LÄMMITYKSESSÄ` rose with it. The bus agrees, and the shape is unmistakable:
+
+```
+10:20:21   24.8        10:21:08   27.5        10:22:22   25.7
+10:20:26   25.5        10:21:26   27.2        10:23:06   24.9
+10:20:37   26.5        10:21:54   26.4
+```
+
+Up 2.7 K in a minute and back down in two. **That is a hand, not a room.**
+
+The old name `Room temperature HC1` came from the element list, and this file
+already doubted it: there is no room sensor anywhere in the installation, and
+`RAUMSOLLTEMP_I` at 26.0 never made sense as something anyone was targeting.
+The doubt was right and the reason is now known.
+
+**The correction matters beyond tidiness.** This is the temperature the heating
+circuit regulates against — so it is the feedback any surplus-energy control
+would close its loop on, and it was previously labelled as something a
+controller would have no business tracking.
+
+### 0x0078 reads the same probe
+
+It moved in the same three minutes and tracks 0x02CA within about 0.2 K. Two
+elements for one sensor usually means one is the raw measurement and the other
+what the controller uses, but nothing in the capture says which is which — so
+it keeps its index as a name.
+
+Neither is carried by the bus on its own: both appear only while somebody is
+standing at the panel. **Both are now polled**, which is why they are worth
+naming at all.
+
+### And a third probe in the same tank is still unidentified
+
+The tank holds three sensors: two on the 1-Wire network, 10 cm apart near the
+top, and this Stiebel one lower down. Warming the 1-Wire pair moved nothing on
+CAN, and warming the Stiebel one moved nothing on 1-Wire — which is the clean
+result. **The two systems measure the same water and share no sensor.**
+
 ## Phase 1: sniffing before the final circuit
 
 The bit rate can be confirmed before buying anything by running **the whole module
