@@ -89,18 +89,6 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  # **OTA:n takia, ei kuuluvuuden.** Oletus `LIGHT` nukuttaa radion
-  # majakkavälien välissä, ja megatavun OTA on tuhansia kuittauskierroksia —
-  # jokaiseen tulee herätysviive. Yksi lähetys katkesi 33 %:n kohdalla
-  # aikakatkaisuun ja laite katosi verkosta kokonaan.
-  #
-  # Aidonin avointen asioiden lista suosittelee samaa ensimmäisenä keinona
-  # heikkoon radioon. Hinta on muutama milliampeeri, ja tämä on verkkovirralla.
-  #
-  # Tämä ei yksin riitä: **pysäytä `esphome logs` -virta OTA:n ajaksi.**
-  # Kolme yhtäaikaista asiakasta — HA, lokivirta ja OTA — on flash-kirjoituksen
-  # aikana enemmän kuin laite kantaa.
-  power_save_mode: NONE
   ap:
     # AP:n nimi lähetetään ilmaan eikä ole salaisuus. Salasana on.
     # Nimi seuraa laitenimeä eikä ystävällistä nimeä: tätä verkkoa etsitään
