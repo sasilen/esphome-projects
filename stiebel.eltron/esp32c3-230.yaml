@@ -1074,6 +1074,22 @@ interval:
           then:
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
+            - delay: 300ms
+            # **0x4E5E tilasana managerilta 0x480, ja tämä on korjaus.**
+            # `Compressor` lukee siitä bitin 9, ja sana lakkasi saapumasta
+            # 20.9. klo 01:06 — yli seitsemäksi tunniksi. Anturi jäätyi
+            # `ON`-tilaan eikä kukaan huomannut, koska jäätynyt binäärianturi
+            # näyttää tismalleen samalta kuin käyvä kone.
+            #
+            # Oire löytyi vasta paineista: ne olivat 16,0 ja 15,8 baria eli
+            # 0,3 erillään, ja paneelikävelyn seisova kone antoi 10,7 ja 10,3.
+            # **Tasaantuneet paineet ovat pysähtyneen kompressorin tunnusmerkki**,
+            # ja ne kertoivat sen mitä tilabitti ei kertonut.
+            #
+            # Kahden minuutin välein, koska tämä ehdollistaa painepollauksen —
+            # vanhentunut tilasana ajaisi sitä ympäri vuorokauden turhaan.
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x91, 0x00, 0xFA, 0x4E, 0x5E, 0x00, 0x00]}
 
   - interval: 15min
     then:
