@@ -1524,6 +1524,20 @@ sensor:
 
 
 switch:
+  # Pysäyttää kaiken pollauksen ilman uutta käännöstä. Se on ainoa asia
+  # toimivan väylän ja neljänkymmenenviiden pyynnön välissä, ja jokainen
+  # `interval`-lohko tarkistaa sen.
+  #
+  # **Tämä katosi kerran** kun viereistä kytkintä muokattiin alueenkorvauksella,
+  # ja oire oli `Couldn't find ID 'poll_setpoints'` — käännösvirhe eikä
+  # hiljainen vika, mutta se maksoi silti flashauskierroksen.
+  - platform: template
+    name: "Poll setpoints"
+    id: poll_setpoints
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+
   # ------------------------------------------- phase 2b, the first write
   # **This is the only thing in this file that changes the machine.** It
   # mirrors a frame the panel was caught sending, byte for byte, with the
