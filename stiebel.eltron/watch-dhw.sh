@@ -2,13 +2,23 @@
 # Vahtii käyttövesivaraajaa ESPHome-lokista ja ilmoittaa kun se ylittää rajan.
 #
 # Käyttö:  ./watch-dhw.sh <loki> [raja] [tunnit]
-# Esim.:   ./watch-dhw.sh wpc-c3-night.log 55 10
+# Esim.:   ./watch-dhw.sh wpc-c3-night.log 57 10
 #
 # **Varaaja on oikea signaali, ei jälkilämmityksen meno.** Meno nousee 55
 # asteeseen myös tavallisessa lämmitysajossa, joten se ei erota
-# legionellakäsittelyä mistään. Varaaja erottaa: tavallinen lataus pysähtyy
-# 50 asteen tienoille, käsittely vie 60:n yli. **Raja on 52** eikä 55: yön
-# 20.9. ajo pysähtyi 54,3:een, eli väli on kapeampi kuin ensin arvioitiin.
+# legionellakäsittelyä mistään.
+#
+# **Raja on 57, ja se johtuu asetusarvoista.** Kone lataa kahteen eri
+# tavoitteeseen: `DHW eco` 50,0 päivällä ja `DHW comfort` 55,0 halvan sähkön
+# tunneilla. Yön 20.9. ajo pysähtyi 54,3:een — se oli mukavuusarvon lataus
+# eikä legionellayritys, mikä todettiin siitä että paneeli ja väylä sanoivat
+# molemmat käsittelyn olevan pois päältä.
+#
+# Aiempi 52 asteen raja olisi siis lauennut **joka yö** tavallisesta
+# latauksesta. Käsittelyn on ylitettävä 60, joten 57 on mukavuusarvon
+# yläpuolella ja tavoitteen alapuolella.
+#
+# Jos asetusarvoja muutetaan, tämä raja on muutettava niiden mukana.
 #
 # **Varaaja-anturi laahaa.** 19.9. kompressori käynnistyi 19:41 ja varaaja
 # lähti nousuun vasta 19:50 — yhdeksän minuuttia. Älä siis tulkitse tasaista
@@ -17,7 +27,7 @@
 set -eu
 
 LOG="${1:?anna lokitiedosto}"
-RAJA="${2:-52}"
+RAJA="${2:-57}"
 TUNNIT="${3:-10}"
 
 LOPPU=$(( $(date +%s) + TUNNIT * 3600 ))
