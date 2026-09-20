@@ -1424,42 +1424,52 @@ switch:
         return {};
       return id(legionella_on);
     turn_on_action:
-      - lambda: |-
-          const uint32_t now = millis();
-          if (id(legionella_last_write) != 0 && now - id(legionella_last_write) < 600000) {
-            // %lu, not %u: millis() is uint32_t and that is `long unsigned`
-            // on this toolchain. The warning is harmless and the fix is free.
-            ESP_LOGW("can", "legionella write refused: %lu s since the last one",
-                     (unsigned long) ((now - id(legionella_last_write)) / 1000));
-            return;
-          }
-          id(legionella_last_write) = now;
-          ESP_LOGW("can", "TX 0x680: 30 00 FA 01 01 01 00  (legionella ON)");
-          auto *bus = id(can0);
-          bus->send_data(0x680, false, {0x30, 0x00, 0xFA, 0x01, 0x01, 0x01, 0x00});
+      - if:
+          condition:
+            lambda: |-
+              const uint32_t now = millis();
+              if (id(legionella_last_write) != 0 && now - id(legionella_last_write) < 600000) {
+                ESP_LOGW("can", "legionella write refused: %lu s since the last one",
+                         (unsigned long) ((now - id(legionella_last_write)) / 1000));
+                return false;
+              }
+              id(legionella_last_write) = now;
+              return true;
+          then:
+            - lambda: 'ESP_LOGW("can", "TX 0x680: 30 00 FA 01 01 01 00  (legionella ON)");'
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x30, 0x00, 0xFA, 0x01, 0x01, 0x01, 0x00]}
+            # **Lue takaisin.** Kirjoitusta ei kuitata — se todettiin
+            # lämpökäyrän kohdalla — joten ilman tätä kytkin napsahtaa
+            # takaisin vanhaan tilaansa riippumatta siitä menikö kirjoitus
+            # läpi. Tila tulee koneen vastauksesta, ei komennosta.
+            - delay: 1500ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
     turn_off_action:
-      - lambda: |-
-          const uint32_t now = millis();
-          if (id(legionella_last_write) != 0 && now - id(legionella_last_write) < 600000) {
-            // %lu, not %u: millis() is uint32_t and that is `long unsigned`
-            // on this toolchain. The warning is harmless and the fix is free.
-            ESP_LOGW("can", "legionella write refused: %lu s since the last one",
-                     (unsigned long) ((now - id(legionella_last_write)) / 1000));
-            return;
-          }
-          id(legionella_last_write) = now;
-          ESP_LOGW("can", "TX 0x680: 30 00 FA 01 01 00 00  (legionella OFF)");
-          auto *bus = id(can0);
-          bus->send_data(0x680, false, {0x30, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00});
+      - if:
+          condition:
+            lambda: |-
+              const uint32_t now = millis();
+              if (id(legionella_last_write) != 0 && now - id(legionella_last_write) < 600000) {
+                ESP_LOGW("can", "legionella write refused: %lu s since the last one",
+                         (unsigned long) ((now - id(legionella_last_write)) / 1000));
+                return false;
+              }
+              id(legionella_last_write) = now;
+              return true;
+          then:
+            - lambda: 'ESP_LOGW("can", "TX 0x680: 30 00 FA 01 01 00 00  (legionella OFF)");'
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x30, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
+            # **Lue takaisin.** Kirjoitusta ei kuitata — se todettiin
+            # lämpökäyrän kohdalla — joten ilman tätä kytkin napsahtaa
+            # takaisin vanhaan tilaansa riippumatta siitä menikö kirjoitus
+            # läpi. Tila tulee koneen vastauksesta, ei komennosta.
+            - delay: 1500ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
 
-  # Pysäyttää pollauksen ilman uutta käännöstä. Se on ainoa asia toimivan
-  # väylän ja kahdentoista neljännestuntikehyksen välissä.
-  - platform: template
-    name: "Poll setpoints"
-    id: poll_setpoints
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
-    entity_category: config
   # Per-frame logging, off at every boot. See the frame handler for why.
   - platform: template
     id: log_frames
