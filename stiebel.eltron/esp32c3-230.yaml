@@ -60,10 +60,16 @@ esphome:
     - priority: -100
       then:
         - delay: 30s
+        # **Kaksi lokiriviä, koska ilman niitä vaimeus on moniselitteinen.**
+        # Jos ensimmäinen puuttuu, `on_boot` ei ajautunut lainkaan. Jos se on
+        # mutta toinen puuttuu, `poll_setpoints` oli pois. Ilman näitä
+        # molemmat näyttävät samalta: ei mitään.
+        - lambda: 'ESP_LOGW("can", "on_boot: 30 s kulunut, poll_setpoints=%s", ONOFF(id(poll_setpoints).state));'
         - if:
             condition:
               switch.is_on: poll_setpoints
             then:
+              - lambda: 'ESP_LOGW("can", "on_boot: lahetetaan kolme pyyntoa");'
               - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                               data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
               - delay: 500ms
