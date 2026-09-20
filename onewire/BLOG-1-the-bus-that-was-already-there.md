@@ -36,6 +36,24 @@ Listaukset olivat kumulatiivisia ja nimetty sen mukaan mitkä huoneet olivat
 kulloinkin mukana. **Asennus eteni siis huone kerrallaan**, ja kunkin askeleen
 uudet osoitteet ovat sen huoneen antureita.
 
+## Neljä johdinta ja yksi vastus
+
+Isäntä on ESP32-C3. Verkkoon lähtee neljä johdinta — data, syöttö ja kaksi
+maata — ja **ylösveto jää isännän päähän**, GPIO4:n ja 3,3 voltin väliin.
+
+![1-Wiren kytkentä](wiring.svg)
+
+Kaksi jännitetasoa, ja se on tarkoitus. **Syöttö on 5 V ja ylösveto 3,3 V:**
+DS18B20:n datanasta on avokollektori eli se osaa vain vetää alas, joten
+ylätason määrää yksin ylösveto. Anturit saavat täyden jännitteen pitkälle
+vedolle mutta datalinja heilahtaa vain 3,3 volttiin ja on turvallinen C3:lle.
+
+Verkko päättyy RJ45-rasiaan, ja sen nastakartta oli oma tutkimuksensa: neljä
+toisistaan riippumatonta reittiä päätyivät samaan tulokseen ennen kuin
+pistokkeesta luettiin vahvistus.
+
+![RJ45:n nastajärjestys](rj45.svg)
+
 ## Osoitteet laskettiin koskematta väylään
 
 OWFS kirjoittaa osoitteen muodossa `28.FF265A750400`. ESPHome haluaa täyden
@@ -92,6 +110,13 @@ passiivinen ylösveto — nousureuna on liian loiva kaukaisimmille haaroille.
 Perustelin sen vielä sillä että vanha isäntä oli DS9490R, jossa on aktiivinen
 ylösveto. **Se ei pitänyt paikkaansa**: omistaja ajoi verkkoa Raspberryn
 GPIO:sta, samalla 4,7 kΩ:lla.
+
+![Ylösveto Raspberryn rimassa](rpi-pullup.jpg)
+
+Kuva vanhasta toteutuksesta dokumentoi sen yhden asian jota mistään muualta ei
+olisi saanut: **vastus on juotettu suoraan riman kahden nastan väliin.**
+Verkossa itsessään ei ole ylösvetoa, eikä siis mitään mitä uusi isäntä voisi
+periä.
 
 ### Kaksi: anturit ovat loiskäytöllä
 
