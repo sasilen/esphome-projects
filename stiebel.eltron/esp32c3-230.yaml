@@ -81,9 +81,15 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  # Oletus `LIGHT` nukuttaa radion majakkavälien välissä, ja jokaiseen
-  # kuittauskierrokseen tulee herätysviive. Repon vakiosuositus heikkoon
-  # radioon ja katkeileviin OTA-lähetyksiin.
+  # **ESP32:n oletus on `LIGHT`**, joka nukuttaa radion majakkavälien välissä
+  # ja herättää sen vain tarkistamaan tukiasemalle jonossa olevat paketit.
+  # Jokaiseen saapuvaan pakettiin tulee silloin jopa majakkavälin viive, ja
+  # megatavun OTA on tuhansia kuittauskierroksia.
+  #
+  # `NONE` pitää vastaanottimen auki jatkuvasti. Hinta on noin 20–40 mA eli
+  # ~0,1 W — verkkovirralla merkityksetön, akulla ei olisi.
+  #
+  # **ESP8266:lla tätä ei tarvita: siellä oletus on jo `NONE`.**
   power_save_mode: NONE
   ap:
     ssid: "WPC CAN fallback"

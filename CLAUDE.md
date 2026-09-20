@@ -252,10 +252,25 @@ Käytä `>>` eikä `>`. Uudelleenohjaus nollasi axioman lokin kolmesti, ja kerra
 se vei mennessään yön mittausaineiston — analyysi oli onneksi jo commitissa.
 Tee siitä skripti jos sama loki käynnistetään usein.
 
-Rinnalla kannattaa asettaa **`power_save_mode: NONE`**. Oletus `LIGHT` nukuttaa
-radion majakkavälien välissä, ja megatavun OTA on tuhansia kuittauskierroksia
-joista jokaiseen tulee herätysviive. Aidonin avointen asioiden lista suosittelee
-samaa ensimmäisenä keinona heikkoon radioon.
+Rinnalla kannattaa asettaa **`power_save_mode: NONE`** — mutta vain ESP32:lla.
+
+`LIGHT` nukuttaa radion majakkavälien välissä ja herättää sen vain
+tarkistamaan tukiasemalle jonossa olevat paketit. Jokaiseen saapuvaan
+pakettiin tulee silloin jopa majakkavälin viive, ja megatavun OTA on tuhansia
+kuittauskierroksia. `NONE` pitää vastaanottimen auki jatkuvasti; hinta on noin
+20–40 mA eli ~0,1 W, mikä on verkkovirralla merkityksetön.
+
+**Oletus riippuu piiristä, ja se meni tässä repossa pitkään väärin päin:**
+
+| | Oletus |
+|---|---|
+| ESP32, ESP32-C3 | `LIGHT` — asetus kannattaa |
+| **ESP8266** | **`NONE` jo valmiiksi** — asetus ei tee mitään |
+
+Aidonin avointen asioiden lista suositteli tätä ensimmäisenä keinona heikkoon
+radioon. **Aidon on ESP8266**, joten suositus ei olisi muuttanut mitään — se
+oli jo voimassa. Ohje oli oikea mutta osoitettu väärälle laitteelle, eikä sitä
+huomannut kukaan ennen kuin oletus tarkistettiin lähdekoodista.
 
 Jos OTA katkeaa vielä näidenkin jälkeen, seuraava epäilty on virtalähde:
 flash-kirjoitus ja WiFi-lähetys yhtä aikaa on se hetki jolloin heikko syöttö
