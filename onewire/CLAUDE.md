@@ -1413,10 +1413,30 @@ Opetus on yleisempi kuin tämä tapaus. Aineistossa näkyi *asennusjärjestys*, 
 siitä luettiin *toiminnallinen ryhmittely*. Ne ovat eri asioita, ja vain
 omistaja tiesi kumpi oli kyseessä.
 
-Kohdistus yksittäiseen oveen on yhä auki: asennusvaihe kertoo milloin eikä
-mitä ovea, ja neljäs vaihe lisäsi kaksi latchia kolmeen huoneeseen. **Yksi oven
-avaus nimeää yhden anturin**, ja se on ensimmäinen tunnistuskeino tässä
-projektissa joka ei nojaa lämpötilaan.
+### Neljä ovea todennettu avaamalla, ja asennusvaihe ei ennusta niitä
+
+Neljä ovea avattiin minuutin välein 20.9. klo 7, ja jokainen näkyi omalla
+kierroksellaan. **Taso nousee kun ovi avataan**, eli kosketin on PIOA:ssa ja
+`device_class: door` on oikein päin ilman inversiota.
+
+| Latch | Ovi | Asennusvaihe |
+|---|---|---|
+| `892EB6` | Keittiön ovi | keittiö ✓ |
+| `A82DB6` | Olohuoneen ovi | neljäs vaihe |
+| `BC37B6` | **Pääovi** | olohuone |
+| `372EB6` | Kodinhoitohuoneen ovi | makuuhuoneet |
+
+**Vain ensimmäinen osuu.** Muut kolme ovat eri huoneen ovia kuin se vaihe jossa
+latch asennettiin — olohuoneen vaiheessa asennettu latch onkin pääovessa, ja
+makuuhuoneiden vaiheessa asennettu kodinhoitohuoneessa.
+
+Se vahvistaa mitä yllä arveltiin mutta ei voitu näyttää: **asennusvaihe kertoo
+milloin, ei mitä.** Lämpötila-antureilla vastaavuus piti, koska ne asennettiin
+siihen huoneeseen jota kulloinkin tehtiin. Ovikosketin sen sijaan on siellä
+missä ovi on, ja ovet vedettiin samalla reissulla mutta eri paikkoihin.
+
+Kaksi jää nimeämättä. `2E30B6` ei liikkunut tässä kokeessa, eli se on ainoa
+kuudesta jota ei ole todennettu. `322EB6` ei todennäköisesti ole ovi lainkaan.
 
 ## Kytkös lattialämmitykseen
 
