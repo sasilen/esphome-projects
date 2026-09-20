@@ -840,6 +840,61 @@ interval:
                 format: "No frames for 20 s - NOT restarting, this is the measurement"
 
 
+
+  # ------------------------------------------- phase 2a, the setpoint poll
+  # **Six elements the bus does not keep fresh.** Each is a setting rather
+  # than a measurement: it stays true until somebody changes it, and the
+  # manager never polls it because nothing on the bus needs it. Passive
+  # capture saw the DHW and flow setpoints asked for exactly once in two
+  # hours.
+  #
+  # **Fifteen minutes, not thirty seconds**, and the reason is not wear — a
+  # read changes no stored value. It is that **a change made at the panel
+  # arrives as a write frame this node already decodes.** Polling is
+  # therefore only needed for the value at boot and for changes made while
+  # this node was offline. Asking more often buys nothing and spends bus
+  # time: twelve frames a quarter-hour is noise against 200 a minute,
+  # twelve every thirty seconds would not be.
+  #
+  # Byte 0 is the receiver shifted right by three with command nibble 1 =
+  # read, and **byte 1 carries the receiver's low bits** — that is what
+  # separates 0x601 from 0x600, and it is the field a guessed frame gets
+  # wrong:
+  #
+  #   0x180 -> 31 00      0x301 -> 61 01      0x601 -> C1 01
+  #
+  # Elements below 0x100 go straight into byte 2; larger ones need the 0xFA
+  # marker and shift the index into bytes 3-4.
+  - interval: 15min
+    then:
+      - if:
+          condition:
+            switch.is_on: poll_setpoints
+          then:
+            # 0x180 / 0x0013 EINSTELL_SPEICHERSOLLTEMP — DHW comfort setpoint
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0x13, 0x00, 0x00, 0x00, 0x00]}
+            - delay: 500ms
+            # 0x180 / 0x0A06 EINSTELL_SPEICHERSOLLTEMP2 — DHW eco setpoint
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x0A, 0x06, 0x00, 0x00]}
+            - delay: 500ms
+            # 0x601 / 0x010E HEIZKURVE — the slope, et_cent_val
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0xC1, 0x01, 0xFA, 0x01, 0x0E, 0x00, 0x00]}
+            - delay: 500ms
+            # 0x301 / 0x0004 VORLAUFSOLLTEMP — flow setpoint
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x61, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00]}
+            - delay: 500ms
+            # 0x601 / 0x0005 RAUMSOLLTEMP_TAG
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0xC1, 0x01, 0x05, 0x00, 0x00, 0x00, 0x00]}
+            - delay: 500ms
+            # 0x601 / 0x0008 RAUMSOLLTEMP_NACHT
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0xC1, 0x01, 0x08, 0x00, 0x00, 0x00, 0x00]}
+
 button:
   - platform: restart
     name: "Restart"
@@ -1248,6 +1303,14 @@ sensor:
 
 
 switch:
+  # Pysäyttää pollauksen ilman uutta käännöstä. Se on ainoa asia toimivan
+  # väylän ja kahdentoista neljännestuntikehyksen välissä.
+  - platform: template
+    name: "Poll setpoints"
+    id: poll_setpoints
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
   # Per-frame logging, off at every boot. See the frame handler for why.
   - platform: template
     id: log_frames
