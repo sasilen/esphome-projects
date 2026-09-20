@@ -939,6 +939,125 @@ interval:
   #
   # Elements below 0x100 go straight into byte 2; larger ones need the 0xFA
   # marker and shift the index into bytes 3-4.
+  # ------------------------------------ kuumakaasu ja paineet, ajon aikana
+  # **Lämpöpumpun terveysmittarit.** Kuumakaasun lämpötila kertoo kompressorin
+  # kunnosta ja kylmäainetäytöstä, paine-ero tehosta. Ne muuttuvat jatkuvasti
+  # ajon aikana ja ovat siksi aitoa käyrädataa — toisin kuin asetusarvot.
+  #
+  # **Vain kompressorin käydessä.** Seisovasta koneesta ne kertovat lepotilan
+  # eivätkä mitään muuta, ja kahdeksan kehystä kahdessa minuutissa ympäri
+  # vuorokauden olisi maksettu tyhjästä. Ehto on binäärianturi jonka manageri
+  # päivittää itse, joten se ei maksa omaa kyselyä.
+  - interval: 2min
+    then:
+      - if:
+          condition:
+            and:
+              - switch.is_on: poll_setpoints
+              - binary_sensor.is_on: compressor
+          then:
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x02, 0x65, 0x00, 0x00]}   # kuumakaasu
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x02, 0x68, 0x00, 0x00]}   # korkeapaine
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x07, 0xA5, 0x00, 0x00]}   # matalapaine
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x01, 0xD4, 0x00, 0x00]}   # lammonlahde
+  # ------------------------------------------------ laskurit, tunnin välein
+  # **Kumulatiivisia, joten tunti on oikea väli** — HA:n pitkän aikavälin
+  # tilastot lasketaan tunneittain viimeisestä tilasta, eikä tiheämpi kysely
+  # tuottaisi yhtään lisätietoa.
+  #
+  # Energialaskurit ovat neljän elementin ryhmiä: MWh, kWh, päivä ja jäännös.
+  # **Jäännös kysytään ensin**, koska `total()` kuluttaa sen — jos se saapuisi
+  # viimeisenä, ryhmä olisi jo julkaistu ilman sitä.
+  #
+  # 25 pyyntöä eli 50 kehystä tunnissa, kahdentoista tuhannen joukossa.
+  - interval: 60min
+    then:
+      - if:
+          condition:
+            switch.is_on: poll_setpoints
+          then:
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x07, 0xFC, 0x00, 0x00]}   # kompressorituntia lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x08, 0x02, 0x00, 0x00]}   # kompressorituntia LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x02, 0x59, 0x00, 0x00]}   # jalkilammitys 1
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x02, 0x5A, 0x00, 0x00]}   # jalkilammitys 2
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x08, 0x05, 0x00, 0x00]}   # jalkilammitys yht
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x2E, 0x00, 0x00]}   # lammontuotto lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x2F, 0x00, 0x00]}   # lammontuotto lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x30, 0x00, 0x00]}   # lammontuotto lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x31, 0x00, 0x00]}   # lammontuotto lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x2A, 0x00, 0x00]}   # lammontuotto LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x2B, 0x00, 0x00]}   # lammontuotto LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x2C, 0x00, 0x00]}   # lammontuotto LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x2D, 0x00, 0x00]}   # lammontuotto LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x1E, 0x00, 0x00]}   # sahko lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x1F, 0x00, 0x00]}   # sahko lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x20, 0x00, 0x00]}   # sahko lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x21, 0x00, 0x00]}   # sahko lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x1A, 0x00, 0x00]}   # sahko LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x1B, 0x00, 0x00]}   # sahko LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x1C, 0x00, 0x00]}   # sahko LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x1D, 0x00, 0x00]}   # sahko LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x27, 0x00, 0x00]}   # jalkilammitys lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x29, 0x00, 0x00]}   # jalkilammitys lammitys
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x23, 0x00, 0x00]}   # jalkilammitys LV
+            - delay: 300ms
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x09, 0x25, 0x00, 0x00]}   # jalkilammitys LV
+
   # **Legionellalippu erikseen ja tiheämmin.** Se on tällä hetkellä kokeen
   # kohde: lippu asetettiin 20.9. klo 08:10 ja kysymys on kuka sen nollaa.
   # Vartin tarkkuus ei riitä yhdistämään nollausta siihen mitä koneessa
