@@ -310,6 +310,33 @@ Se kuudes on juuri se latch jota ei ole vuoden 2020 kartassa. Se sai oman
 entiteettinsä, ja rytmi tallentuu nyt — tunnistus käy vertaamalla mihin muuhun
 se osuu yksiin.
 
+## Neljä ovea nimettiin avaamalla, ja asennusvaihe ei ennustanut niitä
+
+Tämä oli projektin ensimmäinen tunnistus joka ei nojannut lämpötilaan eikä
+päättelyyn. Neljä ovea avattiin minuutin välein, ja jokainen näkyi omalla
+kierroksellaan:
+
+| Latch | Ovi | Asennusvaihe |
+|---|---|---|
+| `892EB6` | Keittiön ovi | keittiö ✓ |
+| `A82DB6` | Olohuoneen ovi | neljäs vaihe |
+| `BC37B6` | **Pääovi** | olohuone |
+| `372EB6` | Kodinhoitohuoneen ovi | makuuhuoneet |
+
+Taso nousee kun ovi avataan, eli kosketin on PIOA:ssa ja `device_class: door`
+on oikein päin ilman inversiota.
+
+**Vain ensimmäinen osuu.** Olohuoneen vaiheessa asennettu latch onkin
+pääovessa ja makuuhuoneiden vaiheessa asennettu kodinhoitohuoneessa. Kolme
+neljästä olisi mennyt väärin jos ne olisi nimetty asennusjärjestyksen
+perusteella — ja juuri sitä olin ehdottamassa.
+
+Lämpötila-antureilla sama vastaavuus piti, koska ne asennettiin siihen
+huoneeseen jota kulloinkin tehtiin. **Ovikosketin on siellä missä ovi on**, ja
+ovet vedettiin samalla reissulla mutta eri paikkoihin. Aineistossa näkyi
+asennusjärjestys ja minä luin siitä toiminnallisen ryhmittelyn; ne ovat eri
+asioita, ja vain avaaminen erotti ne.
+
 ## Mitä tästä jäi käteen
 
 **Vanha levy oli arvokkaampi kuin mikään mittaus.** Kahdenkymmenen anturin
@@ -341,7 +368,8 @@ eivät ole yksi lisäys vaan vähintään kolme, ja että viisi niistä on ostet
 samaan aikaan kuin talon tunnetut anturit. Omistaja epäilee alakerran
 dokumentoimatonta haaraa.
 
-Sauna ei löytynyt. Kuusi ovea odottaa sitä että joku avaa ne yksi kerrallaan ja
-nimeää ne. Ja yksi tuntematon tulo käy jossain viiden minuutin välein.
+Sauna ei löytynyt. **Neljä ovea kuudesta on nimetty**; viides odottaa yhtä
+avausta ja kuudes ei todennäköisesti ole ovi lainkaan — sen molemmat kanavat
+elävät, ja toinen niistä käy jossain viiden minuutin välein.
 
 Väylä oli talossa koko ajan. Nyt se kertoo mitä siellä tapahtuu.
