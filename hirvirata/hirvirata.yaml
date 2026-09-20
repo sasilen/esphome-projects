@@ -28,6 +28,10 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  # Oletus `LIGHT` nukuttaa radion majakkavälien välissä, ja jokaiseen
+  # kuittauskierrokseen tulee herätysviive. Repon vakiosuositus heikkoon
+  # radioon ja katkeileviin OTA-lähetyksiin.
+  power_save_mode: NONE
   ap:
     ssid: "Hirvirata varayhteys"
     password: !secret ap_password

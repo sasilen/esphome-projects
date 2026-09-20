@@ -22,6 +22,14 @@ external_components:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  # Oletus `LIGHT` nukuttaa radion majakkavälien välissä, ja jokaiseen
+  # kuittauskierrokseen tulee herätysviive. Aidonin avointen asioiden lista
+  # suosittelee tätä ensimmäisenä keinona heikkoon radioon, ja se on myös
+  # repon vakiosuositus katkeileviin OTA-lähetyksiin.
+  #
+  # **ESP8266:lla tämä maksaa virtaa**, toisin kuin C3:lla: radio ei enää käy
+  # säästötilassa lainkaan. Verkkovirralla se ei merkitse.
+  power_save_mode: NONE
   ap:
     ssid: Aidon Fallback Hotspot
     password: !secret ap_password
