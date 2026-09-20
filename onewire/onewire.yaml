@@ -581,7 +581,7 @@ interval:
       - delay: 200ms
       - lambda: 'id(d2).update();'   # Pääovi
       - delay: 200ms
-      - lambda: 'id(d3).update();'   # Ovi 2E30B6
+      - lambda: 'id(d3).update();'   # Makuuhuoneen ovi
       - delay: 200ms
       - lambda: 'id(d4).update();'   # Olohuoneen ovi
       - delay: 200ms
@@ -663,7 +663,8 @@ binary_sensor:
     one_wire_id: bus_a
     id: d3
     address: 0x38000000B6302E12      # 12.2E30B6000000 · neljäs vaihe
-    name: "Ovi 2E30B6"
+    # Todennettu avaamalla 20.9. — asennusvaihe oli "neljäs vaihe"
+    name: "Makuuhuoneen ovi"
     device_class: door
     channel: A
     latch: true

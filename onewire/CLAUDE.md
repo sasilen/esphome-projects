@@ -1452,11 +1452,11 @@ Opetus on yleisempi kuin tämä tapaus. Aineistossa näkyi *asennusjärjestys*, 
 siitä luettiin *toiminnallinen ryhmittely*. Ne ovat eri asioita, ja vain
 omistaja tiesi kumpi oli kyseessä.
 
-### Neljä ovea todennettu avaamalla, ja asennusvaihe ei ennusta niitä
+### Viisi ovea todennettu avaamalla, ja asennusvaihe ei ennusta niitä
 
-Neljä ovea avattiin minuutin välein 20.9. klo 7, ja jokainen näkyi omalla
-kierroksellaan. **Taso nousee kun ovi avataan**, eli kosketin on PIOA:ssa ja
-`device_class: door` on oikein päin ilman inversiota.
+Ovet avattiin yksi kerrallaan ja jokainen näkyi omalla kierroksellaan. **Taso
+nousee kun ovi avataan**, eli kosketin on PIOA:ssa ja `device_class: door` on
+oikein päin ilman inversiota.
 
 | Latch | Ovi | Asennusvaihe |
 |---|---|---|
@@ -1464,18 +1464,61 @@ kierroksellaan. **Taso nousee kun ovi avataan**, eli kosketin on PIOA:ssa ja
 | `A82DB6` | Olohuoneen ovi | neljäs vaihe |
 | `BC37B6` | **Pääovi** | olohuone |
 | `372EB6` | Kodinhoitohuoneen ovi | makuuhuoneet |
+| `2E30B6` | Makuuhuoneen ovi | neljäs vaihe |
 
-**Vain ensimmäinen osuu.** Muut kolme ovat eri huoneen ovia kuin se vaihe jossa
-latch asennettiin — olohuoneen vaiheessa asennettu latch onkin pääovessa, ja
-makuuhuoneiden vaiheessa asennettu kodinhoitohuoneessa.
+**Vain ensimmäinen osuu.** Neljä muuta ovat eri huoneen ovia kuin se vaihe
+jossa latch asennettiin — olohuoneen vaiheessa asennettu latch onkin pääovessa,
+makuuhuoneiden vaiheessa asennettu kodinhoitohuoneessa, ja makuuhuoneen ovi
+asennettiin neljännessä vaiheessa.
 
 Se vahvistaa mitä yllä arveltiin mutta ei voitu näyttää: **asennusvaihe kertoo
 milloin, ei mitä.** Lämpötila-antureilla vastaavuus piti, koska ne asennettiin
 siihen huoneeseen jota kulloinkin tehtiin. Ovikosketin sen sijaan on siellä
 missä ovi on, ja ovet vedettiin samalla reissulla mutta eri paikkoihin.
 
-Kaksi jää nimeämättä. `2E30B6` ei liikkunut tässä kokeessa, eli se on ainoa
-kuudesta jota ei ole todennettu. `322EB6` ei todennäköisesti ole ovi lainkaan.
+Viimeinen todennettiin sivutuotteena: kulkija meni pääovesta olohuoneen kautta
+makuuhuoneeseen, ja **kolme latchia laukesi peräkkäisillä kierroksilla siinä
+järjestyksessä**. Reitti näkyy väylällä.
+
+Viides kuudesta riittää. `322EB6` ei ole ovi, ja seuraava luku kertoo miksi se
+tiedetään nyt varmasti.
+
+### `322EB6` ei ole ovi — sen molemmat kanavat laukeavat itsestään
+
+Salpa otettiin lopulta käyttöön myös tällä, ja se ratkaisi kysymyksen. **PIOA
+laukaisee salvan noin neljän minuutin välein** — vuorokauden lokissa 92 kertaa
+— mutta **taso lukee korkeaa vain kahdesti koko aikana**.
+
+Yhdistelmä on itsessään vastaus. Salpa muistaa siirtymän joka tapahtui
+kierrosten välissä; taso näkee vain sen hetken jolloin sitä kysytään. Kun salpa
+laukeaa toistuvasti eikä taso koskaan ehdi nousta, **pulssi on lyhyempi kuin
+minuutin pollausväli.** Ovi ei ole auki alle minuuttia yhdeksänkymmentä kertaa
+vuorokaudessa.
+
+Kanavat eivät myöskään ole sama signaali: yhdeksänkymmenen kierroksen otoksessa
+A:n tapahtuma ja B:n matala tila osuivat samalle kierrokselle vain kerran. B:n
+jakso on viisi–kahdeksan minuuttia, A:n noin neljä. Kaksi erillistä
+jaksollista laitetta samassa piirissä.
+
+### Salpa näkee sen mitä taso ei, ja siksi ne tarkoittavat eri asiaa
+
+Pääovi antaa iltapäivän lokissa usein `taso=NO salpa=YES` — salpa laukeaa,
+mutta ovi lukee kiinni. **Se ei ole häiriö vaan ohikulku:** ovi avattiin ja
+suljettiin kahden kierroksen välissä, eikä minuutin näyte osunut auki-hetkeen.
+Sama rivi ilmestyy siis kahdesta täysin eri syystä:
+
+| Rivi | Ovella | `322EB6`:lla |
+|---|---|---|
+| `taso=YES salpa=YES` | ovi on auki juuri nyt | ei esiinny käytännössä |
+| `taso=NO salpa=YES` | joku kävi kierrosten välissä | kone kävi kierrosten välissä |
+
+Erottelu ei siis tule yksittäisestä rivistä vaan **tiheydestä**. Ovi tuottaa
+pelkkiä salpalaukaisuja silloin kun talossa liikutaan, ja niiden lomassa
+nähdään ajoittain myös taso ylhäällä. `322EB6` tuottaa niitä tasaisesti
+kellon ympäri eikä koskaan tasoa.
+
+Käytännön sääntö: **salpa yksin kertoo että jotain tapahtui, ei mitä.** Jos
+halutaan tietää kumpi, katsotaan onko taso *koskaan* ylhäällä.
 
 ## Kytkös lattialämmitykseen
 

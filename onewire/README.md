@@ -20,7 +20,7 @@ kierroksen yli, eli jokainen väylällä oleva anturi raportoi.
 | **38** | laitetta vastaa luetteloinnissa |
 | **19** | DS18B20:tä luettavissa, nimettyinä huoneisiin |
 | **3** | MAX31850-termoparia, todennäköisesti leivinuunissa |
-| **6** | DS2406-ovikosketinta, neljä nimettyä — luetaan omalla komponentilla |
+| **6** | DS2406-ovikosketinta, viisi nimettyä — luetaan omalla komponentilla |
 
 **Korjaus oli yhden rivin asia, mutta se löytyi vasta neljäntenä.** Aluksi vain
 kahdeksan anturia luki ja neljätoista palautti tehdasarvon 85 °C. Syy ei ollut

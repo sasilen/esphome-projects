@@ -310,10 +310,10 @@ Se kuudes on juuri se latch jota ei ole vuoden 2020 kartassa. Se sai oman
 entiteettinsä, ja rytmi tallentuu nyt — tunnistus käy vertaamalla mihin muuhun
 se osuu yksiin.
 
-## Neljä ovea nimettiin avaamalla, ja asennusvaihe ei ennustanut niitä
+## Viisi ovea nimettiin avaamalla, ja asennusvaihe ei ennustanut niitä
 
 Tämä oli projektin ensimmäinen tunnistus joka ei nojannut lämpötilaan eikä
-päättelyyn. Neljä ovea avattiin minuutin välein, ja jokainen näkyi omalla
+päättelyyn. Ovet avattiin yksi kerrallaan, ja jokainen näkyi omalla
 kierroksellaan:
 
 | Latch | Ovi | Asennusvaihe |
@@ -322,13 +322,14 @@ kierroksellaan:
 | `A82DB6` | Olohuoneen ovi | neljäs vaihe |
 | `BC37B6` | **Pääovi** | olohuone |
 | `372EB6` | Kodinhoitohuoneen ovi | makuuhuoneet |
+| `2E30B6` | Makuuhuoneen ovi | neljäs vaihe |
 
 Taso nousee kun ovi avataan, eli kosketin on PIOA:ssa ja `device_class: door`
 on oikein päin ilman inversiota.
 
 **Vain ensimmäinen osuu.** Olohuoneen vaiheessa asennettu latch onkin
-pääovessa ja makuuhuoneiden vaiheessa asennettu kodinhoitohuoneessa. Kolme
-neljästä olisi mennyt väärin jos ne olisi nimetty asennusjärjestyksen
+pääovessa ja makuuhuoneiden vaiheessa asennettu kodinhoitohuoneessa. Neljä
+viidestä olisi mennyt väärin jos ne olisi nimetty asennusjärjestyksen
 perusteella — ja juuri sitä olin ehdottamassa.
 
 Lämpötila-antureilla sama vastaavuus piti, koska ne asennettiin siihen
@@ -336,6 +337,27 @@ huoneeseen jota kulloinkin tehtiin. **Ovikosketin on siellä missä ovi on**, ja
 ovet vedettiin samalla reissulla mutta eri paikkoihin. Aineistossa näkyi
 asennusjärjestys ja minä luin siitä toiminnallisen ryhmittelyn; ne ovat eri
 asioita, ja vain avaaminen erotti ne.
+
+Viimeinen nimettiin ilman erillistä koetta. Loki näytti kolme laukaisua
+peräkkäisillä kierroksilla:
+
+```
+16:59  Pääovi           taso=NO  salpa=YES
+17:00  Olohuoneen ovi   taso=YES salpa=YES
+17:01  Ovi 2E30B6       taso=YES salpa=YES
+```
+
+Se on yksi ihminen kävelemässä ulko-ovelta olohuoneen läpi makuuhuoneeseen.
+**Väylä ei kertonut vain että ovi liikkui, vaan mihin suuntaan talossa
+mentiin** — ja kolmas ovi sai nimensä siitä että tiesi mistä kulkija tuli.
+
+Samalla selvisi miksi kuudetta ei kannata yrittää nimetä ovena. Kun salpa
+vihdoin kytkettiin päälle myös siihen, se laukesi vuorokaudessa 92 kertaa —
+noin neljän minuutin välein — mutta taso luki auki vain kahdesti. Ovi ei tee
+niin. Pelkkä salpalaukaisu tarkoittaa että jotain tapahtui minuutin näytteiden
+*välissä*, ja se sopii yhtä hyvin ohikulkijaan kuin koneeseen joka
+käy jaksoittain. Erottelu ei tule yhdestä rivistä vaan siitä, nouseeko taso
+koskaan.
 
 ## Mitä tästä jäi käteen
 
