@@ -61,6 +61,19 @@ Jokaisella ESPHome-konfiguraation omaavalla projektilla on `secrets.yaml.example
 samalla kun YAML syntyy; `bestway.lay-z-spa` ei ole ESPHome-projekti eikä
 kuulu tämän piiriin.
 
+**Kontin `/config` on litteä ja siellä on yksi jaettu `secrets.yaml`.** Repon
+projektikohtaiset `secrets.yaml.example`-tiedostot kuvaavat siis rakennetta
+joka ei toteudu ajossa, ja siitä seuraa yksi sääntö: **nimen on oltava
+globaalisti uniikki jos arvo on laitekohtainen.**
+
+`api_encryption_key` on varattu stiebelille ja onewirelle, jotka jakavat
+saman avaimen. Aidon oli ajossa ennen versionhallintaa ja sillä on omansa,
+joten se käyttää nimeä `aidon_api_key`. Jaettuun nimeen siirtyminen vaihtaisi
+avaimen ja **katkaisisi HA:n yhteyden** kunnes se annetaan uudelleen — sitä ei
+kannata tehdä pelkän siisteyden vuoksi.
+
+Wifi-tunnukset ja `ap_password` voivat olla jaettuja, koska ne *ovat* samat.
+
 YAMLissa käytetään aina `!secret`-viittauksia, ei kirjoitettuja arvoja.
 **Tämä koskee myös AP-varayhteyden salasanaa** — se unohtuu helposti, koska se
 tuntuu laitteen omalta asetukselta eikä verkon tunnukselta. AP:n *nimi* sen
