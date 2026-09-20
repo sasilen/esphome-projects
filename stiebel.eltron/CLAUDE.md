@@ -3640,6 +3640,34 @@ if the bench test sends it the other way, the wiring is
 about 2a still holds, because the split is in the configuration and not in the
 hardware.
 
+### 2b has begun, with one write and a guard
+
+The legionella enable is implemented, and it is the only thing in the
+configuration that changes the machine. It mirrors the captured panel frame
+byte for byte with the sender changed:
+
+```
+100>180 wr ex=0101 = 256      the panel, captured 2026-09-19
+680>180 wr ex=0101 = 256      this node
+```
+
+**The state is not optimistic.** It is decoded from element 0x0101 as the
+machine answers it, so a refused or lost write shows up as the switch
+returning to where it was rather than as a lie in Home Assistant. The element
+is polled alongside the setpoints so it cannot go stale.
+
+**The guard is ten minutes between writes**, enforced in the action rather than
+in Home Assistant. The realistic way to exhaust a finite write count is not a
+person pressing a button but an automation that flaps, and a guard that lives
+in the automation is no guard at all. Ten minutes is far more than a legionella
+schedule can use — the parameter carries an enable and nothing else, so there
+is nothing to schedule from here anyway.
+
+**Nothing else writes.** The heating curve at 0x010E is captured, understood and
+deliberately still read-only: it is the parameter with real consequences for
+comfort and for the EEPROM, and it should not arrive in the same flash as the
+first write this project has ever made.
+
 ### 2b — writes
 
 - Identify the writable elements: heating curve slope, room setpoint

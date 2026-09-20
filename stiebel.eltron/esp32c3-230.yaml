@@ -380,6 +380,16 @@ canbus:
                   case 0x000E: id(dhw_temp).publish_state(t);     break;
                   case 0x0016: id(return_temp).publish_state(t);  break;
 
+                  // **The legionella enable, and it is et_little_endian.**
+                  // The number sits in the high byte, so 256 is 1 — reading
+                  // the full sixteen bits would make "on" look like 256.
+                  // Captured as a live write: the panel sent 0 -> 256 while
+                  // ANTILEGIONELLAKÄSITT went from POIS to on.
+                  case 0x0101:
+                    id(legionella_on) = ((value >> 8) == 1);
+                    id(legionella_sw).publish_state(id(legionella_on));
+                    break;
+
                   // ---- named by walking the panel, 2026-09-06 -------------
                   // Every element below was read off a photographed screen
                   // whose values matched the frames logged while it was up.
@@ -753,6 +763,23 @@ canbus:
 
 
 globals:
+  # Legionella enable, mirrored from the bus so the switch shows what the
+  # machine holds rather than what Home Assistant last asked for.
+  - id: legionella_on
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+  # **The EEPROM guard.** millis() at the last legionella write, 0 = never.
+  # See "Why the writes have to be rate-limited": this parameter lives in a
+  # store with a finite write count, and a stuck automation is the realistic
+  # way to exhaust it. One write per ten minutes is far more than a legionella
+  # schedule ever needs and still leaves the budget effectively unlimited.
+  - id: legionella_last_write
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
   - id: frame_count
     type: uint32_t
     restore_value: false
@@ -894,6 +921,10 @@ interval:
             # 0x601 / 0x0008 RAUMSOLLTEMP_NACHT
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0xC1, 0x01, 0x08, 0x00, 0x00, 0x00, 0x00]}
+            - delay: 500ms
+            # 0x180 / 0x0101 legionella enable — so the switch is not stale
+            - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                            data: [0x31, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00]}
 
 button:
   - platform: restart
@@ -1303,6 +1334,59 @@ sensor:
 
 
 switch:
+  # ------------------------------------------- phase 2b, the first write
+  # **This is the only thing in this file that changes the machine.** It
+  # mirrors a frame the panel was caught sending, byte for byte, with the
+  # sender changed:
+  #
+  #     100>180 wr ex=0101 = 256      the panel, captured
+  #     680>180 wr ex=0101 = 256      this node
+  #
+  #   byte 0  0x30 — receiver 0x180 (0x30 << 3), command nibble 0 = write
+  #   byte 1  0x00 — 0x180 has no low bits to carry
+  #   2-4     FA 01 01 — extended marker, element 0x0101
+  #   5-6     01 00 for on, 00 00 for off; et_little_endian puts the number
+  #           in the high byte, so "1" is 0x0100
+  #
+  # **The guard is not optional.** This parameter lives in EEPROM, and the
+  # realistic way to exhaust a finite write count is not a person pressing a
+  # button but an automation that flaps. Ten minutes between writes is far
+  # more than a legionella schedule can use and turns an unbounded risk into
+  # a bounded one.
+  #
+  # The state is not optimistic: it comes from the machine's own answer via
+  # element 0x0101, so a refused or lost write shows up as the switch
+  # returning to where it was.
+  - platform: template
+    name: "Legionella treatment"
+    id: legionella_sw
+    icon: mdi:water-boiler
+    lambda: "return id(legionella_on);"
+    turn_on_action:
+      - lambda: |-
+          const uint32_t now = millis();
+          if (id(legionella_last_write) != 0 && now - id(legionella_last_write) < 600000) {
+            ESP_LOGW("can", "legionella write refused: %u s since the last one",
+                     (now - id(legionella_last_write)) / 1000);
+            return;
+          }
+          id(legionella_last_write) = now;
+          ESP_LOGW("can", "TX 0x680: 30 00 FA 01 01 01 00  (legionella ON)");
+          auto *bus = id(can0);
+          bus->send_data(0x680, false, {0x30, 0x00, 0xFA, 0x01, 0x01, 0x01, 0x00});
+    turn_off_action:
+      - lambda: |-
+          const uint32_t now = millis();
+          if (id(legionella_last_write) != 0 && now - id(legionella_last_write) < 600000) {
+            ESP_LOGW("can", "legionella write refused: %u s since the last one",
+                     (now - id(legionella_last_write)) / 1000);
+            return;
+          }
+          id(legionella_last_write) = now;
+          ESP_LOGW("can", "TX 0x680: 30 00 FA 01 01 00 00  (legionella OFF)");
+          auto *bus = id(can0);
+          bus->send_data(0x680, false, {0x30, 0x00, 0xFA, 0x01, 0x01, 0x00, 0x00});
+
   # Pysäyttää pollauksen ilman uutta käännöstä. Se on ainoa asia toimivan
   # väylän ja kahdentoista neljännestuntikehyksen välissä.
   - platform: template
