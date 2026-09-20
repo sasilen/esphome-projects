@@ -2952,6 +2952,36 @@ Three operational consequences follow, and none is technical:
   every entity, which is the exact outcome the shared name exists to prevent.
   Statistics are keyed on the entity id and survive the gap between the two.
 
+### A watchdog that deliberately does not act
+
+The bring-up config that produced the A-B comparison carried a quiet-bus
+watchdog, and the useful part is what it refuses to do:
+
+```yaml
+- if:
+    condition:
+      lambda: "return id(quiet_checks) == 2;"
+    then:
+      - logger.log:
+          level: WARN
+          format: "No frames for 20 s - NOT restarting, this is the measurement"
+```
+
+A silent bus normally warrants a restart. **During an evaluation it must not,
+because the restart would destroy the result it is supposed to protect** — a
+node that reboots itself out of a silent period reports a shorter silence than
+actually happened, and the number the whole exercise exists to produce becomes
+unreliable.
+
+The watchdog still fires; it just writes to the log instead of acting. That is
+the right shape for any watchdog running over a measurement rather than over a
+service, and it is worth keeping in mind whenever a recovery mechanism is added
+to something whose purpose is to be observed.
+
+That config has since been deleted. Its result — 237 frames a minute, zero
+malformed in 6,199 — is recorded above; this pattern was the only thing in it
+that the result did not already capture.
+
 ### Bringing the C3 up, and the one thing that looks like a dead board
 
 **A factory-fresh SuperMini re-enumerates every two seconds until it has a valid
