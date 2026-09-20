@@ -3593,6 +3593,41 @@ once: transceiver, bit rate, identity, addressing and decoding.
 single bounded failure into a repeating one. The loop comes after the single
 frame has answered.
 
+#### It answered, and every layer was proven at once
+
+The button was pressed on 20 September at 07:26:46. The reply arrived **23
+milliseconds later**, addressed to this node:
+
+```
+[07:26:46.150][W][can]: TX 0x680: 31 00 0C 00 00 00 00  (read 0x000C from 0x180)
+[07:26:46.173][I][can]: 180>680 resp  e=000C = 142 (0x008E)
+```
+
+Nine seconds later the comfort panel asked the same question on its own cycle
+and received the same number:
+
+```
+[07:26:55.572][I][can]: 180>100 resp  e=000C = 142 (0x008E)
+```
+
+**142 is 14.2 °C, and that is what "Outdoor temperature" was publishing.** So
+the check the target was chosen for succeeded: the value this node obtained by
+asking matches the value the bus already carried.
+
+Six things were unproven before that frame and are proven by it:
+
+| | |
+|---|---|
+| Transceiver transmit path | the frame left the board |
+| Bit rate on transmit | it was understood, not just received |
+| 0x680 as an identity | no collision, no error frames |
+| Addressing | the answer came to **0x680**, not to 0x100 |
+| Frame construction | `0x31` did mean "read 0x000C from 0x180" |
+| Decoding | 142 matches the panel's own answer |
+
+**Zero errors and no bus-off** in the log. The bench bus would have proven one
+of these six; the live bus proved all of them in 23 ms.
+
 **Do 2a first, with the write path left out of the configuration entirely.** It
 delivers the panel's numbers on demand without changing anything in the machine,
 and it exercises the identity, the bit rate and the transceiver in the one
