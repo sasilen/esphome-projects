@@ -1366,8 +1366,10 @@ switch:
       - lambda: |-
           const uint32_t now = millis();
           if (id(legionella_last_write) != 0 && now - id(legionella_last_write) < 600000) {
-            ESP_LOGW("can", "legionella write refused: %u s since the last one",
-                     (now - id(legionella_last_write)) / 1000);
+            // %lu, not %u: millis() is uint32_t and that is `long unsigned`
+            // on this toolchain. The warning is harmless and the fix is free.
+            ESP_LOGW("can", "legionella write refused: %lu s since the last one",
+                     (unsigned long) ((now - id(legionella_last_write)) / 1000));
             return;
           }
           id(legionella_last_write) = now;
@@ -1378,8 +1380,10 @@ switch:
       - lambda: |-
           const uint32_t now = millis();
           if (id(legionella_last_write) != 0 && now - id(legionella_last_write) < 600000) {
-            ESP_LOGW("can", "legionella write refused: %u s since the last one",
-                     (now - id(legionella_last_write)) / 1000);
+            // %lu, not %u: millis() is uint32_t and that is `long unsigned`
+            // on this toolchain. The warning is harmless and the fix is free.
+            ESP_LOGW("can", "legionella write refused: %lu s since the last one",
+                     (unsigned long) ((now - id(legionella_last_write)) / 1000));
             return;
           }
           id(legionella_last_write) = now;
