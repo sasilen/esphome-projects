@@ -3798,11 +3798,63 @@ stratifies, so it reports only once the charged layer reaches it.
 Not the reheat flow. It reached 57 °C in an ordinary charge, so a threshold
 there fires on everything.
 
-**The tank does separate them.** A normal charge stopped at 50.4 °C; a
-legionella cycle has to pass 60 °C to do its job. A watcher set at 55 °C sits
-in the gap with room on both sides, and `stiebel.eltron/watch-dhw.sh` is that
-watcher — it polls the log rather than the device, so it adds no API client and
-cannot interfere with an OTA.
+**The tank does separate them.** A legionella cycle has to pass 60 °C to do its
+job, and a normal charge does not come close. `stiebel.eltron/watch-dhw.sh` is
+that watcher — it polls the log rather than the device, so it adds no API
+client and cannot interfere with an OTA.
+
+**The threshold started at 55 °C and that was too low.** A normal night charge
+peaks higher than the 50.4 °C seen in the first observed run: the following
+night it reached **54.3 °C**. A 55 °C watcher would have fired on an ordinary
+charge nearly every night and taught nothing. **It is set at 57 °C**, which
+still leaves three degrees of gap below a real legionella cycle.
+
+The general shape of the mistake is worth keeping: the first observed run is a
+sample of one, and a threshold placed halfway between one sample and a
+textbook number is placed on very little.
+
+### The pump clears the legionella flag itself, and no one writes it off the bus
+
+The flag was set from the panel at 16:36 and read back as 256. The next
+morning the panel read it as **0** — and in the whole night's log there is
+**not one `0x0101` write on the bus**. The only two writes in twenty-five
+hours of capture are the panel turning it on and this node turning it on
+again:
+
+```
+16:36:31  100>180 wr   ex=0101 = 256      panel, on
+08:10:08  TX 0x680: 30 00 FA 01 01 01 00  this node, on
+```
+
+Nothing wrote a zero. So whatever cleared it did so **inside the pump**, not
+as a CAN transaction one could watch for or attribute. That answers the
+question the experiment was set up to ask — "who clears it" — in a way that
+rules out every other node on the bus.
+
+Two caveats keep this honest:
+
+- **The log has a nineteen-minute gap** at 21:56–22:15, a flash window. A
+  write there would have been missed. The rest of the night is continuous.
+- **This node was not yet polling `0x0101` overnight**; the two-minute poll
+  only started at 08:11. So the clear is bounded to a fifteen-hour window, not
+  timestamped.
+
+**And the tank never reached a legionella temperature in between.** The night
+charge ran from midnight to 02:00 and peaked at 54.3 °C — an ordinary comfort
+charge. The flag was set, a charge happened, the flag was gone, and the water
+never passed 60 °C.
+
+That leaves two readings and no way yet to choose between them:
+
+1. The flag is a **one-shot request consumed by the next DHW charge**, whether
+   or not that charge reaches the legionella setpoint.
+2. The flag is cleared on a **schedule boundary** — midnight, or the start of
+   the DHW program — and the charge is a coincidence.
+
+The next night decides it, because the poll now runs every two minutes and
+will timestamp the clear to the minute. **If the clear lands at the end of the
+charge, it is reading 1; if it lands at a round hour with the tank still
+cold, it is reading 2.**
 
 ---
 
