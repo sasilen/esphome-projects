@@ -16,7 +16,9 @@ CONF_CHANNEL = "channel"
 CONF_LATCH = "latch"
 
 # Channel Control Byte 1:  ALR IM TOG IC CHS1 CHS0 CRC1 CRC0
-#   ALR = 0   älä nollaa tapahtumasalpaa  (`latch: true` asettaa tämän)
+#   ALR = 0   **aina**: luku ei saa nollata salpaa, koska nollaus tapahtuu
+#             ennen raportointia. `latch: true` nollaa sen erillisellä
+#             käskyllä vasta kun salpa on luettu.
 #   IM  = 1   **lukutila** — tämä bitti erottaa luvun kirjoituksesta
 #   TOG = 0   kiinteä tila
 #   IC  = 0
@@ -27,16 +29,15 @@ CHANNELS = {
     "B": 0x48,
 }
 
-ALR = 0x80
-
 CONFIG_SCHEMA = (
     binary_sensor.binary_sensor_schema(DS2406BinarySensor)
     .extend(
         {
             cv.Optional(CONF_CHANNEL, default="A"): cv.enum(CHANNELS, upper=True),
             # Ota tapahtumasalpa mukaan tilaan. Piiri muistaa muutoksen jota
-            # pollaus ei ehtinyt nähdä, ja ALR=1 nollaa salvan luvun jälkeen —
-            # joten tila tarkoittaa silloin *päällä nyt tai ollut välissä*.
+            # pollaus ei ehtinyt nähdä. Salpa luetaan ALR=0:lla ja nollataan
+            # erillisellä käskyllä, joten tila tarkoittaa *päällä nyt tai
+            # ollut välissä*.
             cv.Optional(CONF_LATCH, default=False): cv.boolean,
         }
     )
@@ -51,11 +52,7 @@ async def to_code(config: ConfigType) -> None:
     await one_wire.register_one_wire_device(var, config)
 
     # **`cv.enum` palauttaa avaimen, ei arvoa.** Se on merkkijonon aliluokka
-    # jolla on `.enum_value`, joten `config[CONF_CHANNEL]` on "A" eikä 0x44 —
-    # ja `|=` kaatuu siihen. Haku taulukosta on selvempi kuin sisäiseen
-    # attribuuttiin nojaaminen.
-    control = CHANNELS[config[CONF_CHANNEL]]
-    if config[CONF_LATCH]:
-        control |= ALR
-    cg.add(var.set_control_byte(control))
+    # jolla on `.enum_value`, joten `config[CONF_CHANNEL]` on "A" eikä 0x44.
+    # Haku taulukosta on selvempi kuin sisäiseen attribuuttiin nojaaminen.
+    cg.add(var.set_control_byte(CHANNELS[config[CONF_CHANNEL]]))
     cg.add(var.set_use_latch(config[CONF_LATCH]))

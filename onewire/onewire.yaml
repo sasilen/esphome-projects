@@ -669,11 +669,11 @@ binary_sensor:
     name: "Ovi 322EB6"
     device_class: door
     channel: A
-    # **Ainoa ilman salpaa, ja se on pakko.** `ALR=1` nollaa *molempien*
-    # kanavien salvat — se todettiin siitä että ensimmäinen A-kanavan luku
-    # nollasi myös B:n salvan. Tällä piirillä B on se jota kannattaa vahtia,
-    # joten A luetaan ALR=0:lla eikä se häiritse B:n lukua.
-    latch: false
+    # **Salpa oli tässä pois päältä**, koska luulin `ALR=1`:n nollaavan
+    # molempien kanavien salvat. Se nollaa vain valitun — ja nollaus tehdään
+    # nyt muutenkin erillisellä käskyllä luvun jälkeen, joten kanavat eivät
+    # häiritse toisiaan.
+    latch: true
     update_interval: never
 
   - platform: ds2406

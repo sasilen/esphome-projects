@@ -14,6 +14,10 @@ static const uint8_t DS2406_COMMAND_CHANNEL_ACCESS = 0xF5;
 /// Channel Control Byte 2 on varattu tulevalle käytölle ja **on aina 0xFF**.
 static const uint8_t DS2406_CONTROL_BYTE_2 = 0xFF;
 
+/// Channel Control Byte 1:n ylin bitti. Nollaa valitun kanavan
+/// tapahtumasalvan — ja tekee sen ennen kuin Channel Info lähetetään.
+static const uint8_t DS2406_CONTROL_ALR = 0x80;
+
 void DS2406BinarySensor::setup() {
   if (!this->check_address_or_index_())
     this->mark_failed();
@@ -26,6 +30,11 @@ void DS2406BinarySensor::update() {
   uint8_t info;
   {
     InterruptLock lock;
+    // **Luku tehdään aina ALR=0:lla.** `ALR=1` nollaa valitun kanavan salvan
+    // *ennen* kuin Channel Info lähetetään, joten sillä luettu salpa on aina
+    // nolla — myös silloin kun tulo oikeasti liikkui. Se todettiin ovesta
+    // joka avattiin ja suljettiin kierrosten välissä.
+    //
     // send_command_ tekee resetin, MATCH ROMin ja käskyn yhdellä kutsulla.
     if (!this->send_command_(DS2406_COMMAND_CHANNEL_ACCESS)) {
       this->status_set_warning();
@@ -34,6 +43,17 @@ void DS2406BinarySensor::update() {
     this->bus_->write8(this->control_byte_);
     this->bus_->write8(DS2406_CONTROL_BYTE_2);
     info = this->bus_->read8();
+  }
+
+  // Nollaus on oma käskynsä. Se tehdään vasta kun salpa on luettu, ja vain
+  // jos salpaa käytetään — muuten se hävittäisi tiedon jota kukaan ei lukenut.
+  if (this->use_latch_) {
+    InterruptLock lock;
+    if (this->send_command_(DS2406_COMMAND_CHANNEL_ACCESS)) {
+      this->bus_->write8(this->control_byte_ | DS2406_CONTROL_ALR);
+      this->bus_->write8(DS2406_CONTROL_BYTE_2);
+      this->bus_->read8();  // vastaus ei kiinnosta, nollaus tapahtui jo
+    }
   }
 
   // Vaiennut väylä lukee kaikki ykköset. Se ei ole kelvollinen Channel Info:
@@ -52,10 +72,10 @@ void DS2406BinarySensor::update() {
   const bool level = is_b ? ((info & 0x08) != 0) : ((info & 0x04) != 0);
   const bool latch = is_b ? ((info & 0x20) != 0) : ((info & 0x10) != 0);
 
-  // **Salpa muistaa muutoksen jota pollaus ei ehtinyt nähdä.** Kun se on
-  // käytössä, ohjaustavussa on ALR=1 ja piiri nollaa salvan tämän luvun
-  // jälkeen — jolloin seuraava kierros vastaa kysymykseen "liikkuiko tämän
-  // jälkeen". Julkaistu tila on silloin *auki nyt tai ollut auki välissä*.
+  // **Salpa muistaa muutoksen jota pollaus ei ehtinyt nähdä.** Se luetaan yllä
+  // ALR=0:lla ja nollataan erillisellä käskyllä, jolloin seuraava kierros
+  // vastaa kysymykseen "liikkuiko tämän jälkeen". Julkaistu tila on silloin
+  // *päällä nyt tai ollut päällä välissä*.
   const bool state = this->use_latch_ ? (level || latch) : level;
 
   ESP_LOGD(TAG, "'%s': info=0x%02X level=%s latch=%s -> %s", this->get_name().c_str(), info, YESNO(level),
