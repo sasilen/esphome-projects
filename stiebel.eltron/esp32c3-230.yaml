@@ -1393,6 +1393,16 @@ switch:
     name: "Legionella treatment"
     id: legionella_sw
     icon: mdi:water-boiler
+    # **`DISABLED`, ei oletusta.** Template-kytkimen oletus on
+    # `RESTORE_DEFAULT_OFF`, joka julkaisee `OFF`:n käynnistyksessä **ennen
+    # kuin lambdaa on kysytty** — ja se ohitti koko tuntematon-tilan:
+    #
+    #     [07:46:11][S][switch]: 'Legionella treatment' >> OFF
+    #
+    # Kytkin väitti "pois" 30 sekuntia ennen kuin konetta oli ehditty kysyä.
+    # `DISABLED` ei palauta eikä aseta alkutilaa, jolloin lambda saa päättää
+    # ja tila on tuntematon kunnes 0x0101 on luettu.
+    restore_mode: DISABLED
     # Tuntematon kunnes kone on vastannut. HA näyttää sen `unknown`-tilana
     # eikä "pois"-tilana, mikä on ainoa rehellinen vaihtoehto ennen kuin
     # elementti 0x0101 on luettu kertaakaan.
