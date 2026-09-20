@@ -950,11 +950,26 @@ interval:
   # päivittää itse, joten se ei maksa omaa kyselyä.
   - interval: 2min
     then:
+      # **Ehto poistettu, ja se on tietoinen peruutus.** Tämä pollasi aluksi
+      # vain kompressorin käydessä, jotta seisova kone ei kuormittaisi väylää.
+      # Ehto nojasi `Compressor`-anturiin, ja se osoittautui epäluotettavaksi:
+      # sen lähde `0x4E5E` oli jäätynyt seitsemäksi tunniksi arvoon 689, ja
+      # kone ei päivitä sanaa vaikka sitä kysyisi — pollattuna se palautti
+      # saman 689:n. Toinen ehdokas `0xFE1D` vuorottelee 100:n ja 98:n välillä
+      # kymmenen sekunnin välein, eli se on käsketty arvo ja sen kuittaus.
+      #
+      # **Luotettava merkki on paine-ero itse.** Seisovalla koneella korkea ja
+      # matala tasaantuvat 0,3–0,4 baarin päähän toisistaan; käyvällä ne
+      # erkanevat. Se on fysiikkaa eikä tilabitti, ja se oli ainoa asia joka
+      # paljasti jäätyneen anturin.
+      #
+      # Siksi paineita pollataan nyt ehdoitta: **niistä johdetaan käyntitila,
+      # ei toisin päin.** Kahdeksan kehystä kahdessa minuutissa on se hinta.
+      # Kynnys jätetään asettamatta kunnes yksi todellinen ajo on mitattu —
+      # arvattu raja olisi sama virhe uudessa paikassa.
       - if:
           condition:
-            and:
-              - switch.is_on: poll_setpoints
-              - binary_sensor.is_on: compressor
+            switch.is_on: poll_setpoints
           then:
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x31, 0x00, 0xFA, 0x02, 0x65, 0x00, 0x00]}   # kuumakaasu
