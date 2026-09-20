@@ -82,7 +82,11 @@ api:
 
 ota:
   - platform: esphome
-    password: !secret ota_password
+    # **Ei salasanaa.** Laite tarjoaa jo salatun OTA:n API-avaimella, ja
+    # pelkkä `encryption:` vaatii sen — silloin salaamaton lähetys hylätään.
+    # Salasana veisi noin 3,5 kB flashia ja 60 tavua RAMia eikä suojaisi
+    # ketään joka on saanut API-avaimen käsiinsä.
+    encryption:
 
 wifi:
   ssid: !secret wifi_ssid

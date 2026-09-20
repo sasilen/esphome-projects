@@ -53,7 +53,11 @@ api:
 
 ota:
   - platform: esphome
-    password: !secret ota_password
+    # **Ei salasanaa.** Laite tarjoaa jo salatun OTA:n API-avaimella, ja
+    # pelkkä `encryption:` vaatii sen — silloin salaamaton lähetys hylätään.
+    # Salasana veisi noin 3,5 kB flashia ja 60 tavua RAMia eikä suojaisi
+    # ketään joka on saanut API-avaimen käsiinsä.
+    encryption:
     # Hold the watchdog off during an upload. A 20 s window is shorter than an
     # ESP8266 OTA takes, so a node that is stalled — which is exactly when it
     # most needs a new firmware — would otherwise reboot in the middle of every
