@@ -4022,15 +4022,56 @@ a day gave it away.
 
 What could do that — a software hang in one task, a brownout on the manager's
 own supply, a watchdog that did not fire — is not decidable from the bus, and
-this file will not guess. **What is worth recording is the signature**, so the
-next occurrence is recognised in minutes rather than in a day:
+this file will not guess. What is decidable is **how to notice it next time**,
+and that is now an entity rather than a note.
 
-> `0x4E5E` unchanged for longer than a cycle, while `0x480` still answers
-> polls and still writes pump speeds.
+### `Manager state stuck`: the alarm, and why it is not the obvious one
 
-That is a cheap alarm to build and it needs no new register. If it recurs,
-the frequency itself becomes the diagnosis: once is an upset, monthly is a
-failing controller.
+The obvious test is "the status word has not changed in a while". **It does not
+work.** The word changes only on transitions, so an idle machine holds 1 or 65
+for hours — on 19 September it sat unchanged for 2 h 16 min in perfect health.
+Any threshold loose enough to survive that is too loose to catch a 29-hour
+freeze quickly, and any threshold tight enough to catch the freeze fires every
+evening.
+
+**The test that works is the contradiction.** Bit 9 says the compressor is
+running; high and low pressure say whether it actually is. An idle circuit
+equalises to three tenths of a bar, a running one separates to twenty. When
+those two disagree for long enough, one of them is wrong — and it is never the
+physics.
+
+```yaml
+binary_sensor:
+  - platform: template
+    id: manager_stuck
+    name: "Manager state stuck"
+    device_class: problem
+```
+
+Three decisions inside it are worth keeping:
+
+**Fifteen minutes, because a start genuinely disagrees for a moment.** On 21
+September bit 9 rose at 06:22:37 and the pressures had separated by 06:24:34 —
+under two minutes, and that includes the two-minute poll interval. The margin
+is sevenfold. The freeze did not last twenty-nine hours because it was a
+borderline case.
+
+**Two bar, not zero.** Equalised has measured 0.3–0.4 bar and running has
+measured 17–22. Anywhere in between would do; two is far from both edges.
+
+**Stale pressure returns unknown, not false.** The pressures are polled only
+while `poll_setpoints` is on, so the alarm's input can disappear. If it has not
+seen a low-pressure reading in six minutes — three poll intervals — it declines
+to answer instead of reporting "no problem". **That is the day's other lesson
+applied**: this project has already once read an absent signal as a clean
+result, and an alarm that goes quiet when its input dies is that mistake with
+consequences.
+
+It also logs at `WARN` on both edges, so the log-scraping watchers see it
+without Home Assistant being involved.
+
+If this recurs, the frequency is itself the diagnosis: once is an upset,
+monthly is a failing controller.
 
 ### The diagnosis held, and one second of power cut fixed it
 

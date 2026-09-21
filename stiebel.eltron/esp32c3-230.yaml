@@ -474,7 +474,13 @@ canbus:
                   case 0x070B: id(pump_power_dhw).publish_state(value); break;
                   case 0x01A2: id(hp_sensor_max).publish_state(t); break;
                   case 0x0268: id(pressure_high).publish_state(t); break;
-                  case 0x07A5: id(pressure_low).publish_state(t);  break;
+                  // Matalapaine saapuu ryhmän viimeisenä, joten sen hetki
+                  // kelpaa koko paineparin tuoreudeksi. `manager_stuck`
+                  // kieltäytyy päättelemästä ilman sitä.
+                  case 0x07A5:
+                    id(pressure_low).publish_state(t);
+                    id(pressure_seen_at) = millis();
+                    break;
                   case 0x0675:
                     id(source_pressure).publish_state((int16_t) value / 100.0f);
                     break;
@@ -862,6 +868,19 @@ globals:
     restore_value: false
     initial_value: "false"
 
+  # **Jumivahdin tila.** Ks. binäärianturi `Manager state stuck`.
+  # `pressure_seen_at` on millis() viimeisestä matalapaineen lukemasta,
+  # 0 = ei kertaakaan. `stuck_since` on millis() siitä hetkestä jolloin
+  # väite ja fysiikka alkoivat olla ristiriidassa, 0 = eivät ole.
+  - id: pressure_seen_at
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: stuck_since
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
   # Watchdog state. See "the silent stall" below.
   - id: clk_day
     type: uint8_t
@@ -964,8 +983,11 @@ interval:
       # erkanevat. Se on fysiikkaa eikä tilabitti, ja se oli ainoa asia joka
       # paljasti jäätyneen anturin.
       #
-      # Siksi paineita pollataan nyt ehdoitta: **niistä johdetaan käyntitila,
-      # ei toisin päin.** Kahdeksan kehystä kahdessa minuutissa on se hinta.
+      # Siksi paineita pollataan nyt ilman käyntitilaehtoa: **niistä johdetaan
+      # käyntitila, ei toisin päin.** Kahdeksan kehystä kahdessa minuutissa on
+      # se hinta. `poll_setpoints`-pääkytkin on yhä jäljellä, ja se on
+      # `manager_stuck`-anturin ainoa riippuvuus — siksi se kieltäytyy
+      # päättelemästä jos paineet vanhenevat.
       # Kynnys jätetään asettamatta kunnes yksi todellinen ajo on mitattu —
       # arvattu raja olisi sama virhe uudessa paikassa.
       - if:
@@ -1811,6 +1833,78 @@ binary_sensor:
     id: compressor
     name: "Compressor"
     device_class: running
+
+  # **Manageri väittää ajavansa, fysiikka sanoo ettei aja.**
+  #
+  # 20.9. tilasana `0x4E5E` jäätyi kesken käyttövesilatausta arvoon 689 eikä
+  # liikkunut 29 tuntiin. Bitti 9 eli kompressori jäi siihen päälle. Kone ei
+  # lämmittänyt mitään koko sinä aikana: varaaja valui 54,3:sta 38,5:een,
+  # jokainen sallinta luki vihreää eikä paneelissa ollut vikailmoitusta.
+  # Sekunnin virtakatko ohjaimessa vapautti sen.
+  #
+  # **Ehdoksi ei kelpaa "sana ei ole muuttunut hetkeen".** Sana muuttuu vain
+  # siirtymissä, ja seisova kone pitää arvon 1 tai 65 tunteja — 19.9. se
+  # seisoi paikallaan 2 h 16 min täysin terveenä. Aikaraja joka ei laukea
+  # siitä ei laukea jumistakaan.
+  #
+  # **Ehdoksi kelpaa ristiriita.** Seisovalla koneella korkea ja matala paine
+  # tasaantuvat kolmen kymmenyksen päähän toisistaan; käyvällä ne erkanevat
+  # kahteenkymmeneen baariin. Se on fysiikkaa eikä tilabitti, ja se oli koko
+  # jumin ajan ainoa asia joka kertoi totuuden. Kun bitti 9 ja paine-ero ovat
+  # eri mieltä tarpeeksi kauan, jompikumpi on rikki — ja se on aina bitti.
+  #
+  # **Viisitoista minuuttia**, koska käynnistyksessä ne ovat oikeasti eri
+  # mieltä hetken: 21.9. bitti nousi 06:22:37 ja paineet olivat erkaantuneet
+  # viimeistään 06:24:34, eli alle kahdessa minuutissa. Marginaali on
+  # seitsenkertainen eikä jumi kestänyt 29 tuntia sen takia että se olisi
+  # ollut rajatapaus.
+  #
+  # **Vanhentunut paine ei ole "ei jumia".** Paineet pollataan vain kun
+  # `poll_setpoints` on päällä, joten niiden lähde voi olla poissa. Silloin
+  # tämä palauttaa tyhjän eikä epätoden: vahdin hiljaisuus ja vahdin sokeus
+  # eivät saa näyttää samalta. Sama virhe tehtiin tässä projektissa jo kerran
+  # legionellavahdin kanssa.
+  - platform: template
+    id: manager_stuck
+    name: "Manager state stuck"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      // Ilman tilasanaa ei ole väitettä, jota verrata.
+      if (!id(compressor_from_status)) return {};
+
+      // Paineparin on oltava tuore. Kaksi minuuttia on pollausväli, kuusi
+      // antaa kahden epäonnistuneen kierroksen verran löysää.
+      if (id(pressure_seen_at) == 0) return {};
+      if (millis() - id(pressure_seen_at) > 6 * 60 * 1000) return {};
+
+      if (!id(pressure_high).has_state() || !id(pressure_low).has_state())
+        return {};
+      const float hp = id(pressure_high).state;
+      const float lp = id(pressure_low).state;
+
+      const bool claims_running = id(compressor).state;
+      const bool equalised = (hp - lp) < 2.0f;
+
+      if (!(claims_running && equalised)) {
+        id(stuck_since) = 0;
+        return false;
+      }
+      if (id(stuck_since) == 0) {
+        id(stuck_since) = millis();
+        return false;
+      }
+      return (millis() - id(stuck_since)) > 15 * 60 * 1000;
+    # Lokiin WARN-tasolla, jotta lokia lukevat vahdit näkevät tämän ilman
+    # HA:ta — samalla tavalla kuin legionellalipun siirtymä.
+    on_press:
+      - logger.log:
+          level: WARN
+          format: "manager stuck: 0x4E5E claims compressor, pressures equalised for 15 min"
+    on_release:
+      - logger.log:
+          level: WARN
+          format: "manager stuck: cleared"
 
 
 text_sensor:
