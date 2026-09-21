@@ -4029,8 +4029,17 @@ possible audience for an unsolicited command.
 
 **The relay that holds the block is on the same breaker as the machine it
 blocks.** Cutting power to the controller therefore cut power to the thing
-that was blocking it, and the Shelly came back in its power-on default rather
-than in the position HA had set sixty seconds earlier.
+that was blocking it, and the Shelly came back permitting rather than in the
+position HA had set sixty seconds earlier.
+
+**That is deliberate and it is correct.** The Shelly is configured to return
+to the permitting state on power-up, so that a restored supply never leaves
+the heating blocked when Home Assistant is down as well. It is the fail-safe
+direction — the January failure this file warns about, designed out.
+
+So nothing here is misconfigured. The consequence had simply never been
+noticed, because until now nothing published the machine's own view of the
+contact.
 
 Nothing then re-asserted it. An automation that acts on a price *crossing* has
 already fired and believes the job is done, so the block stays lost until the
@@ -4054,21 +4063,31 @@ price next moves across a threshold — which can be hours.
   stayed invisible if Home Assistant had not reported an intent the bus
   contradicted.
 
-**Remedies, cheapest first.**
+**The fix belongs in Home Assistant, and only there.**
+
+Because the relay is deliberately fail-open, **the block is exactly as
+persistent as Home Assistant's willingness to re-assert it** — and no relay
+setting can change that without giving up the fail-safe. Two things follow,
+and they are the whole remedy:
 
 1. **Make the automation state-driven rather than edge-driven.** Re-assert the
    intended position periodically, or when the Shelly comes back online. A
-   reboot then heals in minutes instead of lasting until the price moves.
+   reboot then heals in minutes instead of lasting until the price next crosses
+   a threshold.
 2. **Compare intent against `0x0074` and re-assert on mismatch.** The `EVU
    permitted` entity already publishes the machine's own report every fifteen
-   minutes, and that is precisely what it is for.
-3. **Choose the Shelly's power-on default deliberately.** *Restore last* keeps
-   the block across an outage. Do **not** default it to the blocking position:
-   with HA also down that blocks the heating indefinitely, which is the January
-   failure this file keeps warning about. The Auto-ON timer is the watchdog for
-   that case, not the power-on default.
-4. **Or break the coupling** by moving the Shelly to a different breaker, at
-   the cost of one more circuit to remember.
+   minutes, and that is precisely what it is for. It is also the only thing in
+   the system that can notice a silent release.
+
+Two remedies that look obvious and are not:
+
+- **Moving the Shelly to another breaker does not help.** A real power outage
+  takes out both circuits anyway, so the coupling found here is a shortcut to
+  the general case rather than the cause of it. The only thing a separate
+  breaker buys is that deliberate service cuts stop triggering it.
+- **Changing the power-on default does not help either**, because permitting on
+  power-up is the property that keeps the house warm when HA is down. Trading
+  it for block persistence would be trading a comfort failure for a safety one.
 
 **The setpoints are now polled, and they settle one earlier question.** A
 normal comfort charge targets 55.0 °C, so the 54.3 °C peak was a *completed*

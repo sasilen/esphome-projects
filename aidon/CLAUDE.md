@@ -223,12 +223,17 @@ Tämä ei ole täysi SG Ready vaan sen yksi bitti:
 Käytännön seuraus: kuormaa voi **siirtää pois** kalliilta tunneilta ja huipputehoa
 voi leikata, mutta aurinkoylijäämää ei voi **työntää** pumpulle tällä liitännällä.
 
-**Esto asuu releen haihtuvassa tilassa, ja rele on saman katkaisijan takana kuin
-pumppu.** Sähkökatko, katkaisijan laukeaminen tai huoltokatko päästää eston siis
-irti ilman että kukaan huomaa — ja pumppu palaa verkkoon kertyneen tarpeen
-kanssa, täydellä teholla ja ilman kuormanohjausta. Reunaehtoon reagoiva
-automaatio ei korjaa sitä, koska se on jo lauennut kerran ja pitää työtä
-tehtynä.
+**Shelly palaa virtakatkon jälkeen aina sallivana, ja se on tarkoituksellista:**
+palaava sähkö ei saa jättää lämmitystä estetyksi jos Home Assistant on
+samaan aikaan alhaalla. Suunta on oikea eikä sitä pidä vaihtaa.
+
+Hinta on se että **esto on täsmälleen niin pysyvä kuin HA on halukas
+asettamaan sen uudelleen.** Sähkökatko, katkaisijan laukeaminen tai huoltokatko
+päästää eston irti ilman että kukaan huomaa — ja pumppu palaa verkkoon
+kertyneen tarpeen kanssa, täydellä teholla ja ilman kuormanohjausta.
+Reunaehtoon reagoiva automaatio ei korjaa sitä, koska se on jo lauennut kerran
+ja pitää työtä tehtynä. Korjaus kuuluu siis HA:han: tilan asettaminen
+uudelleen, ei reunaan reagointi.
 
 Tämä havaittiin 21.9.2026 kun pumpun ohjain jouduttiin käynnistämään uudelleen:
 esto meni päälle 06:20, virrat katkaistiin 06:21, ja kone raportoi itse olevansa
