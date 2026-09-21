@@ -3831,6 +3831,18 @@ as a CAN transaction one could watch for or attribute. That answers the
 question the experiment was set up to ask — "who clears it" — in a way that
 rules out every other node on the bus.
 
+**The second clear was ours and proves nothing about the first.** At 06:09:48
+the following day this node transmitted `30 00 FA 01 01 00 00`, the switch
+published OFF, and the register read 0 a second later. Nothing in the
+configuration turns that switch off by itself — there is no automation, no
+timeout, and `restore_mode: DISABLED` — so the write came in over the API,
+which means someone turned it off in Home Assistant. It is in the log as a
+`TX 0x680` line, which is why it took one grep to tell it apart from a clear
+by the machine.
+
+That is the practical value of logging our own transmissions: **the register
+reading zero looks identical whichever of us wrote it.**
+
 Two caveats keep this honest:
 
 - **The log has a nineteen-minute gap** at 21:56–22:15, a flash window. A
@@ -3878,14 +3890,92 @@ pending at the end of it; it is twenty-eight hours of no DHW at all.
 
 The obvious suspicion is that the pending legionella request defers the
 ordinary charge — the machine waiting for a window in which it can do the
-whole job rather than a partial one. **The previous night refutes that as
-stated:** the flag was set then too, from 16:36, and the midnight charge ran
-anyway and reached its setpoint.
+whole job rather than a partial one. **Two things refute that.** The flag was
+set on the previous night too, from 16:36, and the midnight charge ran anyway
+and reached its setpoint. And the charging stopped at 02:00, **six hours
+before the flag was set at 08:10**. The flag cannot be the cause of something
+that started before it.
 
-So the difference between the two nights is something other than the flag, and
-this file does not yet know what. Worth checking on the panel before
-theorising further: DHW operating mode, any time program, and whether the
-machine is in a summer or away mode that suppresses charging.
+### Every permissive the machine publishes says it is free to run
+
+This is the part that makes it a fault rather than a setting. Each of these is
+polled and each has been constant across the whole twenty-eight hours:
+
+| Register | Meaning | Value | Reads as |
+|---|---|---|---|
+| `0x0074` | `EVU_SPERRE_AKTIV`, the contact as the machine reports it | **1**, 85 of 85 | permitted — see the polarity note in the frame handler |
+| `0x1388` | status code | **0**, 392 of 392 | no 8246 block, no fault code |
+| `0x0112` | `PROGRAMMSCHALTER` | **2** | the automatic mode |
+| `0x0013` | DHW comfort setpoint | 55.0 °C | |
+| `0x000E` | tank, as the panel itself reads it | 38.5 °C | the machine knows |
+
+There is no load block, no fault, no standby mode, and a sixteen-and-a-half
+degree deficit the machine can see with its own sensor. It is not choosing
+not to run for any reason it is willing to state.
+
+### The manager's status word froze mid-cycle and has not moved since
+
+`0x4E5E` is the manager's state word and bit 9 is the compressor. Its history
+is a clean walk up at every start and back down to 1 at every stop:
+
+```
+19:41:31   577   bits 0,6,9        compressor starts
+19:58:49   721   bits 0,4,6,7,9
+20:08:23    49   bits 0,4,5        compressor stops
+20:09:56     1   bit 0             idle
+
+00:00:58   577   bits 0,6,9        compressor starts
+00:20:33   689   bits 0,4,5,7,9
+01:01:13   753   bits 0,4,5,6,7,9
+01:06:29   689   bits 0,4,5,7,9    ← and then nothing, for 29 hours
+```
+
+**It never walked back down.** The word stopped at a mid-run value with the
+compressor bit still set, and 645 polls since have returned 689 every time.
+The manager answers those polls, so it is alive; it writes pump speeds to
+0x700 every few seconds, so its output side is running. Only its state has
+stopped advancing.
+
+The physical machine plainly did stop. Hot gas has decayed monotonically from
+32.7 °C to 28.7 °C, and high and low pressure have sat three tenths of a bar
+apart for twenty-two hours — an equalised circuit is not a running compressor.
+
+So the manager believes a cycle is in progress that ended a day ago. **A
+controller that thinks the compressor is already running has no reason to
+start it**, and that single stuck bit accounts for the absent heating and the
+absent DHW together.
+
+This is the disagreement the bit-9 section explicitly asked to be told about:
+
+> If they ever disagree while the machine is steady, **bit 9 is not what this
+> file says it is.**
+
+They now disagree, so that must be said. But the alternative reading is worse
+rather than better: if bit 9 does not mean the compressor, the machine is
+still idle with a full tank of demand and every permissive green, and the
+frozen word is simply one more thing that stopped at 01:06:29 on 20 September.
+Either way something stopped there.
+
+**Our own node did not cause it.** In twenty-five hours of capture this node
+transmitted exactly twice — a read at 07:26 and the legionella write at
+08:10 — and both are hours *after* the freeze. The two-minute poll did not
+start until 08:11. Nothing we did precedes 01:06:29.
+
+### What to do about it, in order
+
+1. **Read the panel.** `DIAGNOSTIIKKA → LAMPOP TILA` shows the remaining
+   minimum-off time (`JALJ LEPOAIKA`, register `0x0668`, which this node does
+   not poll). A large value there would replace the whole theory above with a
+   timer.
+2. **Ask for a one-off DHW charge from the panel.** If the compressor starts,
+   the machine is healthy and the demand logic is what is stuck. If it does
+   not, the lockout is real.
+3. **Power-cycle the controller** if neither of those moves it. A manager
+   whose state machine has stopped advancing is the textbook case for it.
+
+Do not write more to the machine over the bus while it is in this state. A
+controller that is already confused about what it is doing is the worst
+possible audience for an unsolicited command.
 
 **The setpoints are now polled, and they settle one earlier question.** A
 normal comfort charge targets 55.0 °C, so the 54.3 °C peak was a *completed*
@@ -3893,30 +3983,38 @@ comfort charge rather than a legionella attempt that fell short. The 57 °C
 watcher threshold sits two degrees above a finished normal charge, which is
 where it belongs.
 
-### A watcher with the wrong pattern makes silence look like a result
+### I diagnosed a watcher as blind and reproduced its error in the diagnosis
 
-The first legionella watcher searched the log for `legionella 0x0101:`. That
-string does not occur in the log at all — the decoder writes `resp ex=0101 =
-256 (0x0100)`. The watcher ran its full fifteen hours and reported *no
-change*, which was true only in the sense that it could not have reported
-anything else.
+The first legionella watcher searched the log for `legionella 0x0101:`. It ran
+its full fifteen hours and reported *no change*. Checking the log for that
+string returned zero matches, and this file briefly said the watcher had been
+blind — searching for something the log never contains.
 
-**A log-scraping watcher's pattern has to be verified once by hand before its
-silence is worth anything:**
+**That was wrong, and the way it was wrong is the point.** The decoder does
+emit the line:
 
-```sh
-grep -ac "ex=0101" wpc-c3-night.log     # must be > 0
+```
+[06:09:49.577][W][can:423]: legionella 0x0101: ON -> OFF
 ```
 
-`stiebel.eltron/watch-legionella.sh` now does that check itself and refuses to
-start if the pattern matches nothing. It also matches on the **register
-number** rather than the decoder's wording, because the wording is ours and
-can change with a rebuild while `0x0101` cannot.
+It emits it **only on a transition**. There had been no transition during those
+fifteen hours, so the string was absent for exactly the reason the watcher was
+reporting. I looked for the evidence of a change, found none, and read the
+absence as a broken instrument rather than as the answer.
 
-This is the same shape as the OTA lesson elsewhere in this repo: **verify from
-the thing being measured, not from the tool's exit status.** A watcher that
-finds nothing and a watcher that cannot find anything produce identical
-output.
+So the real lesson is not about grep patterns:
+
+> **An edge-triggered signal is absent both when nothing happened and when the
+> instrument is broken.** Distinguishing them needs a second, level-triggered
+> reading — here, the register's current value, which was sitting in the same
+> log the whole time.
+
+`stiebel.eltron/watch-legionella.sh` watches the **value** rather than the
+transition message, which is the level-triggered half. It also verifies its
+own pattern before starting, which remains worth doing — but the check would
+have passed all along, and it was never what went wrong.
+
+The first watcher was correct. It said nothing had changed, and nothing had.
 
 ---
 

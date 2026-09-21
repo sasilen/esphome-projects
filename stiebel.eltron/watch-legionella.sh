@@ -5,19 +5,20 @@
 # Käyttö:  ./watch-legionella.sh <loki> [tunnit]
 # Esim.:   ./watch-legionella.sh wpc-c3-night.log 15
 #
-# **Hae arvoa, älä sanaa.** Ensimmäinen versio tästä etsi lokista merkkijonoa
-# `legionella 0x0101:`, jota loki ei sisällä lainkaan. Vahti kävi viisitoista
-# tuntia ja raportoi "ei muutosta" — ei siksi että lippu olisi pysynyt
-# paikallaan vaan siksi ettei se olisi voinut havaita muutosta millään.
+# **Hae arvoa, älä siirtymää.** Ensimmäinen versio etsi lokista dekooderin
+# siirtymäriviä `legionella 0x0101: ON -> OFF`. Se rivi on olemassa, mutta se
+# kirjoitetaan **vain kun arvo vaihtuu** — eli se puuttuu yhtä lailla silloin
+# kun mitään ei ole tapahtunut kuin silloin kun vahti on rikki.
 #
-# Se on vahdin pahin vikatila: **hiljaisuus näyttää samalta kuin tulos.**
-# Lokista luettavan vahdin hakuehto on siis todennettava kerran käsin
-# ennen kuin sen antamaan hiljaisuuteen nojaa:
+# Niin siinä kävikin: rivin puuttuminen luettiin todisteeksi rikkinäisestä
+# hakuehdosta, vaikka se oli juuri se tulos jota vahti raportoi.
 #
-#     grep -ac "ex=0101" wpc-c3-night.log     # > 0, muuten ehto on väärä
+# Tämä versio lukee **rekisterin nykyisen arvon**, joka on lokissa joka
+# tapauksessa kahden minuutin välein. Silloin "ei muutosta" ja "ei näkyvyyttä"
+# eivät näytä samalta: jos arvoa ei löydy lainkaan, vahti kieltäytyy
+# käynnistymästä.
 #
-# Sanoitus tulee dekooderista ja voi muuttua käännöksen mukana; rekisterin
-# numero ei muutu. Hae siksi `ex=0101`.
+#     grep -ac "ex=0101" wpc-c3-night.log     # > 0, muuten pollaus ei ole päällä
 #
 # Lokissa on kahdenlaisia 0x0101-rivejä, ja molemmat kelpaavat:
 #
@@ -51,7 +52,10 @@ while [ "$(date +%s)" -lt "$LOPPU" ]; do
     if [ "$NYT" != "$ALKU" ]; then
         echo "[vahti] LIPPU MUUTTUI ${ALKU} -> ${NYT}"
         grep -a "ex=0101 = " "$LOG" | tail -2
-        RIVI=$(grep -a "ex=0101 = $NYT" "$LOG" | head -1)
+        # Viimeinen rivi, ei ensimmäinen: loki kattaa monta vuorokautta eikä
+        # aikaleimassa ole päivää, joten `head -1` osuu eiliseen samaan kellon-
+        # aikaan. Siirtymä tapahtui juuri nyt, joten tuorein on oikea.
+        RIVI=$(grep -a "ex=0101 = $NYT" "$LOG" | tail -1)
         T=$(printf '%s' "$RIVI" | cut -c2-6)
         echo "[vahti] --- väyläliikenne minuutilta $T ---"
         grep -a "^\[$T" "$LOG" \
