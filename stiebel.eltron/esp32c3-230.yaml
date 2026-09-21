@@ -584,15 +584,12 @@ canbus:
                     // 100 are the only commands seen — if a middle value ever
                     // appears this wants to become a percentage instead.
                     //
-                    // **Seed only.** 0x4E5E bit 9 took this over: it changes
-                    // on the transition rather than on a poll. But that word
-                    // is written only when the state changes, so this fills
-                    // the entity in from the first poll after a boot and then
-                    // gets out of the way. Whichever arrives first is right;
-                    // they have never disagreed except at a transition, where
-                    // bit 9 is the earlier of the two.
-                    if (!id(compressor_from_status))
-                      id(compressor).publish_state(value > 50);
+                    // **Ei enää siemen eikä lähde.** Entiteetti johdetaan
+                    // paine-erosta, joka päivittyy kahden minuutin välein —
+                    // eli se saa arvon boottauksen jälkeen ilman siementä.
+                    // Tämä jää raakana diagnostiikkana: se on managerin
+                    // *käsky*, ja käsky ja toteuma ovat eri asioita, mikä on
+                    // tässä projektissa maksanut jo yhden vuorokauden.
                     break;
                   // 0xFE1B is the command whose consequence 0xFE07 measures,
                   // so identifying one needs the other visible. 0xFE1C is
@@ -733,13 +730,21 @@ canbus:
                   // one stop it led the 0xFE1D-derived sensor by 19 s.
                   case 0x4E5E:
                     id(elem_4e5e).publish_state(value);
-                    id(compressor).publish_state((value >> 9) & 1);
-                    // From here on 0xFE1D stops publishing this entity. It
-                    // stays as the seed below, because this word is written
-                    // only on transitions — 62 frames in eleven hours — and
-                    // without a seed the entity would read unknown from every
-                    // boot until the compressor next changed state. With the
-                    // watchdog restarting the node that is not a rare event.
+                    // **Tämä ei enää julkaise `Compressor`-entiteettiä.**
+                    // Bitti 9 ei ole kompressori vaan käyttövesilataus:
+                    // 21.9. iltapäivän ristiintaulukoinnissa kompressori kävi
+                    // 104 näytteessä joissa bitti oli pois. Väite oli
+                    // vahvistettu neljällä jaksolla 19.9. — ennen kuin
+                    // paineita pollattiin — eli sitä oli koeteltu vain sitä
+                    // signaalia vasten josta se johdettiin.
+                    //
+                    // Sana ei silti ole hyödytön: **sen muuttuminen** on se
+                    // mitä jumivahti seuraa. Merkitään hetki talteen vain kun
+                    // arvo oikeasti vaihtuu.
+                    if (!id(compressor_from_status) || value != id(w_last)) {
+                      id(w_last) = value;
+                      id(w_change_ms) = millis();
+                    }
                     id(compressor_from_status) = true;
                     break;
                   case 0x0122: id(clk_day)   = n; break;
@@ -873,6 +878,37 @@ globals:
   # 0 = ei kertaakaan. `stuck_since` on millis() siitä hetkestä jolloin
   # väite ja fysiikka alkoivat olla ristiriidassa, 0 = eivät ole.
   - id: pressure_seen_at
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+  # Tilasanan viimeisin arvo ja sen muuttumishetki. Jumivahdin ehto B
+  # vertaa tätä kompressorin vaihtumishetkeen.
+  - id: w_last
+    type: uint16_t
+    restore_value: false
+    initial_value: "0"
+  - id: w_change_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+  # Paine-erosta johdettu käyntitila ja sen vaihtumishetki.
+  - id: c_state
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: c_known
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: c_change_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  # Erikseen nouseva reuna: pysähdyksen jälkeen paineet purkautuvat jopa
+  # 19 minuuttia, joten laskeva reuna ei kelpaa ajoitusvertailuun.
+  - id: c_rise_ms
     type: uint32_t
     restore_value: false
     initial_value: "0"
@@ -1862,15 +1898,58 @@ binary_sensor:
     name: "EVU permitted"
     device_class: running
 
-  # Named from behaviour rather than from the list — see the frame handler.
-  # Two sources feed it: 0x4E5E bit 9 from 0x480 once that word has been seen,
-  # and the polled 0xFE1D from 0x700 as the seed until then.
+  # **Käyntitila johdetaan paine-erosta.** Kaksi aiempaa lähdettä on hylätty
+  # ja kumpikin samasta syystä: ne olivat koneelle annettuja tai koneen
+  # kertomia tiloja, eivät mittauksia siitä mitä tapahtuu.
+  #
+  # `0xFE1D` oli managerin *käsky* 0x700:lle. `0x4E5E` bitti 9 näytti
+  # paremmalta — se vaihtuu siirtymässä — mutta se osoittautui
+  # käyttövesilataukseksi eikä kompressoriksi: 21.9. iltapäivänä kompressori
+  # kävi 104 painenäytteessä joissa bitti oli pois, ja 15 näytteessä joissa
+  # bitti oli päällä se kävi aina. Bitti on siis riittävä muttei
+  # välttämätön ehto, ja entiteetti luki pois päältä koko lämmitysajon.
+  #
+  # **Paine-ero on itse ilmiö.** Seisovalla koneella korkea ja matala
+  # tasaantuvat 0,3–0,6 baarin päähän; käyvällä ne ovat 7–30 baaria
+  # erillään. Väliin jäävät arvot esiintyvät vain pysähtymisen jälkeisessä
+  # tasaantumisessa, joten kynnyksiä on kaksi eikä yksi:
+  #
+  #     yli 5 bar   -> käy
+  #     alle 2 bar  -> seisoo
+  #     väliin      -> pidä edellinen
+  #
+  # Hinta on karkeus: paineet pollataan kahden minuutin välein, joten tila on
+  # enintään sen verran myöhässä. Väärässä se ei ole.
+  #
+  # **Vanhentunut paine palauttaa tyhjän.** Pollaus riippuu
+  # `poll_setpoints`-kytkimestä, ja entiteetti joka jäätyy viimeiseen
+  # arvoonsa lähteen kadotessa on juuri se vika jonka tämä korvaa.
   - platform: template
     id: compressor
     name: "Compressor"
     device_class: running
+    lambda: |-
+      if (id(pressure_seen_at) == 0) return {};
+      if (millis() - id(pressure_seen_at) > 6 * 60 * 1000) return {};
+      if (!id(pressure_high).has_state() || !id(pressure_low).has_state())
+        return {};
 
-  # **Manageri väittää ajavansa, fysiikka sanoo ettei aja.**
+      const float ero = id(pressure_high).state - id(pressure_low).state;
+      bool tila = id(c_state);
+      if (ero > 5.0f)       tila = true;
+      else if (ero < 2.0f)  tila = false;
+
+      if (!id(c_known) || tila != id(c_state)) {
+        const bool nousi = tila && !id(c_state);
+        id(c_known)     = true;
+        id(c_state)     = tila;
+        id(c_change_ms) = millis();
+        if (nousi) id(c_rise_ms) = millis();
+      }
+      return tila;
+
+  # **Tilasana ja kone eivät enää liiku yhdessä.** Kaksi ehtoa, kumpikin
+  # vertaa managerin omaa kertomaa siihen mitä paineet näyttävät.
   #
   # 20.9. tilasana `0x4E5E` jäätyi kesken käyttövesilatausta arvoon 689 eikä
   # liikkunut 29 tuntiin. Bitti 9 eli kompressori jäi siihen päälle. Kone ei
@@ -1922,21 +2001,62 @@ binary_sensor:
       const bool claims_running = id(compressor).state;
       const bool equalised = (hp - lp) < 2.0f;
 
-      if (!(claims_running && equalised)) {
+      if (claims_running && equalised) {
+        if (id(stuck_since) == 0) id(stuck_since) = millis();
+        if ((millis() - id(stuck_since)) > 15 * 60 * 1000) return true;
+      } else {
         id(stuck_since) = 0;
-        return false;
       }
-      if (id(stuck_since) == 0) {
-        id(stuck_since) = millis();
-        return false;
+
+      // **Ehto B: kompressori vaihtoi tilaa eikä tilasana seurannut.**
+      //
+      // Ehto A yllä näkee vain latauksen aikaisen jumin, koska bitti 9 on
+      // pois lämmitysajossa. 20.9. jumi sattui osumaan lataukseen; se oli
+      // tuuria eikä kattavuutta.
+      //
+      // Yleinen tuntomerkki ei ole sanan arvo vaan se, **etteivät sana ja
+      // kone enää liiku yhdessä.** Terveessä ajossa sana vaihtuu sekunneissa
+      // jokaisessa kompressorin siirtymässä. Jumissa kompressori pysähtyi
+      // 02:00 eikä sana ollut liikkunut 01:06 jälkeen.
+      //
+      // "Sana ei ole muuttunut hetkeen" ei yksin kelpaa kummassakaan
+      // suunnassa: seisova kone pitää arvon tunteja, ja kesken latauksen
+      // sana oli 21.9. paikallaan 76 minuuttia täysin terveenä.
+      //
+      // **Vain nouseva reuna, ja se on mitattu eikä valittu.**
+      // Käynnistyksessä paineet erkanevat kahdessa minuutissa: 06:22:37 ->
+      // 06:24:34 ja 10:54:00 -> 10:55:40, molemmat pollausväli mukaan
+      // lukien. Pysähdyksessä ne purkautuvat 0-19 minuuttia riippuen siitä
+      // kuinka korkealle lauhdutuspaine ehti — pitkän latauksen jälkeen
+      // 06:46:51 pysähdyksestä kesti 07:06 asti.
+      //
+      // Molemmat reunat mukaan ottava versio antoi tästä syystä 3,5 tunnin
+      // väärän hälytyksen tämän päivän täysin terveestä EVU-estosta.
+      // Nouseva reuna yksin ei anna yhtään.
+      //
+      // Viisi minuuttia tolerointia, kymmenen vahvistusta. Ehto purkautuu
+      // itsestään heti kun sana seuraavan kerran vaihtuu.
+      if (id(c_known) && id(w_change_ms) != 0 && id(c_rise_ms) != 0) {
+        const uint32_t c = id(c_rise_ms), w = id(w_change_ms);
+        if (c > w && (c - w) > 5 * 60 * 1000 &&
+            (millis() - c) > 10 * 60 * 1000)
+          return true;
       }
-      return (millis() - id(stuck_since)) > 15 * 60 * 1000;
+
+      // **Mitä tämä ei vieläkään näe.** Jos tilakone jäätyy lämmitysajon
+      // aikana *ja* kone pysähtyy kokonaan, bitti 9 on pois (ehto A ei
+      // laukea) eikä uutta käynnistystä tule (ehto B ei laukea). Sellainen
+      // jumi näkyisi vain siitä että lämmintä vettä ei tule — eli varaajan
+      // valumisesta asetusarvon alle tuntikausiksi kompressorin seistessä.
+      // Se on eri kysymys ja ansaitsee oman entiteettinsä; tämä ei teeskentele
+      // kattavansa sitä.
+      return false;
     # Lokiin WARN-tasolla, jotta lokia lukevat vahdit näkevät tämän ilman
     # HA:ta — samalla tavalla kuin legionellalipun siirtymä.
     on_press:
       - logger.log:
           level: WARN
-          format: "manager stuck: 0x4E5E claims compressor, pressures equalised for 15 min"
+          format: "manager stuck: 0x4E5E and the compressor no longer agree"
     on_release:
       - logger.log:
           level: WARN

@@ -4289,20 +4289,51 @@ compressor runs all along.
 
 ### What this changes, and what it does not
 
-**The `Compressor` entity is wrong and reads OFF while the compressor runs.**
-It has been wrong since it was switched to bit 9. The honest source is the
-pressure difference, which is what every diagnosis in this file has actually
-relied on.
+**The `Compressor` entity now comes from the pressure difference**, with two
+thresholds rather than one: above 5 bar it is running, below 2 bar it is not,
+and in between it holds. The dead band exists because the values between only
+occur while a stopped machine is still bleeding down. The cost is coarseness —
+the pressures are polled every two minutes, so the entity is up to that late —
+and the gain is that it is no longer wrong. Both previous sources are gone:
+`0xFE1D` was a command rather than a state, and bit 9 turns out to be the DHW
+charge.
 
-**The `manager_stuck` alarm is unaffected in its firing logic.** It tests bit 9
-*set* against equalised pressures, and that direction still holds — a set bit
-still claims something is running. It fired correctly in testing and did not
-fire through two real starts.
+**The `manager_stuck` alarm keeps its original condition and gains a second.**
 
-**But its coverage is narrower than intended.** A freeze during a heating
-cycle leaves bit 9 clear, so the alarm would never see it. The 20 September
-freeze happened to occur during a DHW charge, which is the only case it
-catches. **That is a gap to close, not a detail.**
+*Condition A*, unchanged: bit 9 set while the pressures are equalised for
+fifteen minutes. Replayed against the real freeze it fires at **09:02** on 20
+September, sixteen minutes after the status word was first polled.
+
+*Condition B*, new: **the compressor started and the status word did not
+follow.** In a healthy cycle the word moves within seconds of every
+transition; a frozen word leaves the machine cycling underneath it. Five
+minutes of tolerance, ten of confirmation, and it clears itself the moment the
+word moves again.
+
+**Condition B watches only the rising edge, and that was measured rather than
+chosen.** A start separates the pressures within two minutes — 06:22:37 →
+06:24:34 and 10:54:00 → 10:55:40, poll interval included. A *stop* takes
+anywhere from zero to nineteen minutes to bleed down, depending on how high
+the head pressure got: after the long charge the machine stopped at 06:46:51
+and the pressures were still apart at 07:04.
+
+The first version used both edges and **produced a three-and-a-half-hour false
+alarm** when replayed against this afternoon's entirely healthy EVU block.
+Restricted to the rising edge it produces none, and condition A still catches
+the real freeze.
+
+### What it still cannot see
+
+If the state machine freezes during a *heating* cycle **and** the machine then
+stops entirely, bit 9 is clear so condition A is silent, and no new start
+arrives so condition B is silent too. That failure would show up only as the
+thing the owner actually notices: the tank draining below setpoint for hours
+with the compressor idle and nothing blocking it.
+
+That is a different question — "no hot water" rather than "the controller is
+confused" — and it deserves its own entity rather than a third clause here.
+Recorded as the next thing to build, and **not quietly assumed to be
+covered.**
 
 ## A complete charge, observed end to end
 
