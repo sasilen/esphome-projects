@@ -24,6 +24,11 @@
 # **Paineet pollataan vain kun `poll_setpoints` on päällä.** Jos lukemat
 # vanhenevat, vahti kertoo siitä eikä raportoi hiljaisuutta tuloksena.
 
+# **`grep -c` tulostaa nollan ja palauttaa silti epätoden.** `|| echo 0`
+# lisää siihen toisen nollan, jolloin `[ "0\n0" -eq 0 ]` kaatuu eikä
+# ehtolause toteudu — ja tarkistus, jonka piti pysäyttää vahti, päästää sen
+# läpi. Vika osuu siis aina auki-suuntaan. Käytä `|| true`.
+
 set -eu
 
 LOG="${1:?anna lokitiedosto}"
@@ -32,7 +37,7 @@ RAJA="${3:-2}"
 
 LOPPU=$(( $(date +%s) + TUNNIT * 3600 ))
 
-if [ "$(grep -ac "'High pressure'" "$LOG" 2>/dev/null || echo 0)" -eq 0 ]; then
+if [ "$(grep -ac "'High pressure'" "$LOG" 2>/dev/null || true)" -eq 0 ]; then
     echo "[vahti] lokissa ei ole painelukemia — poll_setpoints lienee pois"
     exit 1
 fi

@@ -28,6 +28,11 @@
 # B-kanavat jätetään aina pois — niissä ei ole kytkintä viittä lukuun
 # ottamatta, ja ne kelluvat ylhäällä joka kierroksella.
 
+# **`grep -c` tulostaa nollan ja palauttaa silti epätoden.** `|| echo 0`
+# lisää siihen toisen nollan, jolloin `[ "0\n0" -eq 0 ]` kaatuu eikä
+# ehtolause toteudu — ja tarkistus, jonka piti pysäyttää vahti, päästää sen
+# läpi. Vika osuu siis aina auki-suuntaan. Käytä `|| true`.
+
 set -eu
 
 LOG="${1:?anna lokitiedosto}"
@@ -38,7 +43,7 @@ LOPPU=$(( $(date +%s) + TUNNIT * 3600 ))
 
 # Hakuehdon todennus ennen käynnistystä: vahti joka ei voi löytää mitään
 # raportoi hiljaisuutta joka näyttää tulokselta. Ks. watch-legionella.sh.
-if [ "$(grep -ac "ds2406" "$LOG" 2>/dev/null || echo 0)" -eq 0 ]; then
+if [ "$(grep -ac "ds2406" "$LOG" 2>/dev/null || true)" -eq 0 ]; then
     echo "[vahti] lokissa ei ole ds2406-rivejä — väärä loki tai logger liian hiljaa"
     exit 1
 fi
