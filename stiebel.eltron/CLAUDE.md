@@ -3956,10 +3956,81 @@ still idle with a full tank of demand and every permissive green, and the
 frozen word is simply one more thing that stopped at 01:06:29 on 20 September.
 Either way something stopped there.
 
-**Our own node did not cause it.** In twenty-five hours of capture this node
-transmitted exactly twice — a read at 07:26 and the legionella write at
-08:10 — and both are hours *after* the freeze. The two-minute poll did not
-start until 08:11. Nothing we did precedes 01:06:29.
+**Our own node did not cause it, and the exoneration is complete rather than
+circumstantial.** The first frame this node ever put on the bus was at
+**07:26:46 on 20 September** — the outdoor-temperature read button, six hours
+*after* the freeze. Before that it had never transmitted at all: no polls, no
+writes, not even an acknowledgement it initiated. The first write followed at
+08:10 and the first `0x4E5E` poll at 08:41.
+
+So the tempting explanation — that the first write test upset the manager — is
+not merely unlikely. At 01:06:29 there was nothing to upset it with.
+
+### What the bus shows at the moment of the freeze, which is nothing
+
+```
+01:05:30  Element 0x4E5E >> 753
+01:05:48  100>480 wr ex=06AF = 1      the panel's once-a-minute heartbeat
+01:06:29  Element 0x4E5E >> 689       ← last change, ever
+01:06:47  180>100 resp ex=019A = 10
+01:06:48  100>480 wr ex=06AF = 1
+01:08:49  480>100 wr ex=080E = 0      status code 0, routine
+```
+
+Ordinary traffic, no errors, and `Malformed frames` reads 0 across the entire
+two-day capture. Whatever happened, happened inside the manager and left no
+trace on the wire.
+
+**The pair 753 ↔ 689 is the normal rhythm of a charge, not an anomaly.** The
+difference between them is bit 6, and the word had been alternating between
+them every five to twenty minutes since the cycle began:
+
+```
+00:36:34  753
+00:42:12  689
+01:01:13  753
+01:05:30  753
+01:06:29  689   ← stopped here
+```
+
+It froze on a routine toggle, in the bit-6-clear half. There is nothing
+special about 689 except that it happened to be the value showing when the
+music stopped.
+
+### The state reporting failed first, and the machine ran on without it
+
+This is the part that narrows the fault. **The charge did not end at 01:06.**
+The tank kept climbing — 52.7 at 01:00, 53.8 at 01:30, peaking at 54.3 between
+02:00 and 02:30 against a 55.0 °C setpoint — so the compressor ran for roughly
+another fifty minutes and then stopped, essentially having finished the job.
+
+So the sequence is:
+
+1. The state word stops updating at 01:06:29, mid-cycle, while everything is
+   still running normally.
+2. The cycle completes around 02:00 and the compressor stops, by whatever path
+   reaches the contactor.
+3. The manager never records the stop, and therefore never evaluates a new
+   start.
+4. Its output side keeps working the whole time — pump speeds written to 0x700
+   every few seconds, polls answered, the clock kept.
+
+**It is not a machine that halted. It is a machine whose state reporting
+halted while the rest of it kept going.** That is why every permissive read
+green, why the panel showed no fault, and why nothing but the tank falling for
+a day gave it away.
+
+What could do that — a software hang in one task, a brownout on the manager's
+own supply, a watchdog that did not fire — is not decidable from the bus, and
+this file will not guess. **What is worth recording is the signature**, so the
+next occurrence is recognised in minutes rather than in a day:
+
+> `0x4E5E` unchanged for longer than a cycle, while `0x480` still answers
+> polls and still writes pump speeds.
+
+That is a cheap alarm to build and it needs no new register. If it recurs,
+the frequency itself becomes the diagnosis: once is an upset, monthly is a
+failing controller.
 
 ### The diagnosis held, and one second of power cut fixed it
 
@@ -4062,6 +4133,33 @@ price next moves across a threshold — which can be hours.
   instruction worked and the diagnosis held, but the side effect would have
   stayed invisible if Home Assistant had not reported an intent the bus
   contradicted.
+
+**The chain itself is sound, and twenty-six minutes later it proved it.** Home
+Assistant's next scheduled run landed at 06:46:29, and the machine reacted in
+twenty-two seconds:
+
+```
+06:46:29  480>100 wr  e=0074 = 0     the contact opens — blocked
+06:46:29  EVU permitted >> OFF
+06:46:29  480>100 wr  ex=4E5E = 577  bit 9 still set
+06:46:51  Element 0x4E5E >> 65       bit 9 clear — compressor stops
+```
+
+So nothing is broken in the Shelly, the wiring or the machine. The block was
+simply absent for the twenty-six minutes between the power cut and the next
+time Home Assistant had an opinion.
+
+It also **cut the DHW charge off at 40.2 °C**, against a 55 °C setpoint and
+after twenty-eight hours without one. The load control did exactly what it was
+told; whether the tank should have been allowed to finish first is a question
+about the automation's priorities, not about its correctness.
+
+**And it corrects one thing this file believed.** The manager does broadcast
+`0x0074` when the contact changes — the frame above is one — so listening is
+not blind to it. What listening cannot do is report the *level*: two broadcast
+frames against eighty-eight poll responses over two days, and a node that has
+just booted has nothing at all until the next change. Edge-visible, not
+level-visible. The poll stays, for the same reason it was added.
 
 **The fix belongs in Home Assistant, and only there.**
 

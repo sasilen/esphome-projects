@@ -1150,6 +1150,15 @@ interval:
             # sai HA:n nimeämään tyhjän tilan "Not running" -tilaksi, mikä
             # näytti toteutuneelta ajalta eikä puuttuvalta arvolta.
             #
+            # **Tarkennus: kuuntelu näkee muutoksen, muttei tilaa.** Manageri
+            # lähettää `480>100 wr e=0074` kun kosketin vaihtaa asentoa —
+            # 21.9. sellainen tuli 06:46:29. Kahden vuorokauden lokissa niitä
+            # on kaksi ja pollivastauksia 88. Kuuntelu on siis reunaherkkä
+            # eikä tasoherkkä: hiljaisuus tarkoittaa yhtä lailla "ei muutosta"
+            # kuin "ei kuultu", ja käynnistyneellä solmulla ei ole mitään
+            # julkaistavaa ennen seuraavaa vaihtoa. Pollaus on yhä oikea
+            # ratkaisu, samasta syystä kuin legionellavahdissa.
+            #
             # Vastaanottaja 0x480 on `91 00` — sama muoto kuin muilla, vain
             # eri osoite. Alle 0x100:n elementti menee suoraan tavuun 2.
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
