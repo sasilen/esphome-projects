@@ -20,6 +20,16 @@
 #
 # Jos asetusarvoja muutetaan, tämä raja on muutettava niiden mukana.
 #
+# **Älä laske rajaa latauksen alkamisen havaitsemiseksi.** Se houkuttaa:
+# varaaja on 40, laita raja 41 ja tiedät heti kun lataus lähtee. Ei toimi.
+# **Varaaja nousee myös ilman latausta.** 21.9. lataus katkesi EVU-estoon
+# 40,2 asteeseen, ja lukema oli 40,7 kaksi tuntia myöhemmin kompressorin
+# seistessä koko ajan — kerrostuminen tasaantuu, ja anturi istuu juuri
+# siellä missä se tapahtuu.
+#
+# Tämä vahti kertoo siis vasta kun jotain on jo tapahtunut, ja se on sen
+# tarkoituskin. Käynnistymistä vahtii `watch-compressor.sh` paine-erosta.
+#
 # **Varaaja-anturi laahaa.** 19.9. kompressori käynnistyi 19:41 ja varaaja
 # lähti nousuun vasta 19:50 — yhdeksän minuuttia. Älä siis tulkitse tasaista
 # varaajaa todisteeksi siitä ettei mitään ole alkamassa.
