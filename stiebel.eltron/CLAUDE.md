@@ -3844,17 +3844,79 @@ charge ran from midnight to 02:00 and peaked at 54.3 °C — an ordinary comfort
 charge. The flag was set, a charge happened, the flag was gone, and the water
 never passed 60 °C.
 
-That leaves two readings and no way yet to choose between them:
+That left two readings:
 
 1. The flag is a **one-shot request consumed by the next DHW charge**, whether
    or not that charge reaches the legionella setpoint.
 2. The flag is cleared on a **schedule boundary** — midnight, or the start of
    the DHW program — and the charge is a coincidence.
 
-The next night decides it, because the poll now runs every two minutes and
-will timestamp the clear to the minute. **If the clear lands at the end of the
-charge, it is reading 1; if it lands at a round hour with the tank still
-cold, it is reading 2.**
+**Reading 2 is refuted.** The flag was set again at 08:10 and was still 256
+twenty-two hours later, midnight included. Nothing about the calendar clears
+it.
+
+Reading 1 is untested rather than confirmed, because **the charge that was
+supposed to test it never came** — see below.
+
+### The tank has not been charged in twenty-eight hours
+
+| | |
+|---|---|
+| Last completed charge | ended 02:00, peak 54.2 °C |
+| Tank now | **38.5 °C**, twenty-eight hours later |
+| `DHW comfort` setpoint | 55.0 °C |
+| `DHW eco` setpoint | 50.0 °C |
+| Compressor | idle — HP 17.2 bar, LP 16.9 bar, hot gas 28.7 °C |
+
+The pressures being three tenths of a bar apart is the tell: the circuit has
+equalised, so nothing has run for a long while. `0x4E5E` is frozen, which is
+the same symptom from the other direction.
+
+**The tank is eleven and a half degrees below even the eco setpoint and the
+machine is doing nothing about it.** That is not a decay curve with a charge
+pending at the end of it; it is twenty-eight hours of no DHW at all.
+
+The obvious suspicion is that the pending legionella request defers the
+ordinary charge — the machine waiting for a window in which it can do the
+whole job rather than a partial one. **The previous night refutes that as
+stated:** the flag was set then too, from 16:36, and the midnight charge ran
+anyway and reached its setpoint.
+
+So the difference between the two nights is something other than the flag, and
+this file does not yet know what. Worth checking on the panel before
+theorising further: DHW operating mode, any time program, and whether the
+machine is in a summer or away mode that suppresses charging.
+
+**The setpoints are now polled, and they settle one earlier question.** A
+normal comfort charge targets 55.0 °C, so the 54.3 °C peak was a *completed*
+comfort charge rather than a legionella attempt that fell short. The 57 °C
+watcher threshold sits two degrees above a finished normal charge, which is
+where it belongs.
+
+### A watcher with the wrong pattern makes silence look like a result
+
+The first legionella watcher searched the log for `legionella 0x0101:`. That
+string does not occur in the log at all — the decoder writes `resp ex=0101 =
+256 (0x0100)`. The watcher ran its full fifteen hours and reported *no
+change*, which was true only in the sense that it could not have reported
+anything else.
+
+**A log-scraping watcher's pattern has to be verified once by hand before its
+silence is worth anything:**
+
+```sh
+grep -ac "ex=0101" wpc-c3-night.log     # must be > 0
+```
+
+`stiebel.eltron/watch-legionella.sh` now does that check itself and refuses to
+start if the pattern matches nothing. It also matches on the **register
+number** rather than the decoder's wording, because the wording is ours and
+can change with a rebuild while `0x0101` cannot.
+
+This is the same shape as the OTA lesson elsewhere in this repo: **verify from
+the thing being measured, not from the tool's exit status.** A watcher that
+finds nothing and a watcher that cannot find anything produce identical
+output.
 
 ---
 
