@@ -4243,6 +4243,67 @@ The alarm arms with the first status-word poll and fires fifteen minutes
 later, so it would have tripped around 08:56 on 20 September. The tank was
 still 50.9 °C then. **Nobody would have run out of hot water.**
 
+## Bit 9 is not the compressor — it is the DHW charge
+
+**This overturns "0x4E5E is a status word, and bit 9 is the compressor",
+which this file asserted from four cycles with no exceptions.** The
+counter-evidence arrived the moment an independent measurement of the
+compressor existed.
+
+Cross-tabulating every pressure sample on the afternoon of 21 September
+against bit 9 as a held state:
+
+| | pressure split > 5 bar | ≤ 5 bar |
+|---|---|---|
+| **bit 9 set** | 15 | **0** |
+| **bit 9 clear** | **104** | 35 |
+
+Bit 9 set still means the compressor is running — fifteen for fifteen. But the
+compressor runs in a hundred and four samples where bit 9 is **clear**, in
+roughly twenty-minute cycles about every forty minutes, with high pressure at
+19–20 bar, low at 7, and hot gas at 60 °C. That is unmistakably compression,
+and the status word says nothing about it.
+
+**The likely meaning is the DHW charge, not the compressor.** Both bit-9
+episodes of the day — 10:54–12:31 and 14:53–15:23 — are the two charges, with
+the tank rising through each. The bit-9-clear runs have the tank falling and
+much lower head pressure (19–20 bar against 26–37), which reads as space
+heating at a lower condensing temperature.
+
+### Why the original evidence looked airtight
+
+The four cycles that established the rule were captured on 19 September.
+**Pressure polling was not added until 08:19 on 20 September.** So the claim
+"the compressor was idle during these cycles" rested on bit 9 itself: the
+signal being tested was also the only evidence about the thing it was tested
+against.
+
+Those "non-compressor cycles" at 16:51, 20:30 and 23:07 on 19 September have
+exactly the shape of this afternoon's heating runs — `65 → 16449 → 16577 →
+193 → 65 → 1`, about twenty minutes, no bit 9. They were almost certainly
+compressor runs all along.
+
+> **A rule confirmed only against the signal it is derived from is not
+> confirmed.** It took an independent measurement to see it, and the
+> independent measurement was three weeks of work away at the time.
+
+### What this changes, and what it does not
+
+**The `Compressor` entity is wrong and reads OFF while the compressor runs.**
+It has been wrong since it was switched to bit 9. The honest source is the
+pressure difference, which is what every diagnosis in this file has actually
+relied on.
+
+**The `manager_stuck` alarm is unaffected in its firing logic.** It tests bit 9
+*set* against equalised pressures, and that direction still holds — a set bit
+still claims something is running. It fired correctly in testing and did not
+fire through two real starts.
+
+**But its coverage is narrower than intended.** A freeze during a heating
+cycle leaves bit 9 clear, so the alarm would never see it. The 20 September
+freeze happened to occur during a DHW charge, which is the only case it
+catches. **That is a gap to close, not a detail.**
+
 ## A complete charge, observed end to end
 
 The first DHW charge captured from the start of the request to the last
