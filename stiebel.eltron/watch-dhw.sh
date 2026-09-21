@@ -30,8 +30,16 @@
 # Tämä vahti kertoo siis vasta kun jotain on jo tapahtunut, ja se on sen
 # tarkoituskin. Käynnistymistä vahtii `watch-compressor.sh` paine-erosta.
 #
+# **Johda raja asetusarvosta, älä siitä mitä toivot näkeväsi.** 21.9. viritin
+# tämän 54 asteeseen nähdäkseni latauksen valmistuvan. Se ei olisi lauennut:
+# päiväsaikaan tavoite on eco 50,0, ja lataus pysähtyi 50,7:ään tehtyään juuri
+# sen mitä sen kuului. Tarkista kumpi asetusarvo on voimassa ennen kuin
+# päätät mitä "valmis" tarkoittaa.
+#
 # **Varaaja-anturi laahaa.** 19.9. kompressori käynnistyi 19:41 ja varaaja
-# lähti nousuun vasta 19:50 — yhdeksän minuuttia. Älä siis tulkitse tasaista
+# lähti nousuun vasta 19:50 — yhdeksän minuuttia. Pitkän latauksen jälkeen
+# viive on suurempi: 21.9. kompressori pysähtyi 12:31 ja huippu näkyi 12:48,
+# eli seitsemäntoista minuuttia. Yhdeksän on alaraja eikä vakio. Älä tulkitse tasaista
 # varaajaa todisteeksi siitä ettei mitään ole alkamassa.
 
 set -eu

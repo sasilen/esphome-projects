@@ -3798,6 +3798,21 @@ to anyone reading a live log rather than a finished curve.
 The delay is physical rather than electrical — the sensor sits where the tank
 stratifies, so it reports only once the charged layer reaches it.
 
+**And it scales with the charge.** A ninety-seven-minute charge on 21 September
+put seventeen minutes between the compressor stopping and the tank showing its
+peak:
+
+| | |
+|---|---|
+| 10:54:00 | bit 9 rises, compressor starts |
+| 12:31:11 | bit 9 clears, compressor stops |
+| **12:48:10** | **tank peaks at 50.7 °C**, seventeen minutes later |
+
+So "about nine minutes" is the figure for a short run and a floor rather than a
+constant. Reading the tank to decide whether a charge has finished needs the
+longer number, and reading it to decide whether one has *started* needs the
+compressor instead — see `watch-compressor.sh`.
+
 ### Which signal separates a legionella cycle from a normal charge
 
 Not the reheat flow. It reached 57 °C in an ordinary charge, so a threshold
@@ -4227,6 +4242,45 @@ for twenty-two hours.
 The alarm arms with the first status-word poll and fires fifteen minutes
 later, so it would have tripped around 08:56 on 20 September. The tank was
 still 50.9 °C then. **Nobody would have run out of hot water.**
+
+## A complete charge, observed end to end
+
+The first DHW charge captured from the start of the request to the last
+settling degree, on 21 September:
+
+```
+10:52:50  EVU block released
+10:54:00  0x4E5E 577   bit 9 rises
+10:55:40  HP 26.4  LP 9.5      the compressor is actually compressing
+12:31:11  0x4E5E 49    bit 9 clears
+12:48:10  tank peaks 50.7 °C
+13:12:32  0x4E5E 1     idle
+```
+
+Ninety-seven minutes of compressor, 40.5 → 50.7 °C.
+
+**It charged to the eco setpoint, and that is correct rather than cut short.**
+The machine holds two targets — `DHW eco` 50.0 for daytime and `DHW comfort`
+55.0 for cheap hours — so a daytime charge stopping at 50 is the machine
+hitting its target, not being interrupted.
+
+This matters because the opposite reading is available and wrong: a charge
+that stops five degrees below the number on the comfort screen looks like a
+failure. **Check which setpoint is in force before calling a charge
+incomplete.**
+
+### The full state-word walk, including the value it froze on
+
+```
+1 → 65 → 577 → 705 → 17089 → 721 → 657 → 641 → 673 → 689
+  → 561 → 49 → 113 → 241 → 16577 → 193 → 65 → 1
+```
+
+Every value the 20 September freeze went through appears here in an entirely
+healthy cycle, **689 included**. It is an ordinary late-charge state and there
+is nothing diagnostic about it. What was diagnostic was the word stopping, not
+the value it stopped on — which is why the alarm tests the contradiction and
+not the number.
 
 ## The panel stopped polling, and three entities went blind
 
