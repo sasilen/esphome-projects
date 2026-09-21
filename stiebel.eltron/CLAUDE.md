@@ -496,6 +496,11 @@ install can take the ESP's supply from pin 4 through the LM2596, giving one
 common ground reference and no loop — which is exactly what the grounding
 section below asks for. It also means pin 4 must never reach the transceiver.
 
+**Not yet built: the node still runs on USB-C.** Everything in this file about
+pin 4 is a plan. One consequence of that plan is known and is argued under "the
+power cut also released the load block": a node fed from the machine goes down
+with it, and cannot log the reset that is most worth logging.
+
 **Measured, not 12 V: pin 4 sits at 17.4 V.** The legend says `+12V`; the rail is
 evidently unregulated and rises above nominal at light load. Consequences: the
 LM2596 handles it comfortably (its input range starts at 3.2 V and runs to 46 V),
@@ -3993,8 +3998,13 @@ neutral:
 
 - the SN65HVD230 board's `R2` is fitted at 115 Ω, so **this node added a
   terminator to a bus previously measured at 150 Ω, i.e. unterminated**
-- it draws its supply from X27 pin 4, loading a rail that previously fed only
-  the room controller
+- the transceiver's receiver sits across CAN_H and CAN_L on a stub
+
+**It does not load the bus supply, because it is not on it.** The node is
+still fed from USB-C; X27 pin 4 and the LM2596 are the plan for a permanent
+install and have not been built. So the one change to the machine's own
+electrical environment is the terminator and the stub — nothing on the power
+side at all.
 
 Neither has a plausible path to the observed fault. A termination or loading
 problem corrupts frames; it produces CRC errors, retransmissions and
@@ -4218,13 +4228,26 @@ know how much capacitance sits behind the logic — but on this controller the
 short cut reset it cleanly.
 
 **Our own node rode through it.** `Uptime` ran unbroken 77764 → 77824 s across
-the cut, so the log captured the entire event with no gap. That was lucky
-rather than designed: the node's supply comes from X27 pin 4, and the
-expectation was that it would reboot alongside the controller. Whatever the
-reason — only the controller's own supply was cut, or the buck's input held —
-**the most informative sixty seconds of this project were recorded because the
-logger happened to survive the thing it was watching.** A node powered from
-the machine it diagnoses cannot be relied on to witness that machine's reset.
+the cut, so the log captured the entire event with no gap.
+
+**Because it is still on USB-C**, not on the machine. X27 pin 4 through the
+LM2596 is the plan for a permanent install and has not been built, so the node
+has an independent supply and the controller's breaker means nothing to it.
+
+That is worth pinning down before the permanent install happens, because the
+plan would take it away:
+
+> **A node powered from the machine it diagnoses cannot witness that machine's
+> reset.** The most informative sixty seconds of this project were recorded
+> only because the logger was on a different supply from the thing it was
+> watching.
+
+The bus supply is still the right choice for a permanent install — one ground
+reference, no loop, no second wall wart — but the trade is now known rather
+than discovered later. If the node moves to pin 4, a power cycle of the
+controller becomes a blind spot exactly when the log matters most, and the
+remedy is a capacitor large enough to ride out a service cut rather than a
+different supply.
 
 Do not write to the machine over the bus while it is in a state like this. A
 controller that is already confused about what it is doing is the worst
