@@ -3961,19 +3961,58 @@ transmitted exactly twice — a read at 07:26 and the legionella write at
 08:10 — and both are hours *after* the freeze. The two-minute poll did not
 start until 08:11. Nothing we did precedes 01:06:29.
 
-### What to do about it, in order
+### The diagnosis held, and one second of power cut fixed it
 
-1. **Read the panel.** `DIAGNOSTIIKKA → LAMPOP TILA` shows the remaining
-   minimum-off time (`JALJ LEPOAIKA`, register `0x0668`, which this node does
-   not poll). A large value there would replace the whole theory above with a
-   timer.
-2. **Ask for a one-off DHW charge from the panel.** If the compressor starts,
-   the machine is healthy and the demand logic is what is stuck. If it does
-   not, the lockout is real.
-3. **Power-cycle the controller** if neither of those moves it. A manager
-   whose state machine has stopped advancing is the textbook case for it.
+`JALJ LEPOAIKA` read **00** on the panel, which removed the one competing
+explanation: the machine was not waiting out a minimum-off timer. It simply
+did not know it had stopped.
 
-Do not write more to the machine over the bus while it is in this state. A
+The controller's supply was then interrupted for about a second. Fifty-three
+seconds later:
+
+```
+06:20:34  Element 0x4E5E >> 689     frozen for 29 hours
+06:21:28  Element 0x4E5E >> 0
+06:21:29  Element 0x4E5E >> 65      bits 0,6 — the documented idle state
+```
+
+And the manager began commanding differently in the same second — every pump
+row inverted at once:
+
+| | before | after |
+|---|---|---|
+| `0xFE1B` | 0 | **100** |
+| `0xFE1C` | 100 | **0** |
+| `0xFE1D` | 100 (answer 98) | **0** (answer 1) |
+| `0xFE1E` | 7 | **0** |
+| `0xFE07` | 51–53 | **0** |
+
+Return temperature `0x0016` fell 36.9 → 29.3 °C in thirty seconds, having sat
+at 36.9 for most of a day.
+
+**Three things are worth taking from this.**
+
+**The stuck bit was the diagnosis and not a symptom.** A status word that
+stopped advancing mid-cycle, with every permissive green and a sixteen-degree
+deficit ignored, pointed at the controller's state machine and nothing else —
+and a power cycle is exactly the remedy for that and for nothing else. The
+inference was made from bus data alone, before anyone looked at the machine.
+
+**One second was enough**, against the thirty seconds this file had advised.
+The advice was not wrong — a longer cut is the safer default when you do not
+know how much capacitance sits behind the logic — but on this controller the
+short cut reset it cleanly.
+
+**Our own node rode through it.** `Uptime` ran unbroken 77764 → 77824 s across
+the cut, so the log captured the entire event with no gap. That was lucky
+rather than designed: the node's supply comes from X27 pin 4, and the
+expectation was that it would reboot alongside the controller. Whatever the
+reason — only the controller's own supply was cut, or the buck's input held —
+**the most informative sixty seconds of this project were recorded because the
+logger happened to survive the thing it was watching.** A node powered from
+the machine it diagnoses cannot be relied on to witness that machine's reset.
+
+Do not write to the machine over the bus while it is in a state like this. A
 controller that is already confused about what it is doing is the worst
 possible audience for an unsolicited command.
 
