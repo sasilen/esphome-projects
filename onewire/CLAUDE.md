@@ -1520,6 +1520,35 @@ kellon ympäri eikä koskaan tasoa.
 Käytännön sääntö: **salpa yksin kertoo että jotain tapahtui, ei mitä.** Jos
 halutaan tietää kumpi, katsotaan onko taso *koskaan* ylhäällä.
 
+### Kaksitoista tuntia tavallista elämää: yhdeksäntoista tapahtumaa, nolla tasoa
+
+Vahti ajoi 21.9. kello 08:44–20:44 ilman että kukaan koetteli mitään:
+
+| | |
+|---|---|
+| Ovitapahtumia | **19** |
+| Joissa taso oli ylhäällä | **0** |
+| Pääovi | 11 |
+| Olohuoneen ovi | 3 |
+| Makuuhuoneen ovi | 2 |
+| Keittiön ovi | 2 |
+
+**Yksikään yhdeksästätoista ei osunut auki-hetkeen.** Minuutin pollaus näki
+jokaisen niistä pelkkänä salpana. Tavallinen oven käyttö — avaa, kulje,
+sulje — on selvästi lyhyempi kuin kierrosväli, ja avoimeksi jäävä ovi on
+poikkeus eikä sääntö.
+
+**Se tekee salvasta koko anturin.** Ilman sitä nämä kaksitoista tuntia olisivat
+tuottaneet nolla havaintoa: `device_class: door` näyttäisi kiinni olevaa ovea
+vuorokauden ympäri ja näyttäisi toimivalta. Kuudennella latchilla salpa oli
+alun perin pois päältä väärän oletuksen takia — tällä aineistolla se olisi
+ollut kuollut anturi joka ei olisi valittanut kertaakaan.
+
+Kaksi paria on sekunnin päässä toisistaan: 11:23:35 makuuhuone ja 11:23:37
+olohuone, sama uudestaan 11:42. Ne ovat saman kierroksen peräkkäisiä
+lukemia, eli yksi ihminen kulkemassa huoneiden väliä — **reitti näkyy
+väylällä vaikka kumpikaan ovi ei ollut auki kun sitä kysyttiin.**
+
 ## Kytkös lattialämmitykseen
 
 Jos anturit ovat lattiavalussa, tämä projekti menee päällekkäin
