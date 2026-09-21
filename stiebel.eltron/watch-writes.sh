@@ -27,6 +27,12 @@
 # Kaikki muu tulostetaan. **Myös oma solmu 0x680** — jos se alkaa kirjoittaa
 # toistuvasti, se näkyy täällä ennen kuin EEPROM huomaa.
 
+# **Vahti tarkkailee myös lokia itseään.** Jos lokivirta kuolee, vahti
+# raportoi hiljaisuutta joka näyttää samalta kuin rauhallinen väylä. Niin
+# kävi 21.9.: fläshäyksen `pkill -f "esphome logs"` tappoi molemmat virrat
+# ja vain toinen käynnistettiin uudelleen. Tämä poistuu virheellä jos
+# tiedosto ei kasva viiteen minuuttiin.
+
 set -eu
 
 LOG="${1:?anna lokitiedosto}"
@@ -50,7 +56,23 @@ rutiini() {
     return 1
 }
 
+KOKO=$(wc -c < "$LOG")
+KUOLLUT=0
+
 while [ "$(date +%s)" -lt "$LOPPU" ]; do
+    UUSI_KOKO=$(wc -c < "$LOG")
+    if [ "$UUSI_KOKO" -eq "$KOKO" ]; then
+        KUOLLUT=$(( KUOLLUT + 1 ))
+        if [ "$KUOLLUT" -ge 10 ]; then
+            echo "[vahti] LOKI EI KASVA viiteen minuuttiin — en näe mitään"
+            ls -l "$LOG"
+            exit 2
+        fi
+    else
+        KUOLLUT=0
+        KOKO=$UUSI_KOKO
+    fi
+
     UUDET=$(tail -n "+$((RIVI + 1))" "$LOG" 2>/dev/null | grep -a " wr " || true)
     KAIKKI=$(wc -l < "$LOG")
     if [ "$KAIKKI" -gt "$RIVI" ]; then

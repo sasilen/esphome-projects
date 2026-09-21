@@ -10,6 +10,17 @@
 # kierroksen välissä. Nopea käynti näkyy vain salpana, koska minuutin näyte
 # ei osu auki-hetkeen. Kumpikin tulostetaan, ja rivi kertoo kumpi oli.
 #
+# **Vahti tarkkailee myös lokia itseään.** Hakuehdon todentaminen
+# käynnistyessä ei riitä: loki voi kuolla kesken, ja silloin vahti
+# raportoi hiljaisuutta joka näyttää samalta kuin rauhallinen talo.
+# Niin kävi 21.9., kun stiebelin fläshäyksen `pkill -f "esphome logs"`
+# tappoi molemmat virrat ja vain toinen käynnistettiin uudelleen — tämä
+# vahti oli sen jälkeen tunnin sokea eikä sanonut mitään.
+#
+# Nyt se poistuu virheellä jos tiedosto ei ole kasvanut viiteen
+# minuuttiin. Ovipollaus käy minuutin välein, joten viisi on aito
+# pysähdys eikä hiljainen hetki.
+#
 # **`322EB6` suodatetaan pois oletuksena.** Se ei ole ovi: sen kanava A
 # laukeaa noin neljän minuutin välein vuorokauden ympäri eikä taso nouse
 # juuri koskaan. Mukaan se tulee antamalla kolmanneksi argumentiksi `kaikki`.
@@ -42,9 +53,24 @@ suodata() {
 
 # Lähtötilanne: ohita kaikki mitä lokissa jo on.
 NAHTY=$(suodata | wc -l)
+KOKO=$(wc -c < "$LOG")
+KUOLLUT=0
 echo "[vahti] $LOG, ${MITEN}, kesto ${TUNNIT} h — ohitettu $NAHTY vanhaa riviä"
 
 while [ "$(date +%s)" -lt "$LOPPU" ]; do
+    UUSI_KOKO=$(wc -c < "$LOG")
+    if [ "$UUSI_KOKO" -eq "$KOKO" ]; then
+        KUOLLUT=$(( KUOLLUT + 1 ))
+        if [ "$KUOLLUT" -ge 10 ]; then
+            echo "[vahti] LOKI EI KASVA viiteen minuuttiin — en näe ovia"
+            ls -l "$LOG"
+            exit 2
+        fi
+    else
+        KUOLLUT=0
+        KOKO=$UUSI_KOKO
+    fi
+
     NYT=$(suodata | wc -l)
     if [ "$NYT" -gt "$NAHTY" ]; then
         suodata | tail -n $(( NYT - NAHTY )) \

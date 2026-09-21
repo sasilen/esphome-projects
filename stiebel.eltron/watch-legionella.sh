@@ -27,6 +27,12 @@
 #
 # 256 = käsittely tilattu, 0 = ei tilattu.
 
+# **Vahti tarkkailee myös lokia itseään.** Jos lokivirta kuolee, vahti
+# raportoi hiljaisuutta joka näyttää samalta kuin rauhallinen väylä. Niin
+# kävi 21.9.: fläshäyksen `pkill -f "esphome logs"` tappoi molemmat virrat
+# ja vain toinen käynnistettiin uudelleen. Tämä poistuu virheellä jos
+# tiedosto ei kasva viiteen minuuttiin.
+
 set -eu
 
 LOG="${1:?anna lokitiedosto}"
@@ -47,7 +53,23 @@ arvo() {
 ALKU=$(arvo)
 echo "[vahti] $LOG, lippu nyt ${ALKU}, kesto ${TUNNIT} h"
 
+KOKO=$(wc -c < "$LOG")
+KUOLLUT=0
+
 while [ "$(date +%s)" -lt "$LOPPU" ]; do
+    UUSI_KOKO=$(wc -c < "$LOG")
+    if [ "$UUSI_KOKO" -eq "$KOKO" ]; then
+        KUOLLUT=$(( KUOLLUT + 1 ))
+        if [ "$KUOLLUT" -ge 5 ]; then
+            echo "[vahti] LOKI EI KASVA viiteen minuuttiin — en näe mitään"
+            ls -l "$LOG"
+            exit 2
+        fi
+    else
+        KUOLLUT=0
+        KOKO=$UUSI_KOKO
+    fi
+
     NYT=$(arvo)
     if [ "$NYT" != "$ALKU" ]; then
         echo "[vahti] LIPPU MUUTTUI ${ALKU} -> ${NYT}"
