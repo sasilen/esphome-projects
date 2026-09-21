@@ -15,14 +15,38 @@
 # tallennettavia arvoja. Harvinainen kirjoitus on se joka kannattaa nähdä —
 # legionellakytkin näkyi lokissa täsmälleen kerran.
 #
-# Suodatettu pois tunnettuna rutiinina:
+# **Rutiini opitaan lokista, ei luetella käsin.** Tämä oli aluksi
+# kiinteä lista osoitteita, ja se petti ensimmäisessä kunnon ajossa:
+# kaksitoista tuntia tuotti seitsemänkymmentä osumaa, joista jokainen oli
+# `480>100 wr ex=4E5E` eli managerin tilasana. Se on kirjoitus mutta ei
+# asetus — se vaihtuu jokaisessa koneen tilasiirtymässä, kymmeniä kertoja
+# vuorokaudessa.
 #
-#   480>700  FE1B FE1C FE1D FE1E   säätölähtöjä, sekunneittain
-#   100>480  06AF                  7 min välein, arvo vakio 1
-#   480>100  080E                  managerin oma
-#   480>100  0122-0126             kello: päivä, kk, vuosi, tunti, minuutti
-#   601>301  0052                  sekoitusmoduulin oma
-#   480>100  1388                  tilakoodi, 7 min välein
+# Seitsemänkymmentä hälytystä ilman yhtään todellista on huonompi kuin ei
+# vahtia lainkaan, koska sellaista ei lueta. Ja listaa täydentämällä sama
+# toistuu joka kerta kun dekooderi oppii uuden rekisterin.
+#
+# Skriptin oma otsikko sanoi tämän alusta asti — *erotin on harvinaisuus,
+# ei osoite* — mutta toteutus oli osoitelista. Nyt se on harvinaisuus:
+# käynnistyessä lasketaan jokaisen `lähettäjä>vastaanottaja elementti`
+# -avaimen esiintymät koko lokista, ja kaikki mitä on nähty vähintään
+# `RAJA` kertaa on rutiinia.
+#
+# Nykyaineistossa se rajaa itsestään pois kahdeksan säätölähtöä, kellon
+# minuutit, tilakoodin ja tilasanan — ja päästää läpi sen mitä varten
+# vahti on olemassa:
+#
+#   100>180 0101    legionellakytkin, koko aineistossa kerran
+#
+# Kellon päivä-, kuukausi- ja vuosikentät kirjoitetaan niin harvoin
+# (2-3 kertaa) etteivät ne ylitä rajaa, joten ne jäävät kiinteään listaan.
+# Se on tämän menetelmän hinta: *harvinainen mutta tylsä* vaatii yhä
+# ihmisen päätöksen.
+#
+# Samalla aineistolla ajettuna tulos putoaa seitsemästäkymmenestä
+# **kahteen**, ja ne kaksi ovat EVU-koskettimen vaihdot — päivän
+# tärkeimmät tapahtumat väylällä. Pari kappaletta vuorokaudessa on
+# suhdeluku jolla vahtia vielä luetaan.
 #
 # Kaikki muu tulostetaan. **Myös oma solmu 0x680** — jos se alkaa kirjoittaa
 # toistuvasti, se näkyy täällä ennen kuin EEPROM huomaa.
@@ -82,16 +106,26 @@ RIVI=$(wc -l < "$LOG")
 
 echo "[kirjoitusvahti] $LOG, rivistä $RIVI, kesto ${TUNNIT} h"
 
+RAJA="${4:-20}"
+
+# Opi rutiini lokista: avaimet jotka on nähty vähintään RAJA kertaa.
+OPITTU=$(mktemp)
+trap 'rm -f "$OPITTU"' EXIT
+grep -ao "[0-9A-F]\{3\}>[0-9A-F]\{3\} wr  *e\{1,2\}x\{0,1\}=[0-9A-F]*" "$LOG" \
+    | sed 's/  */ /g' | sort | uniq -c \
+    | awk -v r="$RAJA" '$1 >= r { $1=""; sub(/^ /,""); print }' > "$OPITTU"
+echo "[kirjoitusvahti] opittu $(wc -l < "$OPITTU") rutiiniavainta (raja $RAJA)"
+
 rutiini() {
-    # Palauttaa 0 jos rivi on tunnettua rutiinia
+    # Kello: päivä, kuukausi ja vuosi ovat harvinaisia mutta tylsiä, eivätkä
+    # siksi ylitä oppimisrajaa. Ainoa kohta jossa osoite on yhä käsin.
     case "$1" in
-        *"480>700 wr   ex=FE1B"*|*"480>700 wr   ex=FE1C"*) return 0;;
-        *"480>700 wr   ex=FE1D"*|*"480>700 wr   ex=FE1E"*) return 0;;
-        *"100>480 wr   ex=06AF"*|*"480>100 wr   ex=080E"*) return 0;;
-        *"480>100 wr   ex=012"*|*"601>301 wr    e=0052"*)  return 0;;
-        *"480>100 wr   ex=1388"*) return 0;;
+        *"480>100 wr   ex=012"*) return 0;;
     esac
-    return 1
+    AVAIN=$(printf '%s' "$1" \
+        | grep -ao "[0-9A-F]\{3\}>[0-9A-F]\{3\} wr  *e\{1,2\}x\{0,1\}=[0-9A-F]*" \
+        | sed 's/  */ /g')
+    [ -n "$AVAIN" ] && grep -qxF "$AVAIN" "$OPITTU"
 }
 
 KOKO=$(wc -c < "$LOG")
