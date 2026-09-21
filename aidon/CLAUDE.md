@@ -223,6 +223,19 @@ Tämä ei ole täysi SG Ready vaan sen yksi bitti:
 Käytännön seuraus: kuormaa voi **siirtää pois** kalliilta tunneilta ja huipputehoa
 voi leikata, mutta aurinkoylijäämää ei voi **työntää** pumpulle tällä liitännällä.
 
+**Esto asuu releen haihtuvassa tilassa, ja rele on saman katkaisijan takana kuin
+pumppu.** Sähkökatko, katkaisijan laukeaminen tai huoltokatko päästää eston siis
+irti ilman että kukaan huomaa — ja pumppu palaa verkkoon kertyneen tarpeen
+kanssa, täydellä teholla ja ilman kuormanohjausta. Reunaehtoon reagoiva
+automaatio ei korjaa sitä, koska se on jo lauennut kerran ja pitää työtä
+tehtynä.
+
+Tämä havaittiin 21.9.2026 kun pumpun ohjain jouduttiin käynnistämään uudelleen:
+esto meni päälle 06:20, virrat katkaistiin 06:21, ja kone raportoi itse olevansa
+sallittu vielä 06:29. Tapaus ja korjausvaihtoehdot ovat
+[stiebel.eltronin](../stiebel.eltron/CLAUDE.md) kohdassa "The power cut also
+released the load block".
+
 Ratkaisu ylijäämään ei kuitenkaan ole toinen SG Ready -tulo vaan CAN-väylä:
 lämmityskäyrän tai asetusarvojen nosto on portaaton ja toimii pumpun oman
 logiikan kanssa, kun taas tila 4 ohittaa sen. Ks. `../stiebel.eltron/`.

@@ -4016,6 +4016,60 @@ Do not write to the machine over the bus while it is in a state like this. A
 controller that is already confused about what it is doing is the worst
 possible audience for an unsolicited command.
 
+### The power cut also released the load block, because the Shelly shares the breaker
+
+```
+06:20      HA asserts the EVU block — the Shelly moves to the blocking position
+06:21      breaker off for about a second: the controller *and* the Shelly
+06:21:28   controller restarts and reads its EVU input
+06:22:37   compressor starts — nothing is blocking it
+06:29:39   0x0074 = 1, the machine reports permitted
+06:37      hot gas 81.8 °C, DHW charging at full output on an expensive hour
+```
+
+**The relay that holds the block is on the same breaker as the machine it
+blocks.** Cutting power to the controller therefore cut power to the thing
+that was blocking it, and the Shelly came back in its power-on default rather
+than in the position HA had set sixty seconds earlier.
+
+Nothing then re-asserted it. An automation that acts on a price *crossing* has
+already fired and believes the job is done, so the block stays lost until the
+price next moves across a threshold — which can be hours.
+
+**Three consequences, in order of what they cost.**
+
+- **Any power interruption releases the load block silently.** A real outage, a
+  breaker trip, or a service cut all do this, and the machine comes back with
+  accumulated demand and runs at full output with load control absent. That is
+  the worst possible pairing: the block disappears exactly when the machine has
+  the most catching up to do.
+- **HA's intent and the contact's position are different facts.** That is the
+  distinction the `0x0074` poll was added to make, argued for at length in the
+  frame handler and never yet needed. This is the first time it has paid, and
+  it took nine minutes: HA said blocked, the bus said permitted, and the bus
+  was right.
+- **This file's own advice was incomplete.** It told the owner to power-cycle
+  the controller without asking what else sits behind that breaker. The
+  instruction worked and the diagnosis held, but the side effect would have
+  stayed invisible if Home Assistant had not reported an intent the bus
+  contradicted.
+
+**Remedies, cheapest first.**
+
+1. **Make the automation state-driven rather than edge-driven.** Re-assert the
+   intended position periodically, or when the Shelly comes back online. A
+   reboot then heals in minutes instead of lasting until the price moves.
+2. **Compare intent against `0x0074` and re-assert on mismatch.** The `EVU
+   permitted` entity already publishes the machine's own report every fifteen
+   minutes, and that is precisely what it is for.
+3. **Choose the Shelly's power-on default deliberately.** *Restore last* keeps
+   the block across an outage. Do **not** default it to the blocking position:
+   with HA also down that blocks the heating indefinitely, which is the January
+   failure this file keeps warning about. The Auto-ON timer is the watchdog for
+   that case, not the power-on default.
+4. **Or break the coupling** by moving the Shelly to a different breaker, at
+   the cost of one more circuit to remember.
+
 **The setpoints are now polled, and they settle one earlier question.** A
 normal comfort charge targets 55.0 °C, so the 54.3 °C peak was a *completed*
 comfort charge rather than a legionella attempt that fell short. The 57 °C
