@@ -4070,8 +4070,52 @@ consequences.
 It also logs at `WARN` on both edges, so the log-scraping watchers see it
 without Home Assistant being involved.
 
-If this recurs, the frequency is itself the diagnosis: once is an upset,
-monthly is a failing controller.
+### It does not test for the EVU block, and the data says it must not
+
+An EVU block stops the compressor and the pressures equalise, which looks like
+the alarm's condition from a distance. It is not, because **bit 9 follows the
+block within seconds**:
+
+```
+06:46:29  480>100 wr e=0074 = 0        contact opens
+06:46:51  Element 0x4E5E >> 65         bit 9 clear, Compressor >> OFF
+06:47:28  Element 0x4E5E >> 1          fully idle
+```
+
+Twenty-two seconds. `claims_running` goes false, so the condition never starts
+counting and no suppression is needed.
+
+**That also says something about the installation**: the EVU contact is a
+control input the manager reads, not a power interrupt that opens the
+compressor contactor behind its back. Had it been the latter, the manager
+would hold bit 9 through every block and this alarm would fire on each one.
+Worth knowing, because the naive wiring of an EVU contact is exactly the
+second kind.
+
+**Suppressing on `evu_permitted` would therefore add a condition that fixes
+nothing** — and this repo has already learned what happens to those: a setting
+that corrects no observed failure is read later as a deliberate choice, and
+nobody can remember why. It would also hide a genuine freeze that happened to
+begin during a block.
+
+This rests on **one** observation of a block interrupting a run; the only
+other block in the record fell while the machine was already idle, which
+proves nothing either way. If a block ever does leave bit 9 set, the alarm
+will say so by firing spuriously — and *then* the suppression goes in, with a
+reason attached.
+
+### Would it have caught the real one
+
+Yes, and by twenty-one hours. Across the whole freeze — from the first
+`0x4E5E` poll at 08:41 to the power cut at 06:21 the next morning — there are
+**1299 pressure pairs, maximum separation 0.4 bar, not one sample above the
+two-bar threshold**, with bit 9 set throughout and `0x0074` reading permitted
+the entire time. The `Compressor` entity never published a change: it sat ON
+for twenty-two hours.
+
+The alarm arms with the first status-word poll and fires fifteen minutes
+later, so it would have tripped around 08:56 on 20 September. The tank was
+still 50.9 °C then. **Nobody would have run out of hot water.**
 
 ### The diagnosis held, and one second of power cut fixed it
 
