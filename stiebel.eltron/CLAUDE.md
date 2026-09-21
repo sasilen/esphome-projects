@@ -4160,6 +4160,13 @@ under two minutes, and that includes the two-minute poll interval. The margin
 is sevenfold. The freeze did not last twenty-nine hours because it was a
 borderline case.
 
+**Measured again on the next start, with the alarm live.** The block lifted at
+10:52:50, bit 9 rose at 10:54:00, and the pressures separated at 10:55:40:
+**one hundred seconds of the alarm's exact condition being true**, and it
+stayed off as it should. The threshold has now been tested from both sides —
+against a real freeze that would have tripped it in fifteen minutes, and
+against a real start that comes nowhere near.
+
 **Two bar, not zero.** Equalised has measured 0.3–0.4 bar and running has
 measured 17–22. Anywhere in between would do; two is far from both edges.
 
@@ -4247,10 +4254,28 @@ Four facts place the blame, and none of them is on this node:
 
 The one thing that did coincide: **the EVU block landed at 06:46:29 and the
 compressor stopped at 06:46:51, fifty-six seconds before the last reading.**
-That is a correlation with a plausible shape — a panel that stops asking for
-values it has decided not to display — and a single instance. It is not yet a
-mechanism, and the prediction it makes is easy to check: **if polling resumes
-when the block lifts, that is the cause.**
+That was a correlation with a plausible shape — a panel that stops asking for
+values it has decided not to display — and a single instance, so it came with
+a prediction: *if polling resumes when the block lifts, that is the cause.*
+
+**It resumed one second after the block lifted.**
+
+```
+10:52:50  480>100 wr    e=0074 = 1     block released
+10:52:51  180>100 resp  e=000C = 120   outdoor
+10:52:52  180>100 resp  e=000E = 407   tank
+10:52:52  180>100 resp  e=0016 = 234   return
+```
+
+and the ten-second cadence was back immediately — sixty `180>100` frames in
+the following four minutes. Four hours of silence ended with the load block
+and not with anything else.
+
+**So it is a behaviour, not a fault.** The panel stops asking the machine for
+its measurements while the machine is blocked, and starts again when it is
+released. Nothing is broken and nothing needs fixing there — but three
+entities were dark for four hours because of it, and that is precisely why
+they are now polled from here instead.
 
 **The fix does not wait for that answer.** All three elements live on `0x180`,
 which answers us reliably, so they now go into the two-minute group alongside
