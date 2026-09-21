@@ -3956,15 +3956,73 @@ still idle with a full tank of demand and every permissive green, and the
 frozen word is simply one more thing that stopped at 01:06:29 on 20 September.
 Either way something stopped there.
 
-**Our own node did not cause it, and the exoneration is complete rather than
-circumstantial.** The first frame this node ever put on the bus was at
-**07:26:46 on 20 September** — the outdoor-temperature read button, six hours
-*after* the freeze. Before that it had never transmitted at all: no polls, no
-writes, not even an acknowledgement it initiated. The first write followed at
-08:10 and the first `0x4E5E` poll at 08:41.
+### Did this node cause it? The machine had never hung before
+
+The owner's prior is strong and deserves stating first: **the pump has run for
+years without ever doing this**, and a node was attached to its bus roughly ten
+hours before it did. Temporal correlation that tight is not something to wave
+away.
+
+Three things separate presence from cause, and two of them are decisive.
+
+**The transmit path is excluded outright.** `LISTENONLY` was removed in
+`c7ac833` at 07:22 on 20 September and flashed at 07:25:59 — **six hours after
+the freeze**. In listen-only mode the ESP32's TWAI controller never emits a
+dominant bit: no acknowledgement, no error frames, no overload frames. It is
+not that the node chose not to transmit; it could not. The first frame it ever
+put on the wire was at 07:26:46, and the log line exists to prove it.
 
 So the tempting explanation — that the first write test upset the manager — is
 not merely unlikely. At 01:06:29 there was nothing to upset it with.
+
+**The node itself never faltered.** Its uptime ran unbroken for **14 h 50 min**,
+from 16:36 on 19 September to the deliberate reflash at 07:26 the next morning.
+The freeze falls in the middle of that span. There was no reset, no brownout,
+no watchdog, nothing that would have disturbed its transceiver.
+
+That also corrects something tempting in the log: the nineteen-minute silence
+at 21:56–22:15 on 19 September, three hours before the freeze, **is not a node
+outage.** The uptime counter runs straight through it. It was the log stream
+reconnecting — and the `ESPHome version …` banner at 22:15:17 is the same trap
+this repo documented once already: the banner repeats for every log client and
+is not evidence of a boot.
+
+**Electrical presence is not excluded, and honesty requires saying so.** The
+node was physically on the bus for those ten hours, and it is not electrically
+neutral:
+
+- the SN65HVD230 board's `R2` is fitted at 115 Ω, so **this node added a
+  terminator to a bus previously measured at 150 Ω, i.e. unterminated**
+- it draws its supply from X27 pin 4, loading a rail that previously fed only
+  the room controller
+
+Neither has a plausible path to the observed fault. A termination or loading
+problem corrupts frames; it produces CRC errors, retransmissions and
+ultimately bus-off. **None of that happened.** `Malformed frames` read 0 for
+the entire two days, traffic was ordinary before, during and after, and the
+manager answered every poll throughout the twenty-nine hours it was stuck. A
+bus fault that hangs one task in a controller while leaving all of its
+communication perfect is not a mechanism, it is a coincidence looking for one.
+
+**And the configuration has since become far more invasive without recurrence.**
+Since 07:26 on 20 September this node has been acknowledging every frame,
+polling on three intervals, and has written to the machine twice. That is
+strictly more disturbance than the passive listening that preceded the freeze,
+and the pump has not hung once in the day since.
+
+**One fair qualification, in the other direction.** The claim "it has never
+done this" is a claim about what was *noticed*, and until this week nothing
+watched the bus. A twenty-eight-hour loss of hot water would have been
+noticed; a two-hour one at night that cleared itself would not. What can be
+said is that this instance did not clear itself — it needed the supply
+interrupted — so it is not the kind that could have been passing unseen for
+years.
+
+The honest position: **the transmit path is ruled out by construction, the
+node's own stability is ruled out by measurement, and physical presence remains
+possible but has no mechanism and no supporting evidence.** If it recurs, the
+alarm below will timestamp it, and a recurrence is worth far more than any
+argument here.
 
 ### What the bus shows at the moment of the freeze, which is nothing
 
