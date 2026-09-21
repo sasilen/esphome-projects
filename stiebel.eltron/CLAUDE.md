@@ -4221,6 +4221,65 @@ The alarm arms with the first status-word poll and fires fifteen minutes
 later, so it would have tripped around 08:56 on 20 September. The tank was
 still 50.9 °C then. **Nobody would have run out of hot water.**
 
+## The panel stopped polling, and three entities went blind
+
+Three measurements have never been asked for by this node: **`0x000E` the DHW
+tank, `0x0016` the return, `0x000C` the outdoor temperature.** They arrived as
+answers to the *panel's* own questions, and this file recorded them as
+available passively.
+
+**That was true, and it was measured rather than assumed.** Counting the
+`180>100 resp e=000E` frames hour by hour across the whole capture gives
+**351 per hour — one every ten seconds — flat around the clock**, including
+02:00 to 05:00 with the machine idle and nobody awake.
+
+**At 06:47:25 on 21 September they stopped.** Two and a half hours later not
+one had arrived and all three entities read `unknown` in Home Assistant.
+
+Four facts place the blame, and none of them is on this node:
+
+| | |
+|---|---|
+| The panel is alive | it still asks `0x019A` every eleven minutes |
+| The machine is fine | `0x180` answers *our* polls every two minutes throughout |
+| It is not the reflash | the polling stopped an hour before it, at 06:47:25 |
+| It is not idleness | the machine was idle all night at the full 351/h |
+
+The one thing that did coincide: **the EVU block landed at 06:46:29 and the
+compressor stopped at 06:46:51, fifty-six seconds before the last reading.**
+That is a correlation with a plausible shape — a panel that stops asking for
+values it has decided not to display — and a single instance. It is not yet a
+mechanism, and the prediction it makes is easy to check: **if polling resumes
+when the block lifts, that is the cause.**
+
+**The fix does not wait for that answer.** All three elements live on `0x180`,
+which answers us reliably, so they now go into the two-minute group alongside
+the pressures. Three frames per two minutes against twelve thousand an hour is
+free, and it converts three entities from *hoping someone else asks* into the
+same footing as everything else this node measures.
+
+> **Passive data is a dependency on another node's behaviour.** It arrives
+> because some other device wants it, it stops when that device changes its
+> mind, and nothing reports the change. A steady 351 frames an hour for a day
+> looked like a law of nature. It was a habit.
+
+### The empty log after a reboot is a switch, not a fault
+
+Chasing the above wasted a detour worth writing down. After the reflash the
+log showed **no `180>680` frames at all** — our own poll responses had
+vanished — while the sensors they feed kept updating every two minutes. That
+reads exactly like a decoder that has stopped working.
+
+It is `log_frames`, which is `restore_mode: ALWAYS_OFF` and therefore **off
+after every single boot**. With it off the handler logs only frames it could
+*not* decode, so everything working correctly is invisible and only the
+unknown remains. The 019A traffic still appears precisely because nothing
+claims it.
+
+**So a silent log is the normal state, and a busy one means either the switch
+is on or something is unrecognised.** When a value updates in Home Assistant
+but its frame is absent from the log, check the switch before the wiring.
+
 ### The diagnosis held, and one second of power cut fixed it
 
 `JALJ LEPOAIKA` read **00** on the panel, which removed the one competing

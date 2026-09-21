@@ -1129,6 +1129,42 @@ interval:
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x91, 0x00, 0xFA, 0x4E, 0x5E, 0x00, 0x00]}
 
+      # ---------------------------------------------------------------------
+      # **Kolme mittausta jotka nojasivat paneelin hyväntahtoisuuteen.**
+      #
+      # `0x000E` varaaja, `0x0016` paluu ja `0x000C` ulkolämpötila saapuivat
+      # tähän asti pelkästään paneelin omina kyselyinä. Tämä tiedosto kirjasi
+      # ne passiivisesti saataviksi, ja mittaus tuki sitä: **351 vastausta
+      # tunnissa eli yksi joka kymmenes sekunti, tasaisesti vuorokauden
+      # ympäri**, myös yöllä kahdesta viiteen koneen seistessä.
+      #
+      # **21.9. klo 06:47:25 ne loppuivat kesken.** Paneeli jatkaa `0x019A`:n
+      # kyselyä yhdentoista minuutin välein, eli se on hengissä — se vain ei
+      # enää kysy lämpötiloja. Viimeinen lukema oli 56 sekuntia sen jälkeen
+      # kun EVU-esto laski koneen seisomaan. Kaksi ja puoli tuntia myöhemmin
+      # ne olivat yhä hiljaa ja kolme entiteettiä luki `unknown`.
+      #
+      # Koneessa ei ole vikaa: `0x180` vastaa meidän omiin kyselyihimme
+      # kahden minuutin välein moitteetta koko sen ajan.
+      #
+      # **Opetus on passiivisesta datasta yleensä.** Kaikki mitä ei kysytä
+      # itse on riippuvuus toisen solmun käyttäytymiseen, ja se voi muuttua
+      # ilman varoitusta ja ilman vikailmoitusta. Vuorokauden tasainen 351
+      # kehystä tunnissa näytti lailta luonnossa; se oli tapa.
+      #
+      # Kolme kehystä kahdessa minuutissa on ilmainen kahdentoista tuhannen
+      # joukossa, ja se tekee näistä yhtä luotettavia kuin paineista.
+      # Elementti alle 0x100 menee suoraan tavuun 2.
+      - delay: 300ms
+      - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                      data: [0x31, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00]}   # varaaja
+      - delay: 300ms
+      - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                      data: [0x31, 0x00, 0x16, 0x00, 0x00, 0x00, 0x00]}   # paluu
+      - delay: 300ms
+      - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
+                      data: [0x31, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00]}   # ulkolampotila
+
   - interval: 15min
     then:
       - if:
