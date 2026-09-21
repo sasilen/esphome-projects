@@ -3980,10 +3980,46 @@ put on the wire was at 07:26:46, and the log line exists to prove it.
 So the tempting explanation — that the first write test upset the manager — is
 not merely unlikely. At 01:06:29 there was nothing to upset it with.
 
-**The node itself never faltered.** Its uptime ran unbroken for **14 h 50 min**,
-from 16:36 on 19 September to the deliberate reflash at 07:26 the next morning.
-The freeze falls in the middle of that span. There was no reset, no brownout,
-no watchdog, nothing that would have disturbed its transceiver.
+**The node itself never faltered.** It booted at **16:20:41 on 19 September**
+and its uptime counter reached 53 403 s — 14 h 50 min — at the last sample
+before the deliberate reflash the next morning. The freeze falls squarely in
+the middle of that span. No reset, no brownout, no watchdog, nothing that
+would have disturbed its transceiver.
+
+### And nothing we did preceded it — the node was left alone for eight hours
+
+The question is fair enough to answer register by register.
+
+**No action of ours.** Between that boot at 16:20:41 and the flash at 07:25 the
+next morning, the heat-pump node was not touched: not flashed, not commanded,
+not written to, not restarted. Every commit in that window — 18:23, 18:32,
+20:28, 20:49, 20:56 — belongs to the **1-Wire project**, a different ESP on a
+different bus with no electrical or logical path to this one. The last change
+to this node's configuration before the freeze was at 15:18, eight hours
+earlier, and it took effect at that 16:20 boot.
+
+**One shared component, and it is accounted for.** Both log streams break at
+21:56 on 19 September — this one for nineteen minutes, the 1-Wire one for
+three. That is the ESPHome container being restarted, which the 1-Wire work
+required that evening. It dropped the log clients and nothing else: this
+node's uptime counter runs straight through it.
+
+**No load-control event either.** The manager broadcasts `0x0074` when the
+contact changes, and **the entire two-day capture contains exactly two such
+frames, both on 21 September**. Status code `0x1388` was broadcast once, at
+16:16:49 on 19 September, value 0. So no block arrived during the charge and
+no fault code was raised. The freeze was not something the machine was told to
+do.
+
+**And it is not "attach the node and it breaks".** After the node went on the
+bus at about 15:13, the machine completed **four** normal cycles — 16:51–17:12,
+the full compressor run 19:41–20:08, 20:30–20:51 and 23:07–23:28 — each
+walking its status word up and cleanly back down to 1. It froze on the fifth.
+A terminator that breaks a bus does not let four cycles through first.
+
+So the honest shape of it: **the freeze was preceded by eight and a half hours
+of this node doing nothing whatsoever except listen**, and by four healthy
+cycles of the machine doing exactly what it always does.
 
 That also corrects something tempting in the log: the nineteen-minute silence
 at 21:56–22:15 on 19 September, three hours before the freeze, **is not a node
