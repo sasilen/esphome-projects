@@ -4591,7 +4591,12 @@ claims it.
 is on or something is unrecognised.** When a value updates in Home Assistant
 but its frame is absent from the log, check the switch before the wiring.
 
-### The diagnosis held, and one second of power cut fixed it
+### The diagnosis held, and one second of power cut released it
+
+**Released, not fixed** — the distinction matters and this file got it wrong
+once in conversation. A power cycle cleared the stuck state the way a reboot
+clears a hung program: the machine works again and nothing has been changed
+that would stop it happening tomorrow.
 
 `JALJ LEPOAIKA` read **00** on the panel, which removed the one competing
 explanation: the machine was not waiting out a minimum-off timer. It simply
@@ -4658,6 +4663,42 @@ different supply.
 Do not write to the machine over the bus while it is in a state like this. A
 controller that is already confused about what it is doing is the worst
 possible audience for an unsolicited command.
+
+### Where this incident actually stands
+
+Written as a table because the prose is spread over six sections and the
+summary is easy to get wrong — it was got wrong once, in conversation, as
+"fixed, explained and instrumented". Only the last of those is true.
+
+| | |
+|---|---|
+| Released | **yes** — one-second power cut, 21 Sep 06:21 |
+| Fixed | **no** — nothing was changed that would prevent a recurrence |
+| Explained | **no** — the cause is unknown |
+| Described | yes, to the second |
+| Detectable | yes, but only partly |
+
+**What was achieved is exclusion, and there is a lot of it:**
+
+- our own transmissions — the node was `LISTENONLY`, first frame six hours later
+- the node faltering — uptime ran unbroken for 14 h 50 min across the freeze
+- an EVU block — not one `0x0074` frame all night
+- a fault code — `0x1388` read 0 in 392 samples
+- the minimum-off timer — the panel showed `JALJ LEPOAIKA 00`
+- the weather — it was the mildest of the three nights
+- bus errors — zero malformed frames in three days
+
+**Two candidates remain** and one occurrence cannot separate them: the
+hardware's presence on the bus, or an internal controller fault with no
+external cause.
+
+**And the detector is partial.** `Manager state stuck` catches a freeze during
+a DHW charge but not one during a heating cycle that also stops the machine.
+
+So: **one occurrence, cause unknown, recovery performed by hand, detection
+partial, and the trigger for the next hardware step written down.** The only
+thing that can settle it is a second occurrence — which the alarm would now
+catch in fifteen minutes rather than in twenty-nine hours.
 
 ### The power cut also released the load block, because the Shelly shares the breaker
 
