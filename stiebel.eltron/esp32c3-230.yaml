@@ -1041,16 +1041,12 @@ interval:
             - delay: 300ms
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x31, 0x00, 0xFA, 0x01, 0xD4, 0x00, 0x00]}   # lammonlahde
-  # ------------------------------------------------ laskurit, tunnin välein
-  # **Kumulatiivisia, joten tunti on oikea väli** — HA:n pitkän aikavälin
-  # tilastot lasketaan tunneittain viimeisestä tilasta, eikä tiheämpi kysely
-  # tuottaisi yhtään lisätietoa.
+  # ------------------------------------------------ käyttötunnit, tunnin välein
+  # **Kumulatiivisia ja hitaita, joten tunti riittää.** Kompressorin ja
+  # jälkilämmityksen käyttötunnit kasvavat korkeintaan tunnin tunnissa, eikä
+  # mikään vertaa niitä mihinkään tuntia tarkemmalla erottelulla.
   #
-  # Energialaskurit ovat neljän elementin ryhmiä: MWh, kWh, päivä ja jäännös.
-  # **Jäännös kysytään ensin**, koska `total()` kuluttaa sen — jos se saapuisi
-  # viimeisenä, ryhmä olisi jo julkaistu ilman sitä.
-  #
-  # 25 pyyntöä eli 50 kehystä tunnissa, kahdentoista tuhannen joukossa.
+  # Viisi pyyntöä eli kymmenen kehystä tunnissa.
   - interval: 60min
     then:
       - if:
@@ -1071,7 +1067,35 @@ interval:
             - delay: 300ms
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x31, 0x00, 0xFA, 0x08, 0x05, 0x00, 0x00]}   # jalkilammitys yht
-            - delay: 300ms
+
+  # ------------------------------------------------- energiat, vartin välein
+  # **Erotettu käyttötunneista, koska näytteistysväli oli tarkkuuden
+  # rajoite eikä laskuri.** Näitä verrataan talon mitattuun tehoon, ja
+  # tunnin näyte antaa vertailulle tunnin epävarmuuden molempiin päihin.
+  #
+  # Kun vertailuikkuna rajattiin laskurin omiin näytteisiin, **suhde muuttui
+  # 1,89:stä 1,40:een pelkästään tämän takia** — mitään ei skaalattu eikä
+  # korjattu, ikkuna vain osui kohdalleen. Loppuero 443 W vastaa
+  # apupumppuja, eli laskuri on oikeassa siitä mitä se lupaa mitata.
+  #
+  # **Älä lisää kerrointa.** Purku on todennettu paneelia vasten sekä
+  # tunneille että energialle; kerroin rikkoisi todennetun luvun
+  # korjatakseen vertailuvirhettä joka ei ole laskurissa.
+  #
+  # **Järjestys on merkitsevä.** Ryhmät ovat neljän elementin sarjoja MWh,
+  # kWh, päivä ja jäännös, ja jäännös kysytään ensin koska `total()`
+  # kuluttaa sen — jos se saapuisi viimeisenä, ryhmä olisi jo julkaistu
+  # ilman sitä. Rivit on siirretty tähän sellaisinaan eikä uudelleen
+  # järjestetty.
+  #
+  # Kaksikymmentä pyyntöä eli 160 kehystä tunnissa entisen 40:n sijaan.
+  # Kahdentoista tuhannen joukossa se on yhä olematonta.
+  - interval: 15min
+    then:
+      - if:
+          condition:
+            switch.is_on: poll_setpoints
+          then:
             - canbus.send: {canbus_id: can0, can_id: 0x680, use_extended_id: false,
                             data: [0x31, 0x00, 0xFA, 0x09, 0x2E, 0x00, 0x00]}   # lammontuotto lammitys
             - delay: 300ms
