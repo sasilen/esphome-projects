@@ -382,10 +382,12 @@ adding this one in parallel gives **≈ 66 Ω**, landing almost exactly on CAN's
 canonical 60 Ω load — closer to correct than the bus is today, and nowhere near
 the ~40 Ω that three terminators would have made.
 
-**R2 comes out.** The argument above is not wrong about CAN in general; it is
-wrong about *this* bus, and the reason is in the next section.
+**R2 stays fitted for now, and the reason is in the next section** — the
+argument above is not wrong about CAN in general, but it was never the reason
+to keep it either. What kept it is that the case for removing it weakened
+before anyone reached for a soldering iron.
 
-### Why R2 is removed, and what that does and does not prove
+### The R2 question: raised, argued, and left alone
 
 The owner pointed out the comparison this file had not made. **A Wemos with an
 MCP2515 sat on this same bus for a week and nothing happened.** Lining the two
@@ -404,13 +406,29 @@ after the freeze.** Both nodes were pure listeners. What separates them is
 three hardware differences, of which the terminator is the only one that can be
 removed without changing the board.
 
-**The decision rests on asymmetry, not on causation.** Termination is
+**The case for removing it was asymmetry, not causation.** Termination is
 unnecessary here and that is measured twice over: the bus has run unterminated
 for years — the display and manager have always talked across 150 Ω — and the
 Wemos added nothing to it for a week at 11 hours and 95 000 frames with two
 malformed. At 20 kbps one bit lasts 50 µs while reflections on a house-scale
-cable settle in hundreds of nanoseconds. **Removing a component that is not
-needed costs nothing, so it does not require proof that it did harm.**
+cable settle in hundreds of nanoseconds. Removing a component that is not
+needed costs nothing electrically, so it would not have required proof that it
+did harm.
+
+**And then the case weakened, so it stays.** "Costs nothing" was a statement
+about the circuit, not about opening an enclosure and soldering on a working
+installation. Two things happened in the hours after the decision:
+
+- **The long run explained itself.** It ended on its own at 06:00:48 after
+  3 h 28 min, and the status word walked down `16577 → 65 → 1` in fifty
+  seconds — precisely what it failed to do on 20 September. Start, run, stop,
+  all reported correctly. It was a heating run, not a fault.
+- **The freeze has not recurred** in the two days since the power cycle.
+
+So the suspect list went cold before the iron was warm. **R2 stays fitted, and
+the trigger for revisiting is written down rather than left to be re-derived:
+if the freeze recurs, R2 comes out first**, because it is the one of three
+hardware differences that can be removed without changing the board.
 
 Three things must be said plainly so nobody reads more into this later:
 
@@ -420,12 +438,14 @@ Three things must be said plainly so nobody reads more into this later:
   and it has an independent explanation in the weather — night minima fell
   14.7 → 11.3 → 9.2 °C over three nights, and that was the first night of real
   heating load.
-- **Removing R2 forfeits the experiment.** If the freeze never returns we will
-  not know whether R2 mattered or whether one occurrence was one occurrence.
-  That is an acceptable price — a single event cannot establish a rate, and
-  waiting for a second would take weeks — but it is a price.
-- **Two differences from the Wemos remain**: the transceiver and the slope
-  limiting. R2 leaving does not clear the hardware, it clears one third of it.
+- **Leaving R2 fitted also leaves the question open**, and that is the
+  deliberate choice. A single event cannot establish a rate, so neither
+  removing nor keeping the part can be validated in any reasonable time. The
+  cheaper of two unfalsifiable options is the one that needs no soldering.
+- **Three differences from the Wemos remain**: the terminator, the transceiver
+  and the slope limiting — plus a fourth that no capture covers, because **this
+  node transmits and the Wemos never did.** Removing R2 would have cleared one
+  of four, not all of them.
 
 **There is still no mechanism.** Three days produced zero malformed frames,
 every poll answered, every node talking. A CAN layer degraded enough to change
