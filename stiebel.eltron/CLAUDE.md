@@ -4429,6 +4429,71 @@ is nothing diagnostic about it. What was diagnostic was the word stopping, not
 the value it stopped on — which is why the alarm tests the contradiction and
 not the number.
 
+## A long run is not a freeze, and the state word cannot tell them apart
+
+Two events three days apart both presented as **a status word that had not
+changed for hours.** One was a controller that had stopped noticing the
+machine; the other was a heat pump doing its job properly for the first time
+this autumn. Anyone who reads only `0x4E5E` will confuse them, so the
+distinction belongs here in full.
+
+| | Freeze, 20 Sep 01:06 | Long run, 22 Sep 02:32 |
+|---|---|---|
+| `0x4E5E` | 689, unchanged 29 h | 16577, unchanged 2 h 45 min |
+| The word claims | running | running |
+| Pressure split | **0.3–0.4 bar**, 1299 samples, max 0.4 | **15.0 bar** |
+| Hot gas | falling 32.7 → 28.7 | rising 60.5 → 70.3 |
+| Source | **rising to 25.4** — plant-room air | **falling to −2.6**, then stable |
+| Buffer | — | 26.5 → 28.1 |
+| DHW tank | **54.2 → 38.5, 28 h with no hot water** | charged to 55.5 overnight |
+| Reality | **stopped** | **running** |
+
+**In both cases the unchanged word was correct behaviour.** It reports
+transitions. During the freeze there were none because the machine had stopped
+and the manager never registered it; during the long run there are none because
+the machine has been in one continuous state. So *"the word has not changed"*
+carries no information on its own — which is exactly why `manager_stuck` tests
+the word against the physics rather than the word against a clock.
+
+**The tell is direction, not magnitude.** In the freeze every quantity moved
+*toward* ambient: pressures equalising, hot gas cooling, and the source sensor
+warming to plant-room temperature because no brine was circulating. In the long
+run everything moves *away* from ambient: pressures apart, hot gas up, source
+below freezing. That is work, and it cannot be faked by a stuck register.
+
+### Continuous running is the correct mode, not a symptom
+
+The instinct that a two-hour run must be wrong is worth naming, because it is
+backwards.
+
+**Cycling is the symptom of surplus capacity.** A machine that reaches its
+target in nineteen minutes and stops has more output than the house needs at
+that moment. Eight starts an hour is harder on contactors and compressor than
+one continuous run, and each start costs efficiency.
+
+**Continuous running means load has met capacity.** On 22 September the flow
+setpoint read 30.0 °C and the flow held 32.2 — target reached and exceeded —
+while the buffer sat flat at 28.1 because the house was consuming exactly what
+was produced. Equilibrium, not failure.
+
+**The record is the problem, not the machine.** This capture is three days old
+and covers only mild weather: night minima 14.7 → 11.3 → 9.2 °C. There is no
+winter baseline in it at all, so the first night of real heating load looks
+unlike everything that has been written down. Expect the same surprise again at
+the first −10 °C night, and expect it not to be a fault either.
+
+### The electricity meter is the independent witness
+
+Worth remembering because every other instrument in this project hangs off the
+same CAN bus: **household consumption is measured by [aidon](../aidon/), which
+touches nothing here.** Continuous operation and nineteen-minute cycling look
+completely different on a power trace, so the meter settles "is the compressor
+actually running" without the bus being involved at all.
+
+That matters specifically while the bus hardware is under suspicion — see "Why
+R2 is removed". An answer that does not depend on the thing being questioned is
+worth more than three that do.
+
 ## The panel stopped polling, and three entities went blind
 
 Three measurements have never been asked for by this node: **`0x000E` the DHW
