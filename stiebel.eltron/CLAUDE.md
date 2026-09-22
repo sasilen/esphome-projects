@@ -4449,6 +4449,58 @@ is nothing diagnostic about it. What was diagnostic was the word stopping, not
 the value it stopped on — which is why the alarm tests the contradiction and
 not the number.
 
+## Two counters carry the wrong name, and the freeze proved it
+
+`0x0805` is published as **Reheat hours both stages** and `0x0923`/`0x0925` as
+**Heat delivered reheat DHW**. Neither survives contact with the other reheat
+counters. Over 2.65 days:
+
+| Counter | Element | Start | End | Change |
+|---|---|---|---|---|
+| Reheat hours stage 1 | `0x0259` | 135 | 135 | **0** |
+| Reheat hours stage 2 | `0x025A` | 133 | 133 | **0** |
+| Reheat hours *both stages* | `0x0805` | 5962 | 5993 | **+31** |
+| Heat delivered reheat heating | `0x0927/29` | 3311 | 3311 | **0** |
+| Heat delivered reheat *DHW* | `0x0923/25` | 9937 | 9941 | **+4** |
+| Compressor hours heating | `0x07FC` | 2274 | 2283 | +9 |
+| Compressor hours DHW | `0x0802` | 3546 | 3548 | +2 |
+
+**`0x0805` fails on magnitude alone.** It reads 5993 hours where stage 1 is 135
+and stage 2 is 133. A counter of hours when *both* stages ran cannot exceed
+either stage's own total, let alone by a factor of forty.
+
+**And it fails on behaviour.** It advances exactly one hour per hour while
+`0x4E5E` bit 9 is set, and not at all otherwise — flat for fifteen hours on 21
+September, and flat right through the three-and-a-half-hour heating run on 22
+September. Twenty-two of its thirty-one increments came during the freeze, hour
+by hour, **while the machine was doing nothing at all.**
+
+> **The freeze is now permanently in the machine's own statistics.** Twenty-two
+> hours of something that never happened, in a counter nothing can correct from
+> here. Anyone reading that counter later will see a long event on 20 September
+> that did not occur.
+
+**`0x0923/0x0925` fails on the same internal contradiction.** It gained 4 kWh
+while both reheat hour counters stood still. An element that does not run
+cannot deliver heat. The heating-side pair `0x0927/0x0929` stayed at exactly
+3311 kWh over the same period, which is consistent with the element genuinely
+being idle — so that name may be right and this one is not.
+
+**A correction follows from this.** It was briefly concluded in conversation
+that the electric element had quietly contributed 4 kWh to the night charge at
+a COP of one, and that this was a place money leaks. **It did not run.** The
+hour counters are the honest witness and they never moved.
+
+Neither element is renamed yet: renaming in YAML mints a new `entity_id` and
+orphans the history, which is a decision rather than a cleanup. What is in the
+file is a warning at the decode site so the number is not billed to the element
+by the next reader.
+
+**Naming them needs a menu walk** — a screen that shows one of these alone, the
+same method that resolved `0x01AC` against `0x01AD`. Until then they are
+numbers that behave a certain way, which is what this file calls an unnamed
+element.
+
 ## A long run is not a freeze, and the state word cannot tell them apart
 
 Two events three days apart both presented as **a status word that had not

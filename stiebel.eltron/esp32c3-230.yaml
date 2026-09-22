@@ -491,6 +491,25 @@ canbus:
                   case 0x0802: id(hours_dhw).publish_state(value);       break;
                   case 0x0259: id(hours_nhz1).publish_state(value);      break;
                   case 0x025A: id(hours_nhz2).publish_state(value);      break;
+                  // **VÄÄRIN NIMETTY, älä luota lukuun.** 0x0805 ei ole
+                  // jälkilämmityksen yhteistunteja. Kaksi todistetta:
+                  //
+                  // 1. Suuruusluokka. Se lukee 5993 h kun vaihe 1 on 135 h ja
+                  //    vaihe 2 on 133 h. "Molemmat vaiheet" ei voi ylittää
+                  //    kumpaakaan osaansa.
+                  // 2. Käyttäytyminen. Se kasvaa täsmälleen tunnin tunnissa
+                  //    silloin kun 0x4E5E:n bitti 9 on päällä, eikä muulloin:
+                  //    21.9. se seisoi viisitoista tuntia paikallaan, ja 22.9.
+                  //    se ei liikkunut kolmen ja puolen tunnin lämmitysajon
+                  //    aikana lainkaan.
+                  //
+                  // **Se kirjasi 22 haamutuntia 20.9. jumin aikana**, jolloin
+                  // kone ei tehnyt mitään. Koneen oma tilasto on siltä osin
+                  // pilalla eikä sitä voi korjata täältä.
+                  //
+                  // Mitä se on, ei ole ratkaistu. Se ei ole kompressorituntien
+                  // summa (2283 + 3548 = 5831, ei 5993). Nimeäminen vaatii
+                  // paneelikävelyn ruudulta joka näyttää tämän yksin.
                   case 0x0805: id(hours_nhz_both).publish_state(value);  break;
 
                   // ---- energy counters arrive in three pieces ------------
@@ -541,6 +560,15 @@ canbus:
                   // the second is the larger of the two by a factor of three.
                   case 0x0929: if (part(4, 0, value)) id(energy_nhz_heat).publish_state(total(4)); break;
                   case 0x0927: if (part(4, 1, value)) id(energy_nhz_heat).publish_state(total(4)); break;
+                  // **Myös tämä pari on väärin nimetty.** Se kasvoi 4 kWh
+                  // 2,65 vuorokaudessa samalla kun jälkilämmityksen molemmat
+                  // tuntilaskurit seisoivat paikallaan. Vastus joka ei käy ei
+                  // voi tuottaa lämpöä, joten tämä mittaa jotain muuta.
+                  //
+                  // Lämmityspuolen vastaava pari 0x0927/0x0929 pysyi samaan
+                  // aikaan tismalleen paikallaan (3311 kWh), mikä sopii siihen
+                  // että vastus todella ei käynyt — eli sen nimi voi olla
+                  // oikein ja tämän ei.
                   case 0x0925: if (part(5, 0, value)) id(energy_nhz_dhw).publish_state(total(5)); break;
                   case 0x0923: if (part(5, 1, value)) id(energy_nhz_dhw).publish_state(total(5)); break;
 
