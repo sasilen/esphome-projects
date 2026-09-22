@@ -376,10 +376,63 @@ terminator — unlike the MCP2515 module, whose own `121` resistor measured 49 k
 because neither jumper was shorted. The marking says what a part is; only the
 meter says whether it reaches the bus.
 
-**Leave it fitted.** The pump's bus measured 150 Ω de-energised, i.e. no
-terminator of its own. Adding this one in parallel gives **≈ 66 Ω**, which lands
-almost exactly on CAN's canonical 60 Ω load — closer to correct than the bus is
-today, and nowhere near the ~40 Ω that three terminators would have made.
+**This said "leave it fitted", and that has been reversed.** The reasoning was:
+the pump's bus measured 150 Ω de-energised, i.e. no terminator of its own, so
+adding this one in parallel gives **≈ 66 Ω**, landing almost exactly on CAN's
+canonical 60 Ω load — closer to correct than the bus is today, and nowhere near
+the ~40 Ω that three terminators would have made.
+
+**R2 comes out.** The argument above is not wrong about CAN in general; it is
+wrong about *this* bus, and the reason is in the next section.
+
+### Why R2 is removed, and what that does and does not prove
+
+The owner pointed out the comparison this file had not made. **A Wemos with an
+MCP2515 sat on this same bus for a week and nothing happened.** Lining the two
+nodes up as they were at the moment of the 20 September freeze:
+
+| | Wemos, one week | C3, ten hours before the freeze |
+|---|---|---|
+| Mode | `LISTENONLY` | **`LISTENONLY`** — the same |
+| Own terminator | `121` marking, measured **49 kΩ**: absent | **R2, 115 Ω, in circuit** |
+| Transceiver | MCP2515 + TJA1050, 5 V | SN65HVD230, 3.3 V |
+| Edge rate | normal | slope-limited, R1 = 9.5 kΩ |
+
+The acknowledgement hypothesis dies here, and this file had the fact needed to
+kill it: `LISTENONLY` was not removed until 07:22 on 20 September, **six hours
+after the freeze.** Both nodes were pure listeners. What separates them is
+three hardware differences, of which the terminator is the only one that can be
+removed without changing the board.
+
+**The decision rests on asymmetry, not on causation.** Termination is
+unnecessary here and that is measured twice over: the bus has run unterminated
+for years — the display and manager have always talked across 150 Ω — and the
+Wemos added nothing to it for a week at 11 hours and 95 000 frames with two
+malformed. At 20 kbps one bit lasts 50 µs while reflections on a house-scale
+cable settle in hundreds of nanoseconds. **Removing a component that is not
+needed costs nothing, so it does not require proof that it did harm.**
+
+Three things must be said plainly so nobody reads more into this later:
+
+- **There has been one freeze, not several.** 20 September 01:06 to 21
+  September 06:21. The unusually long compressor run on 22 September is a
+  different phenomenon on a different night with the node in a different mode,
+  and it has an independent explanation in the weather — night minima fell
+  14.7 → 11.3 → 9.2 °C over three nights, and that was the first night of real
+  heating load.
+- **Removing R2 forfeits the experiment.** If the freeze never returns we will
+  not know whether R2 mattered or whether one occurrence was one occurrence.
+  That is an acceptable price — a single event cannot establish a rate, and
+  waiting for a second would take weeks — but it is a price.
+- **Two differences from the Wemos remain**: the transceiver and the slope
+  limiting. R2 leaving does not clear the hardware, it clears one third of it.
+
+**There is still no mechanism.** Three days produced zero malformed frames,
+every poll answered, every node talking. A CAN layer degraded enough to change
+a heat pump's thermodynamics would show up as frame errors first, and it has
+not. But *"no mechanism"* is not *"not the cause"*, and this file leaned on
+that phrase three times in one day before the owner's week of Wemos made it
+worth re-examining.
 
 **R1 measures 9.5 kΩ, so the board ships in slope-limited mode.** That is a 10 kΩ
 part inside tolerance, tying Rs (pin 8) to ground through a resistor rather than
@@ -4047,9 +4100,11 @@ is not evidence of a boot.
 node was physically on the bus for those ten hours, and it is not electrically
 neutral:
 
-- the SN65HVD230 board's `R2` is fitted at 115 Ω, so **this node added a
-  terminator to a bus previously measured at 150 Ω, i.e. unterminated**
-- the transceiver's receiver sits across CAN_H and CAN_L on a stub
+- the SN65HVD230 board's `R2` was fitted at 115 Ω, so **this node added a
+  terminator to a bus previously measured at 150 Ω, i.e. unterminated** — this
+  is the difference that has since been removed; see "Why R2 is removed"
+- the transceiver's receiver sits across CAN_H and CAN_L on a stub, and it is a
+  3.3 V slope-limited part where the previous node's was a 5 V TJA1050
 
 **It does not load the bus supply, because it is not on it.** The node is
 still fed from USB-C; X27 pin 4 and the LM2596 are the plan for a permanent
