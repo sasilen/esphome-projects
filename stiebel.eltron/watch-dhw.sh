@@ -18,6 +18,11 @@
 # latauksesta. Käsittelyn on ylitettävä 60, joten 57 on mukavuusarvon
 # yläpuolella ja tavoitteen alapuolella.
 #
+# **Marginaali on ohuempi kuin miltä näytti.** 22.9. yön mukavuuslataus
+# huipentui 55,5 asteeseen eikä 54,3:een, eli 57:ään jää puolitoista
+# astetta eikä kolmea. Se riittää yhä, mutta jos asetusarvoa nostetaan
+# edes asteella, tämä raja on nostettava sen mukana.
+#
 # Jos asetusarvoja muutetaan, tämä raja on muutettava niiden mukana.
 #
 # **Älä laske rajaa latauksen alkamisen havaitsemiseksi.** Se houkuttaa:
