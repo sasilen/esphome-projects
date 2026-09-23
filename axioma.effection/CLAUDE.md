@@ -1127,7 +1127,50 @@ vika: kun `GPIO8` ja `GPIO9` vedetään irti, `GPIO10` jää rimaan yksin
 kahden tyhjän paikan taakse ilman naapurien tukea. Se on paikka jonka
 kannattaa tarkistaa ensimmäisenä, ei paikka josta tiedetään mitään.
 
-#### Jäljellä on kaksi mittaamatonta liitosta
+#### Ja syy oli kaksi kuollutta padia C3:ssa
+
+Kaikki yhdeksän liitosta mitattiin lopulta kunnossa oleviksi, ja silti
+`BUSY` ei noussut. Vika löytyi kun **ESPHomea käskettiin ajamaan nastat ylös
+ehdoitta**, ilman NFC-komponenttia:
+
+```yaml
+switch:
+  - platform: gpio
+    pin: GPIO5
+    restore_mode: ALWAYS_ON
+```
+
+| Nasta | Rivi | Lukema |
+|---|---|---|
+| `GPIO1` `GPIO4` `GPIO7` `GPIO8` `GPIO9` `GPIO20` `GPIO21` | molemmat | **3,3 V** |
+| **`GPIO5`** `RST`, riman paikka 1 | rima | **100 mV** |
+| **`GPIO6`** `NSS`, riman paikka 2 | rima | **100 mV** |
+
+Seitsemän nastaa nousee, kaksi ei — ja ne kaksi ovat riman ensimmäiset, eli
+ne jotka saivat eniten lämpöä. **Katkos on C3:n sisällä padin ja piirin
+välissä.** Jatkuvuus `JP1`:stä padiin menee läpi, maahan on 860 kΩ, eikä
+naapureiden välillä ole siltaa — kaikki aiemmat mittaukset osuivat oikein ja
+kertoivat silti väärää tarinaa, koska ne mittasivat padin *ulkopuolista*
+puolta.
+
+**Kuorma suljettiin pois kahdesti.** Ensin laskemalla: 40 mA:n lähdön
+pitäminen 100 millivoltissa vaatisi kolmen ohmin kuorman, eikä PN5180:n tulo
+voi esittää sellaista. Sitten kokeellisesti — omistaja katkaisi rimanastat,
+todensi eristyksen auki ja mittasi uudelleen: **sama 100 mV.** Laskelma oli
+oikea, mutta koe oli silti oikein tehdä, koska päättely oli kaatunut tänä
+iltana useammin kuin kerran.
+
+**Korjaus on kaksi lakkalankaa eikä levyn vaihto.** Kuollut padi on avoin
+piiri eikä häiritse mitään, joten vanhat rimanastat saavat jäädä ja rima
+kantaa levyn edelleen `GPIO7`:n kautta.
+
+**Menetelmä on se osa joka siirtyy muualle:** kun kytkentä on mitattu
+kunnossa olevaksi mutta laite ei silti vastaa, **aja jokainen nasta ylös
+ehdoitta ja mittaa ne verrokkia vasten.** Se erottaa levyn vian kytkennän
+viasta yhdellä käännöksellä, eikä se nojaa siihen että ajuri käyttäytyy
+odotetusti.
+
+#### Jäljellä oli kaksi mittaamatonta liitosta
 
 Todennettua ovat neljä rimanastaa ja kolme jännitettä. **`MISO` → `GPIO3` ja
 `SCK` → `GPIO4` ovat ainoat joita ei ole tarkistettu millään tavalla.**
@@ -1412,8 +1455,8 @@ taulukko on se joka ratkaisee jos kuva on sen kanssa eri mieltä.**
 
 | JP1 | C3 | Reitti |
 |---|---|---|
-| `RST` | `GPIO5` | rimanasta |
-| `NSS` | `GPIO6` | rimanasta |
+| `RST` | `GPIO20` | lakkalanka — oli `GPIO5`, padi rikki |
+| `NSS` | `GPIO21` | lakkalanka — oli `GPIO6`, padi rikki |
 | `MOSI` | `GPIO7` | rimanasta |
 | `BUSY` | `GPIO10` | rimanasta |
 | `MISO` | `GPIO3` | lakkalanka |

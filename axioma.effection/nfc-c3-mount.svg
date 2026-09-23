@@ -79,9 +79,10 @@
   </g>
   <text x="52" y="686" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KYTKENT&#196;</text>
   <g font-size="10.5" fill="#16212B">
-    <text x="52" y="712">rima  <tspan font-weight="700">RST</tspan>=GPIO5  <tspan font-weight="700">NSS</tspan>=GPIO6  <tspan font-weight="700">MOSI</tspan>=GPIO7  <tspan font-weight="700">BUSY</tspan>=GPIO10</text>
-    <text x="52" y="732">lanka <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
+    <text x="52" y="712">rima  <tspan font-weight="700">MOSI</tspan>=GPIO7  <tspan font-weight="700">BUSY</tspan>=GPIO10</text>
+    <text x="52" y="732">lanka <tspan font-weight="700">RST</tspan>=GPIO20  <tspan font-weight="700">NSS</tspan>=GPIO21  <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
     <text x="52" y="752" fill="#5A6772">irti rimasta: GPIO8 GPIO9 (strapping) &#183; GPIO20 GPIO21 (osuisivat GND:hen ja k&#228;ytt&#228;m&#228;tt&#246;m&#228;&#228;n)</text>
+    <text x="52" y="770" fill="#B03A2E">GPIO5- ja GPIO6-padit eiv&#228;t nouse t&#228;ss&#228; yksil&#246;ss&#228; &#8212; RST ja NSS reititettiin langalla GPIO20:een ja GPIO21:een.</text>
 
     <text x="52" y="786" font-weight="700">Vain SCK osuu silkkipainatukseen.</text>
     <text x="52" y="803" fill="#5A6772">C3:n silkki sanoo GPIO5=MISO, GPIO6=MOSI, GPIO7=SS &#8212; t&#228;ss&#228; ne ovat RST, NSS ja MOSI.</text>

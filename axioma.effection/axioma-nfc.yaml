@@ -120,8 +120,13 @@ external_components:
 
 qalcosonicnfc:
   # Nastat kaaviosta `nfc-c3-mount.svg`, asento A.
-  pn5180_rst_pin: GPIO5      # RST   — rimanasta
-  pn5180_nss_pin: GPIO6      # NSS   — rimanasta
+  # **`GPIO5` ja `GPIO6` ovat rikki tässä yksilössä** — ks. CLAUDE.md.
+  # `RST` on `GPIO20`:ssä eikä `GPIO21`:ssä, koska `GPIO21` on UART0:n
+  # lähetysnasta ja ROM-käynnistin kirjoittaa siihen ennen kuin ESPHome
+  # ottaa sen haltuun. `NSS`:n heiluminen boottissa on harmitonta, koska
+  # kello ei käy; `RST`:n heiluminen olisi turhaa nollailua.
+  pn5180_rst_pin: GPIO20     # RST   — lakkalanka, oli GPIO5
+  pn5180_nss_pin: GPIO21     # NSS   — lakkalanka, oli GPIO6
   pn5180_mosi_pin: GPIO7     # MOSI  — rimanasta
   pn5180_busy_pin: GPIO10    # BUSY  — rimanasta
   pn5180_miso_pin: GPIO3     # MISO  — lakkalanka
