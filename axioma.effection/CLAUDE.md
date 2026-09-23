@@ -1070,6 +1070,62 @@ PN5180:n levy vaimentaa C3:n antennia. **Se oli mittausta lentävästä
 laitteesta**, joka liittyi ja putosi jatkuvasti — skannauslukemat eivät ole
 vertailukelpoisia kun radio käynnistyy uudelleen niiden välissä.
 
+### Ensimmäinen ajo: SPI nousee, PN5180 ei vastaa
+
+```
+[C][spi:074]:   Using HW SPI: SPI2_HOST        CLK GPIO4 · SDI GPIO3 · SDO GPIO7
+[D][PN5180:435]: Sending SPI frame: 04 02
+[E][PN5180:444]: Step 3 - Failed to wait for BUSY_ pin to get high
+[E][component:204]: qalcosonicnfc was marked as failed
+```
+
+Kolme asiaa tästä.
+
+**Väylä nousee kaavion mukaan.** Nastat ovat oikein konfiguraatiossa ja
+ESPHome ottaa laitteistoväylän käyttöön. Se osa on todistettu.
+
+**Komponentti ei jumita.** Se merkitsee itsensä epäonnistuneeksi ja lopettaa;
+setup jatkuu ja päättyy `setup() finished successfully!`. **Tämä kumoaa tässä
+tiedostossa aiemmin esitetyn epäilyn** siitä että `BUSY`-odotus söisi
+suoritusajan ja veisi laitteen verkosta. Ajurissa on aikakatkaisu joka
+odotuksessa, eikä komponentti yritä uudelleen.
+
+**`BUSY` lukee matalaa aina.** Step 0 odottaa laskua ja menee läpi; Step 3
+odottaa nousua ja kaatuu. Kolme selitystä, kaikki mitattavissa levy
+virroissa:
+
+| | |
+|---|---|
+| `RST` lukee 0 V | Piiri on pidossa nollauksessa. `BUSY` ei voi nousta |
+| `BUSY` oikosulussa maahan | Juotossilta tai väärä padi |
+| **Rima yhden nastan siirroksissa** | JP1 on `RST NSS MOSI MISO SCK BUSY GND` — askel alaspäin vie `GPIO10`:n maahan ja `GPIO5`:n `NSS`:ään |
+
+Kolmas selittäisi kaiken kerralla, ja sen todentaa yhdellä
+jatkuvuusmittauksella: **`JP1 RST` ↔ `C3 GPIO5`.** Jos vastapari onkin
+`GPIO6`, asia on selvä.
+
+### WiFi ei korjaantunut, ja `NONE` ei ollut korjaus
+
+Samassa ajossa, komponentti jo epäonnistuneena ja siis pois pelistä:
+`-54 dB`, `power_save_mode: NONE` päällä, ja silti `4-Way Handshake
+Timeout`, `Authentication Failed`, `Handshake Failed`.
+
+**Se yksi onnistunut liittyminen `NONE`:n jälkeen oli otos eikä todiste**, ja
+siitä pääteltiin tässä liikaa. Asetus jää paikalleen, koska MikroTikin
+keepalive-mekanismi on yhä uskottava osaselitys ja verkkovirralla hinta on
+olematon — mutta **sen perustelu on nyt hypoteesi eikä havainto**, ja tämä
+kohta on se joka sanoo sen ääneen.
+
+Seuraava askel ei ole uusi asetus laitteeseen vaan **tukiaseman loki**:
+
+```
+/system/logging/add topics=wireless action=memory
+/log/print where topics~"wireless"
+```
+
+Sama sääntö kuin aiemmin tässä luvussa: laite näkee vain oman puolensa, ja
+torjunnan syy on toisella.
+
 ### Komponentin skeema, todennettuna lähdekoodista
 
 `esphome_qalcosonicnfc`:n avaimet luettiin `components/qalcosonicnfc/
