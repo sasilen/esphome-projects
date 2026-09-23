@@ -1095,7 +1095,18 @@ päälle.
 
 ### Kytkentä
 
-Piirretty [`nfc-wiring.svg`](nfc-wiring.svg):ssä.
+Kaksi kuvaa, eri kysymykseen:
+
+| | |
+|---|---|
+| [`nfc-c3-mount.svg`](nfc-c3-mount.svg) | mihin C3 tulee levyn päällä, mikä on rimanasta ja mikä lakkalanka |
+| [`nfc-wiring.svg`](nfc-wiring.svg) | mikä signaali menee mihin nastaan, ilman mekaniikkaa |
+
+**Signaalikaaviossa oli asennon A jälkeen väärä nastakartta** — `RST` `NSS`
+`MOSI` `MISO` osoittivat vielä nastoihin `GPIO3` `GPIO7` `GPIO6` `GPIO5`, eli
+ensimmäiseen ehdotukseen. Se on korjattu. Kaksi kuvaa samasta kytkennästä on
+kaksi paikkaa jotka voivat erkaantua, ja tämä erkaantui heti — **alla oleva
+taulukko on se joka ratkaisee jos kuva on sen kanssa eri mieltä.**
 
 **Valittu asento on A: USB-C ylöspäin, UART vapaana.**
 

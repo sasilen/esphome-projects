@@ -3,7 +3,7 @@
   <rect x="20" y="20" width="840" height="860" fill="none" stroke="#A8B3BC"/>
 
   <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">NFC-REITTI &#8212; PN5180 QALCOSONIC W1:EEN</text>
-  <text x="40" y="80" font-size="12" fill="#5A6772">PN5180-NFC R1.1 &#183; 70 &#215; 39 mm, antenni samalla levyll&#228; &#183; oma solmu, radiosolmuun ei kosketa</text>
+  <text x="40" y="80" font-size="12" fill="#5A6772">Signaalikaavio, asento A &#183; fyysinen sijoitus ja juotosj&#228;rjestys: nfc-c3-mount.svg</text>
   <line x1="20" y1="98" x2="860" y2="98" stroke="#A8B3BC"/>
 
   <text x="52" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">ESP32-C3 SUPERMINI</text>
@@ -16,10 +16,10 @@
   <g font-size="11" fill="#16212B" text-anchor="end">
     <text x="208" y="190">5V</text>
     <text x="208" y="216">3V3</text>
-    <text x="208" y="242">GPIO3</text>
-    <text x="208" y="268">GPIO7</text>
-    <text x="208" y="294">GPIO6</text>
-    <text x="208" y="320">GPIO5</text>
+    <text x="208" y="242">GPIO5</text>
+    <text x="208" y="268">GPIO6</text>
+    <text x="208" y="294">GPIO7</text>
+    <text x="208" y="320">GPIO3</text>
     <text x="208" y="346">GPIO4</text>
     <text x="208" y="372">GPIO10</text>
     <text x="208" y="398">GND</text>

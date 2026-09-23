@@ -12,6 +12,11 @@ ma 7.9.2026 klo 10–18 tuotti **nolla kehystä**, ja kaappaus jatkui siitä
 katkeamatta seuraavaan päivään klo 14 asti. Kuuntelua on yhteensä noin
 **36 tuntia ja nolla kehystä**, ikkunan sisä- ja ulkopuolelta.
 
+**Työn alla on NFC-solmu**, joka lukee mittarin suoraan ilman radiota ja ilman
+AES-avainta. PN5180 on saapunut; ensimmäinen askel on fläshätä C3 paljaana
+ennen kuin mitään juotetaan. Radiosolmu jää pystyyn siihen asti kunnes NFC on
+kertonut onko wM-Bus ylipäätään päällä.
+
 **Todennäköisin syy: mittari on LoRaWAN-luennassa.** W1:ssä LoRaWAN ja wM-Bus
 ovat erilliset liput, ja vesilaitoksella ei ole syytä pitää wM-Busia päällä jos
 se lukee mittarin LoRaWANilla — paristo on mitoitettu 15 vuodeksi. LoRaWAN ei
@@ -238,6 +243,12 @@ lähetysikkunaa ja riippumatta siitä kumpaa radiota vesilaitos käyttää. Hint
 se että vastaanotin on vietävä mittarin viereen — eli WiFin pitää kuulua siellä
 missä mittari on. Ks. [`CLAUDE.md`](CLAUDE.md).
 
+Moduuli on saapunut: **PN5180-NFC R1.1, 70 × 39 mm**, yksiosainen. Se saa oman
+solmunsa **ESP32-C3 SuperMinillä** — radiosolmuun ei kosketa, koska NFC-luku on
+se joka vastaa jäljellä olevaan kysymykseen wM-Busin tilasta. Konfiguraatio on
+[`axioma-nfc.yaml`](axioma-nfc.yaml), kytkentä
+[`nfc-c3-mount.svg`](nfc-c3-mount.svg).
+
 ## Este 2: AES-128-avain
 
 Qalcosonic W1 käyttää yleensä AES-128-salausta. Avain **ei** ole näytössä,
@@ -248,6 +259,98 @@ vain salatut telegrammit.
 Tämä kannattaa laittaa liikkeelle heti, koska siihen menee kalenteriaikaa.
 **Kysy samalla kertaa radiotila ja moodi** — moodi ratkaisee onko rautavalinta
 oikea, eikä sitä kannata selvittää kahdessa erässä.
+
+## NFC-solmun fläshäys — ennen juottamista
+
+**Fläshää C3 ensin, paljaana.** Se ei ole tapa vaan järjestys, ja siihen on
+kaksi syytä:
+
+- **`BOOT` ja `RESET` ovat levyn pinnalla**, ja rima tulee aivan niiden viereen.
+  Paljaalla levyllä ne painuvat sormella.
+- **Viallinen levy selviää ennen kuin siihen on juotettu yhdeksän liitosta.**
+  Hyllyllä on kuusi C3:a; vaihto maksaa nyt minuutteja ja juotosten jälkeen
+  illan.
+
+Ja kolmas syy on siinä mitä fläshätään: `axioma-nfc.yaml` on vaiheessa 1
+**pelkkä runko ilman SPI:tä ja ilman NFC-komponenttia.** WiFi, API ja OTA
+todennetaan erillään siitä onko komponentin konfiguraatio oikein — kaksi
+tuntematonta kerralla on yksi liikaa.
+
+**1. Vie ja validoi.** Kontin `/config` on litteä ja `secrets.yaml` on siellä
+jo jaettuna:
+
+```sh
+podman cp axioma.effection/axioma-nfc.yaml esphome:/config/
+podman exec esphome esphome config /config/axioma-nfc.yaml
+```
+
+`INFO Configuration is valid!` ennen kuin USB-piuha kaivetaan esiin.
+
+**2. Käännä ja ota `.bin` talteen.** ESPHomen web-käyttöliittymästä
+**Install → Manual download → Factory format**. Ensimmäinen käännös hakee C3:n
+toolchainin ja kestää minuutteja.
+
+Käytä `factory`-tiedostoa äläkä `-ota.bin`-versiota. Jälkimmäinen on vain
+sovellusosio ja olettaa että levyllä on jo bootloader ja partitiotaulu.
+
+**3. Aseta levy latautustilaan.** Kumpi tahansa käy:
+
+| | |
+|---|---|
+| Piuha kiinni | pidä `BOOT` pohjassa, napauta `RESET`, päästä `BOOT` |
+| Piuha irti | pidä `BOOT` pohjassa ja kytke USB, päästä `BOOT` |
+
+**4. Kirjoita.** C3 SuperMinissä on **natiivi USB eikä siltapiiriä** — ei
+CH340C:tä kuten DevKitissä, eikä siis CH34x-ajuria. Portti on siksi
+`/dev/ttyACM0` eikä `/dev/ttyUSB0`:
+
+```sh
+sudo esptool --chip esp32c3 --port /dev/ttyACM0 write_flash 0x0 firmware.factory.bin
+```
+
+Jos portti ei ilmesty, `dmesg` kertoo kytkentähetkellä mitä tapahtui. `Permission
+denied` ratkeaa komennolla `sudo usermod -a -G dialout $USER` ja
+uloskirjautumisella.
+
+Natiivi USB **katoaa ja ilmestyy uudelleen** kirjoituksen jälkeen, koska piiri
+käynnistyy uudelleen ja porttilaite luodaan uudestaan. Se näyttää katkokselta
+eikä ole.
+
+**5. Todenna laitteesta, älä komennon paluuarvosta.** Tämä on repon oma sääntö
+ja se on ansaittu: `esphome run` on onnistunut näennäisesti samalla kun OTA ei
+edes lähtenyt.
+
+```sh
+podman exec esphome esphome logs /config/axioma-nfc.yaml
+```
+
+Odotettu tulos on kolme riviä: WiFi yhdistyy, API nousee, ja **`Uptime` alkaa
+juosta nollasta.** `Uptime` on ainoa rivi joka erottaa uudelleenkäynnistyksen
+siitä että lokiasiakas vain liittyi — kokoonpanobanneri toistuu joka
+liittymisellä eikä todista mitään.
+
+`hardware_uart: USB_SERIAL_JTAG` on YAMLissa juuri tätä varten. Ilman sitä
+sarjaportti on hiljaa ja toimiva levy näyttää kuolleelta.
+
+**6. Mittaa kuuluvuus siinä paikassa johon levy on tulossa.** Varavirtalähde,
+levy mittarin viereen. Odotus on noin **−70 dBm**, koska samassa tilassa oleva
+1-Wire-solmu lukee sitä. Tämä on halpaa nyt ja kallista juotosten jälkeen.
+
+**7. Irrota USB ja juota.** Järjestys on pakotettu, koska C3:n alle ei pääse
+kolvilla sen jälkeen kun se on paikallaan: viisi lakkalankaa ensin, sitten rima,
+sitten C3 päälle. Ks. [`nfc-c3-mount.svg`](nfc-c3-mount.svg) ja
+[`CLAUDE.md`](CLAUDE.md).
+
+**8. Vasta sitten vaihe 2.** Poista kommentit `axioma-nfc.yaml`:n loppuosasta
+— `external_components`, `spi` ja NFC-komponentti — ja lähetä OTA:na. USB-C jää
+`+5V`- ja `3.3V`-padien yläpuolelle, joten piuhaa ei enää saa kätevästi kiinni.
+**Tarkista komponentin avainten nimet upstreamin README:stä ennen ensimmäistä
+käännöstä**; YAMLissa oleva lohko on rakenne eikä lainaus, ja vain nastat ovat
+varmoja.
+
+Ja pollausväli on **kolme tuntia eikä tunti.** Mittarin kommunikointikredit on
+noin 20 min/kk eli 40 s/vrk, ja tunnin väli menee jo yli budjetin kahden
+sekunnin luvulla. Perustelu ja mittausohje: [`CLAUDE.md`](CLAUDE.md).
 
 ## Vianetsintä
 
@@ -262,13 +365,25 @@ Ensimmäistä telegrammia voi joutua odottamaan hetken — lähetysväli on noin
 
 ## Seuraavat vaiheet
 
-1. Kuuntele 868,95 MHz arkena klo 6–18
-2. Todenna SPI sarjaportista: `[VV][CC1101]: part: 00, version: XX`, jossa
-   `version` on `04` tai `14`
-3. Laske FIFO-kynnys `0x00`:aan paikallisessa työkopiossa ja katso nouseeko
-   pakettitahti
-4. Kysy vesilaitokselta radiotila, moodi ja AES-128-avain
-5. Pura ensimmäinen telegrammi ja varmista Meter ID siitä
-6. Lisää mittari Home Assistantiin
+**NFC on nyt ensisijainen reitti**, koska se ei riipu kummastakaan esteestä —
+36 tuntia kuuntelua tuotti nolla kehystä, eikä kolmea ensimmäistä
+radiotoimenpidettä ole enää mielekästä jatkaa ennen kuin mittarin oma
+konfiguraatio on luettu.
+
+1. **Fläshää C3 paljaana** ja mittaa WiFi mittarin luona — ks. NFC-solmun
+   fläshäys
+2. Juota yhdeksän liitosta ja kytke vaihe 2 päälle OTA:na
+3. **Paikanna mittarin kela katsomalla**, kiinnitä löysästi, lue kerran
+4. **Mittaa yhden luvun kesto** ja johda pollausväli siitä kertoimella 2–3
+5. Lue mittarista radiotila, moodi ja aikataulumaskit — ne vastaavat siihen
+   mitä radiosolmu ei ole vuorokausissa kertonut
+6. Kysy vesilaitokselta rinnalla: onko `wMBus T1` päällä, missä moodissa, ja
+   AES-128-avain. Tähän menee kalenteriaikaa, joten käynnistä se heti
+7. Lisää mittari Home Assistantiin
+
+**Radiosolmu jää pystyyn eikä sitä pureta** ennen kuin NFC on kertonut onko
+wM-Bus ylipäätään päällä. Jos se osoittautuu päälle kytketyksi, jäljellä on
+vielä SPI:n todennus sarjaportista (`[VV][CC1101]: part: 00, version: XX`,
+jossa `version` on `04` tai `14`) ja ensimmäisen telegrammin purku.
 
 Yksityiskohdat: [`CLAUDE.md`](CLAUDE.md).

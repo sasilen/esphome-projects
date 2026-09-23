@@ -1,0 +1,102 @@
+# Axioma Qalcosonic W1 — NFC-reitti
+#
+# **Tämä on toinen solmu, ei korvaaja.** `axioma.effection.yaml` jää
+# pystyyn CC1101:n kanssa kunnes NFC-luku on kertonut onko mittarin radio
+# ylipäätään päällä. Se on ainoa kysymys johon radiosolmu voi vielä
+# vastata, ja purkaminen ennen vastausta sulkee sen pysyvästi.
+#
+# Kytkentä: `nfc-c3-mount.svg`. Perustelut ja pollausbudjetti: `CLAUDE.md`.
+#
+# ---------------------------------------------------------------------
+# VAIHE 1 — TÄMÄ TIEDOSTO SELLAISENAAN
+#
+# Fläshää C3 **ennen kuin mitään juotetaan.** Syitä on kaksi eikä
+# kumpikaan ole mukavuus:
+#
+#   1. `BOOT`- ja `RESET`-napit ovat levyn pinnalla, ja rima vie tilan
+#      niiden vierestä. Paljaalla levyllä ne ovat sormin painettavissa.
+#   2. Jos levy osoittautuu vialliseksi, se selviää ennen kuin siihen on
+#      juotettu yhdeksän liitosta.
+#
+# Tässä vaiheessa ei ole SPI:tä eikä NFC-komponenttia. Se on tarkoitus:
+# **WiFi, API ja OTA todennetaan erillään siitä onko komponentin
+# konfiguraatio oikein.** Kaksi tuntematonta kerralla on yksi liikaa.
+# ---------------------------------------------------------------------
+
+esphome:
+  name: axioma-nfc
+  friendly_name: Axioma NFC
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+  # **C3 SuperMinissä loki kulkee USB:n yli, ei UART-nastoja pitkin.**
+  # Ilman tätä riviä `esphome logs` sarjaportin kautta on hiljainen ja
+  # levy näyttää kuolleelta vaikka se toimisi.
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    # **Ei salasanaa**, sama kuin repon muissa solmuissa: pelkkä `encryption:`
+    # hylkää salaamattoman lähetyksen ja nojaa API-avaimeen.
+    encryption:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Axioma NFC fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+sensor:
+  - platform: wifi_signal
+    name: "Wi-Fi"
+    update_interval: 60s
+    entity_category: diagnostic
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+
+# ---------------------------------------------------------------------
+# VAIHE 2 — VASTA KUN LEVY ON TODENNETTU JA JUOTETTU
+#
+# Poista kommentit alta. **Tarkista avainten nimet upstreamin
+# README:stä ennen ensimmäistä käännöstä** — niitä ei ole
+# todennettu tässä repossa, ja alla oleva on rakenne eikä lainaus.
+#
+#   https://github.com/dbmaxpayne/esphome_qalcosonicnfc
+#
+# Nastat ovat kaaviosta ja ne ovat varmoja; komponentin avaimet eivät.
+#
+# external_components:
+#   - source:
+#       type: git
+#       url: https://github.com/dbmaxpayne/esphome_qalcosonicnfc
+#
+# spi:
+#   clk_pin: GPIO4       # SCK   — lakkalanka
+#   mosi_pin: GPIO7      # MOSI  — rimanasta
+#   miso_pin: GPIO3      # MISO  — lakkalanka
+#
+# PAIKANPITÄJÄ — komponentin nimi ja avaimet ovat arvaus, nastat eivät:
+# qalcosonic_nfc:
+#   cs_pin: GPIO6        # NSS   — rimanasta
+#   busy_pin: GPIO10     # BUSY  — rimanasta
+#   reset_pin: GPIO5     # RST   — rimanasta
+#
+#   # **Kolme tuntia, ei tuntia.** Mittarin kommunikointikredit on noin
+#   # 20 min/kk eli 40 s/vrk. Kahden sekunnin luvulla tunnin väli on jo
+#   # yli budjetin. Mittaa yhden luvun kesto ja johda väli siitä
+#   # kertoimella 2–3 — ks. CLAUDE.md.
+#   update_interval: 3h
