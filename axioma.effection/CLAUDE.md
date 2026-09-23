@@ -1248,7 +1248,12 @@ osoittaa jaettuun syöttöön: lähetinpää piikittää satoja milliampeereja
 samasta viidestä voltista joka ajaa C3:n radiota, eikä levyllä ole mitään
 puskuria niiden välissä.
 
-**Se nostaa sen 100 µF:n takaisin listalle.** Tässä luki hetken ettei se
+**Kondensaattori on nyt asennettu** — 330 µF / 25 V `+5V`:n ja `GND`:n
+väliin — eikä se muuttanut PN5180:n tulosta: `No communication` jatkuu.
+Se oli odotettavissa, koska rekisterin luku ei vedä virtaa. Sen varsinainen
+koe on vasta edessä: näkyykö verkkokatkoksia kun lukuja alkaa tulla.
+
+**Ja se nosti sen 100 µF:n takaisin listalle.** Tässä luki hetken ettei se
 korjaa mitään tunnettua vikaa; jos epävakaus seuraa moduulin toimintaa, se
 on juuri se vika jota kondensaattori korjaa. Ja se selittäisi miksi
 virtalähteen vaihto ei auttanut: **notkahdus tapahtuu levyllä, ei
