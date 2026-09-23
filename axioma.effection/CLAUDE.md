@@ -864,10 +864,10 @@ RS-485-moduuli kelpaa CAN-väylälle: yhteinen fysiikka ei ole yhteensopivuus.
 Tässä oli neljäs merkki: *"antenni on pieni neliö samalla levyllä — PN5180 on
 kaksiosainen"*. **Se on väärin ja se olisi hylännyt oikean levyn.**
 
-Saapunut moduuli on yksiosainen: yksi sininen levy, jonka oikealla kahdella
-kolmanneksella on kierukka-antenni ja vasemmalla piiri, passiivit ja
-toistakymmentä juotospadia pitkällä reunalla. Rimassa on `5V` ja `BUSY`, ja
-piirissä lukee `PN5180-NFC`.
+Saapunut moduuli on yksiosainen **`PN5180-NFC` rev `R1.1-170710`, 70 × 39 mm**:
+yksi sininen levy, jonka oikeassa päässä on kierukka-antenni ja vasemmassa
+piiri `PN5180A0`, passiivit ja kolmentoista nastan rima `JP1`. Rimassa on sekä
+`+5V` että `BUSY`, eli molemmat ne joita RC522:ssa ei ole.
 
 Kaksiosaisuus on siis **yhden myydyimmän mallin ominaisuus eikä piirin
 ominaisuus**, ja se oli tässä tiedostossa yleistetty tunnistimeksi yhden
@@ -977,11 +977,24 @@ tarvitse sitä.
 
 Piirretty [`nfc-wiring.svg`](nfc-wiring.svg):ssä.
 
-```
-SCK    GPIO4        NSS    GPIO7
-MOSI   GPIO6        BUSY   GPIO10
-MISO   GPIO5        RST    GPIO3
-```
+**Levy on `PN5180-NFC` rev `R1.1-170710`, 70 × 39 mm, piiri `PN5180A0`.**
+Rimassa `JP1` on kolmetoista nastaa, ja johdotus noudattaa niiden omaa
+järjestystä — silloin yhdeksän johtoa menee rinnakkain ilman risteyksiä:
+
+| JP1 | C3 | |
+|---|---|---|
+| `+5V` | `5V` | lähetinpää |
+| `3.3V` | `3V3` | logiikka |
+| `RST` | `GPIO3` | |
+| `NSS` | `GPIO7` | |
+| `MOSI` | `GPIO6` | |
+| `MISO` | `GPIO5` | |
+| `SCK` | `GPIO4` | |
+| `BUSY` | `GPIO10` | valmiuslinja |
+| `GND` | `GND` | |
+| `GPIO` `IRQ` `AUX` `REQ` | — | jäävät vapaaksi |
+
+Neljä alinta jää kytkemättä: komponentti ei käytä niitä.
 
 C3:lla SPI ei ole sidottu kiinteisiin nastoihin, joten valinta on vapaa.
 Kuusikko väistää **strapping-nastat `GPIO2`, `GPIO8` ja `GPIO9`** sekä USB:n

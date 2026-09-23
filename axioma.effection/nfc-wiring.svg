@@ -1,101 +1,99 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 780" width="860" height="780" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
-  <rect width="860" height="780" fill="#E9ECEF"/>
-  <rect x="20" y="20" width="820" height="740" fill="none" stroke="#A8B3BC"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 900" width="880" height="900" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="880" height="900" fill="#E9ECEF"/>
+  <rect x="20" y="20" width="840" height="860" fill="none" stroke="#A8B3BC"/>
 
   <text x="40" y="58" font-size="21" font-weight="700" fill="#16212B" letter-spacing="1.5">NFC-REITTI &#8212; PN5180 QALCOSONIC W1:EEN</text>
-  <text x="40" y="80" font-size="12" fill="#5A6772">ISO 15693 / NFC-V &#183; ei AES-avainta, ei l&#228;hetysikkunaa &#183; yksiosainen PN5180-NFC &#183; oma solmu, radiosolmuun ei kosketa</text>
-  <line x1="20" y1="98" x2="840" y2="98" stroke="#A8B3BC"/>
+  <text x="40" y="80" font-size="12" fill="#5A6772">PN5180-NFC R1.1 &#183; 70 &#215; 39 mm, antenni samalla levyll&#228; &#183; oma solmu, radiosolmuun ei kosketa</text>
+  <line x1="20" y1="98" x2="860" y2="98" stroke="#A8B3BC"/>
 
-  <text x="50" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">OHJAIN</text>
-  <text x="352" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">LUKIJA</text>
-  <text x="652" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">MITTARI</text>
+  <text x="52" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">ESP32-C3 SUPERMINI</text>
+  <text x="392" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">PN5180 &#183; JP1</text>
+  <text x="672" y="128" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">MITTARI</text>
 
-  <!-- C3 -->
-  <rect x="50" y="150" width="190" height="330" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
-  <text x="145" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">ESP32-C3</text>
-  <text x="145" y="192" font-size="10" fill="#5A6772" text-anchor="middle">SuperMini</text>
+  <rect x="52" y="146" width="168" height="374" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <rect x="392" y="146" width="168" height="374" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+
+  <g font-size="11" fill="#16212B" text-anchor="end">
+    <text x="208" y="190">5V</text>
+    <text x="208" y="216">3V3</text>
+    <text x="208" y="242">GPIO3</text>
+    <text x="208" y="268">GPIO7</text>
+    <text x="208" y="294">GPIO6</text>
+    <text x="208" y="320">GPIO5</text>
+    <text x="208" y="346">GPIO4</text>
+    <text x="208" y="372">GPIO10</text>
+    <text x="208" y="398">GND</text>
+  </g>
   <g font-size="11" fill="#16212B">
-    <text x="152" y="222">5V</text>
-    <text x="152" y="252">3V3</text>
-    <text x="152" y="282">GND</text>
-    <text x="130" y="312">GPIO4</text>
-    <text x="130" y="342">GPIO6</text>
-    <text x="130" y="372">GPIO5</text>
-    <text x="130" y="402">GPIO7</text>
-    <text x="126" y="432">GPIO10</text>
-    <text x="130" y="462">GPIO3</text>
+    <text x="404" y="190">+5V</text>
+    <text x="404" y="216">3.3V</text>
+    <text x="404" y="242">RST</text>
+    <text x="404" y="268">NSS</text>
+    <text x="404" y="294">MOSI</text>
+    <text x="404" y="320">MISO</text>
+    <text x="404" y="346">SCK</text>
+    <text x="404" y="372">BUSY</text>
+    <text x="404" y="398">GND</text>
   </g>
-  <g font-size="9" fill="#5A6772">
-    <text x="60" y="315">SCK</text>
-    <text x="60" y="345">MOSI</text>
-    <text x="60" y="375">MISO</text>
-    <text x="60" y="405">NSS</text>
-    <text x="60" y="435">BUSY</text>
-    <text x="60" y="465">RST</text>
+  <g font-size="11" fill="#A8B3BC">
+    <text x="404" y="424">GPIO</text>
+    <text x="404" y="450">IRQ</text>
+    <text x="404" y="476">AUX</text>
+    <text x="404" y="502">REQ</text>
   </g>
-
-  <!-- PN5180 -->
-  <rect x="350" y="150" width="190" height="330" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
-  <text x="445" y="176" font-size="13" font-weight="700" fill="#16212B" text-anchor="middle">PN5180</text>
-  <text x="445" y="192" font-size="10" fill="#5A6772" text-anchor="middle">yksiosainen, antenni mukana</text>
-  <g font-size="11" fill="#16212B">
-    <text x="366" y="222">5V</text>
-    <text x="366" y="252">3V3</text>
-    <text x="366" y="282">GND</text>
-    <text x="366" y="312">SCK</text>
-    <text x="366" y="342">MOSI</text>
-    <text x="366" y="372">MISO</text>
-    <text x="366" y="402">NSS</text>
-    <text x="366" y="432">BUSY</text>
-    <text x="366" y="462">RST</text>
-  </g>
+  <text x="560" y="428" font-size="10" fill="#5A6772">nelj&#228; ylint&#228;</text>
+  <text x="560" y="444" font-size="10" fill="#5A6772">j&#228;&#228;v&#228;t vapaaksi</text>
+  <text x="560" y="460" font-size="10" fill="#5A6772">&#8212; komponentti</text>
+  <text x="560" y="476" font-size="10" fill="#5A6772">ei k&#228;yt&#228; niit&#228;</text>
 
   <g stroke="#16212B" stroke-width="1.5" fill="none">
-    <path d="M240 218 H350"/><path d="M240 248 H350"/><path d="M240 278 H350"/>
-    <path d="M240 308 H350"/><path d="M240 338 H350"/><path d="M240 368 H350"/>
-    <path d="M240 398 H350"/><path d="M240 428 H350"/><path d="M240 458 H350"/>
+    <path d="M220 186 H392"/><path d="M220 212 H392"/><path d="M220 238 H392"/>
+    <path d="M220 264 H392"/><path d="M220 290 H392"/><path d="M220 316 H392"/>
+    <path d="M220 342 H392"/><path d="M220 368 H392"/><path d="M220 394 H392"/>
   </g>
   <g font-size="9" fill="#5A6772" text-anchor="middle">
-    <text x="295" y="214">l&#228;hetinp&#228;&#228;</text>
-    <text x="295" y="244">logiikka</text>
-    <text x="295" y="424">valmiuslinja</text>
+    <text x="306" y="182">l&#228;hetinp&#228;&#228;</text>
+    <text x="306" y="208">logiikka</text>
+    <text x="306" y="364">valmiuslinja</text>
   </g>
+  <text x="306" y="420" font-size="10" fill="#5A6772" text-anchor="middle">yhdeks&#228;n johtoa, ei risteyksi&#228;</text>
+  <text x="306" y="436" font-size="10" fill="#5A6772" text-anchor="middle">&#8212; rimat ovat samassa j&#228;rjestyksess&#228;</text>
 
-  <!-- mittari -->
-  <text x="650" y="196" font-size="10" fill="#5A6772">kierukka-antenni on</text>
-  <text x="650" y="212" font-size="10" fill="#5A6772">samalla levyll&#228;, ei</text>
-  <text x="650" y="228" font-size="10" fill="#5A6772">erillist&#228; antennilevy&#228;</text>
+  <rect x="672" y="146" width="168" height="200" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
+  <text x="756" y="176" font-size="12" font-weight="700" fill="#16212B" text-anchor="middle">Qalcosonic W1</text>
+  <text x="756" y="200" font-size="10" fill="#5A6772" text-anchor="middle">NFC-V, ISO 15693</text>
+  <text x="756" y="220" font-size="10" fill="#5A6772" text-anchor="middle">luku ilman salasanaa</text>
+  <text x="756" y="240" font-size="10" fill="#5A6772" text-anchor="middle">kirjoitus lukittu</text>
+  <text x="756" y="276" font-size="11" font-weight="700" fill="#16212B" text-anchor="middle">~20 min/kk</text>
+  <text x="756" y="294" font-size="10" fill="#5A6772" text-anchor="middle">kommunikointikredit</text>
+  <text x="756" y="318" font-size="10" fill="#5A6772" text-anchor="middle">rajan t&#228;yttyess&#228; lukko</text>
+  <text x="756" y="334" font-size="10" fill="#5A6772" text-anchor="middle">tunnin vaihtumiseen</text>
+  <path d="M560 240 H672" stroke="#16212B" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
+  <text x="616" y="232" font-size="9" fill="#5A6772" text-anchor="middle">kentt&#228;</text>
 
-  <rect x="650" y="300" width="160" height="180" rx="4" fill="#FFFFFF" stroke="#16212B" stroke-width="1.5"/>
-  <text x="730" y="328" font-size="12" font-weight="700" fill="#16212B" text-anchor="middle">Qalcosonic W1</text>
-  <text x="730" y="350" font-size="10" fill="#5A6772" text-anchor="middle">NFC-V, ISO 15693</text>
-  <text x="730" y="372" font-size="10" fill="#5A6772" text-anchor="middle">luku ilman salasanaa</text>
-  <text x="730" y="394" font-size="10" fill="#5A6772" text-anchor="middle">kirjoitus lukittu</text>
-  <text x="730" y="424" font-size="10" font-weight="700" fill="#16212B" text-anchor="middle">~20 min/kk</text>
-  <text x="730" y="440" font-size="10" fill="#5A6772" text-anchor="middle">kommunikointikredit</text>
-  <path d="M540 330 H650" stroke="#16212B" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
-  <text x="560" y="322" font-size="9" fill="#5A6772">kentt&#228;, muutama cm</text>
-
-  <line x1="20" y1="510" x2="840" y2="510" stroke="#A8B3BC"/>
-  <text x="50" y="536" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">NELJ&#196; ASIAA JOTKA MENEV&#196;T HELPOSTI V&#196;&#196;RIN</text>
+  <line x1="20" y1="550" x2="860" y2="550" stroke="#A8B3BC"/>
+  <text x="52" y="576" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">NELJ&#196; ASIAA JOTKA MENEV&#196;T HELPOSTI V&#196;&#196;RIN</text>
 
   <g font-size="11" fill="#16212B">
-    <text x="50" y="566" font-weight="700">1</text>
-    <text x="72" y="566" font-weight="700">Molemmat j&#228;nnitteet, ei vain 3,3 V.</text>
-    <text x="72" y="583" fill="#5A6772">L&#228;hetinp&#228;&#228; ottaa viisi volttia ja piikittaa satoja milliampeereja RF-purskeessa.</text>
-    <text x="72" y="599" fill="#5A6772">100 &#181;F moduulin viereen. Tarkista ett&#228; SuperMinissa on 5V-nasta &#8212; kaikissa ei ole.</text>
+    <text x="52" y="608" font-weight="700">1</text>
+    <text x="76" y="608" font-weight="700">Molemmat j&#228;nnitteet, ei vain 3,3 V.</text>
+    <text x="76" y="626" fill="#5A6772">L&#228;hetinp&#228;&#228; ottaa viisi volttia ja piikittaa satoja milliampeereja RF-purskeessa.</text>
+    <text x="76" y="642" fill="#5A6772">100 &#181;F moduulin viereen. Tarkista ett&#228; SuperMinissa on 5V-nasta &#8212; kaikissa ei ole.</text>
 
-    <text x="50" y="627" font-weight="700">2</text>
-    <text x="72" y="627" font-weight="700">BUSY on pakollinen, ei valinnainen.</text>
-    <text x="72" y="644" fill="#5A6772">PN5180 ei ole tavallinen SPI-orja: jokaisen komennon j&#228;lkeen on odotettava</text>
-    <text x="72" y="660" fill="#5A6772">BUSY:n laskua. Ilman sit&#228; luku palauttaa roskaa eik&#228; virhett&#228;.</text>
+    <text x="52" y="674" font-weight="700">2</text>
+    <text x="76" y="674" font-weight="700">BUSY on pakollinen, ei valinnainen.</text>
+    <text x="76" y="692" fill="#5A6772">PN5180 ei ole tavallinen SPI-orja: jokaisen komennon j&#228;lkeen on odotettava</text>
+    <text x="76" y="708" fill="#5A6772">BUSY:n laskua. Ilman sit&#228; luku palauttaa roskaa eik&#228; virhett&#228;.</text>
 
-    <text x="50" y="688" font-weight="700">3</text>
-    <text x="72" y="688" font-weight="700">Nastat v&#228;ist&#228;v&#228;t strappingin ja USB:n.</text>
-    <text x="72" y="705" fill="#5A6772">C3:lla SPI ei ole sidottu nastoihin. GPIO2, GPIO8 ja GPIO9 ovat strapping-nastoja</text>
-    <text x="72" y="721" fill="#5A6772">ja GPIO18/19 on USB. Yll&#228; oleva kuusikko v&#228;ltt&#228;&#228; kaikki.</text>
+    <text x="52" y="740" font-weight="700">3</text>
+    <text x="76" y="740" font-weight="700">Nastat v&#228;ist&#228;v&#228;t strappingin ja USB:n.</text>
+    <text x="76" y="758" fill="#5A6772">C3:lla SPI ei ole sidottu nastoihin. GPIO2, GPIO8 ja GPIO9 ovat strapping-nastoja</text>
+    <text x="76" y="774" fill="#5A6772">ja GPIO18/19 on USB. Yll&#228; oleva valinta v&#228;ltt&#228;&#228; kaikki.</text>
 
-    <text x="50" y="749" font-weight="700">4</text>
-    <text x="72" y="749" font-weight="700">Koko moduuli mittaria vasten &#8212; ja C3 sen viereen, koska SPI ei sied&#228; pitki&#228; johtoja.</text>
+    <text x="52" y="806" font-weight="700">4</text>
+    <text x="76" y="806" font-weight="700">Koko levy menee mittaria vasten, ja C3 sen viereen.</text>
+    <text x="76" y="824" fill="#5A6772">70 &#215; 39 mm, antenni oikeassa p&#228;&#228;ss&#228;, nelj&#228; kiinnitysreik&#228;&#228;. Antennia ei voi</text>
+    <text x="76" y="840" fill="#5A6772">sijoittaa erilleen, ja SPI ei sied&#228; pitki&#228; johtoja &#8212; pid&#228; ne alle 20 cm:ss&#228;.</text>
+    <text x="76" y="856" fill="#5A6772">Lukuet&#228;isyys on lyhyempi kuin erillisell&#228; antennilevyll&#228;: kohdistus on ty&#246;t&#228;.</text>
   </g>
 </svg>
