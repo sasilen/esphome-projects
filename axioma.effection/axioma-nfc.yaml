@@ -125,8 +125,19 @@ qalcosonicnfc:
   # lähetysnasta ja ROM-käynnistin kirjoittaa siihen ennen kuin ESPHome
   # ottaa sen haltuun. `NSS`:n heiluminen boottissa on harmitonta, koska
   # kello ei käy; `RST`:n heiluminen olisi turhaa nollailua.
-  pn5180_rst_pin: GPIO20     # RST   — lakkalanka, oli GPIO5
-  pn5180_nss_pin: GPIO21     # NSS   — lakkalanka, oli GPIO6
+  # **`GPIO5` ja `GPIO6` ovat rikki tässä yksilössä, ja `GPIO20`/`GPIO21`
+  # jumittavat käynnistyksen.** Molemmat on todettu mittaamalla, ks.
+  # CLAUDE.md.
+  #
+  # Ensimmäinen siirto `GPIO20`/`GPIO21`:een oli väärä valinta: boottaus
+  # pysähtyi riviin `Using HW SPI: SPI2_HOST` eikä `spi_device`-riviä tullut
+  # lainkaan, ja `safe_mode` laski käynnistyksen epäonnistuneeksi. Pelkkä
+  # nastojen vaihto tähän poisti oireen, muuta ei muutettu.
+  #
+  # `GPIO1` ja `GPIO0` ovat kaukorivissä, eivät strapping-nastoja eivätkä
+  # UART0:aa.
+  pn5180_rst_pin: GPIO1      # RST   — lakkalanka, oli GPIO5
+  pn5180_nss_pin: GPIO0      # NSS   — lakkalanka, oli GPIO6
   pn5180_mosi_pin: GPIO7     # MOSI  — rimanasta
   pn5180_busy_pin: GPIO10    # BUSY  — rimanasta
   pn5180_miso_pin: GPIO3     # MISO  — lakkalanka

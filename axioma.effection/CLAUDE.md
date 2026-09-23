@@ -1160,6 +1160,21 @@ todensi eristyksen auki ja mittasi uudelleen: **sama 100 mV.** Laskelma oli
 oikea, mutta koe oli silti oikein tehdä, koska päättely oli kaatunut tänä
 iltana useammin kuin kerran.
 
+**Ja ensimmäinen kohdevalinta oli väärä.** `GPIO20` ja `GPIO21` valittiin
+sillä perusteella että ne eivät ole strapping-nastoja ja että UART0 on
+vapaa, koska loggeri käyttää `USB_SERIAL_JTAG`:ia. Se päättely oli oikein
+paperilla ja väärin käytännössä: **boottaus pysähtyi riviin `Using HW SPI:
+SPI2_HOST`**, `spi_device`-riviä ei tullut lainkaan ja `safe_mode` laski
+käynnistyksen epäonnistuneeksi.
+
+Pelkkä nastojen vaihto `GPIO1`:een ja `GPIO0`:aan poisti oireen — langat
+jätettiin koskematta, eli muuta ei muutettu. **Mekanismia ei ole
+todennettu**, ja empiirinen sääntö riittää: älä käytä C3:n UART0-nastoja
+SPI:n ohjauslinjoihin, vaikka loggeri olisi USB:llä.
+
+Sama koe erotti samalla toisen mahdollisuuden pois: jos jumi olisi johtunut
+uudesta juotoksesta, se olisi jatkunut nastojen vaihdon jälkeen.
+
 **Korjaus on kaksi lakkalankaa eikä levyn vaihto.** Kuollut padi on avoin
 piiri eikä häiritse mitään, joten vanhat rimanastat saavat jäädä ja rima
 kantaa levyn edelleen `GPIO7`:n kautta.
@@ -1458,8 +1473,8 @@ taulukko on se joka ratkaisee jos kuva on sen kanssa eri mieltä.**
 
 | JP1 | C3 | Reitti |
 |---|---|---|
-| `RST` | `GPIO20` | lakkalanka — oli `GPIO5`, padi rikki |
-| `NSS` | `GPIO21` | lakkalanka — oli `GPIO6`, padi rikki |
+| `RST` | `GPIO1` | lakkalanka — oli `GPIO5`, padi rikki |
+| `NSS` | `GPIO0` | lakkalanka — oli `GPIO6`, padi rikki |
 | `MOSI` | `GPIO7` | rimanasta |
 | `BUSY` | `GPIO10` | rimanasta |
 | `MISO` | `GPIO3` | lakkalanka |
