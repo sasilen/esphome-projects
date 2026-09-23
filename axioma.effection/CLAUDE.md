@@ -973,6 +973,53 @@ sama huone.
 lepää kipinöivässä harjamoottorissa suljetussa rasiassa, eikä tämä projekti
 tarvitse sitä.
 
+### Kohdistus ilman tulostettua koteloa
+
+Upstream-projektissa on 3D-tulostettu kotelo joka kohdistaa antennin mittarin
+kelaan. **Sitä ei käytetä**, ja syy on parempi kuin maku: kotelo lukitsee
+asennon ennen kuin se on todennettu. Levyssä on neljä kiinnitysreikää, ja
+nippuside tai ohut kaksipuolinen teippi antaa säätää kohdistusta ensimmäisen
+onnistuneen luvun jälkeen — kotelo ei anna.
+
+**Asento seuraa fysiikasta eikä ole makuasia:**
+
+- **Litteänä pintaa vasten.** NFC on induktiivista kytkentää: kenttä kulkee
+  kelan tason läpi, joten levy ei mene kyljelleen. Kierto tasossa ei merkitse
+  mitään, koska molemmat ovat silmukoita eivätkä dipoleja.
+- **Antennipää kelan päälle, rimapää poispäin.** Levystä vain oikea ~40 mm on
+  antennia, ja kun rima osoittaa poispäin, johdot lähtevät sivuun eivätkä
+  taitu kelan yli.
+- **Sileä puoli mittariin päin.** Komponentit nostavat levyä millimetrejä irti
+  ja kytkentä heikkenee etäisyyden myötä nopeasti.
+- **Ei metallia väliin eikä antennin taakse.** Johtava pinta vaimentaa kentän
+  ja virittää antennin pois. Nippuside on muovia; kannake ei välttämättä ole.
+
+### Etsi kela katsomalla, älä pollaamalla — mutta käsin kokeilu on halpaa
+
+Tässä luki hetken että paikkaa ei saa etsiä kokeilemalla lainkaan. **Se oli
+liian jyrkkä.** Ero on automaattisen ja käsin tehdyn välillä:
+
+| | Krediittiä 1200 s/kk:sta |
+|---|---|
+| Kymmenen käsin tehtyä koelukua | ~20–30 s, alle 3 % |
+| Pollausluuppi joka hakee osumaa | kuukausi minuuteissa |
+
+Kokeileminen ei siis ole se mikä budjetin polttaa, vaan **silmukka joka jää
+päälle etsimisen ajaksi.** Kytke automaattipollaus päälle vasta kun kohdistus
+on löytynyt ja levy on kiinni pysyvästi.
+
+Halvin järjestys:
+
+1. **Paikanna kela katsomalla** — nolla krediittiä. Kannessa on usein merkintä
+   tai muotoiltu ympyrä; kela on tyypillisesti näytön lähellä muovin takana; ja
+   **W1:n FCC-hakemuksen sisäkuvat** ovat julkisia ja näyttävät sen suoraan. Se
+   on sama lähde josta upstream-tekijä sen paikansi.
+2. **Kiinnitä löysästi ja lue kerran.**
+3. **Jos ei osu, siirrä senttimetri.**
+
+Vasta kun luku onnistuu, kiinnitys tehdään pysyväksi ja pollaus kytketään
+päälle.
+
 ### Kytkentä
 
 Piirretty [`nfc-wiring.svg`](nfc-wiring.svg):ssä.
