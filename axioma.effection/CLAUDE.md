@@ -1097,6 +1097,19 @@ päälle.
 
 Piirretty [`nfc-wiring.svg`](nfc-wiring.svg):ssä.
 
+**Variantti B:n kartta oli edellisessä versiossa väärin.** Levyn kääntö peilaa
+kaikki kahdeksan nastaa, ei vain kuutta — oikea B on `RST=GPIO21`,
+`NSS=GPIO20`, `MOSI=GPIO10`, `BUSY=GPIO7`. Siitä seuraa uusi hinta jota A:lla
+ei ole: **`GPIO20` ja `GPIO21` ovat UART0:n RX ja TX.** Loki kulkee USB CDC:n
+yli joten se ei kaadu, mutta sarjakonsoli menee. A jättää UARTin vapaaksi.
+
+**Ja langat juotetaan yläpuolelta, ei alta.** Tämä kääntyi kun geometria
+korjattiin: C3 on rimalla 2,5–6 mm ilmassa, joten padin päällä on tilaa
+langalle. Alapinta pysyy siistimpänä kun sinne jää vain neljä rimanastaa — ja
+nekin katkaistaan tasan juotoksen jälkeen. Aiempi perustelu altapäin
+juottamiselle nojasi siihen että C3 makaisi kiinni pinnassa, mikä ei pidä
+paikkaansa.
+
 **Levy on `PN5180-NFC` rev `R1.1-170710`, 70 × 39 mm, piiri `PN5180A0`.**
 Rimassa `JP1` on kolmetoista nastaa, ja johdotus noudattaa niiden omaa
 järjestystä — silloin yhdeksän johtoa menee rinnakkain ilman risteyksiä:
