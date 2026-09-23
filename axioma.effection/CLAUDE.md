@@ -1104,6 +1104,34 @@ Kolmas selittäisi kaiken kerralla, ja sen todentaa yhdellä
 jatkuvuusmittauksella: **`JP1 RST` ↔ `C3 GPIO5`.** Jos vastapari onkin
 `GPIO6`, asia on selvä.
 
+#### Ja syy oli `BUSY`-liitos: yksinäinen rimanasta ei yltänyt
+
+`JP1 BUSY` ↔ `C3 GPIO10` mittasi **353 kΩ**, mikä ei ole yhteys vaan
+vuotopolku C3:n ESD-diodien kautta. Kytkemätön tulo kellui matalana, joten
+Step 0 meni läpi ja Step 3 ei voinut onnistua koskaan. Loki kuvasi siis
+kytkentävikaa tarkalleen — kunhan tietää mitä `Step 3` tarkoittaa.
+
+**Vika on rakenteellinen eikä sattumaa.** Rimasta vedetään irti `GPIO8` ja
+`GPIO9`, jotka ovat `GPIO10`:n ja kolmen muun välissä:
+
+```
+GPIO5  GPIO6  GPIO7    ·      ·     GPIO10    ·      ·
+ RST    NSS   MOSI   (MISO)  (SCK)   BUSY   (GND) (GPIO)
+```
+
+Kolme ensimmäistä tukevat toisiaan muovirungossa. **`GPIO10` jää yksin
+kahden tyhjän paikan taakse**, eikä mikään estä sitä liukumasta muovin
+sisällä niin ettei se yllä toiseen levyyn. Sitä ei näe katsomalla, ja
+jatkuvuusmittaus tehtiin ennen virtaa mutta ilmeisesti ei tästä nastasta.
+
+**Korvaa se lakkalangalla** niiden viiden muun tapaan. Yksi lanka on
+luotettavampi kuin yksinäinen rimanasta, eikä rima menetä siitä
+mekaanista tehtäväänsä — kolme vierekkäistä nastaa kantaa levyn.
+
+Yleisempi muoto, joka kannattaa siirtää muihinkin projekteihin: **rima
+kannattaa katkaista sieltä mistä nastat ovat vierekkäin, ja hoitaa
+yksittäiset signaalit langalla.** Irrotettu nasta jättää naapurinsa tuetta.
+
 ### WiFi ei korjaantunut, ja `NONE` ei ollut korjaus
 
 Samassa ajossa, komponentti jo epäonnistuneena ja siis pois pelistä:
