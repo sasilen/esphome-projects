@@ -20,9 +20,9 @@
 # — levy nousi ja liittyi verkkoon, mikä todistaa ettei yksikään strapping-
 # nasta (`GPIO2`, `GPIO8`, `GPIO9`) ole pidossa.
 #
-# Vaihe 2 alempana on nyt aktiivinen. Jos jokin menee pieleen, tämän
-# tiedoston loppuosan voi kommentoida pois ja palata todistetusti toimivaan
-# runkoon yhdellä OTA:lla.
+# **Ja se ansaitsi itsensä kolmannen kerran:** vaihe 2 on nyt kommentoitu
+# pois rajauskokeeksi, ja paluu todistetusti toimivaan runkoon maksoi yhden
+# käännöksen. Perustelu on alempana.
 # ---------------------------------------------------------------------
 
 esphome:
@@ -105,28 +105,47 @@ sensor:
 # `@main` on liikkuva viittaus, ja sama YAML voi kääntyä eri tavalla ilman
 # että repossa muuttuu mitään.
 
-external_components:
-  - source:
-      type: git
-      url: https://github.com/dbmaxpayne/esphome_qalcosonicnfc
-      ref: bed6773b803a7ebf71613585aad8a73376d38b8e
-    components: [qalcosonicnfc]
-    refresh: never
+# ---------------------------------------------------------------------
+# VAIHE 2 ON KOMMENTOITU POIS — RAJAUSKOE
+#
+# Laite liittyi verkkoon ensimmäisellä yrityksellä (−57 dB, `attempt 1/2`)
+# ja katosi vasta sen jälkeen. Se on eri oire kuin illan liittymisvirheet,
+# ja ainoa uusi asia levyllä oli tämä lohko.
+#
+# **Koe erottaa kaksi asiaa yhdellä käännöksellä:** jos laite pysyy pystyssä
+# tuntikausia ilman NFC-komponenttia, `power_save_mode: NONE` on todistettu
+# ja vika on rajattu komponenttiin. Jos se katoaa tästäkin, WiFi on yhä auki
+# eikä komponentti ole syyllinen.
+#
+# Epäilty on `BUSY`-kättely: PN5180 vaatii odotusta jokaisen komennon
+# jälkeen, ja jos piiri ei vastaa, tiukka odotussilmukka syö suoritusajan
+# eikä verkkopino ehdi tehdä mitään. Laite näyttää kadonneelta vaikka on
+# pystyssä.
+#
+# Palautus: poista `# ` jokaisen rivin edestä tästä loppuun.
+# ---------------------------------------------------------------------
+# external_components:
+#   - source:
+#       type: git
+#       url: https://github.com/dbmaxpayne/esphome_qalcosonicnfc
+#       ref: bed6773b803a7ebf71613585aad8a73376d38b8e
+#     components: [qalcosonicnfc]
+#     refresh: never
 
-qalcosonicnfc:
+# qalcosonicnfc:
   # Nastat kaaviosta `nfc-c3-mount.svg`, asento A.
-  pn5180_rst_pin: GPIO5      # RST   — rimanasta
-  pn5180_nss_pin: GPIO6      # NSS   — rimanasta
-  pn5180_mosi_pin: GPIO7     # MOSI  — rimanasta
-  pn5180_busy_pin: GPIO10    # BUSY  — rimanasta
-  pn5180_miso_pin: GPIO3     # MISO  — lakkalanka
-  pn5180_sck_pin: GPIO4      # SCK   — lakkalanka
+#   pn5180_rst_pin: GPIO5      # RST   — rimanasta
+#   pn5180_nss_pin: GPIO6      # NSS   — rimanasta
+#   pn5180_mosi_pin: GPIO7     # MOSI  — rimanasta
+#   pn5180_busy_pin: GPIO10    # BUSY  — rimanasta
+#   pn5180_miso_pin: GPIO3     # MISO  — lakkalanka
+#   pn5180_sck_pin: GPIO4      # SCK   — lakkalanka
 
   # **Kolme tuntia, ei komponentin oletus 60 s.** Mittarin kommunikointikredit
   # on noin 20 min/kk eli 40 s/vrk, ja minuutin väli polttaisi kuukauden
   # budjetin puolessa päivässä. Mittaa yhden luvun kesto ja johda väli siitä
   # kertoimella 2–3 — ks. CLAUDE.md.
-  update_interval: 3h
+#   update_interval: 3h
 
   # **Pakollinen, vaikka näyttää valinnaiselta.** `timepoint_sensor` on
   # komponentin ainoa entiteetti jonka oletus on tyhjä `{}` eikä
@@ -134,43 +153,43 @@ qalcosonicnfc:
   # `.extend(text_sensor_schema())` määrittelee saman avaimen uudelleen
   # ilman oletusta. Ilman tätä lohkoa validointi kaatuu riviin
   # `At least one of 'id:' or 'name:' is required!` eikä kerro mistä.
-  timepoint_sensor:
-    name: "Mittarin aikaleima"
-    timezone: Europe/Helsinki
-    entity_category: diagnostic
+#   timepoint_sensor:
+#     name: "Mittarin aikaleima"
+#     timezone: Europe/Helsinki
+#     entity_category: diagnostic
 
-  water_usage_sensor:
-    name: "Vesimittari"
-  water_flow_sensor:
-    name: "Virtaama"
-  water_temperature_sensor:
-    name: "Veden lämpötila"
-  battery_level_sensor:
-    name: "Paristo"
-    entity_category: diagnostic
+#   water_usage_sensor:
+#     name: "Vesimittari"
+#   water_flow_sensor:
+#     name: "Virtaama"
+#   water_temperature_sensor:
+#     name: "Veden lämpötila"
+#   battery_level_sensor:
+#     name: "Paristo"
+#     entity_category: diagnostic
 
   # **Vikatila on hiljaisuus, joten se tehdään näkyväksi.** Kreditin
   # täyttyessä rajapinta lukkiutuu tunnin vaihtumiseen asti eikä palauta
   # virhettä — luku vain epäonnistuu ja vanha arvo jää näyttämään tuoreelta.
   # Tämä laskuri on se rivi joka erottaa "ei muutosta" ja "ei näkyvyyttä".
-  consecutive_errors_sensor:
-    name: "Peräkkäisiä lukuvirheitä"
-    entity_category: diagnostic
+#   consecutive_errors_sensor:
+#     name: "Peräkkäisiä lukuvirheitä"
+#     entity_category: diagnostic
 
-  error_low_battery:
-    name: "Paristo vähissä"
-  error_leakage:
-    name: "Vuoto"
-  error_burst:
-    name: "Putkirikko"
-  error_reverse_flow:
-    name: "Takaisinvirtaus"
+#   error_low_battery:
+#     name: "Paristo vähissä"
+#   error_leakage:
+#     name: "Vuoto"
+#   error_burst:
+#     name: "Putkirikko"
+#   error_reverse_flow:
+#     name: "Takaisinvirtaus"
 
   # Ensimmäisellä luvulla nämä kertovat mitä mittari oikeasti on. Sarjanumero
   # ja Meter ID jäävät laitteelle eivätkä tule tähän repoon.
-  meter_id_sensor:
-    name: "Meter ID"
-    entity_category: diagnostic
-  serial_number_sensor:
-    name: "Sarjanumero"
-    entity_category: diagnostic
+#   meter_id_sensor:
+#     name: "Meter ID"
+#     entity_category: diagnostic
+#   serial_number_sensor:
+#     name: "Sarjanumero"
+#     entity_category: diagnostic
