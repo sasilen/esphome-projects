@@ -1099,6 +1099,38 @@ mitään.
 Sama opetus kolmatta kertaa tässä tiedostossa, ja tällä kerralla se säästi
 käännöksen: **lähdekoodi kertoo sekunnissa sen mitä README ei.**
 
+#### Käännös tuottaa parikymmentä varoitusta, ja kaksi niistä ei ole kohinaa
+
+Valtaosa on `-Wformat=`: RISC-V:llä `uint32_t` on `long unsigned int`, joten
+`%u` ja `%X` varoittavat vaikka tulostus on oikein — molemmat syövät 32
+bittiä. Ne kertovat että komponentti on kirjoitettu toista arkkitehtuuria
+ajatellen, eivät että jokin on rikki.
+
+**Nämä kaksi ovat eri asia:**
+
+```
+qalcosonicnfc.cpp:353: 'snprintf' output may be truncated
+  snprintf(str_id_number, sizeof(str_id_number), "%08u", id_number);
+  output between 9 and 10 bytes into a destination of size 9
+```
+
+**Yli kahdeksannumeroinen Meter ID katkeaa.** Puskuri on yhdeksän tavua eli
+kahdeksan numeroa ja päättävä nolla, mutta `uint32_t` voi olla kymmennumeroinen.
+Tämän mittarin numero on kahdeksannumeroinen, joten se ei osu — mutta jos
+`Meter ID` tai `Sarjanumero` näyttää joskus väärältä, syy on tässä eikä
+luvussa.
+
+```
+qalcosonicnfc.cpp:489: suggest parentheses around arithmetic in operand of '|'
+  int32_t year = (buf[2] >> 5 | (buf[3] >> 1) & 0xF8) + 2000;
+```
+
+`&` sitoo tiukemmin kuin `|`, joten lauseke on `(buf[2]>>5) | ((buf[3]>>1) &
+0xF8)`. Se on todennäköisesti tarkoitettu niin — seitsemän bitin vuosikenttä
+kahdesta tavusta — mutta **tarkista aikaleima ensimmäisestä onnistuneesta
+luvusta** äläkä oleta sitä. Se on halpaa juuri silloin ja kallista sen
+jälkeen kun sitä on katsottu kuukausi.
+
 #### Kaksi asiaa jotka skeema tekee toisin kuin odottaisi
 
 **1. Entiteetti ei jää pois jättämällä se mainitsematta.** Jokaisella
