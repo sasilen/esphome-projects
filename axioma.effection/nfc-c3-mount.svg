@@ -69,8 +69,8 @@
   <circle cx="192.4" cy="448.2" r="4.6" fill="#FFFFFF" stroke="#16212B" stroke-width="1.2"/>
   <text x="162" y="451.8" font-size="10" fill="#16212B" text-anchor="end">REQ</text>
   <g fill="none" stroke="#B03A2E" stroke-width="1.6">
-    <circle cx="199.0" cy="367.0" r="6.6"/>
-    <circle cx="199.0" cy="387.3" r="6.6"/>
+    <circle cx="315.6" cy="367.0" r="6.8"/>
+    <circle cx="315.6" cy="387.3" r="6.8"/>
   </g>
   <line x1="20" y1="560" x2="860" y2="560" stroke="#A8B3BC"/>
   <g>
@@ -84,9 +84,9 @@
   <text x="52" y="686" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KYTKENT&#196;</text>
   <g font-size="10.5" fill="#16212B">
     <text x="52" y="712">rima  <tspan font-weight="700">MOSI</tspan>=GPIO7  <tspan font-weight="700">BUSY</tspan>=GPIO10</text>
-    <text x="52" y="732">lanka <tspan font-weight="700">RST</tspan>=GPIO20  <tspan font-weight="700">NSS</tspan>=GPIO21  <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
-    <text x="52" y="752" fill="#5A6772">irti rimasta: GPIO8 GPIO9 (strapping) &#183; GPIO20 GPIO21 (osuisivat GND:hen ja k&#228;ytt&#228;m&#228;tt&#246;m&#228;&#228;n)</text>
-    <text x="52" y="770" fill="#B03A2E">GPIO5- ja GPIO6-padit eiv&#228;t nouse t&#228;ss&#228; yksil&#246;ss&#228;: RST ja NSS vedettiin langalla JP1:n nastoista 3 ja 4 padeihin GPIO20 ja GPIO21.</text>
+    <text x="52" y="732">lanka <tspan font-weight="700">RST</tspan>=GPIO1  <tspan font-weight="700">NSS</tspan>=GPIO0  <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
+    <text x="52" y="752" fill="#5A6772">irti rimasta: GPIO8 GPIO9 (strapping) &#183; GPIO20 GPIO21 &#8212; UART0, jumittaa SPI:n alustuksen, &#228;l&#228; k&#228;yt&#228;</text>
+    <text x="52" y="770" fill="#B03A2E">GPIO5- ja GPIO6-padit eiv&#228;t nouse t&#228;ss&#228; yksil&#246;ss&#228;: RST ja NSS vedettiin langalla JP1:n nastoista 3 ja 4 kaukorivin padeihin GPIO1 ja GPIO0.</text>
 
     <text x="52" y="786" font-weight="700">Vain SCK osuu silkkipainatukseen.</text>
     <text x="52" y="803" fill="#5A6772">C3:n silkki sanoo GPIO7=SS &#8212; t&#228;ss&#228; se on MOSI. GPIO5 ja GPIO6 eiv&#228;t ole k&#228;yt&#246;ss&#228;.</text>
