@@ -941,6 +941,34 @@ kuuluu rakentaa sisään alusta asti eikä jälkikäteen:
 - **päästä entiteetti tuntemattomaksi** jos luku ei ole onnistunut kolmeen
   väliin, ettei vanha lukema teeskentele tuoretta
 
+### Suora rima pinoaa levyt, se ei nosta C3:a pystyyn
+
+Tässä luki hetken että suoraan `JP1`:een juotettu C3 **seisoo kohtisuorassa**
+ja työntyy parikymmentä milliä irti pinnasta, ja että vaakatasoon pääsemiseksi
+nastat pitäisi taivuttaa. **Se on väärin päin.**
+
+Suora nastarima menee molempien levyjen reikien läpi ja pitää ne
+**yhdensuuntaisina** — niin kaikki lisäkortit kiinnittyvät. Kulmarima on se
+joka kääntää liitoksen levyn tasoon ja vie toisen levyn viereen.
+
+Oikea kokoonpano on siis pino:
+
+```
+C3            1,2 mm
+rima          korkeus valittavissa
+PN5180        1,6 mm
+------------  mittari
+```
+
+Noin yksitoista milliä vakiorimalla, ja **C3 peittää vasemman kolmanneksen**
+eli sen missä piirit muutenkin ovat. Antennialue jää kokonaan vapaaksi: C3:n
+sisäreuna yltää ~21 mm:iin ja kela alkaa ~30 mm:stä.
+
+**Riman korkeus on suunnitteluparametri eikä jäännös.** C3:n maataso leijuu
+antennin sovituspiirin `L1`/`L2` yllä, ja mitä matalampi rima, sitä lähempänä.
+Vakiorima jättää noin kuusi milliä ilmaa — älä paina C3:a kiinni pintaan
+vaikka se mahtuisi.
+
 ### Oma solmu C3:lla, radiosolmuun ei kosketa
 
 **NFC rakennetaan erilliselle ESP32-C3 SuperMinille** eikä nykyisen
