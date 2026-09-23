@@ -389,12 +389,16 @@ pidossa. Mutta erottele kaksi syytä toisistaan sarjaportista, älä verkosta:
 | Tyhjä, tai toistuva teksti | **Juotos.** Strapping-nasta pidossa tai oikosulku |
 | Boottaa, `Restarting adapter` toistuu | **Sama WiFi-ongelma kuin ennen juottamista** — ei liity liitoksiin |
 
-**8. Vasta sitten vaihe 2.** Poista kommentit `axioma-nfc.yaml`:n loppuosasta
-— `external_components`, `spi` ja NFC-komponentti — ja lähetä OTA:na. USB-C jää
-`+5V`- ja `3.3V`-padien yläpuolelle, joten piuhaa ei enää saa kätevästi kiinni.
-**Tarkista komponentin avainten nimet upstreamin README:stä ennen ensimmäistä
-käännöstä**; YAMLissa oleva lohko on rakenne eikä lainaus, ja vain nastat ovat
-varmoja.
+**8. Vasta sitten vaihe 2.** Se on nyt aktiivisena `axioma-nfc.yaml`:ssä ja
+lähtee OTA:na. USB-C jää `+5V`- ja `3.3V`-padien yläpuolelle, joten piuhaa ei
+enää saa kätevästi kiinni.
+
+Avaimet on **todennettu lähdekoodista** eikä README:stä, ja kolme asiaa meni
+ensimmäisessä arvauksessa väärin: komponentin nimi on `qalcosonicnfc` ilman
+alaviivaa, nastoilla on etuliite `pn5180_`, ja **erillistä `spi:`-lohkoa ei
+tarvita** — komponentin `AUTO_LOAD` sisältää sen ja se ottaa kaikki kuusi
+nastaa omina asetuksinaan. Lähde on kiinnitetty commit-tunnisteeseen, kuten
+radiosolmussakin.
 
 Ja pollausväli on **kolme tuntia eikä tunti.** Mittarin kommunikointikredit on
 noin 20 min/kk eli 40 s/vrk, ja tunnin väli menee jo yli budjetin kahden

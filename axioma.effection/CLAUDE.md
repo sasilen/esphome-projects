@@ -1034,6 +1034,35 @@ oli koko ajan pystyssä ja yritti. **Sarjaportti on ainoa rehellinen tapa
 katsoa liittymisvaihetta**, koska API-lokivirta liittyy vasta kun laite on jo
 verkossa eikä voi määritelmällisesti näyttää miksi se ei ole.
 
+### Komponentin skeema, todennettuna lähdekoodista
+
+`esphome_qalcosonicnfc`:n avaimet luettiin `components/qalcosonicnfc/
+__init__.py`:stä eikä README:stä, ja **kolme asiaa neljästä meni
+ensimmäisessä arvauksessa väärin:**
+
+| | Arvaus | Todellisuus |
+|---|---|---|
+| Komponentin nimi | `qalcosonic_nfc` | **`qalcosonicnfc`**, ei alaviivaa |
+| Nastojen avaimet | `cs_pin`, `busy_pin`, `reset_pin` | **`pn5180_nss_pin`**, `pn5180_busy_pin`, `pn5180_rst_pin` … |
+| Erillinen `spi:`-lohko | tarvitaan | **ei tarvita** — `AUTO_LOAD` sisältää `spi`:n ja komponentti ottaa kaikki kuusi nastaa itse |
+| Nastat | kaaviosta | oikein |
+
+Neljäs rivi on se joka merkitsee: **rauta oli oikein ja pelkkä ohjelmisto
+väärin.** Juotokset tehtiin ennen kuin avaimia oli tarkistettu, ja se oli
+turvallista juuri siksi — nastat tulevat kaaviosta ja kytkennästä, eivät
+komponentin dokumentaatiosta.
+
+`update_interval`:n oletus on **60 s**, mikä polttaisi kuukauden
+kommunikointikreditin puolessa päivässä. Se on nimenomaisesti asetettava.
+
+**Lähde on kiinnitetty commitiin `bed6773`** eikä haaraan. Perustelu on sama
+kuin radiosolmussa ja kirjattu tässä repossa kolmesti: `@main` on liikkuva
+viittaus, ja sama YAML voi kääntyä eri tavalla ilman että repossa muuttuu
+mitään.
+
+Sama opetus kolmatta kertaa tässä tiedostossa, ja tällä kerralla se säästi
+käännöksen: **lähdekoodi kertoo sekunnissa sen mitä README ei.**
+
 ### Kohdistus ilman tulostettua koteloa
 
 Upstream-projektissa on 3D-tulostettu kotelo joka kohdistaa antennin mittarin
