@@ -54,6 +54,24 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+
+  # **`NONE` on korjaus eikä oletus, ja tämä laite ansaitsi sen.**
+  # Repon sääntö on ettei tätä aseteta ilman oiretta joka sen oikeuttaa,
+  # koska asetus joka ei korjaa mitään luetaan myöhemmin valinnaksi.
+  #
+  # Oire: laite liittyi, sai MikroTikilta DHCP-osoitteen ja putosi hetken
+  # päästä ulos syykoodeilla `Auth Expired` ja `Association Expired`.
+  # Ne eivät ole torjuntoja vaan **vanhentumisia** — tukiasema pudottaa
+  # asiakkaan jonka se uskoo kadonneen. MikroTik lähettää keepalive-kehyksiä
+  # ja sen `disconnect-timeout` on lyhyt, ja C3:n oletus `LIGHT` nukuttaa
+  # vastaanottimen majakkavälien välissä. Nukkuva radio missaa kuittaukset.
+  #
+  # Sarjaportissa tämä näytti loputtomalta liittymisyritykseltä, koska
+  # ESPHome kirjaa vain oman puolensa. **DHCP-loki tukiasemalta oli se
+  # havainto joka erotti pudotuksen liittymisvirheestä** — ja se tulee
+  # laitteesta jota ESPHomen loki ei näe lainkaan.
+  power_save_mode: NONE
+
   ap:
     ssid: "Axioma NFC fallback"
     password: !secret ap_password

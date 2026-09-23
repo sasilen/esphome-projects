@@ -1034,6 +1034,42 @@ oli koko ajan pystyssä ja yritti. **Sarjaportti on ainoa rehellinen tapa
 katsoa liittymisvaihetta**, koska API-lokivirta liittyy vasta kun laite on jo
 verkossa eikä voi määritelmällisesti näyttää miksi se ei ole.
 
+### Se ei ollut liittymisvika vaan pudotus, ja DHCP-loki erotti ne
+
+Sarjaportti näytti tuntikausia loputonta liittymisyritystä: `Authentication
+Failed`, `Handshake Failed`, `Auth Expired`, `Association Expired`,
+`Restarting adapter`, uusi skannaus. Siitä pääteltiin peräkkäin neljä eri
+syytä — verkon torjunta, NVS:n vanhentunut PMK-välimuisti, PN5180:n levyn
+vaimentama antenni ja syötön notkahdus. **Kaikki neljä olivat vääriä.**
+
+Vastaus tuli tukiasemalta: **MikroTikin lokissa näkyi DHCP-kysely ja
+annettu osoite.** DHCP tapahtuu vasta assosioinnin, tunnistautumisen ja
+nelivaiheisen kättelyn jälkeen — eli **kaikki se mitä yritettiin korjata
+toimi jo.** Laite liittyi, sai osoitteen ja putosi hetken päästä ulos.
+
+`Auth Expired` ja `Association Expired` eivät ole torjuntoja vaan
+**vanhentumisia**: tukiasema pudottaa asiakkaan jonka se uskoo kadonneen.
+MikroTik lähettää keepalive-kehyksiä ja sen `disconnect-timeout` on lyhyt,
+ja **ESP32-C3:n virransäästön oletus on `LIGHT`**, joka nukuttaa
+vastaanottimen majakkavälien välissä. Nukkuva radio missaa kuittaukset.
+
+Korjaus on `power_save_mode: NONE`, ja tämä on **repon ensimmäinen laite
+joka ansaitsee sen.** Juuren CLAUDE.md sanoo ettei sitä aseteta ilman
+oiretta joka sen oikeuttaa; tämä on se oire.
+
+**Opetus on lähteen valinnassa eikä radiossa.** ESPHomen loki kirjaa vain
+laitteen oman puolen, ja pudotus näyttää siinä identtiseltä sen kanssa ettei
+liittyminen onnistu lainkaan. Ne erottaa vain **toinen osapuoli**, ja se
+osapuoli ei ole missään laitteen lokissa. Sama muoto kuin muualla tässä
+tiedostossa: laitteen oma sanoma voittaa taulukon — mutta kun kyse on
+kahden laitteen välisestä tapahtumasta, **yhden laitteen sanoma ei riitä.**
+
+Sivuhuomio joka kannattaa säilyttää: RSSI heilui saman istunnon aikana
+−58:n ja −78:n välillä samassa fyysisessä paikassa, ja siitä pääteltiin että
+PN5180:n levy vaimentaa C3:n antennia. **Se oli mittausta lentävästä
+laitteesta**, joka liittyi ja putosi jatkuvasti — skannauslukemat eivät ole
+vertailukelpoisia kun radio käynnistyy uudelleen niiden välissä.
+
 ### Komponentin skeema, todennettuna lähdekoodista
 
 `esphome_qalcosonicnfc`:n avaimet luettiin `components/qalcosonicnfc/
