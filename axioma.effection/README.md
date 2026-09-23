@@ -26,9 +26,10 @@ epäilty on moduuli itse.**
 Matkalla löytyi kaksi vikaa jotka eivät liity siihen: **C3:n `GPIO5`- ja
 `GPIO6`-padit ovat kuolleet** (seitsemän muuta nastaa nousee, nämä eivät), ja
 **`GPIO20`/`GPIO21` jumittavat käynnistyksen** vaikka ne ovat vapaita. `RST`
-ja `NSS` on siksi reititetty langalla `GPIO1`:een ja `GPIO0`:aan. Sama levy ei
-myöskään pysy WiFi-verkossa, jossa talon muut C3-solmut toimivat —
-**levy vaihdetaan.** Perustelut [`CLAUDE.md`](CLAUDE.md):ssä.
+ja `NSS` on siksi reititetty langalla `GPIO1`:een ja `GPIO0`:aan. Levy on verkossa vakaasti aina kun
+moduulia ei ajeta, joten **radio ei ole rikki** — epävakaus näyttää olevan
+vuorovaikutusta jaetun syötön kautta, ja se nostaa puuttuvan 100 µF:n
+takaisin listalle. Perustelut [`CLAUDE.md`](CLAUDE.md):ssä.
 
 **Todennäköisin syy: mittari on LoRaWAN-luennassa.** W1:ssä LoRaWAN ja wM-Bus
 ovat erilliset liput, ja vesilaitoksella ei ole syytä pitää wM-Busia päällä jos

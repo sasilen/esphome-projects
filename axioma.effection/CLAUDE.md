@@ -1236,8 +1236,26 @@ Se on vahvempi todiste kuin yksikään lokista tehty päätelmä. Jos verkko
 rikkoisi C3:n liittymisen, se rikkoisi ne kaikki.
 
 **Yhteinen tekijä on tämä yksilö**, ja siitä on riippumaton löydös: kaksi
-GPIO-padia on kuollut, ja seitsemän muuta toimii. Levy jonka läpiviennit
-ovat osin kelvottomia ei ole todennäköisesti moitteeton muualtakaan.
+GPIO-padia on kuollut, ja seitsemän muuta toimii.
+
+**Mutta "levy ei pysy verkossa" on väärä muotoilu, ja omistaja korjasi sen:
+se pysyy, kun PN5180 ei ole toiminnassa.** Se on ollut verkossa vakaasti
+sekä ilman NFC-komponenttia että komponentin epäonnistuttua — eli aina kun
+moduulia ei ajeta.
+
+Silloin kyse ei ole viallisesta radiosta vaan **vuorovaikutuksesta**, ja se
+osoittaa jaettuun syöttöön: lähetinpää piikittää satoja milliampeereja
+samasta viidestä voltista joka ajaa C3:n radiota, eikä levyllä ole mitään
+puskuria niiden välissä.
+
+**Se nostaa sen 100 µF:n takaisin listalle.** Tässä luki hetken ettei se
+korjaa mitään tunnettua vikaa; jos epävakaus seuraa moduulin toimintaa, se
+on juuri se vika jota kondensaattori korjaa. Ja se selittäisi miksi
+virtalähteen vaihto ei auttanut: **notkahdus tapahtuu levyllä, ei
+lähteessä.**
+
+Testattavissa vasta kun moduuli vastaa ja lukuja tulee säännöllisesti —
+silloin näkee osuvatko katkokset lukuyritysten kohdalle.
 
 Oireet sopivat siihen: skannaus ja RSSI ovat kunnossa, mutta liittyminen
 kaatuu kättelyyn ja varayhteyden AP ei näy puhelimessa. Se on vastaanoton ja
@@ -1255,9 +1273,13 @@ käyttöhistoria laitteista joista lokia on tunteja.
 
 #### Seuraus: levy vaihdetaan
 
-Nykyinen C3 kelpaa PN5180:n todentamiseen, koska komponentin setup ajetaan
-ennen verkkoa ja tulos luetaan sarjaportista. **Se on hyvä koejigi mutta
-huono solmu.**
+Nykyinen C3 kelpaa PN5180:n todentamiseen, ja se on verkossa vakaasti aina
+kun moduulia ei ajeta. **Todettuja vikoja on siis yksi eikä kaksi: kaksi
+kuollutta padia**, ja ne on kierretty langoilla.
+
+Levyn vaihto on silti seuraava koe — ei siksi että radio olisi rikki, vaan
+siksi että **SPI-lohko on ainoa osa jota mittaukset eivät kata**, ja tässä
+yksilössä on jo osoitettu valmistusvirhe.
 
 Kun kytkentä on todettu toimivaksi, yhdeksän liitosta siirretään hyllyn
 toiseen C3:een — ja silloin `RST` ja `NSS` palaavat `GPIO5`:een ja
