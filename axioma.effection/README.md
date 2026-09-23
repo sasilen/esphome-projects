@@ -359,12 +359,9 @@ kolvilla sen jälkeen kun se on paikallaan: viisi lakkalankaa ensin, sitten rima
 sitten C3 päälle. Ks. [`nfc-c3-mount.svg`](nfc-c3-mount.svg) ja
 [`CLAUDE.md`](CLAUDE.md).
 
-**`BUSY` kannattaa tehdä langalla eikä rimanastalla.** Kun `GPIO8` ja
-`GPIO9` vedetään irti, `GPIO10` jää rimaan yksin kahden tyhjän paikan
-taakse — eikä mikään estä sitä liukumasta muovin sisällä niin ettei se yllä
-toiseen levyyn. Näin kävi ensimmäisellä kerralla: liitos mittasi 353 kΩ eli
-auki, ja `BUSY` jäi matalaksi. Oire lokissa on
-`Step 3 - Failed to wait for BUSY_ pin to get high`.
+**Tarkista `BUSY` ensimmäisenä jos jokin ei toimi.** Kun `GPIO8` ja `GPIO9`
+vedetään irti, `GPIO10` jää rimaan yksin kahden tyhjän paikan taakse ilman
+naapurien tukea. Se ei ole tiedetty vika vaan rakenteen heikoin kohta.
 
 **Ja 100 µF PN5180:n viereen**, `+5V`:n ja `GND`:n väliin. **Tämä puuttui tämän
 ohjeen ensimmäisestä versiosta**, ja se on juuri se osa joka on helpointa jättää

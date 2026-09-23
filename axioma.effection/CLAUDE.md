@@ -1104,33 +1104,38 @@ Kolmas selittäisi kaiken kerralla, ja sen todentaa yhdellä
 jatkuvuusmittauksella: **`JP1 RST` ↔ `C3 GPIO5`.** Jos vastapari onkin
 `GPIO6`, asia on selvä.
 
-#### Ja syy oli `BUSY`-liitos: yksinäinen rimanasta ei yltänyt
+#### Peruttu: `BUSY`-liitos ei ollut irti, ja 353 kΩ oli oikea lukema
 
-`JP1 BUSY` ↔ `C3 GPIO10` mittasi **353 kΩ**, mikä ei ole yhteys vaan
-vuotopolku C3:n ESD-diodien kautta. Kytkemätön tulo kellui matalana, joten
-Step 0 meni läpi ja Step 3 ei voinut onnistua koskaan. Loki kuvasi siis
-kytkentävikaa tarkalleen — kunhan tietää mitä `Step 3` tarkoittaa.
+Tässä luki että `JP1 BUSY` ↔ `C3 GPIO10` mittasi 353 kΩ ja on siis auki.
+**Se oli väärinluettu mittaus.** Lukema oli `BUSY` **maata vasten**, eli se
+poissulkeva koe joka tarkistaa ettei rima ole siirroksissa — ja 353 kΩ on
+sen oikea tulos. Rimanastat mitattiin erikseen ja ne olivat kunnossa.
 
-**Vika on rakenteellinen eikä sattumaa.** Rimasta vedetään irti `GPIO8` ja
-`GPIO9`, jotka ovat `GPIO10`:n ja kolmen muun välissä:
+Virhe on oppimisen arvoinen, koska se ei ollut mittausvirhe vaan
+lukuvirhe: annoin kaksi mittausta peräkkäin samassa listassa, ja tulkitsin
+vastauksen kuuluvaksi ensimmäiseen. **Kysy aina mistä kahdesta pisteestä
+mitattiin ennen kuin rakennat lukemasta väitteen** — sähköinen johtopäätös
+on vain niin hyvä kuin tieto siitä mihin mittapäät koskivat.
 
-```
-GPIO5  GPIO6  GPIO7    ·      ·     GPIO10    ·      ·
- RST    NSS   MOSI   (MISO)  (SCK)   BUSY   (GND) (GPIO)
-```
+Rimanasta on lisäksi yhtenäistä messinkiä ja johtaa pelkällä puristuksella
+ilman juotosta. **Kilo-ohmien lukema rimanastan yli ei olisi merkinnyt
+huonoa juotosta vaan puuttuvaa nastaa** — ja sekin päättely olisi pitänyt
+tarkistaa ennen kuin siitä kirjoitettiin ohje.
 
-Kolme ensimmäistä tukevat toisiaan muovirungossa. **`GPIO10` jää yksin
-kahden tyhjän paikan taakse**, eikä mikään estä sitä liukumasta muovin
-sisällä niin ettei se yllä toiseen levyyn. Sitä ei näe katsomalla, ja
-jatkuvuusmittaus tehtiin ennen virtaa mutta ilmeisesti ei tästä nastasta.
+Yksi havainto jää silti voimaan suunnittelumuistiinpanona, vaikkei se ollut
+vika: kun `GPIO8` ja `GPIO9` vedetään irti, `GPIO10` jää rimaan yksin
+kahden tyhjän paikan taakse ilman naapurien tukea. Se on paikka jonka
+kannattaa tarkistaa ensimmäisenä, ei paikka josta tiedetään mitään.
 
-**Korvaa se lakkalangalla** niiden viiden muun tapaan. Yksi lanka on
-luotettavampi kuin yksinäinen rimanasta, eikä rima menetä siitä
-mekaanista tehtäväänsä — kolme vierekkäistä nastaa kantaa levyn.
+#### Jäljellä on kaksi mittaamatonta liitosta
 
-Yleisempi muoto, joka kannattaa siirtää muihinkin projekteihin: **rima
-kannattaa katkaista sieltä mistä nastat ovat vierekkäin, ja hoitaa
-yksittäiset signaalit langalla.** Irrotettu nasta jättää naapurinsa tuetta.
+Todennettua ovat neljä rimanastaa ja kolme jännitettä. **`MISO` → `GPIO3` ja
+`SCK` → `GPIO4` ovat ainoat joita ei ole tarkistettu millään tavalla.**
+
+Ja `SCK` sopii oireeseen täsmälleen: ilman kelloa PN5180 ei kellota komentoa
+sisään, ei suorita mitään eikä nosta `BUSY`:a. `MISO` ei tuottaisi samaa —
+poikki oleva paluulinja antaisi roskaa mutta `BUSY` liikkuisi silti, ja vika
+näkyisi vasta myöhemmin.
 
 ### WiFi ei korjaantunut, ja `NONE` ei ollut korjaus
 
