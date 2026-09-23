@@ -873,6 +873,70 @@ Näyttö on tätä heikompi todiste. LCD:llä on radioviestinnän indikaattori, 
 käynnissä"**, ja yksittäisiä näyttösivuja voi piilottaa asennuksessa — sivun
 puuttuminen ei siis todista mitään.
 
+## Pollausväli johdetaan kreditistä, ei tottumuksesta
+
+PN5180 on saapunut, ja tarkoitus on pollata. Se käy — mutta väli on laskettava
+mittarin kommunikointikreditistä eikä valittava sen mukaan mikä tuntuu
+normaalilta.
+
+```
+20 min/kk  =  1200 s/kk  =  40 s/vrk
+```
+
+**Kaikki riippuu yhden luvun kestosta, eikä sitä tiedetä.** Kahden sekunnin
+oletuksella:
+
+| Väli | Lukuja/vrk | Kulutus | |
+|---|---|---|---|
+| 1 h | 24 | 24 min/kk | **yli budjetin** |
+| 2 h | 12 | 12 min/kk | mahtuu |
+| 3 h | 8 | 8 min/kk | väljä |
+
+Viiden sekunnin luvulla sama taulukko siirtyy kokonaan: kaksi tuntia on jo
+30 min/kk. **Mittaa yhden luvun kesto ja johda väli siitä kertoimella 2–3.**
+Se on yksi mittaus ja se poistaa koko arvailun.
+
+**Aloita kolmesta tunnista.** Vesi on kumulatiivista ja HA:n pitkän aikavälin
+tilastot lasketaan tunneittain, joten kolmen tunnin väli ei menetä niille
+mitään. Ainoa tiheämpää haluava on vuotovahti, ja juokseva vessa jää kiinni
+saman päivän aikana kahdeksalla lukemalla. Väljästä välistä jää kaksi
+kolmasosaa budjettia sille että kestoarvio on pielessä.
+
+### Vikatila on hiljaisuus, joten budjetti rakennetaan näkyväksi
+
+Rajan täyttyessä rajapinta **lukkiutuu tunnin vaihtumiseen asti**. Se ei
+palauta virhettä joka näkyisi entiteetissä — luku vain epäonnistuu ja vanha
+arvo jää paikalleen näyttämään tuoreelta.
+
+Se on sama vikaluokka joka on tässä repossa korjattu viidesti yhden viikon
+aikana: **vahdin hiljaisuus ja vahdin sokeus näyttävät samalta.** Siksi tämä
+kuuluu rakentaa sisään alusta asti eikä jälkikäteen:
+
+- **laske luvut** ja julkaise arvio kuluneesta kreditistä omana entiteettinään
+- **havaitse epäonnistunut luku** ja perääntele sen sijaan että yrittäisit
+  heti uudelleen — uusintayritys kuluttaa samaa budjettia joka juuri loppui
+- **päästä entiteetti tuntemattomaksi** jos luku ei ole onnistunut kolmeen
+  väliin, ettei vanha lukema teeskentele tuoretta
+
+### Kytkentä
+
+Piirretty [`nfc-wiring.svg`](nfc-wiring.svg):ssä. Kolme uutta nastaa
+`GPIO21` (NSS), `GPIO22` (BUSY) ja `GPIO17` (RST); SPI-väylä on jo olemassa
+`GPIO18/23/19`:llä ja **CC1101 voi jäädä siihen rinnalle** omalla
+`GPIO5`-valinnallaan niin kauan kuin radiokysymys on auki.
+
+Kolme kohtaa jotka menevät helposti väärin:
+
+- **Molemmat jännitteet.** Lähetinpää ottaa 5 V ja piikittää satoja
+  milliampeereja RF-purskeessa; logiikka on 3,3 V. DevKitin 5 V tulee USB:stä
+  eikä ole jäykkä, joten 100 µF moduulin viereen.
+- **BUSY on pakollinen.** PN5180 ei ole tavallinen SPI-orja: jokaisen komennon
+  jälkeen on odotettava BUSY:n laskua. Ilman sitä luku palauttaa roskaa eikä
+  virhettä — taas vika joka ei näytä vialta.
+- **Antennilevy menee mittaria vasten, ohjain ei.** Lattakaapeli antaa
+  muutaman sentin. Se on se hinta joka kaataa wM-Busin perustelun paikan
+  vapaasta valinnasta, ja se kannattaa hyväksyä ennen kuin kaivoon kiivetään.
+
 ## NFC on myös vaihtoehtoinen reitti koko projektille
 
 [esphome_qalcosonicnfc](https://github.com/dbmaxpayne/esphome_qalcosonicnfc)
