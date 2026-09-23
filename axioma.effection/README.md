@@ -352,6 +352,43 @@ kolvilla sen jälkeen kun se on paikallaan: viisi lakkalankaa ensin, sitten rima
 sitten C3 päälle. Ks. [`nfc-c3-mount.svg`](nfc-c3-mount.svg) ja
 [`CLAUDE.md`](CLAUDE.md).
 
+**Mittaa ennen kuin kytket virran.** Yleismittari, kolme asiaa tässä
+järjestyksessä:
+
+```
+5V  ↔ GND      auki          nämä kolme voivat rikkoa jotain
+3V3 ↔ GND      auki
+5V  ↔ 3V3      auki
+```
+
+C3:n kaukorivissä järjestys on `5V` `GND` `3V3` — **maa on virtojen välissä**,
+eli molemmat mahdolliset oikosulut ovat vierekkäisten nastojen välissä.
+
+Sitten kaksi siltaa jotka eivät riko mitään mutta estävät käynnistyksen:
+
+- **`GPIO3` ↔ `GPIO2`.** Kaukorivissä lukee `GPIO4` `GPIO3` `GPIO2` ja langat
+  menevät kahteen ylempään. `GPIO2` on strapping, joten silta sitoo `MISO`:n
+  siihen
+- **Neljä irrotettua kohtaa auki.** C3:n `GPIO8` `GPIO9` `GPIO20` `GPIO21` ei
+  saa olla yhteydessä JP1:n `MISO` `SCK` `GND` `GPIO` -padeihin
+
+Ja vasta lopuksi yhdeksän jatkuvuusmittausta kytkentätaulukon mukaan.
+
+**`GPIO8` ja `GPIO9` eivät ole irti pelkän strappingin takia.** Ne kytkeytyisivät
+suoraan PN5180:n `MISO`- ja `SCK`-linjoihin, jotka on jo johdotettu `GPIO3`:een
+ja `GPIO4`:ään. Boottihetkellä `GPIO8`:n on oltava ylhäällä ja `MISO` vetäisi sen
+alas — **levy ei käynnistyisi lainkaan.** Se on myös se oire jos juotos on
+siltautunut.
+
+**Levyllä on yhä vaihe 1:n firmware, ja se on funktionaalinen testi.** Jos levy
+nousee ja liittyy verkkoon juotosten jälkeen, yksikään strapping-nasta ei ole
+pidossa. Mutta erottele kaksi syytä toisistaan sarjaportista, älä verkosta:
+
+| Sarjaportti | Tulkinta |
+|---|---|
+| Tyhjä, tai toistuva teksti | **Juotos.** Strapping-nasta pidossa tai oikosulku |
+| Boottaa, `Restarting adapter` toistuu | **Sama WiFi-ongelma kuin ennen juottamista** — ei liity liitoksiin |
+
 **8. Vasta sitten vaihe 2.** Poista kommentit `axioma-nfc.yaml`:n loppuosasta
 — `external_components`, `spi` ja NFC-komponentti — ja lähetä OTA:na. USB-C jää
 `+5V`- ja `3.3V`-padien yläpuolelle, joten piuhaa ei enää saa kätevästi kiinni.
