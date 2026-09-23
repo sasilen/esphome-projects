@@ -1137,6 +1137,45 @@ sisään, ei suorita mitään eikä nosta `BUSY`:a. `MISO` ei tuottaisi samaa �
 poikki oleva paluulinja antaisi roskaa mutta `BUSY` liikkuisi silti, ja vika
 näkyisi vasta myöhemmin.
 
+### Vastaanotin toimii, lähetin ei pääse ulos
+
+Tämä on se havainto joka kattaa kaikki WiFi-oireet yhdellä mekanismilla, ja
+se tuli varayhteydestä: loki sanoi `Starting fallback AP`, **mutta AP ei
+näkynyt puhelimessa.**
+
+| Toiminto | Vaatii | Tila |
+|---|---|---|
+| Skannaus, RSSI −60 dB oikein | vastaanoton | **toimii** |
+| Liittyminen ja kättely | lähetyksen | ei toimi |
+| Oman AP:n majakat | lähetyksen | ei toimi |
+
+Laite näkee molemmat tukiasemat ja lukee niiden kentän, mutta **mikään sen
+lähettämä ei mene perille.** Siksi MikroTikin asetuksista ei löytynyt mitään
+torjuttavaa: tukiasema ei torju, se ei vain kuule. `Probe Request
+Unsuccessful`, `4-Way Handshake Timeout`, `Authentication Failed` ja `Auth
+Expired` ovat kaikki saman asian eri vaiheita.
+
+**Ja se kumoaa väliaikaisen päätelmän jonka tein hetkeä aiemmin**, että AP:n
+käynnistyminen todistaa radion toimivaksi. Loki kertoo vain että ohjelma
+käski radiota; **näkyvyys on se joka todistaa lähetyksen**, ja sitä ei ollut.
+
+Sama muoto kuin muuallakin tässä tiedostossa: laitteen oma loki kertoo mitä
+se yritti, ei mitä tapahtui.
+
+#### Epäilty on syöttö
+
+Vastaanotto vie muutamia milliampeereja; **lähetys piikittää noin 350
+mA:iin.** Piiri joka kuuntelee hyvin mutta ei saa lähetystä ulos on juuri
+sen vian muoto jossa syöttö notkahtaa purskeessa.
+
+Kaksi asiaa on muuttunut sitten kun paljas C3 liittyi verkkoon ongelmitta:
+**PN5180 tuli samaan syöttöön**, ja **100 µF on yhä asentamatta** — se
+puuttui rakennusohjeesta ja on juuri se komponentti joka kantaa nuo piikit.
+
+Kokeet järjestyksessä: toinen virtalähde ilman kolvia, sitten kondensaattori,
+sitten hyllyn toinen C3 ilman PN5180:a samassa paikassa. Viimeinen erottaa
+kuorman verkosta lopullisesti.
+
 ### WiFi ei korjaantunut, ja `NONE` ei ollut korjaus
 
 Samassa ajossa, komponentti jo epäonnistuneena ja siis pois pelistä:
