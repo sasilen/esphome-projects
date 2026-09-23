@@ -993,6 +993,51 @@ onnistuneen luvun jälkeen — kotelo ei anna.
   ja kytkentä heikkenee etäisyyden myötä nopeasti.
 - **Ei metallia väliin eikä antennin taakse.** Johtava pinta vaimentaa kentän
   ja virittää antennin pois. Nippuside on muovia; kannake ei välttämättä ole.
+- **Tuenta antennipäästä, ei rimapäästä.** Ks. seuraava luku: levy saa jäädä
+  vasemmasta päästä irti, mutta kelan pää ei.
+
+### Sileysvaatimus koskee antennialuetta, ei koko alapintaa
+
+Tässä luki ensin ehdottomasti *"älä juota sileälle puolelle"*, ja se on liian
+tiukka. Oikea sääntö on kapeampi ja seuraa siitä mitä kytkentä oikeasti vaatii:
+
+> **Antennin kohdalla alapinnan on oltava sileä. Muualla ei ole väliä.**
+
+Kela on levyn oikea ~40 mm. Vasen kolmannes on yli 30 mm siitä, ja sinne tuleva
+juotosnysty **ei nosta antennia vaan kallistaa levyä** — puoli milliä
+neljänkymmenen millin matkalla on alle asteen.
+
+**Mutta se pätee vain jos levy tukeutuu antennipäästä.** Jos kiinnitys painaa
+vasemmasta päästä, kallistus kääntyy toisin päin ja nostaa kelan irti
+mittarista — eli tuottaa täsmälleen sen vian jota vältetään. Nippuside tai
+teippi menee siis **antennin puolelle**, ja vasen pää saa jäädä irti.
+
+Tästä seuraa käytännön etu: **PN5180:n pintapuolelle ei tarvitse koskea
+kolvilla kertaakaan.** Rima työnnetään reikiin ylhäältä mutta juotetaan
+altapäin — läpiladonnan normaali tapa — ja hyppylangat juotetaan altapäin
+samoin. Kaikki yhdeksän liitosta tehdään yhdeltä puolelta, ja ne mahtuvat
+vasempaan kolmannekseen.
+
+### Yhdeksän liitosta, kahdeksantoista juotosta
+
+Liitoksia on yhdeksän ja jokaisella on kaksi päätä: toinen PN5180:ssa, toinen
+C3:ssa. "C3:n omia liitoksia" ei ole olemassa — reitti vain on eri.
+
+| | Reitti | PN5180:n pää | C3:n pää |
+|---|---|---|---|
+| `RST` `NSS` `MOSI` `BUSY` | rimanasta | alapuolelta | C3:n padiin |
+| `MISO` `SCK` `+5V` `3.3V` `GND` | lakkalanka 0,2–0,3 mm | alapuolelta | C3:n padiin |
+
+**Kokoonpanojärjestys on pakotettu**, koska C3:n alle ei pääse kolvilla sen
+jälkeen kun se on paikallaan:
+
+1. Viisi lakkalankaa alapuolelta, vasempaan kolmannekseen
+2. Rima neljään padiin, juotos alapuolelta — teippaa rima kiinni ennen kääntöä
+3. C3 rimaan ylhäältä, lankojen toiset päät sen kauempaan riviin
+4. Vetokevennys liimalla tai nippusiteellä
+
+Langat ennen rimaa siksi että riman nastat törröttävät alapuolella juuri siinä
+missä ohuita lankoja pitäisi reitittää.
 
 ### Etsi kela katsomalla, älä pollaamalla — mutta käsin kokeilu on halpaa
 
