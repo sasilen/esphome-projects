@@ -1185,6 +1185,35 @@ ehdoitta ja mittaa ne verrokkia vasten.** Se erottaa levyn vian kytkennän
 viasta yhdellä käännöksellä, eikä se nojaa siihen että ajuri käyttäytyy
 odotetusti.
 
+#### Kytkentä on todistettu kokonaan — jäljellä on moduuli
+
+Kaikki mitattavissa oleva on mitattu, ja **jokainen tulos on kunnossa**:
+
+| | Miten todennettu |
+|---|---|
+| `JP1`:n nastajärjestys | moduulin silkkipainatus |
+| C3:n rivikartta | valmistajan nastakuva |
+| Laskusuunta | `JP1` 1 ja 2 antoivat 5 V ja 3,3 V |
+| `RST` → `GPIO1`, `NSS` → `GPIO0` | **nasta ajaa ja lanka kantaa** — 3,3 V molemmissa päissä |
+| `MOSI` → `GPIO7`, `SCK` → `GPIO4` | nasta ajaa, jatkuvuus |
+| `MISO` → `GPIO3`, `BUSY` → `GPIO10` | jatkuvuus |
+| `+5V`, `3.3V`, `GND` | jännitteet padeissa |
+| Oikosulut maahan | `GPIO5` 860 kΩ, `BUSY` 353 kΩ |
+| Naapurisillat `JP1`:ssä | `3↔4` 2 MΩ, `4↔5` `5↔6` `6↔7` `7↔8` kaikki auki |
+
+**Erityisesti se mitä jatkuvuusmittaus ei olisi kertonut** tuli tehdyksi:
+ohjauslinjat ajettiin ylös ehdoitta ESPHomen `gpio`-kytkimillä ja mitattiin
+molemmista päistä. Se erottaa "johdin on olemassa" ja "signaali kulkee" —
+ja juuri se paljasti kaksi kuollutta padia joita mikään muu mittaus ei
+löytänyt.
+
+**PN5180 ei ole vastannut kertaakaan koko projektin aikana.** Joka kerta kun
+se on ollut mitattavissa, jokin muu on ollut rikki: ensin kuolleet padit,
+sitten UART0-nastojen jumi. Nyt kumpikin on poissa eikä moduuli silti vastaa.
+
+Se ei ole todiste kuolleesta moduulista, mutta se on ainoa jäljellä oleva
+selitys — eikä sitä voi testata ilman toista moduulia tai toista isäntää.
+
 #### Jäljellä oli kaksi mittaamatonta liitosta
 
 Todennettua ovat neljä rimanastaa ja kolme jännitettä. **`MISO` → `GPIO3` ja

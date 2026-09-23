@@ -17,12 +17,18 @@ on juotettu yhteen, yhdeksän liitosta läpäisi mittaukset, ja levy nousee
 verkkoon. Radiosolmu jää pystyyn siihen asti kunnes NFC on kertonut onko
 wM-Bus ylipäätään päällä.
 
-**Mutta NFC-komponentti on toistaiseksi kommentoitu pois.** Sen kanssa laite
-liittyi verkkoon ja katosi hetken päästä; ilman sitä se pysyy pystyssä.
-Epäilty on `BUSY`-kättely, joka jää odottamaan jos PN5180 ei vastaa — ks.
-[`axioma-nfc.yaml`](axioma-nfc.yaml). WiFi vaati oman korjauksensa
-(`power_save_mode: NONE`) ja se on eri vika; perustelut
-[`CLAUDE.md`](CLAUDE.md):ssä.
+**Mutta PN5180 ei vastaa, ja kytkentä on poissuljettu.** Jokainen yhdeksästä
+liitoksesta on mitattu molemmista päistä, ohjauslinjat ajettu ylös ehdoitta
+ja todennettu, nastakartat luettu moduulin silkkipainatuksesta ja
+valmistajan kuvasta, eikä naapurisiltoja ole. **Ainoa jäljellä oleva
+epäilty on moduuli itse.**
+
+Matkalla löytyi kaksi vikaa jotka eivät liity siihen: **C3:n `GPIO5`- ja
+`GPIO6`-padit ovat kuolleet** (seitsemän muuta nastaa nousee, nämä eivät), ja
+**`GPIO20`/`GPIO21` jumittavat käynnistyksen** vaikka ne ovat vapaita. `RST`
+ja `NSS` on siksi reititetty langalla `GPIO1`:een ja `GPIO0`:aan. Sama levy ei
+myöskään pysy WiFi-verkossa, jossa talon muut C3-solmut toimivat —
+**levy vaihdetaan.** Perustelut [`CLAUDE.md`](CLAUDE.md):ssä.
 
 **Todennäköisin syy: mittari on LoRaWAN-luennassa.** W1:ssä LoRaWAN ja wM-Bus
 ovat erilliset liput, ja vesilaitoksella ei ole syytä pitää wM-Busia päällä jos
