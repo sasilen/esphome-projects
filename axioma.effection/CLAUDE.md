@@ -1124,7 +1124,15 @@ jälkeen kun se on paikallaan:
 1. Viisi lakkalankaa alapuolelta, vasempaan kolmannekseen
 2. Rima neljään padiin, juotos alapuolelta — teippaa rima kiinni ennen kääntöä
 3. C3 rimaan ylhäältä, lankojen toiset päät sen kauempaan riviin
-4. Vetokevennys liimalla tai nippusiteellä
+4. **100 µF `+5V`:n ja `GND`:n väliin**, PN5180:n viereen
+5. Vetokevennys liimalla tai nippusiteellä
+
+Neljäs askel jäi pois ensimmäisestä kirjauksesta, vaikka se lukee tämän
+tiedoston omalla listalla asioista jotka menevät helposti väärin. Liitoksia
+on yhdeksän ja ne on helppo luetella; kondensaattori ei ole yksikään niistä
+ja putoaa siksi listalta. **Ja sen puuttuminen näyttää verkkovialta**, koska
+syötön notkahdus lähetyksen aikana tuottaa `4-Way Handshake Timeout`:in eikä
+mitään virtaan viittaavaa.
 
 Langat ennen rimaa siksi että riman nastat törröttävät alapuolella juuri siinä
 missä ohuita lankoja pitäisi reitittää.

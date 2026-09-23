@@ -352,6 +352,16 @@ kolvilla sen jälkeen kun se on paikallaan: viisi lakkalankaa ensin, sitten rima
 sitten C3 päälle. Ks. [`nfc-c3-mount.svg`](nfc-c3-mount.svg) ja
 [`CLAUDE.md`](CLAUDE.md).
 
+**Ja 100 µF PN5180:n viereen**, `+5V`:n ja `GND`:n väliin. **Tämä puuttui tämän
+ohjeen ensimmäisestä versiosta**, ja se on juuri se osa joka on helpointa jättää
+tekemättä: yhdeksän liitosta on lueteltu nimeltä, kondensaattori ei ole yksikään
+niistä.
+
+Lähetinpää piikittää satoja milliampeereja RF-purskeessa, ja sama syöttö ajaa
+C3:n radiota. Notkahdus siinä hetkessä **näyttää verkkovirheeltä eikä
+virtavialta** — `4-Way Handshake Timeout` ja `Handshake Failed` ovat sen
+oireita, eivät heikon kentän oireita.
+
 **Mittaa ennen kuin kytket virran.** Yleismittari, kolme asiaa tässä
 järjestyksessä:
 
