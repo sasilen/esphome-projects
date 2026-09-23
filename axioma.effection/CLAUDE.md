@@ -918,24 +918,66 @@ kuuluu rakentaa sisään alusta asti eikä jälkikäteen:
 - **päästä entiteetti tuntemattomaksi** jos luku ei ole onnistunut kolmeen
   väliin, ettei vanha lukema teeskentele tuoretta
 
+### Oma solmu C3:lla, radiosolmuun ei kosketa
+
+**NFC rakennetaan erilliselle ESP32-C3 SuperMinille** eikä nykyisen
+`esp32dev`-solmun päälle. Perustelu on järjestys eikä rauta: radion tila on yhä
+avoin kysymys, ja **NFC-luku on se joka vastaa siihen.** Jos radiosolmua
+puretaan ennen lukua, kysymys sulkeutuu pysyvästi; jos se jätetään rauhaan,
+molemmat ovat pystyssä silloin kun vastaus tulee. DevKit puretaan vasta sen
+jälkeen — tai ei pureta, jos radio osoittautuukin päälle kytketyksi.
+
+Levyn vaihto on myös halvempaa nyt kuin juotosten jälkeen, ja hyllyllä on kuusi
+C3:a.
+
+**Antenniperustelu tarkistettiin ja se kaatui.** Tässä luki hetken että
+mittarin luona WiFi on talon huonoin, koska NFC pakottaa vastaanottimen
+mittarin viereen. Omistaja korjasi: mittari on samassa tilassa 1-Wire-solmun
+kanssa. Mittaus vahvistaa sen riittäväksi:
+
+| Solmu | WiFi |
+|---|---|
+| onewire, samassa tilassa | **−70 dBm** (vaihtelu −69…−76) |
+| stiebel | −77 dBm |
+| axioma työpöydällä | −56 dBm |
+
+−70 ei ole talon paras, mutta se on **todistetusti riittävä**, ja todiste on
+vahvempi kuin lukema: siinä tilassa on jo C3, se on ottanut useita
+OTA-päivityksiä ja streamannut lokia vuorokausia katkeamatta. Sama levytyyppi,
+sama huone.
+
+**Siksi hirviradan WROOM-32U jää hirviradalle.** Sen ulkoantenniperustelu
+lepää kipinöivässä harjamoottorissa suljetussa rasiassa, eikä tämä projekti
+tarvitse sitä.
+
 ### Kytkentä
 
-Piirretty [`nfc-wiring.svg`](nfc-wiring.svg):ssä. Kolme uutta nastaa
-`GPIO21` (NSS), `GPIO22` (BUSY) ja `GPIO17` (RST); SPI-väylä on jo olemassa
-`GPIO18/23/19`:llä ja **CC1101 voi jäädä siihen rinnalle** omalla
-`GPIO5`-valinnallaan niin kauan kuin radiokysymys on auki.
+Piirretty [`nfc-wiring.svg`](nfc-wiring.svg):ssä.
 
-Kolme kohtaa jotka menevät helposti väärin:
+```
+SCK    GPIO4        NSS    GPIO7
+MOSI   GPIO6        BUSY   GPIO10
+MISO   GPIO5        RST    GPIO3
+```
+
+C3:lla SPI ei ole sidottu kiinteisiin nastoihin, joten valinta on vapaa.
+Kuusikko väistää **strapping-nastat `GPIO2`, `GPIO8` ja `GPIO9`** sekä USB:n
+`GPIO18/19`:n.
+
+Neljä kohtaa jotka menevät helposti väärin:
 
 - **Molemmat jännitteet.** Lähetinpää ottaa 5 V ja piikittää satoja
-  milliampeereja RF-purskeessa; logiikka on 3,3 V. DevKitin 5 V tulee USB:stä
-  eikä ole jäykkä, joten 100 µF moduulin viereen.
+  milliampeereja RF-purskeessa; logiikka on 3,3 V. 100 µF moduulin viereen —
+  ja **tarkista että SuperMinissa on 5V-nasta**, kaikissa kloonoissa ei ole.
 - **BUSY on pakollinen.** PN5180 ei ole tavallinen SPI-orja: jokaisen komennon
   jälkeen on odotettava BUSY:n laskua. Ilman sitä luku palauttaa roskaa eikä
   virhettä — taas vika joka ei näytä vialta.
 - **Antennilevy menee mittaria vasten, ohjain ei.** Lattakaapeli antaa
-  muutaman sentin. Se on se hinta joka kaataa wM-Busin perustelun paikan
-  vapaasta valinnasta, ja se kannattaa hyväksyä ennen kuin kaivoon kiivetään.
+  muutaman sentin.
+- **Tarkista komponentin alustatuki ennen kuin harkitset D1 miniä.** ESP8266:lla
+  SPI:n jälkeen jää kolme turvallista nastaa, mikä riittää täpärästi — mutta
+  `esphome_qalcosonicnfc`:n ESP8266-tuki on todentamatta, eikä sitä kannata
+  olettaa.
 
 ## NFC on myös vaihtoehtoinen reitti koko projektille
 
