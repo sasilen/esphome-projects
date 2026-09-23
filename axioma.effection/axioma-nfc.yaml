@@ -132,11 +132,25 @@ qalcosonicnfc:
   pn5180_miso_pin: GPIO3     # MISO  — lakkalanka
   pn5180_sck_pin: GPIO4      # SCK   — lakkalanka
 
-  # **Kolme tuntia, ei komponentin oletus 60 s.** Mittarin kommunikointikredit
-  # on noin 20 min/kk eli 40 s/vrk, ja minuutin väli polttaisi kuukauden
-  # budjetin puolessa päivässä. Mittaa yhden luvun kesto ja johda väli siitä
-  # kertoimella 2–3 — ks. CLAUDE.md.
-  update_interval: 3h
+  # **PENKKIARVO. Tuotantoarvo on `3h` — nosta se ennen kuin jätät laitteen
+  # käyntiin.**
+  #
+  # Mittarin kommunikointikredit on noin 20 min/kk eli 40 s/vrk, ja kahden
+  # minuutin väli on 720 lukua vuorokaudessa — noin 36-kertaisesti yli.
+  # Rajan täyttyessä rajapinta lukkiutuu tunnin vaihtumiseen asti, eikä se
+  # palauta virhettä: luku vain epäonnistuu ja vanha arvo jää näyttämään
+  # tuoreelta.
+  #
+  # **Rakennusvaiheessa tämä on silti vaaraton**, ja syy kannattaa tietää:
+  # krediitti kuluu NFC-tapahtumasta mittarin kanssa. Epäonnistunut yritys —
+  # PN5180 ei vastaa, tai kohdistus ei osu kelaan — ei kommunikoi mittarin
+  # kanssa lainkaan eikä kuluta mitään. **Väli alkaa maksaa vasta
+  # ensimmäisestä onnistuneesta luvusta.**
+  #
+  # Se on siis myös se hetki jolloin tämä nostetaan: mittaa yhden luvun
+  # kesto lokin aikaleimoista ja johda väli siitä kertoimella 2–3.
+  # Perustelu ja taulukko: CLAUDE.md.
+  update_interval: 2min
 
   # **Pakollinen, vaikka näyttää valinnaiselta.** `timepoint_sensor` on
   # komponentin ainoa entiteetti jonka oletus on tyhjä `{}` eikä
