@@ -847,13 +847,36 @@ sama 13,56 MHz, sama SPI, sama 3,3 V ja usein sama myyntikuvaus — **ja se on e
 protokolla.** Sama muoto kuin stiebelissä kirjattu opetus siitä ettei
 RS-485-moduuli kelpaa CAN-väylälle: yhteinen fysiikka ei ole yhteensopivuus.
 
-Kolme merkkiä joista väärän tunnistaa listauksesta:
+**Ratkaisevat merkit ovat nastarimassa, eivät kotelon muodossa:**
 
-- **Piiriä ei nimetä**, vain "13.56 MHz SPI, compatible with Arduino". Jos nimeä
-  ei ole, se on RC522
-- **Hinta 2–3 € kappale** ja myyntierä 3–5 kappaletta. PN5180 on 8–10 € kappale
-- **Antenni on pieni neliö samalla levyllä.** PN5180 on kaksiosainen: pieni
-  piirilevy ja siihen liitetty luottokortin kokoinen suorakaiteen antennilevy
+- **`5V` ja `BUSY` rimassa.** RC522 on pelkkää 3,3 volttia eikä siinä ole
+  valmiuslinjaa; PN5180 ei toimi ilman kumpaakaan. Tämä on nopein ja varmin
+  tarkistus, ja sen voi tehdä tuotekuvasta jos silkkipainatus näkyy.
+- **Nastojen määrä.** MFRC522 tuo ulos kahdeksan. PN5180 tarvitsee vähintään
+  yhdeksän ja levyt katkaisevat 10–16.
+- **Piirin merkintä**, `PN5180` tai `PN5180A0HN`. Jos listauksessa lukee vain
+  "13.56 MHz SPI, compatible with Arduino" ilman piirin nimeä, se on RC522.
+- Hinta 2–3 € kappale ja myyntierä 3–5 kappaletta on RC522:n hinnoittelu;
+  PN5180 on 8–10 € kappale.
+
+### Antennin muoto ei kelpaa tunnistimeksi, ja tässä luki että kelpaa
+
+Tässä oli neljäs merkki: *"antenni on pieni neliö samalla levyllä — PN5180 on
+kaksiosainen"*. **Se on väärin ja se olisi hylännyt oikean levyn.**
+
+Saapunut moduuli on yksiosainen: yksi sininen levy, jonka oikealla kahdella
+kolmanneksella on kierukka-antenni ja vasemmalla piiri, passiivit ja
+toistakymmentä juotospadia pitkällä reunalla. Rimassa on `5V` ja `BUSY`, ja
+piirissä lukee `PN5180-NFC`.
+
+Kaksiosaisuus on siis **yhden myydyimmän mallin ominaisuus eikä piirin
+ominaisuus**, ja se oli tässä tiedostossa yleistetty tunnistimeksi yhden
+tuotekuvan perusteella.
+
+Se on sama virhe jota tämän listan oma kärki varoittaa tekemästä — yhteinen
+fysiikka ei ole yhteensopivuus — vain toisin päin: **yhteinen ulkonäkö ei ole
+yhteensopimattomuus.** Tunnistin on piirin nimi ja sähköinen vaatimus, ei
+muoto.
 
 Hae siis piirin nimellä `PN5180`, ei kuvauksella. Ja tarkista rimasta että
 siinä on **sekä 5 V että 3,3 V** — lähetinpää tarvitsee viisi volttia, logiikka
@@ -972,8 +995,15 @@ Neljä kohtaa jotka menevät helposti väärin:
 - **BUSY on pakollinen.** PN5180 ei ole tavallinen SPI-orja: jokaisen komennon
   jälkeen on odotettava BUSY:n laskua. Ilman sitä luku palauttaa roskaa eikä
   virhettä — taas vika joka ei näytä vialta.
-- **Antennilevy menee mittaria vasten, ohjain ei.** Lattakaapeli antaa
-  muutaman sentin.
+- **Koko moduuli menee mittaria vasten, ja C3 sen viereen.** Saapunut levy on
+  yksiosainen, joten antennia ei voi sijoittaa erilleen logiikasta. SPI on
+  nopea väylä eikä siedä pitkiä johtoja, joten C3:n on oltava 10–20 cm:n
+  päässä — eli sekin päätyy mittarin luo. Se ei ole ongelma tässä tilassa,
+  mutta se poistaa sen joustavuuden jonka kaksiosainen malli olisi antanut.
+- **Lukuetäisyys on lyhyempi kuin kaksiosaisella.** Integroitu kierukka on
+  pienempi kuin erillinen luottokortin kokoinen antennilevy, joten kohdistus
+  mittarin omaan kelaan on tarkempaa työtä. Varaa siihen aikaa ensimmäisellä
+  kerralla.
 - **Tarkista komponentin alustatuki ennen kuin harkitset D1 miniä.** ESP8266:lla
   SPI:n jälkeen jää kolme turvallista nastaa, mikä riittää täpärästi — mutta
   `esphome_qalcosonicnfc`:n ESP8266-tuki on todentamatta, eikä sitä kannata
