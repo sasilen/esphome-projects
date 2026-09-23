@@ -332,6 +332,17 @@ liittymisellä eikä todista mitään.
 `hardware_uart: USB_SERIAL_JTAG` on YAMLissa juuri tätä varten. Ilman sitä
 sarjaportti on hiljaa ja toimiva levy näyttää kuolleelta.
 
+**Anna liittymiselle pari minuuttia, ja älä käytä varayhteyttä merkkinä.**
+Ensimmäinen boot liittyi vasta kuudennella kierroksella, ja siihen meni noin
+kaksi minuuttia. Sitä ennen loki toistaa `Restarting adapter`, ja **jokainen
+uudelleenkäynnistys vie varayhteyden alas ja takaisin** — AP siis vilkkuu eikä
+pysy verkkolistassa. Puuttuva `Axioma NFC fallback` ei tarkoita ettei levy
+käynnisty; se tarkoittaa yhtä hyvin että se on parhaillaan yrittämässä.
+
+Sarjaportti on siksi ainoa rehellinen tapa katsoa tätä vaihetta, ja se on sama
+sääntö kuin muuallakin tässä repossa: **API-lokivirta ei voi näyttää sitä miksi
+laite ei ole verkossa**, koska se liittyy vasta kun laite on.
+
 **6. Mittaa kuuluvuus siinä paikassa johon levy on tulossa.** Varavirtalähde,
 levy mittarin viereen. Odotus on noin **−70 dBm**, koska samassa tilassa oleva
 1-Wire-solmu lukee sitä. Tämä on halpaa nyt ja kallista juotosten jälkeen.

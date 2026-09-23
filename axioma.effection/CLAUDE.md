@@ -1001,6 +1001,39 @@ sama huone.
 lepää kipinöivässä harjamoottorissa suljetussa rasiassa, eikä tämä projekti
 tarvitse sitä.
 
+### Ensimmäinen boot: liittyminen onnistui vasta kuudennella kierroksella
+
+Solmu nousi työpöydällä ja luki **−58 dB**, mikä vastaa radiosolmun −56 dBm:ää
+samasta paikasta. Mutta liittymiseen meni noin kaksi minuuttia, ja
+epäonnistumiset ovat kahta eri lajia:
+
+| Tukiasema | Signaali | Virhe |
+|---|---|---|
+| kauempi | −80…−81 dB | `Probe Request Unsuccessful` |
+| **lähempi** | **−60…−61 dB** | `4-Way Handshake Timeout`, `Authentication Failed`, `Handshake Failed` |
+
+**Ylempi rivi selittyy kuuluvuudella, alempi ei.** Kättely epäonnistui kolmesti
+tukiasemaan jonka kenttä on −60 dB, ja onnistui lopulta samaan tukiasemaan
+samalla avaimella — salasana on siis oikea ja signaali riittävä. Verkossa on
+kaksi tukiasemaa samalla SSID:llä **samalla kanavalla 6**, mikä on joko
+mesh-verkon backhaul tai kaksi tukiasemaa häiritsemässä toisiaan.
+
+**Tätä ei ole korjattu eikä selitetty, vain kirjattu.** Se ei estä mitään:
+levy on verkossa, `Boot seems successful` ja boot-loop-laskuri nollautui.
+Merkitys on siinä että **asennuspaikan odotusarvo on −70 dBm** — kymmenen
+desibeliä heikompi kuin se kenttä jossa kättely jo takkusi. Jos liittyminen
+epäonnistuu mittarin luona, tämä loki on se johon sitä verrataan, eikä
+päätelmä saa silloin olla "C3:n antenni on huono" ennen kuin nämä kolme riviä
+on suljettu pois.
+
+**Varayhteys ei kelpaa tämän vaiheen merkiksi.** Loki toistaa `Restarting
+adapter` joka kierroksella, ja se vie AP:n alas ja takaisin — `Axioma NFC
+fallback` siis vilkkuu eikä pysy verkkolistassa. Puuttuva AP luettiin tässä
+ensin todisteeksi siitä ettei levy käynnisty lainkaan, ja se oli väärin: levy
+oli koko ajan pystyssä ja yritti. **Sarjaportti on ainoa rehellinen tapa
+katsoa liittymisvaihetta**, koska API-lokivirta liittyy vasta kun laite on jo
+verkossa eikä voi määritelmällisesti näyttää miksi se ei ole.
+
 ### Kohdistus ilman tulostettua koteloa
 
 Upstream-projektissa on 3D-tulostettu kotelo joka kohdistaa antennin mittarin
