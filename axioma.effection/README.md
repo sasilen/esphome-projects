@@ -12,10 +12,17 @@ ma 7.9.2026 klo 10–18 tuotti **nolla kehystä**, ja kaappaus jatkui siitä
 katkeamatta seuraavaan päivään klo 14 asti. Kuuntelua on yhteensä noin
 **36 tuntia ja nolla kehystä**, ikkunan sisä- ja ulkopuolelta.
 
-**Työn alla on NFC-solmu**, joka lukee mittarin suoraan ilman radiota ja ilman
-AES-avainta. PN5180 on saapunut; ensimmäinen askel on fläshätä C3 paljaana
-ennen kuin mitään juotetaan. Radiosolmu jää pystyyn siihen asti kunnes NFC on
-kertonut onko wM-Bus ylipäätään päällä.
+**NFC-solmu on rakennettu ja se on verkossa.** PN5180 ja ESP32-C3 SuperMini
+on juotettu yhteen, yhdeksän liitosta läpäisi mittaukset, ja levy nousee
+verkkoon. Radiosolmu jää pystyyn siihen asti kunnes NFC on kertonut onko
+wM-Bus ylipäätään päällä.
+
+**Mutta NFC-komponentti on toistaiseksi kommentoitu pois.** Sen kanssa laite
+liittyi verkkoon ja katosi hetken päästä; ilman sitä se pysyy pystyssä.
+Epäilty on `BUSY`-kättely, joka jää odottamaan jos PN5180 ei vastaa — ks.
+[`axioma-nfc.yaml`](axioma-nfc.yaml). WiFi vaati oman korjauksensa
+(`power_save_mode: NONE`) ja se on eri vika; perustelut
+[`CLAUDE.md`](CLAUDE.md):ssä.
 
 **Todennäköisin syy: mittari on LoRaWAN-luennassa.** W1:ssä LoRaWAN ja wM-Bus
 ovat erilliset liput, ja vesilaitoksella ei ole syytä pitää wM-Busia päällä jos
@@ -432,16 +439,20 @@ Ensimmäistä telegrammia voi joutua odottamaan hetken — lähetysväli on noin
 radiotoimenpidettä ole enää mielekästä jatkaa ennen kuin mittarin oma
 konfiguraatio on luettu.
 
-1. **Fläshää C3 paljaana** ja mittaa WiFi mittarin luona — ks. NFC-solmun
-   fläshäys
-2. Juota yhdeksän liitosta ja kytke vaihe 2 päälle OTA:na
-3. **Paikanna mittarin kela katsomalla**, kiinnitä löysästi, lue kerran
-4. **Mittaa yhden luvun kesto** ja johda pollausväli siitä kertoimella 2–3
-5. Lue mittarista radiotila, moodi ja aikataulumaskit — ne vastaavat siihen
+1. **Todenna että solmu pysyy pystyssä ilman NFC-komponenttia.** `Uptime`
+   juoksee katkeamatta tunteja eikä `Association Expired` esiinny kertaakaan.
+   Se todistaa `power_save_mode: NONE`:n ja rajaa vian komponenttiin
+2. **Mittaa PN5180:n `+5V`, `3.3V` ja `BUSY` maata vasten** levy virroissa.
+   Jatkuvuustesti ei kerro tuleeko jännite perille kuormassa — kylmä juotos
+   virtalangassa lukee auki mutta ei kanna virtaa
+3. Kytke vaihe 2 takaisin ja katso kaatuuko se ensimmäiseen lukuyritykseen
+4. **Paikanna mittarin kela katsomalla**, kiinnitä löysästi, lue kerran
+5. **Mittaa yhden luvun kesto** ja johda pollausväli siitä kertoimella 2–3
+6. Lue mittarista radiotila, moodi ja aikataulumaskit — ne vastaavat siihen
    mitä radiosolmu ei ole vuorokausissa kertonut
-6. Kysy vesilaitokselta rinnalla: onko `wMBus T1` päällä, missä moodissa, ja
+7. Kysy vesilaitokselta rinnalla: onko `wMBus T1` päällä, missä moodissa, ja
    AES-128-avain. Tähän menee kalenteriaikaa, joten käynnistä se heti
-7. Lisää mittari Home Assistantiin
+8. Lisää mittari Home Assistantiin
 
 **Radiosolmu jää pystyyn eikä sitä pureta** ennen kuin NFC on kertonut onko
 wM-Bus ylipäätään päällä. Jos se osoittautuu päälle kytketyksi, jäljellä on
