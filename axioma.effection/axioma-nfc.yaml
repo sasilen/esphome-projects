@@ -128,6 +128,17 @@ qalcosonicnfc:
   # kertoimella 2–3 — ks. CLAUDE.md.
   update_interval: 3h
 
+  # **Pakollinen, vaikka näyttää valinnaiselta.** `timepoint_sensor` on
+  # komponentin ainoa entiteetti jonka oletus on tyhjä `{}` eikä
+  # `{name: ...}`: nimen oletus määritellään sisemmässä skeemassa ja
+  # `.extend(text_sensor_schema())` määrittelee saman avaimen uudelleen
+  # ilman oletusta. Ilman tätä lohkoa validointi kaatuu riviin
+  # `At least one of 'id:' or 'name:' is required!` eikä kerro mistä.
+  timepoint_sensor:
+    name: "Mittarin aikaleima"
+    timezone: Europe/Helsinki
+    entity_category: diagnostic
+
   water_usage_sensor:
     name: "Vesimittari"
   water_flow_sensor:

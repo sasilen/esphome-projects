@@ -1099,6 +1099,40 @@ mitään.
 Sama opetus kolmatta kertaa tässä tiedostossa, ja tällä kerralla se säästi
 käännöksen: **lähdekoodi kertoo sekunnissa sen mitä README ei.**
 
+#### Kaksi asiaa jotka skeema tekee toisin kuin odottaisi
+
+**1. Entiteetti ei jää pois jättämällä se mainitsematta.** Jokaisella
+anturilla on `default={ CONF_NAME: "…" }`, eli **poisjätetty lohko syntyy
+silti englanninkielisellä oletusnimellä.** Listaus ei siis valitse mitkä
+entiteetit luodaan vaan mitkä nimetään suomeksi; laite tuo Home Assistantiin
+kolmisenkymmentä entiteettiä joka tapauksessa. Ei-toivotun saa piiloon
+`internal: true`-rivillä, ei vaikenemalla.
+
+**2. `timepoint_sensor` on pakollinen vaikka näyttää valinnaiselta.** Se on
+ainoa jonka oletus on tyhjä `{}`:
+
+```python
+cv.Optional(CONF_TIMEPOINT_SENSOR, default={}): cv.Schema({
+    cv.Optional(CONF_NAME, default="Time point"): cv.string,
+    cv.Optional(CONF_TIMEZONE): validate_tz,
+}).extend(
+    text_sensor.text_sensor_schema()
+),
+```
+
+Nimen oletus on sisemmässä skeemassa, mutta `.extend()` määrittelee saman
+avaimen uudelleen ilman oletusta ja ylikirjoittaa sen. Tulos on lohko jossa
+ei ole `id`:tä eikä `name`:a, ja validointi kaatuu riviin:
+
+```
+At least one of 'id:' or 'name:' is required!
+```
+
+**Virhe laukeaa oletuskonfiguraatiolla**, eli komponentti ei validoidu
+sellaisenaan. Ja virheilmoitus ei kerro mistä lohkosta on kyse ellei koko
+tulostetta lue — se on sama vikaluokka kuin muuallakin täällä: oire osoittaa
+kauas syystä.
+
 ### Kohdistus ilman tulostettua koteloa
 
 Upstream-projektissa on 3D-tulostettu kotelo joka kohdistaa antennin mittarin
