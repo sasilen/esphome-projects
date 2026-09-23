@@ -1180,66 +1180,47 @@ sisään, ei suorita mitään eikä nosta `BUSY`:a. `MISO` ei tuottaisi samaa �
 poikki oleva paluulinja antaisi roskaa mutta `BUSY` liikkuisi silti, ja vika
 näkyisi vasta myöhemmin.
 
-### Vastaanotin toimii, lähetin ei pääse ulos
+### WiFi-vika on tässä levyssä, ei verkossa
 
-Tämä on se havainto joka kattaa kaikki WiFi-oireet yhdellä mekanismilla, ja
-se tuli varayhteydestä: loki sanoi `Starting fallback AP`, **mutta AP ei
-näkynyt puhelimessa.**
+Tähän oli kertynyt pitkä lista verkkohypoteeseja: MikroTikin `disable-pmkid`
+ja `management-protection`, Decon `WPA/WPA2`-sekatila ja TKIP-ryhmäavain,
+tukiaseman asiakastaulu, `power_save_mode: NONE`. **Kaikki ne ovat
+tarpeettomia, ja omistaja katkaisi ne yhdellä lauseella: samassa verkossa
+toimii useita muita ESP32-C3-solmuja moitteetta.**
 
-| Toiminto | Vaatii | Tila |
-|---|---|---|
-| Skannaus, RSSI −60 dB oikein | vastaanoton | **toimii** |
-| Liittyminen ja kättely | lähetyksen | ei toimi |
-| Oman AP:n majakat | lähetyksen | ei toimi |
+Se on vahvempi todiste kuin yksikään lokista tehty päätelmä. Jos verkko
+rikkoisi C3:n liittymisen, se rikkoisi ne kaikki.
 
-Laite näkee molemmat tukiasemat ja lukee niiden kentän, mutta **mikään sen
-lähettämä ei mene perille.** Siksi MikroTikin asetuksista ei löytynyt mitään
-torjuttavaa: tukiasema ei torju, se ei vain kuule. `Probe Request
-Unsuccessful`, `4-Way Handshake Timeout`, `Authentication Failed` ja `Auth
-Expired` ovat kaikki saman asian eri vaiheita.
+**Yhteinen tekijä on tämä yksilö**, ja siitä on riippumaton löydös: kaksi
+GPIO-padia on kuollut, ja seitsemän muuta toimii. Levy jonka läpiviennit
+ovat osin kelvottomia ei ole todennäköisesti moitteeton muualtakaan.
 
-**Ja se kumoaa väliaikaisen päätelmän jonka tein hetkeä aiemmin**, että AP:n
-käynnistyminen todistaa radion toimivaksi. Loki kertoo vain että ohjelma
-käski radiota; **näkyvyys on se joka todistaa lähetyksen**, ja sitä ei ollut.
+Oireet sopivat siihen: skannaus ja RSSI ovat kunnossa, mutta liittyminen
+kaatuu kättelyyn ja varayhteyden AP ei näy puhelimessa. Se on vastaanoton ja
+lähetyksen välinen jako, ja lähetys on se suunta joka sietää vähiten.
 
-Sama muoto kuin muuallakin tässä tiedostossa: laitteen oma loki kertoo mitä
-se yritti, ei mitä tapahtui.
+**`power_save_mode: NONE` jää paikalleen** mutta sen perustelu on nyt
+hypoteesi: se lisättiin kun yksi liittyminen onnistui heti perään, ja se
+luettiin todisteeksi. Verkkovirralla hinta on olematon, joten se saa jäädä —
+mutta tämä kohta sanoo ääneen ettei se ole todennettu korjaus.
 
-#### Epäilty on syöttö
+**Ja tästä seuraa opetus jota tässä tiedostossa on nyt neljä kertaa:** kun
+kaksi hypoteesia on kaatunut samasta lähteestä, älä ehdota kolmatta samasta
+lähteestä. Hanki uusi lähde — tai kysy omistajalta, jolla on vuosien
+käyttöhistoria laitteista joista lokia on tunteja.
 
-Vastaanotto vie muutamia milliampeereja; **lähetys piikittää noin 350
-mA:iin.** Piiri joka kuuntelee hyvin mutta ei saa lähetystä ulos on juuri
-sen vian muoto jossa syöttö notkahtaa purskeessa.
+#### Seuraus: levy vaihdetaan
 
-Kaksi asiaa on muuttunut sitten kun paljas C3 liittyi verkkoon ongelmitta:
-**PN5180 tuli samaan syöttöön**, ja **100 µF on yhä asentamatta** — se
-puuttui rakennusohjeesta ja on juuri se komponentti joka kantaa nuo piikit.
+Nykyinen C3 kelpaa PN5180:n todentamiseen, koska komponentin setup ajetaan
+ennen verkkoa ja tulos luetaan sarjaportista. **Se on hyvä koejigi mutta
+huono solmu.**
 
-Kokeet järjestyksessä: toinen virtalähde ilman kolvia, sitten kondensaattori,
-sitten hyllyn toinen C3 ilman PN5180:a samassa paikassa. Viimeinen erottaa
-kuorman verkosta lopullisesti.
+Kun kytkentä on todettu toimivaksi, yhdeksän liitosta siirretään hyllyn
+toiseen C3:een — ja silloin `RST` ja `NSS` palaavat `GPIO5`:een ja
+`GPIO6`:een, koska korjauslangat olivat tämän yksilön kuolleita padeja
+varten eivätkä suunnittelun osa.
 
-### WiFi ei korjaantunut, ja `NONE` ei ollut korjaus
-
-Samassa ajossa, komponentti jo epäonnistuneena ja siis pois pelistä:
-`-54 dB`, `power_save_mode: NONE` päällä, ja silti `4-Way Handshake
-Timeout`, `Authentication Failed`, `Handshake Failed`.
-
-**Se yksi onnistunut liittyminen `NONE`:n jälkeen oli otos eikä todiste**, ja
-siitä pääteltiin tässä liikaa. Asetus jää paikalleen, koska MikroTikin
-keepalive-mekanismi on yhä uskottava osaselitys ja verkkovirralla hinta on
-olematon — mutta **sen perustelu on nyt hypoteesi eikä havainto**, ja tämä
-kohta on se joka sanoo sen ääneen.
-
-Seuraava askel ei ole uusi asetus laitteeseen vaan **tukiaseman loki**:
-
-```
-/system/logging/add topics=wireless action=memory
-/log/print where topics~"wireless"
-```
-
-Sama sääntö kuin aiemmin tässä luvussa: laite näkee vain oman puolensa, ja
-torjunnan syy on toisella.
+**Testaa uuden levyn nastat ennen kuin juotat.** Ks. README, kohta 6,5.
 
 ### Komponentin skeema, todennettuna lähdekoodista
 
