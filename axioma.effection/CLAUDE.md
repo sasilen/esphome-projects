@@ -1419,6 +1419,28 @@ päälle.
 
 ### Kytkentä
 
+**Molemmat päät on todennettu lähteestä, ei päättelystä.**
+
+`JP1`:n järjestys luettiin **moduulin omasta silkkipainatuksesta** — repon
+juuren tuotekuvassa se on luettavissa, `JP1`-merkinnän päästä alkaen:
+
+```
++5V  3.3V  RST  NSS  MOSI  MISO  SCK  BUSY  GND  GPIO  IRQ  AUX  REQ
+```
+
+Se vahvistettiin myös mittaamalla: nastat 1 ja 2 antoivat 5 V ja 3,3 V, eli
+laskusuunta on oikea.
+
+C3:n rivikartta on valmistajan nastakuvasta: rima USB-C:stä alkaen `GPIO5`
+`GPIO6` `GPIO7` `GPIO8` `GPIO9` `GPIO10` `GPIO20` `GPIO21`, kaukorivi `5V`
+`GND` `3V3` `GPIO4` `GPIO3` `GPIO2` `GPIO1` `GPIO0`.
+
+**Upstream ei anna C3:lle nastoja lainkaan.** Sen taulukko on tavalliselle
+ESP32:lle (`SCLK 18`, `MISO 19`, `MOSI 23`, `NSS 14`, `BUSY 16`, `RST 17`)
+ja `board: esp32-c3-devkitm-1` on esimerkissä kommentoituna. Nastavalinta on
+siis vapaa, ja tämän projektin valinta perustuu C3:n vapaisiin nastoihin —
+ei siihen että se olisi jostain kopioitu.
+
 Kaksi kuvaa, eri kysymykseen:
 
 | | |
