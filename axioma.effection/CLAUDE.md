@@ -1097,41 +1097,48 @@ päälle.
 
 Piirretty [`nfc-wiring.svg`](nfc-wiring.svg):ssä.
 
-**Variantti B:n kartta oli edellisessä versiossa väärin.** Levyn kääntö peilaa
-kaikki kahdeksan nastaa, ei vain kuutta — oikea B on `RST=GPIO21`,
-`NSS=GPIO20`, `MOSI=GPIO10`, `BUSY=GPIO7`. Siitä seuraa uusi hinta jota A:lla
-ei ole: **`GPIO20` ja `GPIO21` ovat UART0:n RX ja TX.** Loki kulkee USB CDC:n
-yli joten se ei kaadu, mutta sarjakonsoli menee. A jättää UARTin vapaaksi.
+**Valittu asento on A: USB-C ylöspäin, UART vapaana.**
 
-**Ja langat juotetaan yläpuolelta, ei alta.** Tämä kääntyi kun geometria
-korjattiin: C3 on rimalla 2,5–6 mm ilmassa, joten padin päällä on tilaa
-langalle. Alapinta pysyy siistimpänä kun sinne jää vain neljä rimanastaa — ja
-nekin katkaistaan tasan juotoksen jälkeen. Aiempi perustelu altapäin
-juottamiselle nojasi siihen että C3 makaisi kiinni pinnassa, mikä ei pidä
-paikkaansa.
-
-**Levy on `PN5180-NFC` rev `R1.1-170710`, 70 × 39 mm, piiri `PN5180A0`.**
-Rimassa `JP1` on kolmetoista nastaa, ja johdotus noudattaa niiden omaa
-järjestystä — silloin yhdeksän johtoa menee rinnakkain ilman risteyksiä:
-
-| JP1 | C3 | |
+| JP1 | C3 | Reitti |
 |---|---|---|
-| `+5V` | `5V` | lähetinpää |
-| `3.3V` | `3V3` | logiikka |
-| `RST` | `GPIO3` | |
-| `NSS` | `GPIO7` | |
-| `MOSI` | `GPIO6` | |
-| `MISO` | `GPIO5` | |
-| `SCK` | `GPIO4` | |
-| `BUSY` | `GPIO10` | valmiuslinja |
-| `GND` | `GND` | |
-| `GPIO` `IRQ` `AUX` `REQ` | — | jäävät vapaaksi |
+| `RST` | `GPIO5` | rimanasta |
+| `NSS` | `GPIO6` | rimanasta |
+| `MOSI` | `GPIO7` | rimanasta |
+| `BUSY` | `GPIO10` | rimanasta |
+| `MISO` | `GPIO3` | lakkalanka |
+| `SCK` | `GPIO4` | lakkalanka |
+| `+5V` | `5V` | lakkalanka |
+| `3.3V` | `3V3` | lakkalanka |
+| `GND` | `GND` | lakkalanka |
 
-Neljä alinta jää kytkemättä: komponentti ei käytä niitä.
+**Rimasta vedetään irti neljä nastaa** ennen asennusta: `GPIO8` ja `GPIO9` ovat
+strapping, `GPIO20` osuisi maahan ja `GPIO21` käyttämättömään padiin.
 
-C3:lla SPI ei ole sidottu kiinteisiin nastoihin, joten valinta on vapaa.
-Kuusikko väistää **strapping-nastat `GPIO2`, `GPIO8` ja `GPIO9`** sekä USB:n
-`GPIO18/19`:n.
+Käytetyt nastat ovat `3, 4, 5, 6, 7, 10` — sama turvallinen kuusikko kuin
+alusta asti, vain eri signaaleille. Strapping `2, 8, 9`, USB `18/19` ja UART0
+`20/21` jäävät kaikki vapaiksi.
+
+**Hylätty vaihtoehto B** olisi kääntänyt C3:n niin että USB-C osoittaa
+käyttämättömien padien suuntaan. Se maksaisi UART0:n, koska kääntö peilaa
+kaikki kahdeksan nastaa ja `GPIO20`/`GPIO21` päätyisivät `RST`:ksi ja
+`NSS`:ksi. USB CDC riittää lokiin, mutta sarjakonsoli on halvempi pitää kuin
+saada takaisin.
+
+**A:n hinta on että USB-C jää `+5V`- ja `3.3V`-padien yläpuolelle.**
+Asennuksessa se ei haittaa, koska langat juotetaan ennen C3:a — mutta niiden
+korjaaminen vaatii C3:n irrottamisen. Tee ne huolella kerralla.
+
+### Vain SCK osuu silkkipainatukseen
+
+C3:n silkki sanoo `GPIO5=MISO`, `GPIO6=MOSI`, `GPIO7=SS`. Tässä ne ovat `RST`,
+`NSS` ja `MOSI`. Ainoa osuma on `GPIO4=SCK`.
+
+Se on toiminnallisesti yhdentekevää — C3 reitittää SPI:n GPIO-matriisin läpi ja
+ESPHome ottaa nastat konfiguraatiosta — mutta **kirjoita kartta levyn kylkeen
+tussilla.** Kolmen kuukauden päästä silkki valehtelee kahdeksalla nastalla
+yhdeksästä.
+
+
 
 Neljä kohtaa jotka menevät helposti väärin:
 
