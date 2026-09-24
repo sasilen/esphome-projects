@@ -75,27 +75,20 @@ ota:
     encryption:
 
 wifi:
-  # **The second network, and it is the first test of the network itself.**
+  # **Back on the main network. The second-SSID test is finished.**
   #
-  # The network was excluded four times on the grounds that other ESP32-C3
-  # nodes run on it faultlessly. That argument is sound and it is not
-  # withdrawn — but **it excludes the network as a whole, not an interaction
-  # between this node and one particular access point**, and those are
-  # different claims. `onewire` proves the SSID works; it does not prove
-  # that whatever this node does during the handshake is tolerated by the
-  # same access point.
+  # A phone hotspot on its own name — independent hardware, sole access
+  # point, −30 dB, `WPA2` and `WPA3` both tried — gave the same
+  # `Auth Expired`. The network is therefore not the cause, and there is no
+  # reason to keep this node off the network it is meant to live on.
   #
-  # A second SSID separates them for the price of one flash.
-  #
-  # **The second network must be 2.4 GHz.** The ESP32-C3 has no 5 GHz radio
-  # at all, so pointing this at a `…_5G` name produces a node that never
-  # sees the access point — and the log of that is indistinguishable from
-  # the fault being investigated. It would read as a confirmation and be
-  # nothing of the kind.
-  #
-  # To go back, change both lines to `wifi_ssid` and `wifi_password`.
-  ssid: !secret wifi_ssid2
-  password: !secret wifi_password2
+  # **To repeat the test:** add `wifi_ssid2` and `wifi_password2` to the
+  # shared `/config/secrets.yaml` and change the two lines below. The
+  # hotspot must be 2.4 GHz and on a name of its own — sharing the house
+  # SSID makes the node round-robin between access points and destroys
+  # attribution. Both mistakes were made before the test finally counted.
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   # **`power_save_mode: NONE` was here and it was never a fix.**
   #
