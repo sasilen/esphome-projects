@@ -1357,29 +1357,50 @@ Error Flags Raw: 00 00 00 00
 asking for since the polling budget was first written, and it settles the
 interval:
 
-| Interval | Reads/day | Consumption | Of budget |
+| Interval | Reads/day | Consumption | Of assumed budget |
 |---|---|---|---|
+| **15 min** | **96** | **98.6 s/day** | **~250 %** — chosen |
 | 1 h | 24 | 24.6 s/day | 62 % |
-| **2 h** | **12** | **12.3 s/day** | **31 %** — chosen |
+| 2 h | 12 | 12.3 s/day | 31 % |
 | 3 h | 8 | 8.2 s/day | 21 % |
 
 **Totals are correct at any of these**, because water is cumulative. What
 changes is how lumpy the hourly graph looks, since Home Assistant computes
-statistics per hour.
+statistics per hour — and at 15 min each hour has four samples rather than
+one.
 
-Two hours was chosen over one for a reason that is about uncertainty rather
-than the arithmetic: **the 20 min/month credit is a general figure, not
-measured from this meter**, and 1027 ms is a single sample. If both are 30 %
-out the wrong way, an hourly interval is already over budget. A threefold
-margin covers that.
+### The interval was set past the budget on purpose
 
-And being wrong is cheap: the interface locks until the hour turns, nothing
-breaks, and `Consecutive read errors` shows it. **Watching that sensor for a
-month is the only way to learn what the credit actually is** — after which
-the interval can be set from measurement instead of assumption.
+Two hours was chosen first, and the reasoning was about uncertainty rather
+than arithmetic: **the 20 min/month credit is a general figure, not measured
+from this meter**, 1027 ms is a single sample, and if both were 30 % out the
+wrong way an hourly interval would already be over. A threefold margin
+covered that.
 
-The bench value of 2 min would be 720 reads a day and would burn the month's
-credit in a bit over a day.
+**That reasoning was turned around by a working counter-example.**
+`kosla-dev/qalcosonic-w1-nfc-reader` reads this same meter with this same
+component **every 300 s.** By the arithmetic above that is 288 reads a day,
+about 148 min/month — **seven times the assumed budget** — and it is a
+finished, running build with no reported trouble.
+
+Both cannot be true. Either the credit is much larger than 20 min/month, or
+it is not consumed the way this file assumed — the plausible candidate being
+that it meters something other than wall-clock transaction time.
+
+**So the budget became the weakest number in the chain, not the interval**,
+and a margin defended against a number that may be wrong protects nothing.
+It only postpones finding out. Fifteen minutes is deliberately inside what a
+working build already does and still well short of it.
+
+**What makes this safe is the failure mode, not the margin.** If the credit
+does run out, the interface locks until the hour turns: nothing breaks, no
+setting is lost, and `Consecutive read errors` rises. That sensor is the
+instrument — **a month at zero measures the credit; a month of climbing sets
+the interval.** Either outcome replaces an assumption that has stood
+unverified since the budget was first written.
+
+The bench value of 2 min stays out: 720 reads a day is another sevenfold on
+top of this, and it would be guessing again in the other direction.
 
 **The Meter ID is not the nameplate serial.** The repo's placeholder was an
 assumption from the nameplate and it was wrong. The real number stays out of
@@ -1784,7 +1805,7 @@ our choices and differs in one that matters.
 | Board | **`seeed_xiao_esp32c3`** | C3 SuperMini |
 | **Antenna** | **u.FL, external on a pigtail** | **PCB antenna on top of the module** |
 | logger | `INFO`, **no `hardware_uart`** | had `USB_SERIAL_JTAG` |
-| `update_interval` | **300s** | was 2 h |
+| `update_interval` | **300s** | **15 min** — set toward this; see above |
 | `power_save_mode`, `output_power` | neither | neither |
 | Component and commit | same | same |
 

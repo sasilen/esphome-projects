@@ -164,36 +164,46 @@ qalcosonicnfc:
   pn5180_miso_pin: GPIO4     # MISO  — enamelled wire
   pn5180_sck_pin: GPIO3      # SCK   — enamelled wire
 
-  # **Two hours, and the number behind it is now measured.**
+  # **Fifteen minutes, and it knowingly exceeds the budget written below.**
   #
-  # One successful read took **1027 ms** — the `took a long time for an
-  # operation` warning reports it directly. At two hours that is 12 reads a
-  # day, about 12.3 s/day against a budget of 40 s/day: **31 %, a bit over
-  # a threefold margin.**
+  # One successful read takes **1027 ms** — the `took a long time for an
+  # operation` warning reports it directly. At 15 min that is 96 reads a day,
+  # about 98.6 s/day, i.e. **roughly 49 min/month against an assumed budget
+  # of 20 min/month: about 250 %.**
   #
-  #   1 h   24 reads   24.6 s/day   62 %
-  #   2 h   12 reads   12.3 s/day   31 %   ← here
-  #   3 h    8 reads    8.2 s/day   21 %
+  #   15 min   96 reads   98.6 s/day   ~250 %   ← here
+  #    1 h     24 reads   24.6 s/day     62 %
+  #    2 h     12 reads   12.3 s/day     31 %
+  #    3 h      8 reads    8.2 s/day     21 %
   #
-  # **Totals are correct at any of these** — water is cumulative. What
-  # changes is how lumpy the hourly graph looks in Home Assistant, whose
-  # statistics are computed per hour.
+  # **The budget is now the weakest number in the chain, not the interval.**
+  # The 20 min/month credit is a general figure that has never been verified
+  # on this meter, and there is a working counter-example:
+  # `kosla-dev/qalcosonic-w1-nfc-reader` reads the same meter with the same
+  # component **every 300 s** — 288 reads a day, about 148 min/month by this
+  # same arithmetic, i.e. seven times the assumed budget — and reports no
+  # trouble with it. Either the credit is much larger than 20 min/month, or
+  # it is not consumed the way this file assumed.
   #
-  # One hour is defensible and fits that grid exactly, but **two of the
-  # inputs are assumptions rather than measurements**: the 20 min/month
-  # credit comes from a general source, not from this meter, and 1027 ms is
-  # a single sample that grows if the coupling weakens. If both are 30 %
-  # out the wrong way, an hourly interval is already over.
+  # Both cannot be true at once, and **the only way to learn which is to
+  # exceed the assumed figure and watch.** A margin chosen against a number
+  # that may be wrong protects nothing; it only postpones finding out.
   #
-  # **Being wrong is cheap and visible.** If the credit runs out the
-  # interface locks until the hour turns and nothing breaks, and the
-  # `Consecutive read errors` sensor below shows it. That is also the only
-  # way to find out what the credit actually is — watch it for a month and
-  # the interval can be set from measurement instead of assumption.
+  # **Being wrong is cheap and visible, which is what makes this safe.** If
+  # the credit does run out the interface locks until the hour turns, nothing
+  # breaks, no setting is lost, and the `Consecutive read errors` sensor below
+  # rises. That sensor is the experiment's instrument — if it stays at zero
+  # for a month, the credit is measured rather than assumed. If it starts
+  # climbing, raise the interval and the answer is still cheaper than the
+  # guess it replaced.
   #
-  # The bench value of 2 min would be 720 reads a day and would burn the
-  # month's credit in a bit over a day. It was harmless only while the
-  # reads were failing.
+  # **Totals are correct at any interval** — water is cumulative. What 15 min
+  # buys over an hour is four samples per hour instead of one, so Home
+  # Assistant's hourly statistics stop being a single point, and a running
+  # toilet shows up the same day rather than the next.
+  #
+  # The bench value of 2 min would be 720 reads a day, which is another
+  # sevenfold on top of this. That one stays out.
   #
   # Old text, kept because the reasoning still applies:
   #
@@ -208,11 +218,7 @@ qalcosonicnfc:
   # failed attempt — the PN5180 not answering, or the alignment missing the
   # coil — does not communicate with the meter at all and consumes nothing.
   # **The interval only starts costing from the first successful read.**
-  #
-  # That is therefore also the moment to raise it: measure the duration of
-  # one read from the log timestamps and derive the interval from it with a
-  # factor of 2–3. Rationale and table: CLAUDE.md.
-  update_interval: 2h
+  update_interval: 15min
 
   # **Required, although it looks optional.** `timepoint_sensor` is the
   # component's only entity whose default is an empty `{}` rather than
