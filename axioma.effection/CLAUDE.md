@@ -1668,6 +1668,33 @@ Same ESPHome, same chip, same configuration, an independent access point at
 
 **One difference remains: the PN5180 is attached.**
 
+##### The hotspot result has an untested premise
+
+**Nothing has ever joined that hotspot.** The conclusion above assumes a
+healthy node could, and that assumption has not been measured.
+
+The bare-board test that exists — day 2 at 10:21, the second C3, stage 2
+commented out — **was run against the home network.** The hotspot did not
+exist then. So the pair "bare C3 + hotspot" has never been tried, and it is
+the control for this experiment rather than a repeat of an old one.
+
+If that access point rejects any ESPHome C3, the exclusion above is empty.
+
+**The cheapest form of the control needs no flash at all: check the
+hotspot's security mode on the phone.** A `WPA3` or mixed `WPA2/WPA3`
+setting can produce `Auth Expired` on an ESP by itself — mixed mode with
+mandatory PMF is a known source of ESP32 association failures. If that is
+what it is set to, the measurement is void and has to be repeated on
+`WPA2-PSK`.
+
+If it is already `WPA2-PSK`, the result stands much better and the bare-C3
+flash becomes optional rather than required.
+
+**This is the project's most repeated mistake, recorded here for the fifth
+time: a measurement without a control.** The conclusion is left standing
+because it is probably right — but it is marked, not asserted, until the
+control exists.
+
 ##### The symmetry argument excludes attenuation, not mismatch
 
 This file has said the antenna is excluded because attenuation is
