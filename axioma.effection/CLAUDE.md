@@ -1230,7 +1230,52 @@ unconditionally and measure them against a control.** That separates a board
 fault from a wiring fault in one build, and it does not rely on the driver
 behaving as expected.
 
-#### The wiring is proven in full — what remains is the module
+#### Resolved: MISO and SCK were crossed, and the diagram crossed them
+
+**The module was never dead.** After the two wires were swapped in the
+configuration, the PN5180 came up and started transmitting:
+
+```
+[D][PN5180:241]: Send data (len=3): 26 01 00
+[D][PN5180:154]: Write Register 0x00: with AND mask …
+[D][PN5180:549]: Get Transceive state...
+```
+
+`26 01 00` is an ISO 15693 Inventory — flags `0x26`, command `0x01`, mask
+length `0x00`. The chip is initialised, in NFC-V mode and looking for a tag
+in the field. The `qalcosonicnfc is marked FAILED` line disappeared from the
+configuration dump at the same time, for the first time in the project.
+
+**The cause was `MISO` and `SCK` soldered the other way round**, and they
+were like that from the first joint — because
+[`nfc-c3-mount.svg`](nfc-c3-mount.svg) drew the two wires crossing even
+though the pads sit directly opposite each other at the same height. A
+straight wire, which is what anyone would solder, produces `MISO`→`GPIO4`
+and `SCK`→`GPIO3`. The diagram produced the crossing; the build did not.
+
+The symptom matches exactly: the clock went into the module's `MISO`
+**output** and the `SCK` **input** got no clock, so the chip could not
+execute a command and could not raise `BUSY`. That is `Step 3 - Failed` in
+one sentence.
+
+**And no measurement made could have seen it.** Continuity was good on both
+wires, there were no bridges, no shorts to ground, both pins drove 3.3 V —
+every one of those tests passes when two conductors are simply swapped end
+for end. **Continuity proves a conductor exists and that a signal gets
+through; it does not prove the two ends belong together.** That is a third
+level beyond the two this file already records.
+
+The fix was two lines in the YAML, not an iron: on the C3 SPI goes through
+the GPIO matrix and ESPHome takes the pins from the configuration. The
+diagram was redrawn as two horizontal lines to match.
+
+**This retracts the conclusion below**, which was reached the previous
+evening: the module was named as the only remaining suspect, and a
+replacement was about to be ordered. It was innocent.
+
+#### What the wiring investigation had established
+
+
 
 Everything measurable was measured, and **every result is good**:
 

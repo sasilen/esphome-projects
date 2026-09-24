@@ -62,27 +62,21 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  # **`NONE` is a fix, not a default, and this device earned it.**
-  # The repo's rule is not to set this without a symptom that justifies it,
-  # because a setting that fixes nothing gets read later as a preference.
+  # **EXPERIMENT: `power_save_mode: NONE` removed.**
   #
-  # Symptom: the device associated, got a DHCP address from the MikroTik and
-  # dropped out shortly after with the reason codes `Auth Expired` and
-  # `Association Expired`. Those are not rejections but **expirations** —
-  # the access point drops a client it believes has vanished. MikroTik sends
-  # keepalive frames and its `disconnect-timeout` is short, and the C3's
-  # default `LIGHT` puts the receiver to sleep between beacons. A sleeping
-  # radio misses the acknowledgements.
+  # It was added on the strength of a single successful association and
+  # flagged at the time as a hypothesis rather than a verified fix. It is
+  # the only Wi-Fi-layer setting this node has that the house's other
+  # working C3 nodes do not, and it had never been tested against the same
+  # hardware without it.
   #
-  # On the serial port this looked like an endless association attempt,
-  # because ESPHome logs only its own side. **The DHCP log from the router
-  # was the observation that separated a drop from a join failure** — and it
-  # comes from a device ESPHome's log cannot see at all.
+  # A second, independent C3 then showed the same `Auth Expired` symptom,
+  # which rules out the first board. What remains shared is the
+  # configuration, the location and the PN5180 assembly — and this line was
+  # the cheapest of those to remove.
   #
-  # Caveat: see CLAUDE.md. A single successful association was read as
-  # proof at the time, and the justification is a hypothesis rather than a
-  # verified fix. It stays because on mains power it costs nothing.
-  power_save_mode: NONE
+  # If the symptom persists without it, restore nothing: the setting was
+  # innocent and the suspects are the location and the assembly.
 
   ap:
     ssid: "Axioma NFC fallback"
