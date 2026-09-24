@@ -148,8 +148,18 @@ qalcosonicnfc:
   pn5180_miso_pin: GPIO4     # MISO  — enamelled wire
   pn5180_sck_pin: GPIO3      # SCK   — enamelled wire
 
-  # **BENCH VALUE. The production value is `3h` — raise it before leaving
-  # the device running.**
+  # **Three hours, and the number behind it is now measured.**
+  #
+  # One successful read took **1027 ms** — the `took a long time for an
+  # operation` warning reports it directly. At three hours that is 8 reads
+  # per day, about 8 s/day against a budget of 40 s/day: **20 %, with the
+  # margin the rationale asks for.**
+  #
+  # The bench value of 2 min would be 720 reads a day and would burn the
+  # month's credit in a bit over a day. It was harmless only while the
+  # reads were failing.
+  #
+  # Old text, kept because the reasoning still applies:
   #
   # The meter's communication credit is about 20 min/month, i.e. 40 s/day,
   # and a two-minute interval is 720 reads per day — roughly 36 times over.
@@ -166,7 +176,7 @@ qalcosonicnfc:
   # That is therefore also the moment to raise it: measure the duration of
   # one read from the log timestamps and derive the interval from it with a
   # factor of 2–3. Rationale and table: CLAUDE.md.
-  update_interval: 2min
+  update_interval: 3h
 
   # **Required, although it looks optional.** `timepoint_sensor` is the
   # component's only entity whose default is an empty `{}` rather than

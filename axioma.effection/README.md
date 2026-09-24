@@ -20,7 +20,21 @@ ESP32-C3 SuperMini turned out to have **two dead GPIO pads** — `GPIO5` and
 transferred to a replacement board that passed the pin test. The radio node
 stays up until NFC has said whether wM-Bus is switched on at all.
 
-**The PN5180 has never answered, and the wiring is ruled out.** Every one of
+**The meter has been read.** On day 2 the whole chain worked end to end:
+inventory, M-Bus checksum, and a full readout — 255.547 m³, water 15.1 °C,
+battery 91 %, error flags all zero. **One read takes 1027 ms**, which
+settles the polling interval at three hours: 8 reads a day, about 20 % of
+the meter's communication credit.
+
+Two things came out of it that the repo had guessed wrong: the Meter ID is
+not the nameplate serial, and the alignment was found by hand in minutes
+because failed inventories cost no credit.
+
+**What is still open is Wi-Fi**, and it does not block reading the meter —
+the node reads over the serial port with no network at all. See
+[`CLAUDE.md`](CLAUDE.md), "OPEN PROBLEM".
+
+**Earlier: the PN5180 had never answered, and the wiring was ruled out.** Every one of
 the nine connections was measured from both ends, the control lines were
 driven high unconditionally and verified, the pin maps were read from the
 module's silkscreen and the board vendor's diagram, and there are no bridges

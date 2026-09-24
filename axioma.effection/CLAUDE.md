@@ -1337,6 +1337,45 @@ still move, and the fault would show only later.
 
 (Both were subsequently measured good.)
 
+### The meter has been read
+
+On day 2 at 17:17, with the board held against the meter's coil, the whole
+chain worked end to end for the first time:
+
+```
+Inventory successful, UID=…
+M-Bus Checksum OK (calculated: 18, received: 18)
+Water Usage: 255.547 m³        Water Usage (Only Negative): 1.718 m³
+Water Temperature: 15.1 °C     External Temperature: 18.0 °C
+Battery Percentage: 91 %       Operating Time: 847 days
+Error Flags Raw: 00 00 00 00
+```
+
+**Four things worth keeping from it.**
+
+**One read takes 1027 ms.** That is the measurement this file has been
+asking for since the polling budget was first written, and it settles the
+interval: at three hours, 8 reads a day is about 8 s against a budget of
+40 s/day — 20 %, with the margin the rationale asks for. The bench value of
+2 min would be 720 reads a day and would burn the month's credit in a bit
+over a day.
+
+**The Meter ID is not the nameplate serial.** The repo's placeholder was an
+assumption from the nameplate and it was wrong. The real number stays out of
+this file because the repo is public — but the rule holds once more: **the
+device's own utterance beats the table.**
+
+**The tag is powered by the field.** `EH_EN=1, EH_ON=1, FIELD_ON=1,
+VCC_ON=1` — the ST25 harvests energy from the reader, which is why the read
+works at all without touching the meter's battery beyond the communication
+credit.
+
+**And the error flags are all zero**, which is the first independent word
+from the meter that nothing is wrong with it.
+
+**The alignment was found by hand, not by polling** — as the rationale here
+prescribed. Failed inventories cost no credit, so the search was free.
+
 ### OPEN PROBLEM: the assembled node will not stay on Wi-Fi
 
 Read this section first if you come back to this. Everything below it is the
