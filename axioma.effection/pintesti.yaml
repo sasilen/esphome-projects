@@ -1,0 +1,101 @@
+# Nastatesti — aja tämä paljaalle C3:lle ENNEN kuin mitään juotetaan
+#
+# Ajaa jokaisen käytettävän nastan ylös ehdoitta ilman NFC-komponenttia.
+# Mittaa jokainen padi maata vasten: **kaikkien pitää olla ~3,3 V.**
+#
+# **Miksi tämä on olemassa.** 23.9.2026 rakennettiin solmu jonka yhdeksän
+# liitosta mitattiin kolmeen kertaan kunnossa oleviksi, eikä PN5180 silti
+# vastannut. Vika oli C3:ssa: `GPIO5`- ja `GPIO6`-padit eivät nousseet
+# lainkaan. Katkos oli levyn sisällä padin ja piirin välissä, joten
+# jatkuvuusmittaus JP1:stä padiin meni läpi ja kertoi väärää tarinaa.
+#
+# **Jatkuvuus kertoo että johdin on olemassa. Tämä kertoo että signaali
+# kulkee.** Ne ovat eri asioita, ja vain jälkimmäinen löysi vian.
+#
+# Nasta ei paljasta vikaansa ennen kuin sitä käytetään: se levy oli
+# fläshätty ja ajanut WiFiä moitteetta näiden ollessa koko ajan rikki.
+#
+# ---------------------------------------------------------------------
+# **VAIN PALJAALLE LEVYLLE.** Jos PN5180 on jo kytketty, poista `GPIO3`
+# (`MISO`) ja `GPIO10` (`BUSY`) — ne ovat silloin moduulin lähtöjä, eikä
+# kahta lähtöä saa ajaa vastakkain.
+# ---------------------------------------------------------------------
+#
+# Käyttö:
+#   podman cp axioma.effection/pintesti.yaml esphome:/config/
+#   podman exec esphome esphome compile /config/pintesti.yaml
+#   sudo esptool --chip esp32c3 --port /dev/ttyACM0 write_flash 0x0 firmware.factory.bin
+#
+# Laitteen nimi on sama kuin oikean solmun, joten HA:han ei synny toista
+# laitetta. Palauta `axioma-nfc.yaml` kun mittaukset on tehty.
+
+esphome:
+  name: axioma-nfc
+  friendly_name: Axioma NFC
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    encryption:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: NONE
+  ap:
+    ssid: "Axioma NFC fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+sensor:
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+
+switch:
+  # **Verrokki.** Ei kuulu kytkentään eikä siihen tule mitään. Jos tämä ei
+  # nouse, vika on mittauksessa tai firmwaressa — ei levyssä.
+  - platform: gpio
+    pin: GPIO1
+    name: "Testi GPIO1 verrokki"
+    restore_mode: ALWAYS_ON
+
+  # Kuusi nastaa joita kytkentä käyttää, kaavion mukaisessa järjestyksessä
+  - platform: gpio
+    pin: GPIO5
+    name: "Testi GPIO5 RST"
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    pin: GPIO6
+    name: "Testi GPIO6 NSS"
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    pin: GPIO7
+    name: "Testi GPIO7 MOSI"
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    pin: GPIO3
+    name: "Testi GPIO3 MISO"
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    pin: GPIO4
+    name: "Testi GPIO4 SCK"
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    pin: GPIO10
+    name: "Testi GPIO10 BUSY"
+    restore_mode: ALWAYS_ON

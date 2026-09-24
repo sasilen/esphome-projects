@@ -361,29 +361,23 @@ laite ei ole verkossa**, koska se liittyy vasta kun laite on.
 levy mittarin viereen. Odotus on noin **−70 dBm**, koska samassa tilassa oleva
 1-Wire-solmu lukee sitä. Tämä on halpaa nyt ja kallista juotosten jälkeen.
 
-**6,5. Todenna nastat ennen kuin juotat.** Yksi käännös ja viisi mittausta,
-ja se olisi säästänyt tässä projektissa illan: `GPIO5` ja `GPIO6`
-osoittautuivat rikkinäisiksi vasta kun yhdeksän liitosta oli tehty ja
-kytkentä mitattu kolmeen kertaan kunnossa olevaksi.
+**6,5. Todenna nastat ennen kuin juotat.** Fläshää
+[`pintesti.yaml`](pintesti.yaml) ja mittaa seitsemän padia maata vasten —
+kaikkien pitää olla **~3,3 V**.
 
-```yaml
-switch:
-  - platform: gpio
-    pin: GPIO5          # toista jokaiselle käytettävälle nastalle
-    name: "Testi GPIO5"
-    restore_mode: ALWAYS_ON
-```
+Se ajaa jokaisen käytettävän nastan ylös ehdoitta, ja mukana on yksi
+kytkemätön nasta verrokiksi. Se joka ei nouse, on rikki — ja levyn
+vaihtaminen maksaa tässä vaiheessa minuutteja.
 
-Ota mukaan **yksi nasta jota et käytä** verrokiksi. Kaikkien pitää lukea
-3,3 V maata vasten. Se joka ei lue, on rikki — ja levyn vaihtaminen maksaa
-tässä vaiheessa minuutteja.
+**Tämä olisi säästänyt kokonaisen illan.** `GPIO5` ja `GPIO6` osoittautuivat
+rikkinäisiksi vasta kun yhdeksän liitosta oli tehty ja kytkentä mitattu
+kolmeen kertaan kunnossa olevaksi. Katkos oli C3:n sisällä padin ja piirin
+välissä, joten **jatkuvuusmittaus meni läpi ja kertoi väärää tarinaa:**
+jatkuvuus todistaa että johdin on olemassa, tämä testi todistaa että
+signaali kulkee.
 
-**Älä ota mukaan nastoja jotka ovat vastapuolen lähtöjä**, kuten `MISO` tai
-`BUSY`: kahta lähtöä ei laiteta vastakkain.
-
-Nastat eivät paljasta vikaansa käytössä ennen kuin niitä käytetään. Tämän
-levyn `GPIO5` ja `GPIO6` eivät olleet missään aiemmassa konfiguraatiossa, eli
-levy oli fläshätty ja ajanut WiFiä moitteetta niiden ollessa koko ajan
+Ja nasta ei paljasta vikaansa ennen kuin sitä käytetään. Se levy oli
+fläshätty ja ajanut WiFiä moitteetta niiden kahden ollessa koko ajan
 rikki.
 
 **7. Irrota USB ja juota.** Järjestys on pakotettu, koska C3:n alle ei pääse
