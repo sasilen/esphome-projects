@@ -1495,6 +1495,7 @@ and not this geometry.
 | Loose wiring | inspected |
 | Resets and brownouts | priority decayed to −15 within one boot, no banner in between |
 | The antenna | three access points visible, strongest −61 dB; attenuation is symmetric |
+| A client limit on the SSID | a phone joins `IoT` on request — the network does accept new associations |
 | The network | the owner's call, four times, and right every time |
 | The PN5180 itself | answers, initialises, drives the RF field, issues inventories |
 
@@ -1503,7 +1504,31 @@ ground plane detunes the C3's antenna (killed by the 12:29 success with the
 same geometry), and that the supply dips during transmit bursts (killed by
 the transmit-power cut changing nothing).
 
-**Nothing else is worth guessing at.** The useful move is below.
+**One variable has never been tested, and it is the only one shared by both
+boards and not shared with the nodes that work: the ESP-IDF version.**
+
+This node is the only one in the house built on ESPHome 2026.9.0 with
+ESP-IDF 5.5.5. The others were flashed months ago and never re-associate, so
+they never exercise the current supplicant. A regression there would survive
+a board swap, a change of location and a change of supply, and would produce
+exactly this pattern.
+
+And a phone joins `IoT` on request, so the access point does accept new
+associations — the difference is on the client side. That is a partial
+exclusion rather than a full one, because a phone is a very different
+supplicant from an ESP32, but it points the same way.
+
+It is one line and one build:
+
+```yaml
+esp32:
+  framework:
+    type: esp-idf
+    version: 5.3.2
+```
+
+**Beyond that, nothing else is worth guessing at.** The useful move is
+below.
 
 #### It does not have to be solved
 
