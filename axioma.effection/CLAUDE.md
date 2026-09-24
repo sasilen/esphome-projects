@@ -1394,6 +1394,42 @@ credit.
 **And the error flags are all zero**, which is the first independent word
 from the meter that nothing is wrong with it.
 
+#### What the read did not answer, and why it no longer matters
+
+**The component reads the M-Bus data block, not the meter's
+configuration.** Radio state, the `wMBus T1` and `wMBus S1` flags and the
+schedule masks live in the meter's own settings memory, reachable only
+through the manufacturer's protocol — which is what Axilink does, and that
+route is still closed.
+
+So three of the four questions this project was built to answer are still
+unanswered from the meter's own mouth.
+
+**One of the four is answered, and it closes a hypothesis.** Total
+consumption is 255.547 m³ over 847 days of operating time, so the 10-litre
+threshold was passed two years ago: **transport mode is long released.**
+Hypothesis 2.2 is dead — the radio is not off because the meter is still
+factory-fresh.
+
+It also strengthens the other conclusion. The meter is alive and healthy —
+error flags zero, battery 91 % — and 36 hours of listening on 868.95 MHz
+still produced nothing. "wM-Bus is switched off" is a better explanation now
+than it was when the meter was silent for all we knew.
+
+**But the question has become moot, and that is worth saying plainly.** The
+radio state only ever mattered as a route to the readings. The readings now
+arrive by another route:
+
+| | |
+|---|---|
+| Is wM-Bus on | **No longer matters** — the values come the other way |
+| The AES-128 key from the utility | **Not needed** |
+| The transmission window | **Does not apply** |
+| Dismantling the radio node | It can go. Its only job was this same data |
+
+The only remaining reason to ask the water utility is curiosity, and it
+costs calendar time for something already in hand.
+
 **The alignment was found by hand, not by polling** — as the rationale here
 prescribed. Failed inventories cost no credit, so the search was free.
 

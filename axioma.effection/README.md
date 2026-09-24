@@ -21,6 +21,17 @@ Two things the repo had guessed wrong came out of it: **the Meter ID is not
 the nameplate serial**, and the alignment to the meter's coil was found by
 hand in minutes, because a failed inventory costs no credit.
 
+**What the NFC read does not give is the meter's configuration** — radio
+state, the wM-Bus flags and the schedule masks are in the meter's settings
+memory and need the manufacturer's protocol. It does answer one of them:
+255.547 m³ over 847 days means transport mode was released two years ago, so
+that is not why the radio is silent.
+
+**And the question has become moot.** The radio state only mattered as a
+route to the readings, and the readings now arrive by another route. The AES
+key is not needed, the transmission window does not apply, and the radio
+node can be dismantled whenever convenient.
+
 **The radio route produced nothing.** About 36 hours of listening on
 868.95 MHz, inside and outside the schedule window, gave **zero frames**.
 The receiver is demonstrably fine — noise packets come through. The probable
