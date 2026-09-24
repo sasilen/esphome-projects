@@ -1515,9 +1515,9 @@ and not this geometry.
 | Supply shorts | `5V ↔ GND`, `3V3 ↔ GND`, `5V ↔ 3V3` measured open repeatedly |
 | Loose wiring | inspected |
 | Resets and brownouts | priority decayed to −15 within one boot, no banner in between |
-| The antenna | three access points visible, strongest −61 dB; attenuation is symmetric |
+| The antenna, as **attenuation** | access points visible at −30 dB; a 30–40 dB loss cannot hide behind that. **Mismatch is a separate question and is not excluded** — see below |
 | A client limit on the SSID | a phone joins `IoT` on request — the network does accept new associations |
-| The network | the owner's call, four times, and right every time |
+| **The network** | **properly excluded**: a phone hotspot — independent hardware, sole access point, −30 dB — gives the same `Auth Expired` six times running |
 | The PN5180 itself | answers, initialises, drives the RF field, issues inventories |
 | A static IP | tried, no change — and it **cannot** help: it removes DHCP, which is downstream of the handshake that fails |
 
@@ -1640,6 +1640,70 @@ The credentials are `wifi_ssid2` and `wifi_password2` in the shared
 
 Either answer is worth more than the last several flashes, because **this is
 the first test whose two outcomes lead somewhere different.**
+
+#### The network is excluded, and the test that did it was the third attempt
+
+**A phone hotspot, its own SSID, 2.4 GHz, one access point and nothing else
+in the scan. −30 dB. `Auth Expired` on six consecutive attempts.**
+
+That is the cleanest measurement this problem has produced, and it took
+three tries to get right:
+
+| Attempt | Why it did not count |
+|---|---|
+| A second home SSID | Almost certainly the same physical access points — it varies the SSID configuration, not the hardware |
+| The hotspot sharing that SSID | Three access points under one name and one credential; the node round-robins and attribution is lost |
+| **The hotspot on its own name** | **Counts.** One candidate, independent hardware, no shared state |
+
+A phone hotspot shares no firmware, no configuration, no client table and no
+block list with the Deco or the MikroTik. **The network is now excluded in
+the strong sense**, not on the owner's reasonable inference from other
+nodes.
+
+**And the configuration is no longer a difference either.** With
+`hardware_uart` removed, this node's configuration is identical line for
+line to `onewire` — a C3 in the same room that associates without trouble.
+Same ESPHome, same chip, same configuration, an independent access point at
+−30 dB, and one works and one does not.
+
+**One difference remains: the PN5180 is attached.**
+
+##### The symmetry argument excludes attenuation, not mismatch
+
+This file has said the antenna is excluded because attenuation is
+symmetric — reception at −61 dB rules out the 30–40 dB loss that killing
+transmission would require. **That reasoning is sound for attenuation and
+does not cover mismatch**, and the distinction was missed here.
+
+Reciprocity applies to the antenna as a passive element. It does not apply
+to **how the power amplifier behaves into a bad load.** Reflected power can
+distort the transmitted signal so that frames arrive at the access point
+corrupt, while the same antenna's reception loses only a few decibels.
+Reception never experiences that nonlinearity.
+
+So the accurate statement is: **attenuation is excluded; a mismatch that
+corrupts transmission is not.** It fits the symptom exactly — the device
+hears perfectly and the access point never gets a usable frame from it.
+
+**This does not reinstate the antenna as the explanation.** The
+counter-evidence stands and it is not weak: the assembly worked at 12:29
+with this same geometry. But "excluded" was too strong, and both builds
+known to work keep the radio off the module.
+
+##### The next test needs no iron
+
+There are spare C3s on the shelf. **Flash a bare one with this same
+`axioma-nfc.yaml`, stage 2 commented out, and point it at the same
+hotspot.**
+
+| Outcome | What it means |
+|---|---|
+| Associates and stays up | The configuration and the access point are fine — the fault is the assembled node: the module, or its effect on the radio |
+| The same failure | The fault is in the configuration or between ESPHome and this access point, not in the hardware |
+
+**Earlier bare-board tests were run against the home network, not this
+one**, so this is a new measurement rather than a repeat. It is also the
+last one available without a soldering iron.
 
 #### It does not have to be solved
 
