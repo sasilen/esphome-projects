@@ -1358,7 +1358,43 @@ return −53 dB and every association dies in authentication. That is a
 transmit-side failure, and transmission is the direction that tolerates
 least.
 
-**Two mechanisms remain and they have not been separated:**
+#### Separated: it is the antenna, not the supply
+
+`output_power: 8.5dB` was flashed — a two-thirds cut in the transmit current
+peak. **No change:** `Handshake Failed` and `Authentication Failed` at
+−60 dB, exactly as at full power.
+
+If the cause were a supply dip during the burst, cutting the burst would
+have helped. It did not. And the controlled pair is complete:
+
+| | |
+|---|---|
+| Bare C3, same network, same configuration | **associated immediately** |
+| Same board with the module attached | does not associate |
+| Transmit power cut to a third | **no change** |
+
+**The cause is the antenna.** The C3's PCB antenna sits ~6 mm above a
+70 × 39 mm board carrying a ground plane and a copper coil, which detunes it
+and absorbs the radiated power. Reception survives that — the access point
+is audible at −60 dB — but transmission does not carry.
+
+It explains every observation of the two days at once: the device hears, the
+access point never hears the device, and it makes no difference where in the
+house it is or how close to the access point it stands.
+
+**One more thing it ruled out:** the priority decay reached `-15` within a
+single boot with no banner in between, so the board is not resetting. The
+serial port dropping repeatedly is USB CDC behaviour, not brownouts.
+
+**The fix is mechanical.** Three options, middle one recommended:
+
+| | |
+|---|---|
+| A taller header | A few more millimetres of air. The plane is large, so unlikely to be enough |
+| **The C3 off the module's footprint**, 10–15 cm of wire | Removes the cause. SPI tolerates it at 2 MHz, as this file already records |
+| A board with u.FL and an external antenna | Surest, but needs a new board |
+
+**Two mechanisms were open and have now been separated:**
 
 | | |
 |---|---|
