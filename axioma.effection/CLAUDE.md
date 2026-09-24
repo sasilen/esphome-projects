@@ -1464,6 +1464,24 @@ reading. It has failed with the component disabled.
 some point; nothing after it has worked at all, in any configuration. The
 only event in between was carrying the board to the meter and back.
 
+**The antenna is excluded too, and the scan results say so.** Three access
+points are visible and the strongest reads −61 dB. Attenuation is the same
+in both directions: an antenna detuned badly enough to kill transmission
+would show the access points tens of decibels weaker than they are. It
+does not.
+
+To leave reception at −61 dB while stopping transmission entirely, the loss
+would have to be 30–40 dB — and then the scan could not look like this. The
+hypothesis has now fallen twice from different directions: the assembly
+worked at 12:29 with the same geometry, and the scans are healthy.
+
+**So foil under the C3, a taller header or a u.FL board would all fix a
+fault that is not there.** Adding foil would in fact make things worse: a
+conductive sheet a few millimetres from a PCB antenna detunes it, shorts the
+near field and reflects power back. The one useful spacing for a reflector
+is a quarter wave, about 31 mm at 2.4 GHz, which is not a few millimetres
+and not this geometry.
+
 **Excluded by measurement, not by argument:**
 
 | | How |
@@ -1476,6 +1494,7 @@ only event in between was carrying the board to the meter and back.
 | Supply shorts | `5V ↔ GND`, `3V3 ↔ GND`, `5V ↔ 3V3` measured open repeatedly |
 | Loose wiring | inspected |
 | Resets and brownouts | priority decayed to −15 within one boot, no banner in between |
+| The antenna | three access points visible, strongest −61 dB; attenuation is symmetric |
 | The network | the owner's call, four times, and right every time |
 | The PN5180 itself | answers, initialises, drives the RF field, issues inventories |
 
