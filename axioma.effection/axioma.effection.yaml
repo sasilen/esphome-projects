@@ -1,36 +1,39 @@
-# Axioma Effectio (Qalcosonic W1) — vaihe 1: kuuntele ennen kuin tulkitset
+# Axioma Effectio (Qalcosonic W1) — stage 1: listen before interpreting
 #
-# Tämä konfiguraatio ei osaa lukea mittarin arvoja eikä yritäkään. Se todentaa
-# neljä asiaa yhdellä kertaa: radio toimii, SPI-kytkennät ovat oikein, taajuus
-# on oikein, ja mittari kuuluu vastaanottimeen. Kaikki neljä näkyvät yhdestä
-# lokirivistä:
+# This configuration cannot read the meter's values and does not try. It
+# verifies four things at once: the radio works, the SPI wiring is right,
+# the frequency is right, and the meter is audible to the receiver. All four
+# show up in a single log line:
 #
 #   Received T1 A frame from 12345678 RSSI -70
 #
-# Se rivi tulee myös silloin kun telegrammi on salattu, eli **AES-avainta ei
-# tarvita tähän vaiheeseen.** Avainpyyntö kannattaa laittaa liikkeelle silti
-# heti, koska siihen menee kalenteriaikaa — ja kun se saapuu, jäljelle jää yksi
-# sensorilohko, ei uutta selvitystyötä.
+# That line appears even when the telegram is encrypted, so **no AES key is
+# needed for this stage.** Put the key request in motion straight away
+# anyway, because it takes calendar time — and when it arrives, what is left
+# is one sensor block, not new investigation.
 #
-# Mittari lähettää noin 16 sekunnin välein, joten ensimmäistä telegrammia voi
-# joutua odottamaan hetken. Älä tulkitse hiljaisuutta viaksi ennen kuin olet
-# odottanut pari minuuttia.
+# The meter transmits roughly every 16 seconds, so the first telegram may
+# take a moment. Do not read silence as a fault before you have waited a
+# couple of minutes.
 
 substitutions:
-  # Mittarin sarjanumero tyyppikilvestä. Tämä on **oletus**, ei tieto: Meter ID
-  # varmistetaan vastaanotetusta telegrammista, ja vasta silloin sen saa uskoa.
-  # Jos lokissa näkyy eri numero, lokki on oikeassa.
+  # The meter's serial number from the nameplate. This is an **assumption**,
+  # not knowledge: the Meter ID is confirmed from a received telegram, and
+  # only then may it be believed. If the log shows a different number, the
+  # log is right.
   meter_id: "12345678"
 
 esphome:
-  # `name` on tekninen identiteetti: siitä tulee verkkonimi `axioma.local`, ja
-  # se on se johon OTA osuu. Se seuraa `/config`:n muiden laitteiden tapaa
-  # (`aidon`, `wpc-can`) eli repon hakemistonimeä.
+  # `name` is the technical identity: it becomes the network name
+  # `axioma.local`, and it is what OTA targets. It follows the convention of
+  # the other devices in `/config` (`aidon`, `wpc-can`), i.e. the repo's
+  # directory name.
   #
-  # `friendly_name` on saman nimen luettava muoto, ei kuvaileva vaihtoehto —
-  # niin se on repon muissakin: `wpc-can` → "WPC 07 CAN", ei "Lämpöpumppu".
-  # Laite nimetään sen mukaan mikä se on, ei mitä se tekee, koska funktio
-  # näkyy jo entiteetin omassa nimessä.
+  # `friendly_name` is the readable form of the same name, not a descriptive
+  # alternative — that is how it is elsewhere in the repo too: `wpc-can` →
+  # "WPC 07 CAN", not "Heat pump". A device is named for what it is, not
+  # what it does, because the function already shows in the entity's own
+  # name.
   name: axioma
   friendly_name: Axioma
 
@@ -38,39 +41,41 @@ esp32:
   board: esp32dev
 
 logger:
-  # **DEBUG päivän kuunteluun, VERY_VERBOSE vain sarjaporttiajoon.**
+  # **DEBUG for a day of listening, VERY_VERBOSE only for a serial session.**
   #
-  # Kehysrivi ja `RX FIFO overflow` ovat D- ja W-tasolla eli näkyvät tässä.
-  # VV:llä on yksi peruste ja se on alla oleva `version`-rivi — mutta se
-  # tulostuu setup-vaiheessa, jota **API-lokivirta ei näe koskaan**, joten
-  # VV:stä ei ole hyötyä ilman sarjaporttia. Hinta olisi megatavu lokia
-  # tunnissa ja CPU-kuorma virtaavan API-yhteyden kanssa, ja juuri CPU:n
-  # näännyttäminen on yksi oire siinä yläpuolen bugissa jota tässä epäillään.
-  # Kuuntelun pitää olla puhdas mittaus.
+  # The frame line and `RX FIFO overflow` are at D and W level, so they show
+  # up here. VV has exactly one justification and that is the `version` line
+  # below — but it is printed during setup, which **the API log stream never
+  # sees**, so VV is useless without a serial port. The cost would be a
+  # megabyte of log per hour and CPU load alongside a streaming API
+  # connection, and starving the CPU is itself one symptom of the upstream
+  # bug suspected here. The listening run has to be a clean measurement.
   #
-  # Kun pääset levyn ääreen, nosta taso takaisin ja lue sarjaportista:
+  # When you can get to the board, raise the level and read from serial:
   #
   #   level: VERY_VERBOSE
   #   logs: {spi: INFO, spi_device: INFO, api: INFO, wifi: INFO}
   #
-  # Etsittävä rivi on radioajurin setup-vaiheesta, tagilla `CC1101`:
+  # The line to look for comes from the radio driver's setup, under the tag
+  # `CC1101`:
   #
   #   [VV][CC1101]: part: 00, version: XX
   #
-  # **`version` pitää olla 04 tai 14.** Jos se on 00 tai FF, MISO ei vastaa.
-  # Tätä tarvitaan siksi, että komponentin oma tarkistus vertaa vain
-  # osanumeroa ja kaatuu vasta jos se on jotain muuta kuin nolla — ja kuollut
-  # väylä lukee nollaa. `Invalid part number` ei siis tule koskaan väärästä
-  # kytkennästä, vaikka se on ainoa virheilmoitus jonka ajuri antaa.
+  # **`version` must be 04 or 14.** If it is 00 or FF, MISO is not
+  # answering. This matters because the component's own check compares only
+  # the part number and fails only if it is something other than zero — and
+  # a dead bus reads zero. `Invalid part number` therefore never comes from
+  # wrong wiring, even though it is the only error the driver produces.
   #
-  # `RX FIFO overflow` ja `RX timeout after N bytes` näkyvät tälläkin tasolla —
-  # ne ovat W-tasolla, ja ne ovat juuri se ero jolla tämä laite eroaa yläpuolen
-  # bugista #425. Niitä ei ole tullut yhtään. Ks. CLAUDE.md.
+  # `RX FIFO overflow` and `RX timeout after N bytes` show at this level too
+  # — they are at W level, and they are exactly the difference between this
+  # device and upstream bug #425. Not one has appeared. See CLAUDE.md.
   #
-  # **`sensor`-tagia ei saa vaientaa.** Se on `Uptime`-rivin tagi, ja tämän
-  # repon OTA-ohje nojaa siihen: lähetyksen perille meno todennetaan laitteesta
-  # eikä komennon paluuarvosta. Sama rivi paljastaa myös sen että toistuvat
-  # `ESPHome version` -bannerit lokissa eivät ole boottauksia.
+  # **The `sensor` tag must not be silenced.** It is the tag of the `Uptime`
+  # line, and this repo's OTA procedure leans on it: an upload is verified
+  # from the device, not from the command's exit status. The same line also
+  # reveals that repeated `ESPHome version` banners in the log are not
+  # reboots.
   level: DEBUG
 
 api:
@@ -79,10 +84,11 @@ api:
 
 ota:
   - platform: esphome
-    # **Ei salasanaa.** Laite tarjoaa jo salatun OTA:n API-avaimella, ja
-    # pelkkä `encryption:` vaatii sen — silloin salaamaton lähetys hylätään.
-    # Salasana veisi noin 3,5 kB flashia ja 60 tavua RAMia eikä suojaisi
-    # ketään joka on saanut API-avaimen käsiinsä.
+    # **No password.** The device already offers encrypted OTA via the API
+    # key, and a bare `encryption:` requires it — unencrypted uploads are
+    # then rejected. A password would cost about 3.5 kB of flash and 60
+    # bytes of RAM and would not protect anyone from someone who already has
+    # the API key.
     encryption:
 
 wifi:
@@ -90,28 +96,27 @@ wifi:
   password: !secret wifi_password
 
   ap:
-    # AP:n nimi lähetetään ilmaan eikä ole salaisuus. Salasana on.
-    # Nimi seuraa laitenimeä eikä ystävällistä nimeä: tätä verkkoa etsitään
-    # silloin kun WiFi ei toimi, ja silloin haetaan sitä laitetta.
-    ssid: "Axioma varayhteys"
+    # The AP's name is broadcast and is not a secret. The password is.
+    # The name follows the device name rather than the friendly name: this
+    # network is looked for when Wi-Fi is not working, and then one is
+    # looking for that device.
+    ssid: "Axioma fallback"
     password: !secret ap_password
 
 captive_portal:
 
 
-# ------------------------------------------------------------------ Diagnostiikka
-# Tämä on tässä ennen kuin mittarista tulee riviäkään dataa, koska se vastaa
-# kysymykseen jonka pitää ratketa ensin: **kuuluuko levy siitä paikasta johon
-# se on tulossa.** wM-Bus on radio, joten vastaanottimen paikan valitsee itse —
-# ja tämä sensori on se mittari jolla valinnan tekee.
+# ------------------------------------------------------------------ Diagnostics
+# This is here before a single line of meter data arrives, because it
+# answers the question that has to be settled first: **is the board audible
+# from the place it is going to.** wM-Bus is radio, so the receiver's
+# location is yours to choose — and this sensor is the instrument that makes
+# the choice.
 #
-# Aidonissa sama kysymys jäi auki asennuksen jälkeen ja on siellä yhä avointen
-# asioiden listan kärjessä: −80 dBm luukku auki, −87…−90 kiinni. Se mitattiin
-# liian myöhään. Täällä ei ole samaa pakkoa, joten mittaa ennen kuin kiinnität.
-# Nimet ovat englanniksi kuten aidonissa, joka on repon ainoa tuotannossa oleva
-# laite: siellä diagnostiikka on englanniksi ja mittausdata suomeksi. Home
-# Assistantissa laitteet näyttävät silloin samalta, ja mittarin omat entiteetit
-# erottuvat siitä että ne ovat suomeksi.
+# In the aidon project the same question was left open after installation
+# and is still at the top of its open-issues list: −80 dBm with the hatch
+# open, −87…−90 closed. It was measured too late. There is no such
+# constraint here, so measure before you fix anything in place.
 binary_sensor:
   - platform: status
     name: "Status"
@@ -127,73 +132,77 @@ sensor:
 
 
 # ------------------------------------------------------------------- Radio
-# Komponentin skeema on muuttunut sen jälkeen kun tämän projektin muistiinpanot
-# kirjoitettiin. Vanha muoto oli yksi `wmbus:`-lohko joka sisälsi SPI-pinnit ja
-# erilliset gdo0/gdo2 -pinnit; nykyinen käyttää ESPHomen omaa `spi:`-komponenttia
-# ja `wmbus_radio:`-lohkoa jossa on yksi `irq_pin`.
+# The component's schema changed after this project's notes were written.
+# The old form was a single `wmbus:` block containing the SPI pins and
+# separate gdo0/gdo2 pins; the current one uses ESPHome's own `spi:`
+# component and a `wmbus_radio:` block with a single `irq_pin`.
 #
-# **Tämä tiedosto oli kiinnitetty väärään haaraan.** Se osoitti `@version_4`:ään
-# ja kirjoitti silti uutta skeemaa — ja ne ovat eri sukupolvia:
+# **This file was pinned to the wrong branch.** It pointed at `@version_4`
+# and still wrote the new schema — and those are different generations:
 #
-#   version_4   viimeinen julkaisu 4.1.4 (2/2025), vanha `wmbus:`-lohko
+#   version_4   last release 4.1.4 (2/2025), old `wmbus:` block
 #   5.x         "full refactor/rewrite", `spi:` + `wmbus_radio:` + `wmbus_meter:`
 #
-# Käännös olisi kaatunut tuntemattomaan avaimeen `wmbus_radio`. Vika ei ollut
-# skeemassa vaan siinä että versio kiinnitettiin lukematta mitä siihen kuuluu.
+# The build would have failed on the unknown key `wmbus_radio`. The fault
+# was not in the choice of schema but in pinning a version without reading
+# what belongs to it.
 #
-# **Eikä julkaisutagi kelvannut sekään.** `@5.1.6` on uusin julkaisu ja sillä on
-# oikea skeema, mutta se **ei tunne CC1101:tä lainkaan**:
+# **And the release tag was no good either.** `@5.1.6` is the newest release
+# and has the right schema, but it **does not know CC1101 at all**:
 #
 #   Unknown value 'CC1101', valid options are 'SX1276'.
 #   'reset_pin' is a required option for [wmbus_radio].
 #   [frequency] is an invalid option for [wmbus_radio].
 #
-# Viiden sarjan uudelleenkirjoitus lähti liikkeelle SX1276:sta, ja CC1101 tuli
-# takaisin vasta sen jälkeen — päähaaraan, jota ei ole koskaan julkaistu.
-# Yhtään julkaisua jossa olisi sekä CC1101 että tämä skeema ei ole olemassa:
+# The five series' rewrite started from the SX1276, and CC1101 came back
+# only afterwards — into the main branch, which has never been released.
+# No release exists that has both CC1101 and this schema:
 #
-#   version_4   4.1.4, 2/2025   CC1101 kyllä, vanha `wmbus:`-skeema
-#   5.1.6       8/2025          uusi skeema, ei CC1101:tä
-#   main                        molemmat, ei julkaisua
+#   version_4   4.1.4, 2/2025   CC1101 yes, old `wmbus:` schema
+#   5.1.6       8/2025          new schema, no CC1101
+#   main                        both, no release
 #
-# **Kiinnitys on siis commit-tunniste.** Se on ainoa muoto joka antaa sekä
-# CC1101:n että liikkumattomuuden — haara liikkuu, tagissa ei ole CC1101:tä.
-# Tarkistettu lähdekoodista eikä READMEsta, joka on tässä johtanut harhaan
-# kahdesti: `wmbus_radio/__init__.py` löytää radiotyypit
-# `transceiver_*.cpp`-tiedostoista, `reset_pin` on valinnainen ja `frequency`
-# on CC1101:n oma, oletuksena juuri 868.95 MHz.
+# **The pin is therefore a commit hash.** It is the only form that gives
+# both CC1101 and immobility — a branch moves, a tag has no CC1101.
+# Verified from the source rather than the README, which has misled twice
+# here: `wmbus_radio/__init__.py` discovers radio types from the
+# `transceiver_*.cpp` files, `reset_pin` is optional and `frequency` belongs
+# to the CC1101, defaulting to exactly 868.95 MHz.
 #
-# Commit on päähaaran kärki 20.8.2026. Kehitys on aktiivista, mutta tämä on
-# julkaisematonta koodia — se on tietoinen vaihtokauppa, ei huolimattomuus.
+# The commit is the tip of main as of 20.8.2026. Development is active, but
+# this is unreleased code — a deliberate trade, not carelessness.
 #
-# **Validoitu ESPHome 2026.8.2:lla: `Configuration is valid!`** Kehysvaraus jota
-# tässä pidettiin — että komponentti ehkä vaatii `esp-idf`:n — on tarpeeton:
-# ESPHome valitsee sen jo oletuksena (esp-idf 5.5.5).
+# **Validated with ESPHome 2026.8.2: `Configuration is valid!`** The
+# framework reservation held here — that the component might require
+# `esp-idf` — is unnecessary: ESPHome already picks it by default
+# (esp-idf 5.5.5).
 #
-# `wmbus_common` on mukana koska `wmbus_radio` nojaa siihen. Se ei ole avain
-# jonka kirjoittaa itse — validointi kaatui `Component not found: wmbus_common`
-# ensimmäisellä ajolla, koska `components:`-rajaus esti riippuvuuden
-# latautumisen. Rajaus on silti tässä: se pitää näkyvissä mitä repo tuo, ja
-# puuttuva moduuli näkyy heti eikä hiljaa.
+# `wmbus_common` is included because `wmbus_radio` depends on it. It is not
+# a key you write yourself — validation failed with
+# `Component not found: wmbus_common` on the first run, because the
+# `components:` restriction prevented the dependency from loading. The
+# restriction is still here: it keeps visible what the repo pulls in, and a
+# missing module shows immediately rather than quietly.
 #
-# `refresh: never` koska commit-tunniste ei voi muuttua. Oletus tarkistaisi
-# päivityksiä vuorokausittain kiinteälle pisteelle, mikä on pelkkää odotusta.
-# **Väliaikaisesti paikallinen työkopio, ei GitHub.** Syy on yhden tavun
-# testimuutos jota ei voi tehdä etälähteeseen: `FIFOTHR` 0x07 → 0x00, eli
-# GDO0 laukeaa neljästä tavusta eikä 32:sta. Se on version_4:n arvo ja issue
-# #425:n johtava epäily siitä miksi kehyksiä ei koskaan koota.
+# `refresh: never` because a commit hash cannot change. The default would
+# check for updates daily against a fixed point, which is pure waiting.
 #
-# Puu on ladattu samasta commitista kuin alla oleva kiinnitys, joten **muuta
-# eroa ei ole kuin se yksi rivi.** `upstream/` on gitignoressa eikä
-# kolmannen osapuolen koodi mene tähän repoon; muutos on kirjattu
-# CLAUDE.md:hen jotta se on toistettavissa ilman tätä puuta.
+# **Temporarily a local working copy, not GitHub.** The reason is a one-byte
+# test change that cannot be made to a remote source: `FIFOTHR` 0x07 → 0x00,
+# i.e. GDO0 fires at four bytes instead of 32. That is version_4's value and
+# issue #425's leading suspicion for why frames are never assembled.
 #
-# **Palauta alla oleva rivi heti kun testi on ratkennut** — kumpaan suuntaan
-# tahansa. Paikallinen puu ei päivity eikä näy kenellekään muulle.
+# The tree is checked out from the same commit as the pin below, so **the
+# only difference is that one line.** `upstream/` is in .gitignore and
+# third-party code does not enter this repo; the change is recorded in
+# CLAUDE.md so that it is reproducible without that tree.
 #
-# Polku on suhteessa tähän tiedostoon, ja se tarkoittaa että `upstream/`:n on
-# oltava kontin näkemässä hakemistossa YAMLin vieressä. Jos käännös sanoo
-# ettei polkua ole, kopioi hakemisto sinne käsin.
+# **Restore the line below as soon as the test resolves** — either way. A
+# local tree does not update and is not visible to anyone else.
+#
+# The path is relative to this file, which means `upstream/` has to be in a
+# directory the container can see, next to the YAML. If the build says the
+# path does not exist, copy the directory there by hand.
 external_components:
   - source:
       type: local
@@ -212,112 +221,118 @@ spi:
 wmbus_radio:
   radio_type: CC1101
   cs_pin: GPIO5
-  # Vanha kytkentätaulukko määrittää sekä GDO0:n (GPIO4) että GDO2:n (GPIO2).
-  # Nykyinen komponentti tarvitsee vain yhden keskeytyslinjan, ja se on GDO0.
+  # The old wiring table specifies both GDO0 (GPIO4) and GDO2 (GPIO2). The
+  # current component needs only one interrupt line, and that is GDO0.
   #
-  # **Irrota GDO2:n johto, älä jätä sitä paikalleen.** Tässä luki aiemmin että
-  # sen voi jättää koska se ei häiritse. GPIO2 on strapping-nasta: se haluaa
-  # LOW:n tai kellumisen nollauksessa, ja GDO2 on CC1101:n lähtö. Jos se ajaa
-  # nastaa ylös käynnistyksen aikana, levy ei tule normaalitilaan — ja tämän
-  # projektin vianetsintä listaa juuri sen boot-loopin syyksi.
+  # **Disconnect the GDO2 wire, do not leave it in place.** This used to say
+  # it could stay because it does no harm. GPIO2 is a strapping pin: it
+  # wants LOW or floating at reset, and GDO2 is an output of the CC1101. If
+  # it drives the pin high during startup, the board does not come up in
+  # normal mode — and this project's own troubleshooting lists exactly that
+  # as a cause of boot loops.
   irq_pin: GPIO4
 
-  # **Takaisin T/C-moodiin, ja tällä kertaa oikeaan aikaan.**
+  # **Back to T/C mode, and this time at the right hour.**
   #
-  #   S      868.30 MHz   <- kokeiltu, hiljaista
-  #   T, C   868.95 MHz   <- tämä nyt, W1:n oletus
+  #   S      868.30 MHz   <- tried, silent
+  #   T, C   868.95 MHz   <- this now, the W1's default
   #
-  # Molemmat aiemmat mittaukset osuivat mittarin lähetysikkunan ulkopuolelle
-  # tai väärälle taajuudelle, joten kumpikaan ei todista mitään mittarista:
+  # Both earlier measurements fell outside the meter's transmission window
+  # or on the wrong frequency, so neither proves anything about the meter:
   #
-  #   8,5 h 868.95:llä   su 21:15 → ma 05:45   ikkunan ulkopuolella
-  #   6 min 868.30:llä   ma aamu               ikkunan sisällä, väärä taajuus
+  #   8.5 h at 868.95   Sun 21:15 → Mon 05:45   outside the window
+  #   6 min at 868.30   Mon morning             inside the window, wrong frequency
   #
-  # Qalcosonic W1:n oletusaikataulu on **ma–pe 6:00–18:00**, ja sen
-  # ulkopuolella radio on hiljaa kokonaan — paristo mitoitetaan 15 vuodeksi.
-  # Nolla telegrammia sunnuntaiyönä on siis odotettu tulos, ei havainto.
+  # The Qalcosonic W1's default schedule is **Mon–Fri 6:00–18:00**, and
+  # outside it the radio is silent altogether — the battery is specified for
+  # 15 years. Zero telegrams on a Sunday night is therefore an expected
+  # result, not an observation.
   #
-  # Aikataulu on maskitettu sekä viikonpäivä- että kuukausitasolla, ja maskit
-  # ovat luettavissa mittarista NFC:llä ilman salasanaa. Se on tämän oletuksen
-  # tarkistus, jos päiväsaikaan ajettu kuuntelu on yhä hiljainen.
+  # The schedule is masked at both weekday and month level, and the masks
+  # are readable from the meter over NFC without a password. That is the
+  # check on this assumption if a daytime listening run is still silent.
   frequency: 868.95MHz
 
-  # Ilman tätä komponentti tulostaa vastaanotetun paketin näin:
+  # Without this the component prints a received packet like so:
   #
   #   [D][packet:106]: Have data from radio (8 bytes)
   #   [D][wmbusmeters:351]: raw packet "320C800948884A28"
   #
-  # Se riittää todistamaan että radio toimii, mutta **ei kerro RSSI:tä eikä
-  # sitä onko kehys kokonainen.** Juuri ne kaksi erottavat toisistaan
-  # "mittari on kaukana" ja "vastaanotto katkeaa" — ja ilman niitä
-  # vianetsintä on arvailua, kuten yllä olevan esimerkkirivin kohdalla kävi.
+  # That is enough to prove the radio works, but **it says nothing about
+  # RSSI or whether the frame is complete.** Those two are exactly what
+  # separates "the meter is far away" from "reception breaks up" — and
+  # without them troubleshooting is guesswork, as it turned out to be with
+  # the example line above.
   #
-  # Tämä on juuri se mitä vaihe 1 tarvitsee: **tulostaa jokaisen kehyksen
-  # jokaiselta kuuluvalta mittarilta.** Se ei vaadi Meter ID:tä eikä
-  # AES-avainta — molemmat ovat vasta tulkintaa varten, ja tässä vaiheessa
-  # kysymys on kuuluuko mitään.
+  # This is precisely what stage 1 needs: **print every frame from every
+  # audible meter.** It requires neither a Meter ID nor an AES key — both
+  # are for interpretation, and at this stage the question is whether
+  # anything is audible at all.
   #
-  # Naapurin mittari kelpaa todisteeksi yhtä hyvin kuin oma: se todistaa että
-  # radio, kytkentä ja taajuus toimivat. Oman tunnistaa vasta ID:stä.
+  # A neighbour's meter is as good a proof as our own: it proves the radio,
+  # the wiring and the frequency work. Our own is identified only from the
+  # ID.
   on_frame:
     - then:
         - logger.log:
-            format: "Kehys: RSSI %d dBm, %d tavua: %s"
+            format: "Frame: RSSI %d dBm, %d bytes: %s"
             args:
               - frame->rssi()
               - (int) frame->data().size()
               - frame->as_hex().c_str()
 
 
-# --------------------------------------------------------------- Mittari
-# Tämä lohko on tarkoituksella kommentoituna. Se odottaa kahta asiaa, ja
-# molemmat tulevat vasta kun radio on todettu toimivaksi:
+# --------------------------------------------------------------- Meter
+# This block is commented out on purpose. It waits for two things, and both
+# arrive only once the radio has been shown to work:
 #
-#   1. Meter ID lokista — ei tyyppikilvestä
-#   2. AES-128-avain vesilaitokselta
+#   1. The Meter ID from the log — not from the nameplate
+#   2. The AES-128 key from the water utility
 #
-# Poista kommentit vasta kun molemmat ovat tiedossa. Sitä ennen tämä lohko
-# tuottaisi entiteettejä jotka eivät koskaan täyty, ja tässä repossa on jo
-# kirjattu mitä ikuisesti tuntemattomat entiteetit maksavat.
+# Uncomment only when both are known. Before that this block would produce
+# entities that never fill, and this repo has already recorded what
+# permanently unknown entities cost.
 #
-# **Ajuri on `q400`, ei `axioma`.** Tässä luki pitkään mittarin valmistajan
-# nimi, jota ei ole olemassa ajurina. wmbusmeters tunnistaa Qalcosonic W1:n
-# automaattisesti huonosti mutta lukee sen `q400`-ajurilla, ja komponentti
-# tarjoaa ajurit suoraan wmbusmetersista.
+# **The driver is `q400`, not `axioma`.** This said the meter
+# manufacturer's name for a long time, and no such driver exists.
+# wmbusmeters auto-detects the Qalcosonic W1 poorly but reads it with the
+# `q400` driver, and the component offers the drivers straight from
+# wmbusmeters.
 #
-# **Anturit ovat oma alustansa, eivät `sensors:`-lista.** 5.x:ssä ne
-# viittaavat mittariin `parent_id`:llä; sisäkkäinen lista oli 4.x:n muoto ja
-# kaatuisi samalla tavalla kuin väärä haara.
+# **Sensors are their own platform, not a `sensors:` list.** In 5.x they
+# reference the meter by `parent_id`; a nested list was the 4.x form and
+# would fail the same way the wrong branch did.
 #
 # wmbus_meter:
-#   - id: vesi
+#   - id: water
 #     meter_id: ${meter_id}
 #     type: q400
 #     key: !secret meter_key
 #     mode: [T1]
 #
-# **Nämä menevät yllä olevaan `sensor:`-lohkoon `wifi_signal`in perään.** Älä
-# luo toista `sensor:`-avainta — YAML ei salli kahta samannimistä, ja virhe
-# tulee vasta silloin kun kommentit poistetaan eli pahimpaan aikaan.
+# **These go into the `sensor:` block above, after `wifi_signal`.** Do not
+# create a second `sensor:` key — YAML does not allow two of the same name,
+# and the error appears only when the comments are removed, i.e. at the
+# worst possible moment.
 #
 #   - platform: wmbus_meter
-#     parent_id: vesi
+#     parent_id: water
 #     field: total_m3
-#     name: "Vesimittari"
+#     name: "Water meter"
 #     unit_of_measurement: "m³"
 #     device_class: water
 #     state_class: total_increasing
 #     accuracy_decimals: 3
 #
-#   # Kentän nimeä ei ole varmistettu. `q400`:n julkaistussa tulosteessa on
+#   # The field name has not been confirmed. `q400`'s published output has
 #   # total_m3, consumption_at_set_date_m3, meter_datetime, set_datetime,
-#   # status ja rssi_dbm — **lämpötilaa ei ole siinä listassa**, vaikka W1
-#   # sellaisen mittaa. Ensimmäinen purettu telegrammi kertoo mitä kenttiä
-#   # tämä yksilö oikeasti tarjoaa; lisää tämä vasta sen jälkeen.
+#   # status and rssi_dbm — **temperature is not in that list**, even though
+#   # the W1 measures one. The first decoded telegram will say what fields
+#   # this particular meter actually offers; add this only after that.
 #   # - platform: wmbus_meter
-#   #   parent_id: vesi
+#   #   parent_id: water
 #   #   field: temperature_c
-#   #   name: "Veden lämpötila"
+#   #   name: "Water temperature"
 #   #   unit_of_measurement: "°C"
 #   #   device_class: temperature
 #   #   state_class: measurement
