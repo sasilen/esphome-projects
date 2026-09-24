@@ -1861,8 +1861,15 @@ kind that has already cost this project two lifted pads.
 **It can be skipped entirely.** Cut the four header pins and the five
 enamelled wires close to the C3 with side cutters. That leaves four pin
 stubs and five wire ends standing on the module, all in open air and easy to
-solder to, and **the PN5180 never sees an iron.** The old C3 is sacrificed;
-there are six on the shelf.
+solder to, and **the PN5180 never sees an iron.**
+
+**The C3 is not sacrificed by this, and that matters more than it sounds.**
+Cut the pins close to it and the board stays usable: clean the stubs out of
+its pads, or do not bother and **solder the new wires to different pads
+instead.** On the C3 SPI runs through the GPIO matrix, so a damaged pad is
+not a constraint but six lines of YAML — which is exactly how the first
+board's two dead pads were handled here rather than by replacing it. A board
+with a couple of dead outputs still has more outputs than this needs.
 
 | | Cut | Desolder |
 |---|---|---|
