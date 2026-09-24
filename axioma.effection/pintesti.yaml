@@ -1,33 +1,37 @@
-# Nastatesti — aja tämä paljaalle C3:lle ENNEN kuin mitään juotetaan
+# Pin test — run this on a bare C3 BEFORE soldering anything
 #
-# Ajaa jokaisen käytettävän nastan ylös ehdoitta ilman NFC-komponenttia.
-# Mittaa jokainen padi maata vasten: **kaikkien pitää olla ~3,3 V.**
+# Drives every pin the wiring will use high, unconditionally, with no NFC
+# component. Measure each pad against ground: **all of them must read
+# ~3.3 V.**
 #
-# **Miksi tämä on olemassa.** 23.9.2026 rakennettiin solmu jonka yhdeksän
-# liitosta mitattiin kolmeen kertaan kunnossa oleviksi, eikä PN5180 silti
-# vastannut. Vika oli C3:ssa: `GPIO5`- ja `GPIO6`-padit eivät nousseet
-# lainkaan. Katkos oli levyn sisällä padin ja piirin välissä, joten
-# jatkuvuusmittaus JP1:stä padiin meni läpi ja kertoi väärää tarinaa.
+# **Why this exists.** On 23.9.2026 a node was built whose nine connections
+# were measured three times over and found good, and the PN5180 still did
+# not answer. The fault was in the C3: the `GPIO5` and `GPIO6` pads never
+# rose at all. The break was inside the board between the pad and the die,
+# so a continuity measurement from JP1 to the pad passed and told the wrong
+# story.
 #
-# **Jatkuvuus kertoo että johdin on olemassa. Tämä kertoo että signaali
-# kulkee.** Ne ovat eri asioita, ja vain jälkimmäinen löysi vian.
+# **Continuity proves a conductor exists. This proves a signal gets
+# through.** Those are different things, and only the second one found it.
 #
-# Nasta ei paljasta vikaansa ennen kuin sitä käytetään: se levy oli
-# fläshätty ja ajanut WiFiä moitteetta näiden ollessa koko ajan rikki.
+# A pin does not reveal its fault until it is used: that board had been
+# flashed and had run Wi-Fi faultlessly with those two broken the whole
+# time.
 #
 # ---------------------------------------------------------------------
-# **VAIN PALJAALLE LEVYLLE.** Jos PN5180 on jo kytketty, poista `GPIO3`
-# (`MISO`) ja `GPIO10` (`BUSY`) — ne ovat silloin moduulin lähtöjä, eikä
-# kahta lähtöä saa ajaa vastakkain.
+# **BARE BOARD ONLY.** If the PN5180 is already connected, remove `GPIO3`
+# (`MISO`) and `GPIO10` (`BUSY`) — they are the module's outputs then, and
+# two outputs must never be driven against each other.
 # ---------------------------------------------------------------------
 #
-# Käyttö:
+# Usage:
 #   podman cp axioma.effection/pintesti.yaml esphome:/config/
 #   podman exec esphome esphome compile /config/pintesti.yaml
 #   sudo esptool --chip esp32c3 --port /dev/ttyACM0 write_flash 0x0 firmware.factory.bin
 #
-# Laitteen nimi on sama kuin oikean solmun, joten HA:han ei synny toista
-# laitetta. Palauta `axioma-nfc.yaml` kun mittaukset on tehty.
+# The device name is the same as the real node, so no second device appears
+# in Home Assistant. Restore `axioma-nfc.yaml` once the measurements are
+# done.
 
 esphome:
   name: axioma-nfc
@@ -67,35 +71,36 @@ sensor:
     entity_category: diagnostic
 
 switch:
-  # **Verrokki.** Ei kuulu kytkentään eikä siihen tule mitään. Jos tämä ei
-  # nouse, vika on mittauksessa tai firmwaressa — ei levyssä.
+  # **Control.** Not part of the wiring and nothing is connected to it. If
+  # this one does not rise, the fault is in the test or the measurement —
+  # not in the board.
   - platform: gpio
     pin: GPIO1
-    name: "Testi GPIO1 verrokki"
+    name: "Test GPIO1 control"
     restore_mode: ALWAYS_ON
 
-  # Kuusi nastaa joita kytkentä käyttää, kaavion mukaisessa järjestyksessä
+  # The six pins the wiring uses, in the order of the diagram
   - platform: gpio
     pin: GPIO5
-    name: "Testi GPIO5 RST"
+    name: "Test GPIO5 RST"
     restore_mode: ALWAYS_ON
   - platform: gpio
     pin: GPIO6
-    name: "Testi GPIO6 NSS"
+    name: "Test GPIO6 NSS"
     restore_mode: ALWAYS_ON
   - platform: gpio
     pin: GPIO7
-    name: "Testi GPIO7 MOSI"
+    name: "Test GPIO7 MOSI"
     restore_mode: ALWAYS_ON
   - platform: gpio
     pin: GPIO3
-    name: "Testi GPIO3 MISO"
+    name: "Test GPIO3 MISO"
     restore_mode: ALWAYS_ON
   - platform: gpio
     pin: GPIO4
-    name: "Testi GPIO4 SCK"
+    name: "Test GPIO4 SCK"
     restore_mode: ALWAYS_ON
   - platform: gpio
     pin: GPIO10
-    name: "Testi GPIO10 BUSY"
+    name: "Test GPIO10 BUSY"
     restore_mode: ALWAYS_ON

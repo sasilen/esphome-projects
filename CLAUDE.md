@@ -9,8 +9,8 @@ konfiguraatiota** — ei kolmannen osapuolen koodia.
 
 Käyttäjä kommunikoi suomeksi. Vastaa suomeksi, myös koodikommenteissa.
 
-Dokumenttien kieli on projektikohtainen eikä sitä yhtenäistetä: aidon, hirvirata,
-axioma.effection ja bestway.lay-z-spa suomeksi, stiebel.eltron ja
+Dokumenttien kieli on projektikohtainen eikä sitä yhtenäistetä: aidon, hirvirata
+ja bestway.lay-z-spa suomeksi, axioma.effection, stiebel.eltron ja
 pegasos.enervent englanniksi. **Kirjoita aina sen tiedoston kielellä jota
 muokkaat.** Projektin README ja CLAUDE.md ovat samalla kielellä.
 

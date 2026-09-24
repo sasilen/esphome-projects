@@ -1,33 +1,35 @@
-# Axioma Qalcosonic W1 — NFC-reitti
+# Axioma Qalcosonic W1 — the NFC route
 #
-# **Tämä on toinen solmu, ei korvaaja.** `axioma.effection.yaml` jää
-# pystyyn CC1101:n kanssa kunnes NFC-luku on kertonut onko mittarin radio
-# ylipäätään päällä. Se on ainoa kysymys johon radiosolmu voi vielä
-# vastata, ja purkaminen ennen vastausta sulkee sen pysyvästi.
+# **This is a second node, not a replacement.** `axioma.effection.yaml`
+# stays up with the CC1101 until an NFC read has told us whether the meter's
+# radio is switched on at all. That is the only question the radio node can
+# still answer, and dismantling it before the answer closes it permanently.
 #
-# Kytkentä: `nfc-c3-mount.svg`. Perustelut ja pollausbudjetti: `CLAUDE.md`.
+# Wiring: `nfc-c3-mount.svg`. Rationale and polling budget: `CLAUDE.md`.
 #
 # ---------------------------------------------------------------------
-# VAIHE 1 — LÄPÄISTY
+# STAGE 1 — PASSED
 #
-# Tiedosto fläshättiin ensin ilman SPI:tä ja ilman NFC-komponenttia, koska
-# **WiFi, API ja OTA on todennettava erillään siitä onko komponentin
-# konfiguraatio oikein.** Kaksi tuntematonta kerralla on yksi liikaa.
+# This file was flashed first without SPI and without the NFC component,
+# because **Wi-Fi, the API and OTA have to be verified separately from
+# whether the component's configuration is right.** Two unknowns at once is
+# one too many.
 #
-# Se järjestys ansaitsi itsensä kahdesti: paljaalla levyllä `BOOT` ja
-# `RESET` ovat sormin painettavissa ennen kuin rima vie tilan niiden
-# vierestä, ja juotosten jälkeen sama runko toimi funktionaalisena testinä
-# — levy nousi ja liittyi verkkoon, mikä todistaa ettei yksikään strapping-
-# nasta (`GPIO2`, `GPIO8`, `GPIO9`) ole pidossa.
+# That order earned itself twice over: on a bare board `BOOT` and `RESET`
+# can be pressed with a finger before the header takes the space beside
+# them, and after soldering the same skeleton served as a functional test —
+# the board came up and joined the network, which proves that no strapping
+# pin (`GPIO2`, `GPIO8`, `GPIO9`) is being held.
 #
-# **Ja se ansaitsi itsensä kolmannen kerran.** Vaihe 2 kommentoitiin kerran
-# pois rajauskokeeksi kun laite katosi verkosta, ja paluu todistetusti
-# toimivaan runkoon maksoi yhden käännöksen. Ilman komponenttia solmu pysyi
-# pystyssä — mutta se ei vielä osoita komponenttiin, koska
-# `power_save_mode: NONE` lisättiin samaan aikaan eikä niitä ollut siihen
-# mennessä kokeiltu yhdessä.
+# **And it earned itself a third time.** Stage 2 was once commented out as
+# an isolation experiment when the device disappeared from the network, and
+# returning to a known-good skeleton cost one build. Without the component
+# the node stayed up — but that does not yet point at the component,
+# because `power_save_mode: NONE` was added at the same time and the two
+# had never been tried together.
 #
-# Jos koe on toistettava: kommentoi `external_components`-rivistä loppuun.
+# To repeat the experiment: comment out from the `external_components` line
+# to the end.
 # ---------------------------------------------------------------------
 
 esphome:
@@ -41,9 +43,9 @@ esp32:
 
 logger:
   level: DEBUG
-  # **C3 SuperMinissä loki kulkee USB:n yli, ei UART-nastoja pitkin.**
-  # Ilman tätä riviä `esphome logs` sarjaportin kautta on hiljainen ja
-  # levy näyttää kuolleelta vaikka se toimisi.
+  # **On the C3 SuperMini the log goes over USB, not over UART pins.**
+  # Without this line `esphome logs` through the serial port is silent and
+  # the board looks dead even when it is working.
   hardware_uart: USB_SERIAL_JTAG
 
 api:
@@ -52,29 +54,34 @@ api:
 
 ota:
   - platform: esphome
-    # **Ei salasanaa**, sama kuin repon muissa solmuissa: pelkkä `encryption:`
-    # hylkää salaamattoman lähetyksen ja nojaa API-avaimeen.
+    # **No password**, same as the repo's other nodes: a bare `encryption:`
+    # rejects unencrypted uploads and leans on the API key.
     encryption:
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  # **`NONE` on korjaus eikä oletus, ja tämä laite ansaitsi sen.**
-  # Repon sääntö on ettei tätä aseteta ilman oiretta joka sen oikeuttaa,
-  # koska asetus joka ei korjaa mitään luetaan myöhemmin valinnaksi.
+  # **`NONE` is a fix, not a default, and this device earned it.**
+  # The repo's rule is not to set this without a symptom that justifies it,
+  # because a setting that fixes nothing gets read later as a preference.
   #
-  # Oire: laite liittyi, sai MikroTikilta DHCP-osoitteen ja putosi hetken
-  # päästä ulos syykoodeilla `Auth Expired` ja `Association Expired`.
-  # Ne eivät ole torjuntoja vaan **vanhentumisia** — tukiasema pudottaa
-  # asiakkaan jonka se uskoo kadonneen. MikroTik lähettää keepalive-kehyksiä
-  # ja sen `disconnect-timeout` on lyhyt, ja C3:n oletus `LIGHT` nukuttaa
-  # vastaanottimen majakkavälien välissä. Nukkuva radio missaa kuittaukset.
+  # Symptom: the device associated, got a DHCP address from the MikroTik and
+  # dropped out shortly after with the reason codes `Auth Expired` and
+  # `Association Expired`. Those are not rejections but **expirations** —
+  # the access point drops a client it believes has vanished. MikroTik sends
+  # keepalive frames and its `disconnect-timeout` is short, and the C3's
+  # default `LIGHT` puts the receiver to sleep between beacons. A sleeping
+  # radio misses the acknowledgements.
   #
-  # Sarjaportissa tämä näytti loputtomalta liittymisyritykseltä, koska
-  # ESPHome kirjaa vain oman puolensa. **DHCP-loki tukiasemalta oli se
-  # havainto joka erotti pudotuksen liittymisvirheestä** — ja se tulee
-  # laitteesta jota ESPHomen loki ei näe lainkaan.
+  # On the serial port this looked like an endless association attempt,
+  # because ESPHome logs only its own side. **The DHCP log from the router
+  # was the observation that separated a drop from a join failure** — and it
+  # comes from a device ESPHome's log cannot see at all.
+  #
+  # Caveat: see CLAUDE.md. A single successful association was read as
+  # proof at the time, and the justification is a hypothesis rather than a
+  # verified fix. It stays because on mains power it costs nothing.
   power_save_mode: NONE
 
   ap:
@@ -94,21 +101,22 @@ sensor:
     entity_category: diagnostic
 
 # ---------------------------------------------------------------------
-# VAIHE 2 — VASTA KUN LEVY ON TODENNETTU JA JUOTETTU
+# STAGE 2 — ONLY ONCE THE BOARD IS VERIFIED AND SOLDERED
 #
-# Avainten nimet on **todennettu lähdekoodista**, ei README:stä:
-# `components/qalcosonicnfc/__init__.py`. Tässä projektissa README on
-# kaatunut kolmesti, ja tälläkin kerralla ensimmäinen arvaus meni väärin
-# joka avaimella — komponentin nimessä, nastojen etuliitteessä ja siinä
-# tarvitaanko erillinen `spi:`-lohko.
+# The key names are **verified from the source**, not from the README:
+# `components/qalcosonicnfc/__init__.py`. In this project the README has
+# been wrong three times, and this time too the first guess was wrong on
+# every key — the component's name, the pins' prefix, and whether a
+# separate `spi:` block is needed.
 #
-# **Erillistä `spi:`-lohkoa ei tarvita.** Komponentin `AUTO_LOAD` sisältää
-# `spi`:n ja se ottaa kaikki kuusi nastaa omina asetuksinaan. Jos validointi
-# silti valittaa puuttuvaa SPI-väylää, se on ensimmäinen asia jota kokeilla.
+# **No separate `spi:` block is needed.** The component's `AUTO_LOAD`
+# includes `spi` and it takes all six pins as its own options. If
+# validation still complains about a missing SPI bus, that is the first
+# thing to try.
 #
-# **Lähde on kiinnitetty commitiin eikä haaraan**, kuten radiosolmussakin:
-# `@main` on liikkuva viittaus, ja sama YAML voi kääntyä eri tavalla ilman
-# että repossa muuttuu mitään.
+# **The source is pinned to a commit, not a branch**, as in the radio node:
+# `@main` is a moving reference, and the same YAML can build differently
+# without anything changing in the repo.
 
 external_components:
   - source:
@@ -119,93 +127,91 @@ external_components:
     refresh: never
 
 qalcosonicnfc:
-  # Nastat kaaviosta `nfc-c3-mount.svg`, asento A.
-  # **`GPIO5` ja `GPIO6` ovat rikki tässä yksilössä** — ks. CLAUDE.md.
-  # `RST` on `GPIO20`:ssä eikä `GPIO21`:ssä, koska `GPIO21` on UART0:n
-  # lähetysnasta ja ROM-käynnistin kirjoittaa siihen ennen kuin ESPHome
-  # ottaa sen haltuun. `NSS`:n heiluminen boottissa on harmitonta, koska
-  # kello ei käy; `RST`:n heiluminen olisi turhaa nollailua.
-  # **`GPIO5` ja `GPIO6` ovat rikki tässä yksilössä, ja `GPIO20`/`GPIO21`
-  # jumittavat käynnistyksen.** Molemmat on todettu mittaamalla, ks.
-  # CLAUDE.md.
+  # Pins from `nfc-c3-mount.svg`, orientation A.
   #
-  # Ensimmäinen siirto `GPIO20`/`GPIO21`:een oli väärä valinta: boottaus
-  # pysähtyi riviin `Using HW SPI: SPI2_HOST` eikä `spi_device`-riviä tullut
-  # lainkaan, ja `safe_mode` laski käynnistyksen epäonnistuneeksi. Pelkkä
-  # nastojen vaihto tähän poisti oireen, muuta ei muutettu.
+  # **`GPIO5` and `GPIO6` are broken on this particular board, and
+  # `GPIO20`/`GPIO21` hang the boot.** Both were established by
+  # measurement — see CLAUDE.md.
   #
-  # `GPIO1` ja `GPIO0` ovat kaukorivissä, eivät strapping-nastoja eivätkä
-  # UART0:aa.
-  pn5180_rst_pin: GPIO1      # RST   — lakkalanka, oli GPIO5
-  pn5180_nss_pin: GPIO0      # NSS   — lakkalanka, oli GPIO6
-  pn5180_mosi_pin: GPIO7     # MOSI  — rimanasta
-  pn5180_busy_pin: GPIO10    # BUSY  — rimanasta
-  pn5180_miso_pin: GPIO3     # MISO  — lakkalanka
-  pn5180_sck_pin: GPIO4      # SCK   — lakkalanka
+  # The first move to `GPIO20`/`GPIO21` was the wrong choice: the boot
+  # stopped at the line `Using HW SPI: SPI2_HOST`, no `spi_device` line
+  # appeared at all, and `safe_mode` counted the boot as unsuccessful.
+  # Changing only the pins to these removed the symptom; nothing else was
+  # touched.
+  #
+  # `GPIO1` and `GPIO0` are on the far row, are not strapping pins and are
+  # not UART0.
+  pn5180_rst_pin: GPIO1      # RST   — enamelled wire, was GPIO5
+  pn5180_nss_pin: GPIO0      # NSS   — enamelled wire, was GPIO6
+  pn5180_mosi_pin: GPIO7     # MOSI  — header pin
+  pn5180_busy_pin: GPIO10    # BUSY  — header pin
+  pn5180_miso_pin: GPIO3     # MISO  — enamelled wire
+  pn5180_sck_pin: GPIO4      # SCK   — enamelled wire
 
-  # **PENKKIARVO. Tuotantoarvo on `3h` — nosta se ennen kuin jätät laitteen
-  # käyntiin.**
+  # **BENCH VALUE. The production value is `3h` — raise it before leaving
+  # the device running.**
   #
-  # Mittarin kommunikointikredit on noin 20 min/kk eli 40 s/vrk, ja kahden
-  # minuutin väli on 720 lukua vuorokaudessa — noin 36-kertaisesti yli.
-  # Rajan täyttyessä rajapinta lukkiutuu tunnin vaihtumiseen asti, eikä se
-  # palauta virhettä: luku vain epäonnistuu ja vanha arvo jää näyttämään
-  # tuoreelta.
+  # The meter's communication credit is about 20 min/month, i.e. 40 s/day,
+  # and a two-minute interval is 720 reads per day — roughly 36 times over.
+  # When the limit is reached the interface locks until the hour turns, and
+  # it returns no error: the read simply fails and the old value stays put,
+  # looking fresh.
   #
-  # **Rakennusvaiheessa tämä on silti vaaraton**, ja syy kannattaa tietää:
-  # krediitti kuluu NFC-tapahtumasta mittarin kanssa. Epäonnistunut yritys —
-  # PN5180 ei vastaa, tai kohdistus ei osu kelaan — ei kommunikoi mittarin
-  # kanssa lainkaan eikä kuluta mitään. **Väli alkaa maksaa vasta
-  # ensimmäisestä onnistuneesta luvusta.**
+  # **During the build this is still harmless**, and the reason is worth
+  # knowing: credit is consumed by an NFC transaction with the meter. A
+  # failed attempt — the PN5180 not answering, or the alignment missing the
+  # coil — does not communicate with the meter at all and consumes nothing.
+  # **The interval only starts costing from the first successful read.**
   #
-  # Se on siis myös se hetki jolloin tämä nostetaan: mittaa yhden luvun
-  # kesto lokin aikaleimoista ja johda väli siitä kertoimella 2–3.
-  # Perustelu ja taulukko: CLAUDE.md.
+  # That is therefore also the moment to raise it: measure the duration of
+  # one read from the log timestamps and derive the interval from it with a
+  # factor of 2–3. Rationale and table: CLAUDE.md.
   update_interval: 2min
 
-  # **Pakollinen, vaikka näyttää valinnaiselta.** `timepoint_sensor` on
-  # komponentin ainoa entiteetti jonka oletus on tyhjä `{}` eikä
-  # `{name: ...}`: nimen oletus määritellään sisemmässä skeemassa ja
-  # `.extend(text_sensor_schema())` määrittelee saman avaimen uudelleen
-  # ilman oletusta. Ilman tätä lohkoa validointi kaatuu riviin
-  # `At least one of 'id:' or 'name:' is required!` eikä kerro mistä.
+  # **Required, although it looks optional.** `timepoint_sensor` is the
+  # component's only entity whose default is an empty `{}` rather than
+  # `{name: ...}`: the name's default is declared in the inner schema and
+  # `.extend(text_sensor_schema())` redeclares the same key without one.
+  # Without this block validation fails with
+  # `At least one of 'id:' or 'name:' is required!` and does not say where.
   timepoint_sensor:
-    name: "Mittarin aikaleima"
+    name: "Meter timestamp"
     timezone: Europe/Helsinki
     entity_category: diagnostic
 
   water_usage_sensor:
-    name: "Vesimittari"
+    name: "Water usage"
   water_flow_sensor:
-    name: "Virtaama"
+    name: "Water flow"
   water_temperature_sensor:
-    name: "Veden lämpötila"
+    name: "Water temperature"
   battery_level_sensor:
-    name: "Paristo"
+    name: "Battery"
     entity_category: diagnostic
 
-  # **Vikatila on hiljaisuus, joten se tehdään näkyväksi.** Kreditin
-  # täyttyessä rajapinta lukkiutuu tunnin vaihtumiseen asti eikä palauta
-  # virhettä — luku vain epäonnistuu ja vanha arvo jää näyttämään tuoreelta.
-  # Tämä laskuri on se rivi joka erottaa "ei muutosta" ja "ei näkyvyyttä".
+  # **The failure mode is silence, so it is made visible.** When the credit
+  # is exhausted the interface locks until the hour turns and returns no
+  # error — the read simply fails and the old value keeps looking fresh.
+  # This counter is the line that separates "no change" from "no
+  # visibility".
   consecutive_errors_sensor:
-    name: "Peräkkäisiä lukuvirheitä"
+    name: "Consecutive read errors"
     entity_category: diagnostic
 
   error_low_battery:
-    name: "Paristo vähissä"
+    name: "Low battery"
   error_leakage:
-    name: "Vuoto"
+    name: "Leakage"
   error_burst:
-    name: "Putkirikko"
+    name: "Burst pipe"
   error_reverse_flow:
-    name: "Takaisinvirtaus"
+    name: "Reverse flow"
 
-  # Ensimmäisellä luvulla nämä kertovat mitä mittari oikeasti on. Sarjanumero
-  # ja Meter ID jäävät laitteelle eivätkä tule tähän repoon.
+  # On the first read these tell what the meter actually is. The serial
+  # number and Meter ID stay on the device and do not enter this repo.
   meter_id_sensor:
     name: "Meter ID"
     entity_category: diagnostic
   serial_number_sensor:
-    name: "Sarjanumero"
+    name: "Serial number"
     entity_category: diagnostic
