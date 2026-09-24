@@ -1769,6 +1769,61 @@ not part of the design.
 
 **Test a new board's pins before you solder.** See README, step 6.5.
 
+### Comparison with the other projects that do this
+
+Two independent projects read this meter with a PN5180 and ESPHome, and both
+were checked against ours.
+
+**[kosla-dev/qalcosonic-w1-nfc-reader](https://github.com/kosla-dev/qalcosonic-w1-nfc-reader)
+is the same build, finished.** Same meter, same component, **the same commit
+pin `bed6773`**, a custom adapter PCB and a printed mount. It confirms two of
+our choices and differs in one that matters.
+
+| | kosla-dev (works) | here |
+|---|---|---|
+| Board | **`seeed_xiao_esp32c3`** | C3 SuperMini |
+| **Antenna** | **u.FL, external on a pigtail** | **PCB antenna on top of the module** |
+| logger | `INFO`, **no `hardware_uart`** | had `USB_SERIAL_JTAG` |
+| `update_interval` | **300s** | was 2 h |
+| `power_save_mode`, `output_power` | neither | neither |
+| Component and commit | same | same |
+
+**The XIAO ESP32-C3 has no PCB antenna at all** — it has a u.FL connector
+and ships with an antenna on a lead. So in the one known working build of
+this exact project, **the antenna is physically away from the PN5180.**
+
+That is not evidence that our antenna is the fault — reception at −61 dB
+from three access points argues against it, and that argument stands. But it
+is worth recording plainly: **nobody has demonstrated this working with a
+PCB-antenna board sitting on the module.** If the Wi-Fi problem is ever
+worth spending money on, a XIAO ESP32-C3 is the board that is known to work
+here, not a guess.
+
+One observation without an explanation: **kosla-dev uses `GPIO20` for `BUSY`
+and `GPIO21` for `SCK`** — the two pins that hung the boot here at
+`Using HW SPI: SPI2_HOST`. Different physical pads on the XIAO, the same
+GPIO numbers. Recorded as an observation.
+
+**`hpuac/esphome-qalcosonic-e3`** does the same for the QALCOSONIC E3 heat
+meter, and **`JohnMcLear/esphome_pn5180`** and
+**`bluenazgul/esphome_pn5180_tag_reader`** are generic PN5180 components for
+ESPHome. None of them is closer to this build than kosla-dev's.
+
+### The upstream issue tracker, checked
+
+**No issue anywhere mentions Wi-Fi trouble with this component.** Three
+match observations made here:
+
+| | |
+|---|---|
+| **#28**, open | `NSS` is left asserted when the `BUSY` wait times out, because `transceiveCommand` returns from the error path before deasserting it. **This is the same bug found here by reading the source** — see the retracted `BUSY` section above |
+| **#27**, open | every second cycle fails with `No card detected`, independent of the interval. If that starts happening here it is not our wiring |
+| **#23**, open, with PR #24 | `At least one of 'id:' or 'name:' is required`. **This is our validation failure**, known upstream and unfixed. Naming `timepoint_sensor` is the right workaround |
+
+**#25** is the one to watch if reads ever start crashing the board: an
+unbounded wait for `RX_IRQ_STAT` in `issueISO15693Command` blocked the main
+loop until the watchdog fired.
+
 ### The component's schema, verified from the source
 
 `esphome_qalcosonicnfc`'s keys were read from

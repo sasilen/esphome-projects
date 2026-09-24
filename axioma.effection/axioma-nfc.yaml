@@ -42,11 +42,27 @@ esp32:
     type: esp-idf
 
 logger:
+  # **EXPERIMENT, not committed: `hardware_uart` removed entirely.**
+  #
+  # Compared across three nodes, this line is now the only difference left:
+  #
+  #   onewire    C3, same room, ESPHome 2026.9.0, DEBUG, no hardware_uart   works
+  #   wpc-can    C3, ESPHome 2026.9.0, INFO, no hardware_uart               works
+  #   axioma-nfc C3, ESPHome 2026.9.0, tried both levels, USB_SERIAL_JTAG   fails
+  #
+  # Two working nodes at different log levels, and neither has the line.
+  # Lowering the level to INFO was tested and changed nothing — but that
+  # tested the volume, not whether the USB Serial/JTAG peripheral is in use
+  # at all. Those are different things.
+  #
+  # With `hardware_uart` omitted, ESPHome logs to `UART0` — exactly what the
+  # two working nodes do. The cost is that the serial log over USB
+  # disappears; verify from the server with `ping` or `esphome logs`
+  # instead.
+  #
+  # If this is the cause, the meter still reads — the NFC side does not
+  # depend on logging — and the log comes back over the API.
   level: DEBUG
-  # **On the C3 SuperMini the log goes over USB, not over UART pins.**
-  # Without this line `esphome logs` through the serial port is silent and
-  # the board looks dead even when it is working.
-  hardware_uart: USB_SERIAL_JTAG
 
 api:
   encryption:
