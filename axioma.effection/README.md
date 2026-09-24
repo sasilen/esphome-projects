@@ -7,45 +7,39 @@ CC1101 radio. The meter transmits a Wireless M-Bus telegram on 868.95 MHz
 roughly every 16 seconds; the ESP32 receives it and forwards it over
 ESPHome's native API. No MQTT.
 
-**Status: wired, listening, and the meter does not transmit wM-Bus.** The
-receiver is demonstrably fine — noise packets do come through — but a full
-transmission window on Monday 7.9.2026 from 10:00 to 18:00 produced **zero
-frames**, and the capture continued uninterrupted into the next day until
-14:00. That is about **36 hours of listening and zero frames**, from both
-inside and outside the window.
+**Status: the meter is read over NFC. Wi-Fi on that node is unsolved.**
 
-**The NFC node is built, and it is being rebuilt on a fresh C3.** The first
-ESP32-C3 SuperMini turned out to have **two dead GPIO pads** — `GPIO5` and
-`GPIO6` never rose while seven other pins did — so the wiring is being
-transferred to a replacement board that passed the pin test. The radio node
-stays up until NFC has said whether wM-Bus is switched on at all.
+The NFC route works end to end. On day 2 the whole chain ran: inventory,
+M-Bus checksum, and a full readout — 255.547 m³, water 15.1 °C, external
+18.0 °C, battery 91 %, error flags all zero, 847 days of operating time.
 
-**The meter has been read.** On day 2 the whole chain worked end to end:
-inventory, M-Bus checksum, and a full readout — 255.547 m³, water 15.1 °C,
-battery 91 %, error flags all zero. **One read takes 1027 ms**, which
-settles the polling interval at three hours: 8 reads a day, about 20 % of
-the meter's communication credit.
+**One read takes 1027 ms**, which settles the polling interval at three
+hours: 8 reads a day, about 20 % of the meter's communication credit.
 
-Two things came out of it that the repo had guessed wrong: the Meter ID is
-not the nameplate serial, and the alignment was found by hand in minutes
-because failed inventories cost no credit.
+Two things the repo had guessed wrong came out of it: **the Meter ID is not
+the nameplate serial**, and the alignment to the meter's coil was found by
+hand in minutes, because a failed inventory costs no credit.
 
-**What is still open is Wi-Fi**, and it does not block reading the meter —
-the node reads over the serial port with no network at all. See
-[`CLAUDE.md`](CLAUDE.md), "OPEN PROBLEM".
+**The radio route produced nothing.** About 36 hours of listening on
+868.95 MHz, inside and outside the schedule window, gave **zero frames**.
+The receiver is demonstrably fine — noise packets come through. The probable
+reason is that the meter is on LoRaWAN metering: in the W1, LoRaWAN and
+wM-Bus are separate flags, and a utility reading over LoRaWAN has no reason
+to keep wM-Bus on. LoRaWAN is not an alternative local route, because its
+keys live on the network server.
 
-**Earlier: the PN5180 had never answered, and the wiring was ruled out.** Every one of
-the nine connections was measured from both ends, the control lines were
-driven high unconditionally and verified, the pin maps were read from the
-module's silkscreen and the board vendor's diagram, and there are no bridges
-between neighbours. What remains is **the module itself or the first C3's
-SPI block** — and the fresh board settles which.
+**What is open is Wi-Fi on the NFC node.** It associates occasionally and
+mostly does not, on two different boards, at every signal level, in every
+location, on every supply. Ten explanations were proposed and all were
+retracted. **It does not block reading the meter** — the node reads over the
+serial port with no network at all. The full record and what has been
+excluded by measurement are in [`CLAUDE.md`](CLAUDE.md) under
+"OPEN PROBLEM".
 
-**Probable cause on the radio side: the meter is on LoRaWAN metering.** In
-the W1, LoRaWAN and wM-Bus are separate flags, and a water utility has no
-reason to keep wM-Bus on if it reads the meter over LoRaWAN — the battery is
-specified for 15 years. LoRaWAN is not an alternative local route, because
-its keys live on the network server. Rationale: [`CLAUDE.md`](CLAUDE.md).
+Along the way the first ESP32-C3 turned out to have **two dead GPIO pads**,
+which cost an evening because continuity measured fine and only a driven pin
+revealed it. The build moved to a replacement board that passed the pin
+test — see [`pintesti.yaml`](pintesti.yaml).
 
 The radio configuration is deliberately **a listener and nothing more**. It
 cannot read the meter's values and does not try — it verifies the radio, the
