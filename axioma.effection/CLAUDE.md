@@ -1066,7 +1066,24 @@ the handshake already struggled. If association fails at the meter, this log
 is what it is compared against, and the conclusion must not then be "the
 C3's antenna is poor" until these three lines have been ruled out.
 
-**The fallback AP is not a valid sign for this phase.** The log repeats
+**The fallback AP has never been visible, on any board, anywhere — do not
+use it as a diagnostic.** It was suggested three times in this project and
+produced nothing each time, including on the desk where the node associates
+in one round and Wi-Fi demonstrably works.
+
+The reason is that the station and the AP share one radio: while the
+association retry loop runs and `Restarting adapter` repeats, the AP's
+beacons go out sporadically and a phone's scan never catches them. The log
+said `Starting fallback AP` once and it still was not visible.
+
+That also retracts an inference drawn from it: the AP's invisibility was
+read as evidence that transmission does not get out. **The node associates
+on the desk, so transmission works** — the AP is simply not observable here.
+
+**The usable criterion is whether the device joins the network**, checked
+from the server, not from a phone.
+
+**And the fallback AP is not a valid sign for this phase either.** The log repeats
 `Restarting adapter` on every round, and that takes the AP down and back up
 — so `Axioma NFC fallback` flickers rather than staying in the network list.
 A missing AP was first read here as proof that the board does not start at
