@@ -1,130 +1,132 @@
 # Axioma Effectio (Qalcosonic W1) → Home Assistant (ESPHome + CC1101)
 
-> **Tekniset tiedot ja perustelut.** Yleiskuva: [README.md](README.md).
+> **Technical detail and rationale.** Overview: [README.md](README.md).
 
-## Tavoite
+## Goal
 
-Lukea **Axioma Effectio / Qalcosonic W1** -vesimittaria suoraan Home Assistantiin käyttäen:
+Read an **Axioma Effectio / Qalcosonic W1** water meter straight into Home
+Assistant using:
 
 - ESP32
 - CC1101 868 MHz
-- ESPHome API
+- the ESPHome API
 
-**Ei MQTT:tä.**
+**No MQTT.**
 
 ---
 
-# Mittarin tiedot
+# The meter
 
-Kuvan perusteella:
+From the photograph:
 
-| Ominaisuus | Arvo |
+| Property | Value |
 |------------|------|
-| Valmistaja | Axioma |
-| Malli | Effectio / Qalcosonic W1 |
+| Manufacturer | Axioma |
+| Model | Effectio / Qalcosonic W1 |
 | SW | 1.03 |
 | CE | M24 1621 |
-| Tyyppi | LT-1621-MI001-034 |
-| SN | 12345678 — paikanpitäjä, oikea lukee tyyppikilvestä |
-| Valmistusvuosi | 2024 |
+| Type | LT-1621-MI001-034 |
+| SN | 12345678 — placeholder, the real one is on the nameplate |
+| Year | 2024 |
 
-Todennäköinen Meter ID:
+Probable Meter ID:
 
 ```
 12345678
 ```
 
-Huom:
-Meter ID varmistetaan myöhemmin vastaanotetusta Wireless M-Bus -telegrammista.
+Note: the Meter ID is confirmed later from a received Wireless M-Bus
+telegram.
 
 ---
 
-# Käytettävät laitteet
+# Hardware used
 
-## Jo olemassa
+## Already in stock
 
-- ESP32 DevKit, 30-nastainen — [kuva](../pegasos.enervent/esp32-devkit.jpg)
-- CC1101 868 MHz — [kuva](cc1101-module.jpg)
-- 868 MHz SMA-antenni
-- ESP8266 (ei tarvita tähän projektiin)
+- ESP32 DevKit, 30 pins — [photo](../pegasos.enervent/esp32-devkit.jpg)
+- CC1101 868 MHz — [photo](cc1101-module.jpg)
+- 868 MHz SMA antenna
+- ESP8266 (not needed for this project)
 
-## Miksi ESP32 eikä ESP8266
+## Why ESP32 and not ESP8266
 
-**Ohjelma ei mahdu ESP8266:een.** Valmis image on 1 069 167 tavua, ja D1 minin
-sovelluspartitio on OTA:n kanssa noin megatavu. Se ei ole rajatapaus, ja se on
-mitattu eikä arvioitu — luvut ja niiden vertailu repon muihin projekteihin ovat
-kohdassa "Alustatuki".
+**The program does not fit on an ESP8266.** The built image is 1,069,167
+bytes, and the D1 mini's application partition with OTA is about a megabyte.
+That is not a borderline case, and it is measured rather than estimated —
+the figures and their comparison with the repo's other projects are under
+"Platform support".
 
-Komponentti ei muutenkaan tue ESP8266:ta, mutta koko olisi ratkaissut asian
-vaikka tukisi.
+The component does not support the ESP8266 anyway, but size would have
+settled it even if it did.
 
-**Levy on tavallinen 30-nastainen DevKit**, printtiantennilla, USB-C:llä ja
-CH340C-siltapiirillä. Viisi nastaa riittää, ja niitä on kolmekymmentä.
+**The board is an ordinary 30-pin DevKit**, with a PCB antenna, USB-C and a
+CH340C bridge. Five pins are enough, and there are thirty.
 
-**Ulkoantennia ei tarvita.** wM-Bus on radio: mittari lähettää 868 MHz:llä ja
-CC1101 kuulee sen kantaman sisältä mistä tahansa, joten **vastaanottimen paikan
-valitsee itse** ja sen valitsee sieltä missä WiFi kuuluu. Aidonissa vastaava
-pakko on aito, koska se levy on fyysisesti kiinni mittarin portissa — täällä ei
-ole.
+**No external antenna is needed.** wM-Bus is radio: the meter transmits on
+868 MHz and the CC1101 hears it from anywhere within range, so **you choose
+where the receiver goes** and you choose somewhere Wi-Fi reaches. In aidon
+the equivalent constraint is real, because that board is physically attached
+to the meter's port — here it is not.
 
-Siksi levylle tulee **vain yksi antenni: 868 MHz CC1101:lle.** Se poistaa
-sekaannuksen jota tässä tiedostossa aiemmin varoiteltiin, kun levyvaihtoehtona
-oli u.FL-antennia vaativa moduuli ja antenneja oli kaksi.
+So the board gets **one antenna only: 868 MHz for the CC1101.** That removes
+the confusion this file used to warn about, when the candidate board was a
+module needing a u.FL antenna and there were two antennas.
 
-**CC1101-moduulissa on 26 MHz:n kide**, mikä on odotettu arvo.
+**The CC1101 module has a 26 MHz crystal**, which is the expected value.
 
-**Antennikytkentä: pigtail tuli moduulin mukana.** Kuvatussa kulmassa ei näy
-SMA- eikä u.FL-liitintä, joten antenni kytkeytyy sen kautta. Tämä on siis
-kunnossa eikä sovitinta tarvita.
+**Antenna connection: the pigtail came with the module.** The photographed
+corner shows neither an SMA nor a u.FL connector, so the antenna attaches
+through it. This is therefore in order and no adapter is needed.
 
-Jos pigtail joskus katoaa, neljännesaallon lanka on 868 MHz:llä noin 8,2 cm ja
-kelpaa kokeiluihin ilman mitään liitintä.
+If the pigtail ever goes missing, a quarter-wave wire at 868 MHz is about
+8.2 cm and is good enough for experiments with no connector at all.
 
-### 8,2 vai 8,6 cm — molemmat ovat oikein, eri oletuksella
+### 8.2 or 8.6 cm — both are right, under different assumptions
 
-Lähteet antavat neljännesaallolle **8,6 cm** ja tässä tiedostossa on lukenut
-**8,2 cm**. Kumpikaan ei ole virhe:
+Sources give **8.6 cm** for a quarter wave and this file has said **8.2 cm**.
+Neither is an error:
 
 ```
-λ    = 299 792 458 / 868,95 MHz = 34,50 cm
-λ/4  = 8,63 cm                              vapaassa tilassa
-     × 0,95 nopeuskerroin                   eristetyllä langalla
-     = 8,19 cm
+λ    = 299 792 458 / 868.95 MHz = 34.50 cm
+λ/4  = 8.63 cm                              in free space
+     × 0.95 velocity factor                 with insulated wire
+     = 8.19 cm
 ```
 
-**8,6 cm on teoreettinen vapaan tilan mitta, 8,2 cm on eristetylle langalle
-lyhennetty.** Jos leikkaat paljasta lankaa, käytä 8,6 cm; jos eristettyä,
-8,2 cm on lähempänä. Ero on puoli senttiä eikä ratkaise mitään vastaanotossa —
-mutta se selittää miksi kaksi lähdettä antaa eri luvun.
+**8.6 cm is the theoretical free-space length, 8.2 cm is shortened for
+insulated wire.** If you cut bare wire, use 8.6 cm; if insulated, 8.2 cm is
+closer. The difference is half a centimetre and decides nothing in reception
+— but it explains why two sources give different numbers.
 
-**Ja vastaanotossa viritys on vähemmän kriittinen kuin lähetyksessä.** Huono
-sovitus heikentää herkkyyttä, mutta ei riko mitään — lähettävässä päässä
-heijastunut teho voi rikkoa. Tämä solmu ei lähetä koskaan.
+**And in reception, tuning matters less than in transmission.** A poor match
+reduces sensitivity but breaks nothing — at the transmitting end reflected
+power can destroy something. This node never transmits.
 
-### Kolme lukua linkkibudjettiin
+### Three numbers for the link budget
 
 | | |
 |---|---|
-| RX-herkkyys | noin **−110 dBm** |
-| RX-virta | ~14 mA |
-| Datanopeus | 0,6–600 kbps — wM-Bus T1 on 100 kbps, hyvin sisällä |
+| RX sensitivity | about **−110 dBm** |
+| RX current | ~14 mA |
+| Data rate | 0.6–600 kbps — wM-Bus T1 is 100 kbps, comfortably inside |
 
-−110 dBm on se luku jota vasten kuuluvuutta arvioidaan, jos mittari ei kuulu.
-Vertailun vuoksi WiFi lukee tällä levyllä −56 dBm työpöydällä.
+−110 dBm is the figure to judge reception against if the meter is not
+audible. For comparison, Wi-Fi reads −56 dBm on this board on the desk.
 
-### Lähetysrajoitus ei koske tätä
+### The duty-cycle limit does not apply here
 
-EU:n 868 MHz -kaista on **1 %:n lähetysaikarajoitettu**, ja se on syytä tuntea
-— mutta se ei rajoita mitään täällä, koska tämä solmu **ei lähetä koskaan.**
-Kuuntelu on rajoittamatonta.
+The EU 868 MHz band has a **1 % duty-cycle limit**, which is worth knowing —
+but it constrains nothing here, because this node **never transmits.**
+Listening is unlimited.
 
-Mittarin ~16 sekunnin lähetysväli ei myöskään johdu siitä: telegrammi kestää
-millisekunteja, joten sen käyttöaste on promillen luokkaa. Väli on
-paristonkeston valinta, ei sääntelyn pakko.
+Nor is the meter's ~16-second interval caused by it: a telegram lasts
+milliseconds, so its duty cycle is in the per-mille range. The interval is a
+battery-life choice, not a regulatory constraint.
 
 ---
 
-# Arkkitehtuuri
+# Architecture
 
 ```
 Axioma Water Meter
@@ -140,13 +142,13 @@ Axioma Water Meter
  Home Assistant
 ```
 
-Ei MQTT:tä.
+No MQTT.
 
 ---
 
-# ESP32 ↔ CC1101 kytkentä
+# ESP32 ↔ CC1101 wiring
 
-Piirretty auki: [`wiring.svg`](wiring.svg).
+Drawn out: [`wiring.svg`](wiring.svg).
 
 | CC1101 | ESP32 | |
 |---------|-------|---|
@@ -157,29 +159,30 @@ Piirretty auki: [`wiring.svg`](wiring.svg).
 | SCK | GPIO18 | |
 | CSN | GPIO5 | strapping |
 | GDO0 | GPIO4 | `irq_pin` |
-| GDO2 | — | **ei kytketä** |
+| GDO2 | — | **not connected** |
 
-## Huomio
+## Note
 
-CC1101 toimii vain 3.3 voltilla.
+The CC1101 runs on 3.3 V only.
 
-Älä koskaan käytä 5V.
+Never use 5 V.
 
-## DevKitissä D-numero on GPIO-numero
+## On the DevKit the D number is the GPIO number
 
-Levyn silkkipainatus ei sano `GPIO18` vaan `D18`, ja **se on sama nasta.**
-Ylärivi lukee kokonaisuudessaan:
+The board's silkscreen does not say `GPIO18` but `D18`, and **it is the same
+pin.** The upper row reads, in full:
 
 ```
 3V3  GND  D15  D2  D4  D16  D17  D5  D18  D19  D21  RX0  TX0  D22  D23
 ```
 
-**Tämä on eri kuin Wemos D1 minissä**, ja siinä on ansa jota tässä repossa on
-kaksi levytyyppiä: D1 minissä `D5` on **GPIO14** eikä numeroilla ole mitään
-yhteyttä toisiinsa. ESP32-DevKitissä `D`-etuliite on pelkkä etuliite. Kuka
-tahansa joka siirtyy levystä toiseen tekee tämän virheen kerran.
+**This differs from the Wemos D1 mini**, and there is a trap in that because
+this repo has two board types: on the D1 mini `D5` is **GPIO14** and the
+numbers have no relationship to each other. On the ESP32 DevKit the `D`
+prefix is merely a prefix. Anyone moving between the two boards makes this
+mistake once.
 
-| YAML | Levyn merkintä |
+| YAML | Board marking |
 |---|---|
 | `clk_pin: GPIO18` | `D18` |
 | `mosi_pin: GPIO23` | `D23` |
@@ -187,90 +190,92 @@ tahansa joka siirtyy levystä toiseen tekee tämän virheen kerran.
 | `cs_pin: GPIO5` | `D5` |
 | `irq_pin: GPIO4` | `D4` |
 
-**Kaikki seitsemän lankaa menevät samaan riviin.** 3V3 ja GND ovat sen kaksi
-ensimmäistä, D23 reunimmainen — alariviin ei tarvitse koskea lainkaan, mikä
-helpottaa sekä juottamista että kotelointia.
+**All seven wires go to the same row.** 3V3 and GND are its first two, D23
+the outermost — the lower row needs no attention at all, which makes both
+soldering and enclosing easier.
 
-## Moduulissa ei ole nastamerkintöjä kummallakaan puolella
+## The module has no pin markings on either side
 
-Levy on pieni neliö, silkkipainatuksena vain `CC11010 868MHz Module`. Kahdeksan
-reikää yhdessä reunassa, kolme vastakkaisessa, **eikä yhtään nastan nimeä.**
-Järjestys on siis tunnistettava, ei luettava.
+The board is a small square, silkscreened only `CC11010 868MHz Module`.
+Eight holes on one edge, three on the opposite one, **and not one pin name.**
+The order therefore has to be recognised, not read.
 
-**Kaksi riippumatonta lähdettä antaa saman järjestyksen**, ja molemmat kuvaavat
-fyysisesti tätä levyä — sama silkkipainatus, sama 8 + 3 reikää. Yleinen
-"CC1101-moduulin pinout" -taulukko, joka kuvaa 10-nastaista korttia eri
-järjestyksessä, **ei päde tähän** ja hylättiin siksi.
+**Two independent sources give the same order**, and both describe this
+board physically — same silkscreen, same 8 + 3 holes. The generic "CC1101
+module pinout" table, which describes a 10-pin card in a different order,
+**does not apply here** and was discarded for that reason.
 
-Asento ratkaistaan maamerkeistä, koska levyn saa käteen neljässä asennossa:
-**kide ylöspäin ja teksti vasemmassa reunassa pystyssä.** Silloin kahdeksan
-reikää ovat oikeassa reunassa ja järjestys ylhäältä alas on:
+The orientation is settled from landmarks, because the board can be held
+four ways: **crystal up and the text vertical along the left edge.** Then
+the eight holes are on the right edge and the order from top to bottom is:
 
-| # | Nasta | → ESP32 |
+| # | Pin | → ESP32 |
 |---|---|---|
 | 1 | CSN | GPIO5 |
 | 2 | GDO0 | GPIO4 |
-| 3 | GDO2 | **ei kytketä** |
+| 3 | GDO2 | **not connected** |
 | 4 | MISO | GPIO19 |
 | 5 | SCK | GPIO18 |
 | 6 | MOSI | GPIO23 |
 | 7 | GND | GND |
 | 8 | VCC | 3V3 |
 
-Vasemmassa reunassa **GND — ANT — GND**; keskimmäinen on antenni, ja järjestys
-on symmetrinen eli kääntövirhe ei sotke sitä.
+On the left edge, **GND — ANT — GND**; the middle one is the antenna, and
+the order is symmetric, so getting it the wrong way round does not matter.
 
-Piirretty auki: [`wiring.svg`](wiring.svg).
+Drawn out: [`wiring.svg`](wiring.svg).
 
-**Reikien jako on 2,0 mm eikä 2,54 mm**, joten Dupont-hyppylangat eivät mahdu.
-Juota langat suoraan — ohutta, 0,2 mm² monisäikeistä tai AWG30:tä, koska paksu
-lanka repii pienen padin irti. Pysyvässä asennuksessa juotos on muutenkin
-parempi kuin liitin, mikä on sama päättely kuin stiebelin väyläjohtimissa.
+**The hole pitch is 2.0 mm, not 2.54 mm**, so Dupont jumpers do not fit.
+Solder the wires directly — thin, 0.2 mm² stranded or AWG30, because thick
+wire tears the small pad off. In a permanent installation a soldered joint
+is better than a connector anyway, which is the same reasoning as for
+stiebel's bus conductors.
 
-### Ja tämä on syy miksi taulukkoon saa luottaa tässä
+### And this is why the table can be trusted here
 
-**Vain VCC ja GND voivat rikkoa piirin.** Loput kuusi ovat 3,3 V:n logiikkaa,
-joten väärä arvaus niissä tarkoittaa että mikään ei toimi — ei että jokin
-hajoaa. Riski on siis kahdessa nastassa, ei kahdeksassa.
+**Only VCC and GND can destroy the chip.** The other six are 3.3 V logic, so
+a wrong guess there means nothing works — not that something breaks. The
+risk is in two pins, not eight.
 
-Ne kaksi tunnistaa mittarilla ilman mitään lähdettä: **niiden väliltä
-vastuslukema nousee hitaasti** ohituskondensaattorien varautuessa, kun taas
-logiikkanastat lukevat auki lähes kaikkeen. Jos pari löytyy rivin siitä päästä
-jonka taulukko lupaa, koko asento on todistettu yhdellä mittauksella.
+Those two can be identified with a meter and no source at all: **between
+them the resistance reading climbs slowly** as the bypass capacitors charge,
+whereas the logic pins read open to almost everything. If the pair is found
+at the end of the row the table promises, the whole orientation is proven
+with one measurement.
 
-Sama menetelmä kuin stiebelissä, jossa TJA1050:n nastat tunnistettiin kolmella
-riippumattomalla jatkuvuusmittauksella ennen kuin mitään kytkettiin.
+The same method as in stiebel, where the TJA1050's pins were identified with
+three independent continuity measurements before anything was connected.
 
-### SPI-kello on 1 MHz, ja se näkyy lokissa
+### The SPI clock is 1 MHz, and it shows in the log
 
-Boottiloki tulostaa `data_rate: 1000000.0`. Se on SPI-väylän nopeus, ei radion
-bittinopeus. CC1101 kestäisi 10 MHz, mutta 1 MHz on se jota lähteet
-suosittelevat kehitykseen ja se jonka komponentti valitsee itse — tähän ei
-tarvitse koskea.
+The boot log prints `data_rate: 1000000.0`. That is the SPI bus speed, not
+the radio's bit rate. The CC1101 would take 10 MHz, but 1 MHz is what the
+sources recommend for development and what the component picks by itself —
+there is nothing to change here.
 
-## Strapping-nastat, ja miksi vain toinen niistä on ongelma
+## Strapping pins, and why only one of them is a problem
 
-Piiri lukee tietyt GPIO:t **nollauksen hetkellä** päättääkseen käynnistystilan.
-Sen jälkeen ne ovat tavallisia nastoja, joten strapping-nastan saa käyttää —
-kunhan mikään ei pidä sitä väärässä tasossa juuri silloin. Tavallisen ESP32:n
-strapping-nastat ovat **GPIO0, 2, 5, 12 ja 15**, ja tämä kytkentä osuu kahteen.
+The chip reads certain GPIOs **at the moment of reset** to decide its boot
+mode. After that they are ordinary pins, so a strapping pin may be used —
+provided nothing holds it at the wrong level right then. An ordinary ESP32's
+strapping pins are **GPIO0, 2, 5, 12 and 15**, and this wiring touches two.
 
-**GPIO5 on turvallinen.** Se haluaa HIGH:n käynnistyksessä, ja CS lepää
-HIGH:ssa. Sama päättely on kirjattu
-[stiebelissä](../stiebel.eltron/CLAUDE.md) saman piirin osalta.
+**GPIO5 is safe.** It wants HIGH at startup, and CS idles HIGH. The same
+reasoning is recorded in [stiebel](../stiebel.eltron/CLAUDE.md) for the same
+chip.
 
-**GPIO2 ei ole, ja siksi GDO2 jää kytkemättä.** Se haluaa LOW:n tai kellumisen,
-ja GDO2 on CC1101:n **lähtö** — jos se ajaa nastaa ylös nollauksen aikana, levy
-ei käynnisty normaalitilaan. Skeemamuutos poisti GDO2:n käytöstä ilman että
-kukaan tavoitteli tätä, mutta **johtoa ei silti pidä jättää paikalleen**: tämän
-tiedoston oma vianetsintä listaa boot-loopin syyksi nimenomaan väärässä nastassa
-olevan GDO-linjan.
+**GPIO2 is not, and that is why GDO2 stays unconnected.** It wants LOW or
+floating, and GDO2 is an **output** of the CC1101 — if it drives the pin
+high during reset, the board does not come up in normal mode. The schema
+change removed GDO2 from use without anyone aiming for this, but **the wire
+should still not be left in place**: this file's own troubleshooting lists a
+GDO line on the wrong pin as a cause of boot loops.
 
 ---
 
 # CC1101 pinout
 
-Useimmissa moduuleissa pinnit ovat:
+On most modules the pins are:
 
 ```
 GDO2
@@ -283,20 +288,21 @@ GND
 VCC
 ```
 
-Tarkista kuitenkin oman moduulin silkkipainatus.
+Check your own module's silkscreen all the same.
 
 ---
 
-# ESPHome testikonfiguraatio
+# ESPHome test configuration
 
-> **Tämä on `version_4`:n skeema eikä käänny nykyisellä komponentilla.** Se on
-> jätetty paikalleen koska se on toisen sukupolven oikea muoto, ei virhe — ks.
-> "Versiot ovat kaksi sukupolvea". Ajettava versio on
+> **This is `version_4`'s schema and does not build with the current
+> component.** It is left in place because it is the correct form of the
+> other generation, not an error — see "The versions are two generations".
+> The version that runs is
 > [`axioma.effection.yaml`](axioma.effection.yaml).
 
 ```yaml
 esphome:
-  name: vesimittari
+  name: watermeter
 
 esp32:
   board: esp32dev
@@ -328,749 +334,786 @@ wmbus:
 
 ---
 
-# Mitä pitäisi näkyä logissa
+# What should appear in the log
 
-Kun mittari lähettää telegrammin, loggeriin tulee esimerkiksi:
+When the meter transmits a telegram, the logger shows something like:
 
 ```
 Received T1 A frame from 12345678 RSSI -70
 ```
 
-Jos tämä näkyy:
+If this appears:
 
-- radio toimii
-- kytkennät ovat oikein
-- taajuus on oikein
-- mittari kuuluu vastaanottimeen
+- the radio works
+- the wiring is right
+- the frequency is right
+- the meter is audible to the receiver
 
 ---
 
-# Avoin: miksi kehyksiä ei tule
+# Open: why no frames arrive
 
-**Radio toimii — se on todistettu.** Kytkettynä ja parin metrin päässä
-mittarista loki tuotti:
+**The radio works — that is proven.** Connected and a couple of metres from
+the meter, the log produced:
 
 ```
 [D][packet:106]: Have data from radio (8 bytes)
 [D][wmbusmeters:351]: raw packet "320C800948884A28"
 ```
 
-**SPI ja GDO0 ovat tässä kunnossa**, ja perustelu on vahvempi kuin pelkkä rivin
-ilmestyminen: vaihtelevat tavut eivät voi tulla kuolleelta väylältä, koska
-vastaamaton MISO lukee tasaista nollaa tai `0xFF`:ää. Keskeytyslinja laukeaa ja
-FIFO:sta luetaan oikeasti dataa.
+**SPI and GDO0 are in order here**, and the reasoning is stronger than the
+mere appearance of the line: varying bytes cannot come from a dead bus,
+because an unanswering MISO reads a steady zero or `0xFF`. The interrupt
+fires and real data is read from the FIFO.
 
-**Se ei tarkoita että vastaanottopolku kokoaa kehyksiä.** Kolmessa minuutissa
-tuli yksi kahdeksan tavun paketti, eikä siinä ole telegrammia: `0x32` ja `0x0C`
-eivät ole L- ja C-kenttiä lainkaan vaan dekoodaamatonta chip-tason dataa, ja
-kahdeksan tavua on juuri se vakio jonka epäonnistunut otsikon purku tuottaa —
-perustelu on kohdassa "Niiden 47 paketin otsikkoanalyysi ei ollut pätevä".
-Tässä luki aiemmin että `0x0C` on kelvoton C-kenttä; se luki kenttää väärästä
-paikasta.
+**That does not mean the receive path assembles frames.** In three minutes
+one eight-byte packet arrived, and there is no telegram in it: `0x32` and
+`0x0C` are not L and C fields at all but undecoded chip-level data, and
+eight bytes is exactly the constant that a failed header decode produces —
+the reasoning is under "The header analysis of those 47 packets was not
+valid". This used to say that `0x0C` is an invalid C field; it was reading
+the field from the wrong place.
 
-**Kahden metrin päässä kuuluvuus ei selitä hiljaisuutta.** Oman mittarin
-telegrammin pitäisi tulla vahvana ja kokonaisena. Antenni on kiinni ANT-padissa,
-ja se on kierteinen kuparilanka eli heliksiantenni — säteilijä, ei pelkkä
-siirtolinja.
+**At two metres, reception does not explain the silence.** Our own meter's
+telegram should arrive strong and complete. The antenna is attached to the
+ANT pad, and it is a coiled copper wire, i.e. a helical antenna — a
+radiator, not just a transmission line.
 
-Jäljelle jää **kolme** kysymystä eikä yksi, ja ne on eroteltava toisistaan:
-lähettääkö mittari, lähettääkö se moodissa jota tämä komponentti osaa, ja
-kokoaako komponentti kehyksen jos lähetys tulee. Ne ovat hypoteesit 2, 1 ja 3
-alla. **Yksikään mittaus ei tähän mennessä ole erottanut niitä**, koska
-kaikki kolme näyttävät lokissa samalta.
+That leaves **three** questions rather than one, and they have to be kept
+apart: does the meter transmit, does it transmit in a mode this component
+understands, and does the component assemble a frame if a transmission
+arrives. They are hypotheses 2, 1 and 3 below. **No measurement so far has
+separated them**, because all three look the same in the log.
 
-## Siitä on tässä repossa kokemusta
+## There is experience of this in this repo
 
-Aidonin koko projekti alkoi samasta:
+The whole aidon project started from the same thing:
 
-> **Portti on oletuksena kuollut.** Verkkoyhtiön on aktivoitava sekä rajapinta
-> että 5 V:n syöttö. Tämä on projektin ainoa vaihe jota ei voi nopeuttaa —
-> tilaa se ensin.
+> **The port is dead by default.** The network company has to activate both
+> the interface and the 5 V supply. This is the project's one step that
+> cannot be hurried — order it first.
 
-Vesimittarissa on sama mahdollisuus, mutta muoto on eri: **kyse ei ole
-kävelyluennasta vastaan kiinteä verkko.** Sama laite lähettää 16 sekunnin välein
-aikatauluikkunan sisällä ja on hiljaa sen ulkopuolella, ja oletusikkuna on
-**ma–pe 6:00–18:00.** Kumpi luentatapa on käytössä ei siis ratkaise mitään —
-kellonaika ratkaisee.
+The water meter has the same possibility, but in a different form: **this is
+not a walk-by reading versus a fixed network.** The same device transmits
+every 16 seconds inside a schedule window and is silent outside it, and the
+default window is **Mon–Fri 06:00–18:00.** Which reading method is in use
+therefore settles nothing — the time of day settles it.
 
-Tämän tiedoston **`noin 16 sekunnin väli` on yleisestä lähteestä eikä mitattu
-tästä yksilöstä.** Se on oletus siinä missä ne taulukot joita tässä projektissa
-on jouduttu kumoamaan neljä kertaa. Maahantuojan myyntimateriaali sanoo
-lähetysväliksi **5 minuuttia**, mikä on ristiriidassa 16 sekunnin kanssa —
-kumpaakaan ei ole todennettu tästä mittarista, ja NFC-luku kertoisi sen.
+This file's **`about a 16-second interval` comes from a general source and
+was not measured from this particular meter.** It is an assumption in the
+same way as the tables this project has had to overturn four times. The
+importer's sales material gives the interval as **5 minutes**, which
+contradicts the 16 seconds — neither has been verified from this meter, and
+an NFC read would say.
 
-**Kysy se samalla kun kysyt AES-avainta.** Kaikkiin menee kalenteriaikaa ja
-kaikki menevät samalle vastaanottajalle:
+**Ask that at the same time as the AES key.** All of them take calendar time
+and all go to the same recipient:
 
-1. **Onko `wMBus T1` päällä lainkaan — ja voitteko kytkeä sen päälle?**
-2. Missä moodissa se lähettää — T1, C1 vai S1?
-3. AES-128-avain
+1. **Is `wMBus T1` on at all — and can you switch it on?**
+2. In which mode does it transmit — T1, C1 or S1?
+3. The AES-128 key
 
-Kohta 1 muuttui muodosta "onko radiolähetys päällä" tähän, kun selvisi että
-**mittari on LoRaWAN-luennassa.** Silloin kysymys ei ole onko radio päällä
-vaan onko *tämä* radio päällä, ja vastaus on todennäköisesti ei — ks. "Ratkaisu
-on todennäköisesti tämä". Se tekee kohdasta 1 pyynnön muuttaa asetusta heidän
-omassa laitteessaan, ja **kieltävä vastaus on siinä rehellinen mahdollisuus**
-paristoperustelulla.
+Item 1 changed from "is radio transmission on" into this when it turned out
+that **the meter is on LoRaWAN metering.** The question is then not whether
+the radio is on but whether *this* radio is on, and the answer is probably
+no — see "The answer is probably this". That makes item 1 a request to
+change a setting in their own device, and **a refusal is an honest
+possibility there** on battery grounds.
 
-Kohta 2 on yhä listalla, koska se on ainoa joka voi kaataa rautavalinnan: T1 ja
-C1 tulevat samalla kuuntelulla, S1 vaatii toisen vastaanottimen.
+Item 2 is still on the list, because it is the only one that can invalidate
+the hardware choice: T1 and C1 come with the same listening, S1 needs a
+different receiver.
 
-**Älä esitä johtopäätöstä "mittari ei lähetä"** vaan kysy neutraalisti. Tämän
-tiedoston oma päättely siitä on jouduttu peruuttamaan kahdesti, ja
-vastaanottimen puolella on yhä avoin epäilty — ks. hypoteesi 3.
+**Do not present the conclusion "the meter does not transmit"** — ask
+neutrally. This file's own reasoning about it has had to be retracted twice,
+and there is still an open suspect on the receiver side — see hypothesis 3.
 
-Pyyntöön kuuluu **tyyppikilven oikea sarjanumero.** Repossa se on paikanpitäjä
-`12345678`, koska repo on julkinen.
+The request includes **the real serial number from the nameplate.** In the
+repo it is the placeholder `12345678`, because the repo is public.
 
-## Yön mittaus ei ratkaissut sitä: se osui lähetysikkunan ulkopuolelle
+## The overnight run did not settle it: it fell outside the window
 
-8,5 tuntia parin metrin päässä mittarista, taajuudella 868,95 MHz:
+8.5 hours a couple of metres from the meter, on 868.95 MHz:
 
 | | |
 |---|---|
-| Kokonaisia kehyksiä | **0** |
-| Raakapaketteja | 47 |
+| Complete frames | **0** |
+| Raw packets | 47 |
 
-**Nolla on tässä odotettu tulos eikä havainto.** Qalcosonic W1:n oletusaikataulu
-on **ma–pe 6:00–18:00**, ja sen ulkopuolella radio on hiljaa kokonaan — paristo
-mitoitetaan 15 vuodeksi. Mittaus alkoi sunnuntaina noin 21:15 ja päättyi
-maanantaina 05:45, eli se oli kokonaan ikkunan ulkopuolella ja viikonloppuna
-kahdesti.
+**Zero is an expected result here, not an observation.** The Qalcosonic W1's
+default schedule is **Mon–Fri 06:00–18:00**, and outside it the radio is
+silent altogether — the battery is specified for 15 years. The run started
+on Sunday at about 21:15 and ended on Monday at 05:45, so it was entirely
+outside the window and doubly so at a weekend.
 
-Aikataulu on maskitettu sekä viikonpäivä- että kuukausitasolla. Lähde ei ole
-valmistajan datalehti vaan riippumaton rakentaja joka törmäsi täsmälleen tähän
-oireeseen, ja wmbusmetersin ylläpitäjä vahvistaa ilmiön yleisyyden: osa
-mittareista sammuttaa radion öisin ja viikonloppuisin oletuskonfiguraatiolla.
-Maskit ovat luettavissa mittarista NFC:llä, joten oletus on tarkistettavissa
-laitteesta — ks. "Mittarin oma konfiguraatio on luettavissa NFC:llä".
+The schedule is masked at both weekday and month level. The source is not
+the manufacturer's datasheet but an independent builder who hit exactly this
+symptom, and wmbusmeters' maintainer confirms the phenomenon is common: some
+meters switch the radio off at night and at weekends in their default
+configuration. The masks are readable from the meter over NFC, so the
+assumption can be checked from the device — see "The meter's own
+configuration is readable over NFC".
 
-**Vertailuluku pätee silti, kun mittaus tehdään ikkunan sisällä.** Kahden metrin
-päässä 16 sekunnin välein lähettävä mittari tuottaisi noin 1900 vastaanottoa
-8,5 tunnissa.
+**The comparison figure still holds when the measurement is made inside the
+window.** At two metres, a meter transmitting every 16 seconds would produce
+about 1900 receptions in 8.5 hours.
 
-### Niiden 47 paketin otsikkoanalyysi ei ollut pätevä
+### The header analysis of those 47 packets was not valid
 
-Tässä luki että neljä ominaisuutta yhdessä osoittavat kaikki 47 kohinaksi.
-Johtopäätös osuu todennäköisesti oikeaan, mutta **kaksi neljästä perustelusta
-ei mittaa sitä mitä se väittää.**
+This used to say that four properties together showed all 47 to be noise.
+The conclusion is probably right, but **two of the four arguments do not
+measure what they claim.**
 
-`packet.cpp` yrittää T1:n 3-of-6-dekoodausta kolmesta ensimmäisestä tavusta. Jos
-yksikin kuuden bitin koodi on kelvoton, dekoodaus palauttaa tyhjän ja L-kenttä
-palaa oletusarvoon 0 — ja siitä `expected_size` laskee `(3·5+1)/2 =` **8**.
-Satunnaisdatalla dekoodaus läpäisee noin 0,4 %:n todennäköisyydellä, joten
-käytännössä jokainen kohinaosuma tuottaa saman luvun.
+`packet.cpp` attempts T1's 3-of-6 decoding on the first three bytes. If even
+one six-bit code is invalid, the decode returns empty and the L field falls
+back to 0 — from which `expected_size` computes `(3·5+1)/2 =` **8**. With
+random data the decode passes with about 0.4 % probability, so in practice
+every noise hit produces the same number.
 
-Kaksi seurausta:
+Two consequences:
 
-- **8 tavua ei ole lukugranulariteetti vaan laskettu vakio.** Se on komponentin
-  allekirjoitus tilanteelle "en saanut otsikkoa auki" eikä kerro signaalista
-  mitään suuntaan tai toiseen.
-- **Lokiin tulostetut tavut eivät ole L- ja C-kenttiä.** `convert_to_frame`
-  yrittää dekoodausta vasta myöhemmin ja kaatuu samalla tavalla, joten
-  tulosteessa on dekoodaamatonta chip-tason dataa. Väite "yksikään C-kenttä ei
-  kelpaa" lukee kenttää joka ei ole siinä paikassa. Tämän voi tarkistaa lokin
-  omalla esimerkillä: `0x32 = 0b00110010`, ja `>>2 = 0b001100` ei ole
-  3-of-6-hakutaulussa, eli dekoodaus kaatuu jo ensimmäiseen segmenttiin.
+- **Eight bytes is not a read granularity but a computed constant.** It is
+  the component's signature for "I could not open the header" and says
+  nothing about the signal either way.
+- **The bytes printed in the log are not L and C fields.** `convert_to_frame`
+  attempts the decode only later and fails the same way, so the output
+  contains undecoded chip-level data. The claim "not one C field is valid"
+  is reading a field that is not in that position. This can be checked
+  against the log's own example: `0x32 = 0b00110010`, and `>>2 = 0b001100`
+  is not in the 3-of-6 lookup table, so the decode fails on the very first
+  segment.
 
-Jäljelle jää kaksi kelvollista perustelua: paketit ovat eri sisältöisiä eikä
-niissä ole rytmiä. Ne riittävät sanomaan ettei mikään lähde toistu, mutta
-**eivät erota kohinaa oman mittarin kehyksestä jonka otsikon purku
-epäonnistui.**
+Two valid arguments remain: the packets differ in content and have no
+rhythm. They are enough to say that no source repeats, but **they do not
+separate noise from our own meter's frame whose header decode failed.**
 
-Tämä on sama opetus kolmatta kertaa tässä tiedostossa: **taulukko on hypoteesi,
-laitteen oma sanoma on todiste** — ja tällä kerralla väärä taulukko oli oma.
+This is the same lesson for the third time in this file: **a table is a
+hypothesis, the device's own utterance is evidence** — and this time the
+wrong table was our own.
 
-### Hypoteesi 1: väärä taajuus — ei testattavissa tällä komponentilla
+### Hypothesis 1: wrong frequency — not testable with this component
 
-868-kaistalla on kaksi wM-Bus-moodia, ja kuuntelemme vain toista:
+There are two wM-Bus modes on the 868 band, and we listen to only one:
 
-| Moodi | Taajuus |
+| Mode | Frequency |
 |---|---|
-| **S** | **868,30 MHz** |
-| T, C | 868,95 MHz |
+| **S** | **868.30 MHz** |
+| T, C | 868.95 MHz |
 
-**Tässä luki että hypoteesi on testattu ja kumottu 7.9.2026. Se peruutetaan:
-testi oli kyvytön havaitsemaan sitä mitä se väitti sulkevansa pois.**
+**This used to say the hypothesis was tested and disproved on 7.9.2026. That
+is retracted: the test was incapable of detecting what it claimed to rule
+out.**
 
-`transceiver_cc1101.cpp` kirjoittaa koko rekisteritaulukon kiinteillä
-literaaleilla, ja `frequency`-asetuksesta johdetaan **vain** FREQ2/FREQ1/FREQ0:
+`transceiver_cc1101.cpp` writes the whole register table with fixed
+literals, and **only** FREQ2/FREQ1/FREQ0 are derived from the `frequency`
+setting:
 
-| Asetus | Rekisteri | |
+| Setting | Register | |
 |---|---|---|
-| 100 kbps | MDMCFG4 `0x5C`, MDMCFG3 `0x04` | kiinteä |
-| 2-FSK, Manchester **pois**, 16/16 sync | MDMCFG2 `0x06` | kiinteä |
-| Deviaatio ~50 kHz | DEVIATN `0x44` | kiinteä |
-| Sync word `0x543D` | SYNC1/SYNC0 | kiinteä |
+| 100 kbps | MDMCFG4 `0x5C`, MDMCFG3 `0x04` | fixed |
+| 2-FSK, Manchester **off**, 16/16 sync | MDMCFG2 `0x06` | fixed |
+| Deviation ~50 kHz | DEVIATN `0x44` | fixed |
+| Sync word `0x543D` | SYNC1/SYNC0 | fixed |
 
-Koodin oma kommentti sanoo sen suoraan: `Configure for wM-Bus Mode C/T at
+The code's own comment says it outright: `Configure for wM-Bus Mode C/T at
 868.95 MHz, 100 kbps, 2-FSK`.
 
-**`frequency: 868.30MHz` siirsi siis pelkän paikallisoskillaattorin.** S-moodi on
-32,768 kbps **Manchester-koodattuna** ja eri synkronointikuviolla; vastaanotin oli
-100 kbps 2-FSK ilman Manchesteria. Se ei demoduloi S-lähetystä millään
-signaalinvoimakkuudella.
+**So `frequency: 868.30MHz` moved only the local oscillator.** S mode is
+32.768 kbps **Manchester-coded** with a different sync pattern; the receiver
+was 100 kbps 2-FSK with no Manchester. It does not demodulate an S
+transmission at any signal strength.
 
-Samasta syystä myös selitys jota tässä kokeiltiin — "S-moodi on kohinaisempi
-kanava, koska sen eri modulaatio- ja nopeusasetukset laukaisevat väärän
-synkronoinnin herkemmin" — ei voi olla oikea: **yhtään modulaatio- tai
-nopeusasetusta ei vaihtunut.** Ja 43 minuutin ajo 868,30:llä tuotti
-myöhemmin **nolla** raakapakettia, mikä on päinvastainen havainto kuin se kuuden
-minuutin otos jolla kohinaisuutta perusteltiin.
+For the same reason the explanation tried here — "S mode is a noisier
+channel, because its different modulation and rate settings trigger false
+sync more easily" — cannot be right either: **not one modulation or rate
+setting changed.** And a 43-minute run at 868.30 later produced **zero** raw
+packets, which is the opposite observation to the six-minute sample the
+noisiness claim rested on.
 
-**Komponentti ei tue S-moodia lainkaan.** Radiokerros asettaa link moden vain
-arvoihin C1 tai T1, ja `wmbus_meter`:n `mode:`-valinnat ovat `Any`, `C1` ja `T1`.
-Tätä hypoteesia ei siis voi testata tällä raudalla: jos mittari on S1-moodissa,
-vastaanotin on vaihdettava, ja rtl-sdr + rtl_wmbus osaa S:n, T:n ja C:n.
-**Siksi moodi kuuluu vesilaitokselle menevään kysymyslistaan** — se ratkaisee
-onko koko rautavalinta oikea.
+**The component does not support S mode at all.** The radio layer sets the
+link mode only to C1 or T1, and `wmbus_meter`'s `mode:` options are `Any`,
+`C1` and `T1`. This hypothesis therefore cannot be tested with this
+hardware: if the meter is in S1 mode, the receiver has to change, and
+rtl-sdr + rtl_wmbus handles S, T and C. **That is why the mode belongs on
+the list of questions for the water utility** — it decides whether the whole
+hardware choice is right.
 
-**Toinen puoli päättelystä kestää: C1 tuli katetuksi.** C1 ja T1 jakavat saman
-radioasetuksen, ja C1 tunnistetaan preamble-tavusta `0x54` automaattisesti ilman
-YAML-asetusta. Se 8,5 tunnin ajo 868,95:llä kuunteli siis molempia.
+**The other half of the reasoning holds: C1 was covered.** C1 and T1 share
+the same radio settings, and C1 is recognised automatically from the
+preamble byte `0x54` with no YAML setting. So the 8.5-hour run at 868.95
+listened to both.
 
-Kommentoidussa mittarilohkossa on tämän takia ansa: **`mode: [T1]` suodattaisi
-C1-telegrammit pois.** Jätä oletus `Any`.
+There is a trap in the commented-out meter block because of this: **`mode:
+[T1]` would filter out C1 telegrams.** Leave the default `Any`.
 
-### Ratkaisu on todennäköisesti tämä: mittari on LoRaWAN-luennassa
+### The answer is probably this: the meter is on LoRaWAN metering
 
-**Tämä mittari on LoRaWAN-käytössä.** Se tiedetään asennuksesta eikä väylältä,
-ja se selittää kaiken mitä yllä on mitattu.
+**This meter is in LoRaWAN use.** That is known from the installation rather
+than from the bus, and it explains everything measured above.
 
-W1:ssä radiot ovat **erilliset liput** — `LoRa WAN`, `wMBus T1`, `wMBus S1` —
-eivät toisensa poissulkevia mutta eivät myöskään kytkeytyneitä toisiinsa. Jos
-vesilaitos lukee mittarin LoRaWANilla, **sillä ei ole mitään syytä pitää
-wM-Bus-radiota päällä**, ja on yksi hyvä syy pitää se pois: paristo on
-mitoitettu viideksitoista vuodeksi ja jokainen ylimääräinen lähetys on siitä
-pois. Se on konfiguraatio joka tuottaisi täsmälleen tämän tiedoston
-mittaustulokset — toimiva vastaanotin, oikea taajuus, oikea moodi, ei mitään
-kuultavaa.
+In the W1 the radios are **separate flags** — `LoRa WAN`, `wMBus T1`,
+`wMBus S1` — not mutually exclusive but not coupled to each other either. If
+the utility reads the meter over LoRaWAN, **it has no reason to keep the
+wM-Bus radio on**, and one good reason to keep it off: the battery is
+specified for fifteen years and every extra transmission comes out of it.
+That is a configuration that would produce exactly this file's measurements
+— a working receiver, the right frequency, the right mode, nothing to hear.
 
-**LoRaWAN ei ole vaihtoehtoinen paikallinen reitti.** Lähetykset menevät
-vesilaitoksen verkkopalvelimelle, ja hyötykuorma on salattu istuntoavaimilla
-joita se palvelin hallinnoi. Paikallinen LoRa-vastaanotin — komponentti tukee
-SX1276:ta ja SX1262:ta, eli rauta olisi olemassa — näkisi että lähetyksiä
-tulee, mutta ei niiden sisältöä. **Avaimet ovat kauempana kuin se AES-avain
-jota tässä alun perin lähdettiin kysymään**, koska ne eivät ole mittarin
-ominaisuus vaan verkon.
+**LoRaWAN is not an alternative local route.** Transmissions go to the
+utility's network server, and the payload is encrypted with session keys
+that server manages. A local LoRa receiver — the component supports the
+SX1276 and SX1262, so the hardware would exist — would see that
+transmissions occur, but not their contents. **The keys are further away
+than the AES key this started out asking for**, because they are not a
+property of the meter but of the network.
 
-Kaksi seurausta:
+Two consequences:
 
-- **Kysymyslistan ensimmäinen kohta vaihtuu.** Ei enää "missä moodissa se
-  lähettää" vaan **"onko wM-Bus T1 päällä lainkaan, ja voitteko kytkeä sen".**
-  Se on pyyntö muuttaa asetusta heidän omassa laitteessaan, ja siihen voi tulla
-  kieltävä vastaus paristoperustelulla — mikä on rehellinen perustelu eikä
-  pelkkä byrokratia.
-- **NFC nousee ensisijaiseksi.** Se on paikallinen, ei tarvitse avainta, ei
-  radiota eikä lähetysikkunaa, **eikä siihen vaikuta se kumpaa radiota
-  vesilaitos käyttää.** Mittarin data on NFC-rajapinnassa riippumatta siitä
-  lähettääkö se mitään.
+- **The first item on the question list changes.** No longer "in which mode
+  does it transmit" but **"is wM-Bus T1 on at all, and can you switch it
+  on".** That is a request to change a setting in their own device, and it
+  may get a refusal on battery grounds — which is an honest reason rather
+  than mere bureaucracy.
+- **NFC becomes primary.** It is local, needs no key, no radio and no
+  transmission window, **and it is unaffected by which radio the utility
+  uses.** The meter's data is in the NFC interface regardless of whether it
+  transmits anything.
 
-**Yksi hypoteesi jonka tämä herätti, ja jonka pidempi aineisto kaataa.** Ne
-kohinapaketit voisivat olla mittarin omia LoRaWAN-lähetyksiä, joita 2-FSK-
-vastaanotin näkee roskana — LoRa on chirp-hajaspektri eikä CC1101 demoduloi
-sitä, mutta chirp voi laukaista väärän sync-osuman. LoRaWAN-vesimittari
-lähettää säännöllisin välein, joten hypoteesi on testattavissa aikaväleistä.
+**One hypothesis this raised, and which longer data overturns.** Those noise
+packets could be the meter's own LoRaWAN transmissions, seen as rubbish by a
+2-FSK receiver — LoRa is chirp spread spectrum and the CC1101 does not
+demodulate it, but a chirp can trigger a false sync hit. A LoRaWAN water
+meter transmits at regular intervals, so the hypothesis is testable from the
+intervals.
 
-Kahdenkymmenen paketin välit 30 tunnin ajalta ovat 30, 140, 66, 88, 72, 45,
-128, 92, 25, 38, 15, 103, 130, 32, 50, 9, 210, 480 ja 60 minuuttia.
-Vaihteluväli on **yhdeksästä minuutista kahdeksaan tuntiin.** Vastaväite oli
-että jos vastaanotin osuisi vain satunnaiseen osaan lähetyksistä, välit
-olisivat silti saman perusjakson monikertoja — ja niitä ne eivät ole: yksikään
-jakso tunnin sisällä ei sovi näihin edes löysästi, vaan parhaallakin ehdokkaalla
-pahin poikkeama on **yli kolmannes jaksosta.**
+Twenty packets' intervals over 30 hours are 30, 140, 66, 88, 72, 45, 128,
+92, 25, 38, 15, 103, 130, 32, 50, 9, 210, 480 and 60 minutes. The range is
+**from nine minutes to eight hours.** The counter-argument was that if the
+receiver caught only a random subset of transmissions, the intervals would
+still be multiples of a common base period — and they are not: no period
+within an hour fits them even loosely, and even the best candidate's worst
+deviation is **more than a third of the period.**
 
-Se on kohinaa. **Merkintä on käsitelty**, ja jäljelle jää mitä 8 tavun purskeet
-ovat olleet alusta asti: vääriä sync-osumia.
+It is noise. **The entry is settled**, and what remains is what the 8-byte
+bursts have been from the start: false sync hits.
 
-### Hypoteesi 2: mittari ei lähetä silloin kun kuunnellaan
+### Hypothesis 2: the meter does not transmit while we listen
 
-Kolme muotoa, halvimmasta alkaen:
+Three forms, cheapest first:
 
-1. **Lähetysikkuna.** Oletus ma–pe 6:00–18:00 selittää yön mittauksen
-   sellaisenaan. Tarkistus: kuuntele arkena päiväsaikaan.
-2. **Kuljetustila.** Uudessa mittarissa radio on pois päältä ja aktivoituu
-   automaattisesti kun kumuloitunut tilavuus ylittää **10 litraa**. Sama
-   tapahtuma lukitsee konfiguraatioparametrit pysyvästi. Tarkistus:
-   kokonaistilavuus ei ole nolla.
-3. **Radio konfiguroitu pois.** Tämä menee vesilaitokselle.
+1. **The transmission window.** The default Mon–Fri 06:00–18:00 explains the
+   overnight run as it stands. Check: listen on a weekday during the day.
+2. **Transport mode.** In a new meter the radio is off and activates
+   automatically once accumulated volume exceeds **10 litres**. The same
+   event locks the configuration parameters permanently. Check: total volume
+   is not zero.
+3. **The radio is configured off.** This one goes to the water utility.
 
-Tämä on sama muoto kuin aidonin este, ja sen ratkaisu on sama: kysy, ja kysy
-ajoissa.
+This is the same shape as aidon's obstacle, and its solution is the same:
+ask, and ask early.
 
-### Hypoteesi 3: vastaanotin ei kokoa kehystä
+### Hypothesis 3: the receiver does not assemble a frame
 
-Tämä ei ollut listalla lainkaan, ja se on syytä pitää mielessä ennen kuin
-mittarista tehdään johtopäätöksiä.
+This was not on the list at all, and it is worth keeping in mind before
+drawing conclusions about the meter.
 
 [Issue #425](https://github.com/SzczepanLeon/esphome-components/issues/425),
-avattu 2.8.2026 ja yhä avoin: `wmbus_radio/CC1101 receives only noise (8-byte
-packets, RX FIFO overflow) — never captures full telegrams`. Kiinnitetty commit
-on `main`:n kärki, joten korjausta ei ole olemassa eikä pinnin siirtäminen auta.
+opened 2.8.2026 and still open: `wmbus_radio/CC1101 receives only noise
+(8-byte packets, RX FIFO overflow) — never captures full telegrams`. The
+pinned commit is the tip of `main`, so no fix exists and moving a pin does
+not help.
 
-Epäily kohdistuu siihen että GDO0 laukeaa FIFO-kynnyksestä eikä sync-wordin
-osumasta. RF-asetukset ovat sukupolvien välillä tavu tavulta identtiset; ero on
-lukustrategiassa:
+The suspicion is that GDO0 fires on the FIFO threshold rather than on a sync
+word hit. The RF settings are byte-for-byte identical between the
+generations; the difference is in the read strategy:
 
 | | `version_4` | `main` 5.1.7 |
 |---|---|---|
-| FIFO-kynnys RX:n alussa | **4 tavua** | **32 tavua** |
-| GDO2 sync-porttina | kyllä, oma tila | ei käytössä |
-| PKTLEN pituuden selvittyä | vaihdetaan fixed-tilaan | jää infinite-tilaan |
-| `sync_mode`-asetus | on | ei ole |
+| FIFO threshold at RX start | **4 bytes** | **32 bytes** |
+| GDO2 as a sync gate | yes, its own state | not used |
+| PKTLEN once length is known | switched to fixed mode | stays in infinite mode |
+| `sync_mode` setting | present | absent |
 
-**Oireprofiili ei silti täsmää tähän laitteeseen**, ja se erotus kannattaa
-säilyttää:
+**The symptom profile still does not match this device**, and that
+distinction is worth keeping:
 
-| | #425 | tämä laite |
+| | #425 | this device |
 |---|---|---|
-| Raportoijia | 1 | |
-| Kohinapaketteja | 1–3 s välein | 1 / 11 min |
-| `RX FIFO overflow` | jatkuvasti | **ei yhtään** |
-| CPU:n näännyttäminen | kyllä | ei havaittu |
+| Reporters | 1 | |
+| Noise packets | every 1–3 s | 1 / 11 min |
+| `RX FIFO overflow` | continuously | **none at all** |
+| CPU starvation | yes | not observed |
 
-Sama 8 tavun allekirjoitus, eri intensiteetti. Se on varteenotettava epäilty eikä
-kirjattu syy.
+The same 8-byte signature, a different intensity. It is a serious suspect
+rather than an established cause.
 
-### Täysi lähetysikkuna mitattu: nolla kehystä
+### A full transmission window measured: zero frames
 
-7.9.2026, maanantai, 868,95 MHz, mittari parin metrin päässä. **Ensimmäinen
-mittaus tässä projektissa jonka voi kirjata sellaisenaan** — kolme aiempaa
-kumoutui, koska ne mittasivat jotain muuta kuin väittivät.
+7.9.2026, Monday, 868.95 MHz, the meter a couple of metres away. **The first
+measurement in this project that can be recorded as it stands** — three
+earlier ones were overturned, because they measured something other than
+what they claimed.
 
 | | |
 |---|---|
-| Kuunneltu ikkunan sisällä | noin **7,5 h** (10:13 → 18:00, kaksi flashausta välissä) |
-| Kohinapaketteja | **6** — 10:11, 11:18, 12:46, 13:58, 14:42, 16:50 |
-| Kokonaisia kehyksiä | **0** |
+| Listened inside the window | about **7.5 h** (10:13 → 18:00, two flashes in between) |
+| Noise packets | **6** — 10:11, 11:18, 12:46, 13:58, 14:42, 16:50 |
+| Complete frames | **0** |
 | `RX timeout` / `RX FIFO overflow` | **0** |
-| FIFO-kynnys 32 vs. 4 tavua | ei eroa |
+| FIFO threshold 32 vs. 4 bytes | no difference |
 
-Odotusarvo jos mittari lähettäisi 16 sekunnin välein: **noin 1700
-vastaanottoa.** Yön mittauksen kanssa yhteensä noin 16 tuntia ja nolla kehystä.
+Expected value if the meter transmitted every 16 seconds: **about 1700
+receptions.** Together with the overnight run, about 16 hours and zero
+frames.
 
-Neljä muuttujaa olivat tällä kertaa oikein samaan aikaan — oikea taajuus, moodi
-jota komponentti tukee, lähetysikkunan sisällä, ja vastaanotin todistetusti
-elossa. **Vastaanottimen puoli on siis niin pitkälle todistettu kuin ilman
-kehystä voi**, ja se on syy pitää mittarin puolta ensisijaisena.
+Four variables were right at the same time this time — the right frequency,
+a mode the component supports, inside the transmission window, and a
+receiver demonstrably alive. **The receiving side is therefore proven as far
+as it can be without a frame**, and that is the reason to treat the meter's
+side as primary.
 
-Yksi kirjanpitohuomio: `LOCAL PATCH` -rivi ei ole kaappauslokissa vaan
-flashauksen boottitulosteessa. Kokoonpanotuloste toistuu vain **uudelle**
-liittyvälle lokiasiakkaalle, ja taustalla `>>`-ohjauksella pyörinyt virta oli jo
-kiinni — sama mekanismi joka on kirjattu juuren CLAUDE.md:hen.
+One bookkeeping note: the `LOCAL PATCH` line is not in the capture log but
+in the boot output of the flash. The configuration dump repeats only for a
+**new** log client attaching, and the stream running in the background with
+`>>` redirection was already closed — the same mechanism recorded in the
+root CLAUDE.md.
 
-#### Ja 20 tuntia perään valvomatta: sama nolla
+#### And 20 hours afterwards unattended: the same zero
 
-Kaappaus jäi päälle ikkunan päätyttyä ja katkesi vasta 8.9.2026 klo 14:00
-sähkökatkoon. Se antoi ilmaiseksi sen mitä ikkunamittaus ei kata: illan, yön ja
-seuraavan arkiaamun puolelta päivään.
+The capture was left on after the window ended and broke only at 14:00 on
+8.9.2026, at a power cut. It gave for free what the window measurement does
+not cover: the evening, the night and the next weekday morning up to midday.
 
 | | |
 |---|---|
-| Lisäaikaa ikkunan jälkeen | noin **20 h** (7.9. 18:00 → 8.9. 14:00) |
-| Uusia kohinapaketteja | **12** — koko lokissa yhteensä 20 |
-| Kokonaisia kehyksiä | **0** |
-| Uudelleenkäynnistyksiä | **0** |
+| Extra time after the window | about **20 h** (7.9. 18:00 → 8.9. 14:00) |
+| New noise packets | **12** — 20 in the whole log |
+| Complete frames | **0** |
+| Reboots | **0** |
 
-Kumulatiivisesti kuuntelua on siis noin **36 tuntia ja nolla kehystä.**
+Cumulatively that is about **36 hours of listening and zero frames.**
 
-Ajo on samalla vahvin todiste vastaanottimen vakaudesta mitä tässä on: `Uptime`
-juoksi katkeamatta **95 584 sekuntiin eli 26,5 tuntiin** viimeisestä
-flashauksesta 7.9. klo 11:28. Levy ei siis kaatunut, jumittunut eikä pudonnut
-verkosta kertaakaan sinä aikana kun se ei kuullut mitään — ja `Uptime` on ainoa
-rivi joka erottaa nämä toisistaan, kuten juuren CLAUDE.md:hen on kirjattu.
+The run is at the same time the strongest evidence of receiver stability
+there is here: `Uptime` ran uninterrupted to **95,584 seconds, i.e. 26.5
+hours** from the last flash on 7.9. at 11:28. The board therefore did not
+crash, hang or drop off the network once during the time it heard nothing —
+and `Uptime` is the only line that distinguishes these, as recorded in the
+root CLAUDE.md.
 
-**Tämä ei ollut suunniteltu mittaus vaan päälle unohtunut loki.** Uutta se ei
-kumoa — ikkunamittaus kaatoi lähetysikkunahypoteesin jo — mutta se poistaa
-viimeisenkin epäilyn ajoituksesta: ikkunan sisä- ja ulkopuoli on nyt mitattu
-peräkkäin katkeamatta, eikä kummallakaan puolella ole eroa.
+**This was not a planned measurement but a log left running.** It overturns
+nothing new — the window measurement had already disposed of the
+transmission-window hypothesis — but it removes the last doubt about timing:
+inside and outside the window have now been measured back to back without a
+break, and there is no difference on either side.
 
-### Testi: FIFO-kynnys 32 → 4 tavua
+### Test: FIFO threshold 32 → 4 bytes
 
-Tehty paikallisessa työkopiossa, koska yhtä tavua ei voi muuttaa etälähteeseen.
-Puu on ladattu samasta commitista kuin YAMLin kiinnitys, ja **ero on tämä yksi
-rivi** tiedostossa `wmbus_radio/transceiver_cc1101.cpp`:
+Done in a local working copy, because one byte cannot be changed in a remote
+source. The tree is checked out from the same commit as the YAML's pin, and
+**the difference is this one line** in `wmbus_radio/transceiver_cc1101.cpp`:
 
 ```c
-// this->write_register(CC1101_FIFOTHR, 0x07);   // upstream: RX FIFO >= 32 tavua
-   this->write_register(CC1101_FIFOTHR, 0x00);   // version_4: RX FIFO >= 4 tavua
+// this->write_register(CC1101_FIFOTHR, 0x07);   // upstream: RX FIFO >= 32 bytes
+   this->write_register(CC1101_FIFOTHR, 0x00);   // version_4: RX FIFO >= 4 bytes
 ```
 
-`upstream/` on gitignoressa eikä kolmannen osapuolen koodi mene tähän repoon,
-joten **muutos on kirjattu tänne jotta se on toistettavissa ilman sitä puuta.**
-YAMLissa `external_components` osoittaa toistaiseksi paikalliseen polkuun ja
-GitHub-lähde on kommentoituna sen alla.
+`upstream/` is in .gitignore and third-party code does not enter this repo,
+so **the change is recorded here so that it is reproducible without that
+tree.** In the YAML, `external_components` points at a local path for now
+and the GitHub source is commented out below it.
 
-**Kontrolli on toinen paikallinen lisäys, ei pakettitahti.** Rivi `configuring
-FIFO threshold` on VV-tasolla ja siis setup-vaiheessa, jota API-lokivirta ei näe,
-eikä tagin tasoa voi nostaa globaalin yli — ylemmät tasot on käännetty pois.
-Siksi `transceiver.cpp`:n `dump_config`:iin on lisätty rivi:
+**The control is a second local addition, not the packet rate.** The line
+`configuring FIFO threshold` is at VV level and therefore in setup, which
+the API log stream does not see, and a tag's level cannot be raised above
+the global one — the higher levels are compiled out. So a line was added to
+`transceiver.cpp`'s `dump_config`:
 
 ```
 [C][wmbus.transceiver]:   LOCAL PATCH: FIFOTHR=0x00 (RX FIFO >= 4 bytes)
 ```
 
-`ESP_LOGCONFIG` on C-tasolla ja **kokoonpanotuloste toistuu joka lokiasiakkaan
-liittyessä**, joten patchatun puun voi todeta binäärissä milloin tahansa ilman
-sarjaporttia. Jos rivi puuttuu, käännös ei käyttänyt tätä puuta.
+`ESP_LOGCONFIG` is at C level and **the configuration dump repeats for every
+log client attaching**, so the patched tree can be confirmed in the binary at
+any time without a serial port. If the line is missing, the build did not
+use this tree.
 
-**Ja se ansaitsi itsensä heti.** Ensimmäinen käännös paikallisen puun kanssa
-tuotti kokoonpanotulosteen ilman tätä riviä: `podman cp` oli pesinyt puun
-`/config/upstream/upstream`:iin, koska kohdehakemisto oli jo olemassa, ja
-käännös luki vanhaa kopiota. Ilman merkkiriviä se olisi näyttänyt onnistuneelta
-testiltä. **Kopioi sisältö eikä hakemistoa:** `podman cp <polku>/upstream/.
-esphome:/config/upstream/`.
+**And it earned itself immediately.** The first build with the local tree
+produced a configuration dump without this line: `podman cp` had nested the
+tree into `/config/upstream/upstream`, because the target directory already
+existed, and the build read the old copy. Without the marker line it would
+have looked like a successful test. **Copy the contents, not the directory:**
+`podman cp <path>/upstream/. esphome:/config/upstream/`.
 
-**Pakettitahti ei kelpaa kontrolliksi, ja se oli tässä ensin väärin.**
-`MDMCFG2 = 0x06` vaatii 16/16-bitin sync-osuman ennen kuin FIFO alkaa täyttyä,
-eli kohinapakettien tahti syntyy väärien sync-osumien todennäköisyydestä.
-FIFO-kynnys päättää vain siitä toimitetaanko osuman jälkeinen purske jos se ei
-kasva 32 tavuun. Vaikutus on siis kohtalainen eikä dramaattinen, ja mitattu ero
-— yksi paketti 65 minuutissa vastaan noin yksi kahdessa tunnissa — sopii yhtä
-hyvin kumpaan tahansa johtopäätökseen.
+**The packet rate is not a valid control, and that was wrong here at first.**
+`MDMCFG2 = 0x06` requires a 16/16-bit sync hit before the FIFO starts
+filling, so the rate of noise packets comes from the probability of false
+sync hits. The FIFO threshold only decides whether the burst after a hit is
+delivered if it does not grow to 32 bytes. The effect is therefore moderate
+rather than dramatic, and the measured difference — one packet in 65 minutes
+versus about one in two hours — fits either conclusion equally well.
 
-| Havainto | Tulkinta |
+| Observation | Interpretation |
 |---|---|
-| `LOCAL PATCH` -rivi lokissa | Patch on binäärissä. Vasta tämän jälkeen hiljaisuus tarkoittaa jotain |
-| Rivi puuttuu | Käännös ei käyttänyt paikallista puuta — `esphome clean` ja uudelleen |
-| Kokonainen kehys | Hypoteesi 3 vahvistuu ja este oli vastaanottimessa |
+| `LOCAL PATCH` line in the log | The patch is in the binary. Only after this does silence mean anything |
+| The line is missing | The build did not use the local tree — `esphome clean` and again |
+| A complete frame | Hypothesis 3 is confirmed and the obstacle was in the receiver |
 
-Kolmas rivi on se jota testi hakee. Kaksi ensimmäistä ovat kontrolli, ja se on
-tässä tarpeen: **kaksi kertaa aiemmin on tulkittu mittausta joka ei mitannut
-sitä mitä luultiin** — S-moodi väärillä rekistereillä ja 8 tavun otsikot jotka
-eivät olleet otsikoita.
+The third row is what the test is looking for. The first two are the
+control, and it is needed here: **twice already a measurement has been
+interpreted that did not measure what was assumed** — S mode with the wrong
+registers, and 8-byte headers that were not headers.
 
-Jos senkin jälkeen on hiljaista, `version_4` on todistetusti toimiva CC1101-
-toteutus, mutta kahdella ehdolla: **GDO2 on kytkettävä takaisin** sync-portiksi
-ja **ei GPIO2:een** (strapping, perusteltu yllä), ja #425:n raportoija sanoo
-`version_4`:n kaatuvan nykyisillä ESPHome-versioilla. Siksi se on vasta viimeinen.
+If it is still silent after that, `version_4` is a demonstrably working
+CC1101 implementation, but with two conditions: **GDO2 has to be connected
+back** as a sync gate and **not to GPIO2** (strapping, argued above), and
+#425's reporter says `version_4` crashes with current ESPHome versions. That
+is why it comes last.
 
-# AES-128 salaus
+# AES-128 encryption
 
-Axioma Qalcosonic W1 käyttää yleensä AES-128-salausta.
+The Axioma Qalcosonic W1 normally uses AES-128 encryption.
 
-AES-avain EI löydy:
+The AES key is NOT found:
 
-- näytöstä
-- tyyppikilvestä
-- sarjanumerosta
+- on the display
+- on the nameplate
+- in the serial number
 
-Sen saa yleensä:
+It is normally obtained from:
 
-- vesilaitokselta
-- isännöitsijältä
-- rakennuttajalta
-- mittarin toimittajalta
+- the water utility
+- the building manager
+- the developer
+- the meter's supplier
 
-Ilman AES-avainta voidaan yleensä nähdä vain salatut telegrammit.
+Without the AES key, normally only encrypted telegrams are visible.
 
-# Mittarin oma konfiguraatio on luettavissa NFC:llä
+# The meter's own configuration is readable over NFC
 
-W1:ssä on NFC-rajapinta, ja **konfiguraation lukeminen ei vaadi salasanaa** —
-vasta kirjoitus vaatii. Puhelimella saa siis suoraan mittarista ne asiat joita
-tässä tiedostossa on arvailtu yleisistä lähteistä:
+The W1 has an NFC interface, and **reading the configuration requires no
+password** — only writing does. A phone therefore gets straight from the
+meter the things this file has guessed at from general sources:
 
-- radiotila päällä vai pois
-- `wMBus T1` ja `wMBus S1` erillisinä lippuina — eli **moodi**
-- lähetysikkunan viikonpäivä- ja kuukausimaski
-- kokonaistilavuus, eli onko kuljetustila jo purkautunut
+- radio state on or off
+- `wMBus T1` and `wMBus S1` as separate flags — i.e. the **mode**
+- the transmission window's weekday and month masks
+- total volume, i.e. whether transport mode has already been released
 
-Tämä olisi halvin tapa tarkistaa lähetysikkunaoletus, ja se on **sama sääntö kuin
-muualla tässä tiedostossa: laitteen oma sanoma voittaa taulukon.**
+This would be the cheapest way to check the transmission-window assumption,
+and it is **the same rule as elsewhere in this file: the device's own
+utterance beats the table.**
 
-**Käytännössä reitti on kiinni**, ja se johtuu sovelluksista eikä mittarista:
+**In practice the route is closed**, and that is down to the apps rather
+than the meter:
 
-| Sovellus | |
+| App | |
 |---|---|
-| `Qalcosonic configurator W1`, `QW1 Radio Activator` | luki ilman salasanaa ja näytti aikataulumaskit — **poistettu Play Storesta**, enää APK-peileissä |
-| **Axilink** | Axioman nykyinen, NFC ja optinen pää — **salasanasuojattu**, tunnus tulee jälleenmyyjältä |
-| **Axilink Lite** | ilmainen ja virallinen, kertoisi onko mittari aktiivinen ja lähettääkö se — **ei asennettavissa Pixel 9:ään** |
+| `Qalcosonic configurator W1`, `QW1 Radio Activator` | read without a password and showed the schedule masks — **removed from the Play Store**, only on APK mirrors now |
+| **Axilink** | Axioma's current one, NFC and optical head — **password-protected**, credentials come from the reseller |
+| **Axilink Lite** | free and official, would say whether the meter is active and transmitting — **cannot be installed on a Pixel 9** |
 
-Se salasanaton luku johon tässä aiemmin nojattiin **koski poistettua
-sovellusta**, ei nykyistä. Reitti on siis olemassa mutta ei ilmainen: se vaatii
-joko jälleenmyyjän tunnuksen, APK:n kolmannen osapuolen peilistä, tai
-maahantuojan (Effectio Oy) apua.
+The password-free read this used to rely on **applied to the removed app**,
+not the current one. The route therefore exists but is not free: it requires
+either a reseller's credentials, an APK from a third-party mirror, or help
+from the importer (Effectio Oy).
 
-### Ja puhelin ei näe mittaria — se on puhelimesta, ei mittarista
+### And the phone does not see the meter — that is the phone, not the meter
 
-Napautus tuotti **ei mitään**: puhelin ei havainnut tunnistetta lainkaan. Se ei
-ole havainto mittarista, ja kaksi syytä selittävät sen puhelimen puolelta.
+A tap produced **nothing**: the phone did not detect a tag at all. That is
+not an observation about the meter, and two reasons explain it from the
+phone's side.
 
-**Mittarin NFC on ISO 15693 eli NFC-V**, ei se NFC-A jota puhelimet käyttävät
-maksamiseen ja tarroihin. Tämä on päätelty luotettavasti mutta epäsuorasti:
-`esphome_qalcosonicnfc` lukee W1:tä **PN5180-piirillä**, joka on nimenomaan
-ISO 15693 -lukija.
+**The meter's NFC is ISO 15693, i.e. NFC-V**, not the NFC-A that phones use
+for payments and stickers. This is inferred reliably but indirectly:
+`esphome_qalcosonicnfc` reads the W1 with a **PN5180 chip**, which is
+specifically an ISO 15693 reader.
 
-**Androidilla NFC-V on rajoitettu.** Käyttöjärjestelmä tarjoaa siihen vain
-raakaa `transceive`-liikennettä ilman NDEF-tukea, ja **Android 15 lisäsi
-tunnisteiden lupajärjestelmän jossa ISO 15693 on "restricted" ellei jokin
-sovellus ole erikseen sallittujen listalla**; Android 16 lisäsi siihen
-vahvistusdialogin. Ilman NFC-V-kelpoista sovellusta järjestelmä ei reititä
-tunnistetta minnekään, eli **paljas puhelin on hiljaa vaikka tunniste olisi
-kentässä.** Se selittää todennäköisesti myös sen miksi Axilink Lite ei
-asentunut kyseiseen puhelimeen.
+**On Android, NFC-V is restricted.** The operating system offers only raw
+`transceive` traffic with no NDEF support, and **Android 15 added a tag
+permission system in which ISO 15693 is "restricted" unless an app is
+explicitly on the allow list**; Android 16 added a confirmation dialog to
+it. Without an NFC-V-capable app the system routes the tag nowhere, so **a
+bare phone is silent even with the tag in the field.** That probably also
+explains why Axilink Lite would not install on that phone.
 
-Toinen syy on kohdistus. Mittarin kela on tarkassa paikassa — paikannettu
-FCC-hakemuksesta — ja siihen on tehty **3D-tulostettu kotelo joka kohdistaa
-PN5180:n antennin.** Jos kohdistus vaatii tulostetun kotelon, se ei ole
-armollinen puhelimen kelalle.
+The second reason is alignment. The meter's coil is in a precise place —
+located
+from the FCC filing — and a **3D-printed case exists that aligns the
+PN5180's antenna** to it. If alignment needs a printed case, it is not
+forgiving towards a phone's coil.
 
-**Sääntö tästä: puhelimen hiljaisuus ei kuulu mittarin vikaluetteloon.** Se on
-sama virhemuoto kuin S-moodin testi väärillä rekistereillä — mittaus joka ei
-mittaa sitä mitä sen otsikko sanoo.
+**The rule from this: a phone's silence does not belong on the meter's fault
+list.** It is the same error shape as the S-mode test with the wrong
+registers — a measurement that does not measure what its title says.
 
-### Siksi PN5180 ei ole enää varavaihtoehto
+### That is why the PN5180 is no longer a fallback
 
-[esphome_qalcosonicnfc](https://github.com/dbmaxpayne/esphome_qalcosonicnfc) on
-noin viiden euron moduuli, ja se **ohittaa kolme estettä kerralla**: ei
-AES-avainta, ei lähetysikkunaa, eikä väliä sillä kumpaa radiota vesilaitos
-käyttää. Sille on valmis kotelomalli antennin kohdistukseen.
+[esphome_qalcosonicnfc](https://github.com/dbmaxpayne/esphome_qalcosonicnfc)
+is a five-euro module, and it **defeats three obstacles at once**: no AES
+key, no transmission window, and no dependence on which radio the utility
+uses. There is a ready case model for antenna alignment.
 
-Hinta on rehellisesti sanottava, ja se kaataa yhden tämän tiedoston omista
-perusteluista: **vastaanotin on vietävä mittarin viereen.** Tässä on luettu
-että wM-Bus on radio ja siksi paikan valitsee itse sieltä missä WiFi kuuluu —
-NFC:llä se vapaus katoaa, ja mittarikaivo tai tekninen tila on se paikka jossa
-WiFin pitää silloin kuulua.
+The price has to be stated honestly, and it overturns one of this file's own
+arguments: **the receiver has to go next to the meter.** It has been argued
+here that wM-Bus is radio and therefore you choose the location where Wi-Fi
+reaches — with NFC that freedom disappears, and the meter pit or the utility
+room is then where Wi-Fi has to reach.
 
-Se on eri projekti eikä korjaus tähän. Mutta kun tähän on nyt käytetty
-kolmekymmentäkuusi tuntia kuuntelua nollalla kehyksellä, se on **suorempi tie
-kuin radio jonka lähettämisestä ei ole todistetta.**
+It is a different project rather than a fix to this one. But now that
+thirty-six hours of listening have been spent here with zero frames, it is
+**a more direct route than a radio with no evidence that it transmits.**
 
-#### Lukijaa ostettaessa: piirin nimi on ainoa asia joka ratkaisee
+#### When buying a reader: the chip's name is the only thing that decides
 
-**Lukijan on tuettava ISO 15693:a, ja `PN5180` on käytännössä ainoa halpa piiri
-joka tukee.** Muut samaan pystyvät — RC663, ST25R3911B, TRF7970A, CR95HF — eivät
-ole hyllytavaraa.
+**The reader has to support ISO 15693, and `PN5180` is in practice the only
+cheap chip that does.** The others capable of it — RC663, ST25R3911B,
+TRF7970A, CR95HF — are not off-the-shelf items.
 
-**RC522 ei kelpaa.** MFRC522 tukee vain ISO 14443A:ta eli MIFARE-kortteja. Se on
-sama 13,56 MHz, sama SPI, sama 3,3 V ja usein sama myyntikuvaus — **ja se on eri
-protokolla.** Sama muoto kuin stiebelissä kirjattu opetus siitä ettei
-RS-485-moduuli kelpaa CAN-väylälle: yhteinen fysiikka ei ole yhteensopivuus.
+**The RC522 will not do.** The MFRC522 supports only ISO 14443A, i.e. MIFARE
+cards. Same 13.56 MHz, same SPI, same 3.3 V and often the same sales
+description — **and it is a different protocol.** The same shape as the
+lesson recorded in stiebel about an RS-485 module not doing for a CAN bus:
+shared physics is not compatibility.
 
-**Ratkaisevat merkit ovat nastarimassa, eivät kotelon muodossa:**
+**The decisive signs are in the pin header, not in the shape of the board:**
 
-- **`5V` ja `BUSY` rimassa.** RC522 on pelkkää 3,3 volttia eikä siinä ole
-  valmiuslinjaa; PN5180 ei toimi ilman kumpaakaan. Tämä on nopein ja varmin
-  tarkistus, ja sen voi tehdä tuotekuvasta jos silkkipainatus näkyy.
-- **Nastojen määrä.** MFRC522 tuo ulos kahdeksan. PN5180 tarvitsee vähintään
-  yhdeksän ja levyt katkaisevat 10–16.
-- **Piirin merkintä**, `PN5180` tai `PN5180A0HN`. Jos listauksessa lukee vain
-  "13.56 MHz SPI, compatible with Arduino" ilman piirin nimeä, se on RC522.
-- Hinta 2–3 € kappale ja myyntierä 3–5 kappaletta on RC522:n hinnoittelu;
-  PN5180 on 8–10 € kappale.
+- **`5V` and `BUSY` on the header.** The RC522 is 3.3 V only and has no
+  ready line; the PN5180 works without neither. This is the fastest and
+  surest check, and it can be done from a product photo if the silkscreen is
+  visible.
+- **The number of pins.** The MFRC522 brings out eight. The PN5180 needs at
+  least nine and boards break out 10–16.
+- **The chip marking**, `PN5180` or `PN5180A0HN`. If a listing says only
+  "13.56 MHz SPI, compatible with Arduino" without the chip's name, it is an
+  RC522.
+- A price of €2–3 each in a lot of 3–5 is RC522 pricing; the PN5180 is €8–10
+  each.
 
-### Antennin muoto ei kelpaa tunnistimeksi, ja tässä luki että kelpaa
+### The antenna's shape is not a valid identifier, and this said it was
 
-Tässä oli neljäs merkki: *"antenni on pieni neliö samalla levyllä — PN5180 on
-kaksiosainen"*. **Se on väärin ja se olisi hylännyt oikean levyn.**
+There was a fourth sign here: *"the antenna is a small square on the same
+board — the PN5180 is two-part"*. **That is wrong and it would have rejected
+the right board.**
 
-Saapunut moduuli on yksiosainen **`PN5180-NFC` rev `R1.1-170710`, 70 × 39 mm**:
-yksi sininen levy, jonka oikeassa päässä on kierukka-antenni ja vasemmassa
-piiri `PN5180A0`, passiivit ja kolmentoista nastan rima `JP1`. Rimassa on sekä
-`+5V` että `BUSY`, eli molemmat ne joita RC522:ssa ei ole.
+The module that arrived is single-board, **`PN5180-NFC` rev `R1.1-170710`,
+70 × 39 mm**: one blue board with a coil antenna at the right end and at the
+left a `PN5180A0` chip, passives and a thirteen-pin header `JP1`. The header
+has both `+5V` and `BUSY`, i.e. both of the ones the RC522 lacks.
 
-Kaksiosaisuus on siis **yhden myydyimmän mallin ominaisuus eikä piirin
-ominaisuus**, ja se oli tässä tiedostossa yleistetty tunnistimeksi yhden
-tuotekuvan perusteella.
+Being two-part is therefore **a property of one best-selling model, not a
+property of the chip**, and it had been generalised into an identifier here
+on the strength of a single product photo.
 
-Se on sama virhe jota tämän listan oma kärki varoittaa tekemästä — yhteinen
-fysiikka ei ole yhteensopivuus — vain toisin päin: **yhteinen ulkonäkö ei ole
-yhteensopimattomuus.** Tunnistin on piirin nimi ja sähköinen vaatimus, ei
-muoto.
+It is the same mistake this list's own opening warns against — shared
+physics is not compatibility — only the other way round: **shared appearance
+is not incompatibility.** The identifier is the chip's name and the
+electrical requirement, not the shape.
 
-Hae siis piirin nimellä `PN5180`, ei kuvauksella. Ja tarkista rimasta että
-siinä on **sekä 5 V että 3,3 V** — lähetinpää tarvitsee viisi volttia, logiikka
-kolme.
+So search by the chip's name `PN5180`, not by description. And check the
+header for **both 5 V and 3.3 V** — the transmitter side needs five volts,
+the logic three.
 
-**Asetusten muuttaminen ei onnistu**, ja syy on rakenteellinen: parametrien
-kirjoitus lukittuu pysyvästi kun mittari on läpäissyt 10 litran kynnyksen.
-Asennetun mittarin aikataulua ei siis säädetä kuluttajan työkaluilla — se on
-vesilaitoksen tai valmistajan oikeus.
+**Changing settings is not possible**, and the reason is structural: writing
+parameters locks permanently once the meter has passed the 10-litre
+threshold. The schedule of an installed meter is therefore not adjusted with
+consumer tools — that is the utility's or the manufacturer's right.
 
-**Mittarissa on kommunikointikredit**: lisärajapintojen käyttö on rajattu noin
-20 minuuttiin kuukaudessa pariston säästämiseksi, ja rajan täyttyessä rajapinta
-lukkiutuu tunnin vaihtumiseen asti. Älä siis pollaa NFC:tä.
+**The meter has a communication credit**: use of the auxiliary interfaces is
+limited to about 20 minutes per month to save the battery, and when the
+limit is reached the interface locks until the hour turns. So do not poll
+NFC hard.
 
-Näyttö on tätä heikompi todiste. LCD:llä on radioviestinnän indikaattori, mutta
-**ei ole varmistettu kertooko se "radio konfiguroitu päälle" vai "lähetys
-käynnissä"**, ja yksittäisiä näyttösivuja voi piilottaa asennuksessa — sivun
-puuttuminen ei siis todista mitään.
+The display is weaker evidence than this. The LCD has a radio communication
+indicator, but **it has not been confirmed whether it means "radio
+configured on" or "transmission in progress"**, and individual display pages
+can be hidden at installation — the absence of a page therefore proves
+nothing.
 
-## Pollausväli johdetaan kreditistä, ei tottumuksesta
+## The polling interval is derived from the credit, not from habit
 
-PN5180 on saapunut, ja tarkoitus on pollata. Se käy — mutta väli on laskettava
-mittarin kommunikointikreditistä eikä valittava sen mukaan mikä tuntuu
-normaalilta.
+The PN5180 has arrived, and the intention is to poll. That is fine — but the
+interval has to be computed from the meter's communication credit rather
+than chosen by what feels normal.
 
 ```
-20 min/kk  =  1200 s/kk  =  40 s/vrk
+20 min/month  =  1200 s/month  =  40 s/day
 ```
 
-**Kaikki riippuu yhden luvun kestosta, eikä sitä tiedetä.** Kahden sekunnin
-oletuksella:
+**Everything depends on the duration of one read, and that is not known.**
+Assuming two seconds:
 
-| Väli | Lukuja/vrk | Kulutus | |
+| Interval | Reads/day | Consumption | |
 |---|---|---|---|
-| 1 h | 24 | 24 min/kk | **yli budjetin** |
-| 2 h | 12 | 12 min/kk | mahtuu |
-| 3 h | 8 | 8 min/kk | väljä |
+| 1 h | 24 | 24 min/month | **over budget** |
+| 2 h | 12 | 12 min/month | fits |
+| 3 h | 8 | 8 min/month | roomy |
 
-Viiden sekunnin luvulla sama taulukko siirtyy kokonaan: kaksi tuntia on jo
-30 min/kk. **Mittaa yhden luvun kesto ja johda väli siitä kertoimella 2–3.**
-Se on yksi mittaus ja se poistaa koko arvailun.
+With a five-second read the same table shifts entirely: two hours is already
+30 min/month. **Measure the duration of one read and derive the interval
+from it with a factor of 2–3.** That is one measurement and it removes all
+the guessing.
 
-**Aloita kolmesta tunnista.** Vesi on kumulatiivista ja HA:n pitkän aikavälin
-tilastot lasketaan tunneittain, joten kolmen tunnin väli ei menetä niille
-mitään. Ainoa tiheämpää haluava on vuotovahti, ja juokseva vessa jää kiinni
-saman päivän aikana kahdeksalla lukemalla. Väljästä välistä jää kaksi
-kolmasosaa budjettia sille että kestoarvio on pielessä.
+**Start at three hours.** Water is cumulative and Home Assistant's long-term
+statistics are computed hourly, so a three-hour interval loses them nothing.
+The only thing wanting more is leak detection, and a running toilet is
+caught within the same day on eight readings. A roomy interval leaves
+two-thirds of the budget in reserve for the duration estimate being wrong.
 
-### Vikatila on hiljaisuus, joten budjetti rakennetaan näkyväksi
+### The failure mode is silence, so the budget is made visible
 
-Rajan täyttyessä rajapinta **lukkiutuu tunnin vaihtumiseen asti**. Se ei
-palauta virhettä joka näkyisi entiteetissä — luku vain epäonnistuu ja vanha
-arvo jää paikalleen näyttämään tuoreelta.
+When the limit is reached the interface **locks until the hour turns**. It
+returns no error that would show in an entity — the read simply fails and
+the old value stays put, looking fresh.
 
-Se on sama vikaluokka joka on tässä repossa korjattu viidesti yhden viikon
-aikana: **vahdin hiljaisuus ja vahdin sokeus näyttävät samalta.** Siksi tämä
-kuuluu rakentaa sisään alusta asti eikä jälkikäteen:
+That is the same class of fault this repo has fixed five times in a single
+week: **a watcher's silence and a watcher's blindness look the same.** So
+this belongs built in from the start rather than added afterwards:
 
-- **laske luvut** ja julkaise arvio kuluneesta kreditistä omana entiteettinään
-- **havaitse epäonnistunut luku** ja perääntele sen sijaan että yrittäisit
-  heti uudelleen — uusintayritys kuluttaa samaa budjettia joka juuri loppui
-- **päästä entiteetti tuntemattomaksi** jos luku ei ole onnistunut kolmeen
-  väliin, ettei vanha lukema teeskentele tuoretta
+- **count the reads** and publish an estimate of consumed credit as an
+  entity of its own
+- **detect a failed read** and back off rather than retrying immediately —
+  a retry spends the same budget that just ran out
+- **let the entity go unknown** if a read has not succeeded for three
+  intervals, so that an old reading does not pretend to be fresh
 
-### Suora rima pinoaa levyt, se ei nosta C3:a pystyyn
+### A straight header stacks the boards; it does not stand the C3 up
 
-Tässä luki hetken että suoraan `JP1`:een juotettu C3 **seisoo kohtisuorassa**
-ja työntyy parikymmentä milliä irti pinnasta, ja että vaakatasoon pääsemiseksi
-nastat pitäisi taivuttaa. **Se on väärin päin.**
+This briefly said that a C3 soldered straight into `JP1` **stands
+perpendicular** and sticks out a couple of centimetres from the surface, and
+that getting it horizontal would need the pins bent. **That is backwards.**
 
-Suora nastarima menee molempien levyjen reikien läpi ja pitää ne
-**yhdensuuntaisina** — niin kaikki lisäkortit kiinnittyvät. Kulmarima on se
-joka kääntää liitoksen levyn tasoon ja vie toisen levyn viereen.
+A straight pin header passes through both boards' holes and holds them
+**parallel** — that is how every add-on card attaches. A right-angle header
+is the one that turns the joint into the plane of the board and puts the
+second board beside the first.
 
-Oikea kokoonpano on siis pino:
+The correct assembly is therefore a stack:
 
 ```
-C3            1,2 mm
-rima          korkeus valittavissa
-PN5180        1,6 mm
-------------  mittari
+C3            1.2 mm
+header        height selectable
+PN5180        1.6 mm
+------------  meter
 ```
 
-Noin yksitoista milliä vakiorimalla, ja **C3 peittää vasemman kolmanneksen**
-eli sen missä piirit muutenkin ovat. Antennialue jää kokonaan vapaaksi: C3:n
-sisäreuna yltää ~21 mm:iin ja kela alkaa ~30 mm:stä.
+About eleven millimetres with a standard header, and **the C3 covers the
+left third**, i.e. where the circuitry is anyway. The antenna area stays
+entirely clear: the C3's inner edge reaches ~21 mm and the coil starts at
+~30 mm.
 
-**Riman korkeus on suunnitteluparametri eikä jäännös.** C3:n maataso leijuu
-antennin sovituspiirin `L1`/`L2` yllä, ja mitä matalampi rima, sitä lähempänä.
-Vakiorima jättää noin kuusi milliä ilmaa — älä paina C3:a kiinni pintaan
-vaikka se mahtuisi.
+**The header's height is a design parameter, not a leftover.** The C3's
+ground plane floats above the antenna's matching network `L1`/`L2`, and the
+lower the header, the closer. A standard header leaves about six
+millimetres of air — do not press the C3 down onto the surface even if it
+would fit.
 
-### Oma solmu C3:lla, radiosolmuun ei kosketa
+### Its own node on a C3; the radio node is left alone
 
-**NFC rakennetaan erilliselle ESP32-C3 SuperMinille** eikä nykyisen
-`esp32dev`-solmun päälle. Perustelu on järjestys eikä rauta: radion tila on yhä
-avoin kysymys, ja **NFC-luku on se joka vastaa siihen.** Jos radiosolmua
-puretaan ennen lukua, kysymys sulkeutuu pysyvästi; jos se jätetään rauhaan,
-molemmat ovat pystyssä silloin kun vastaus tulee. DevKit puretaan vasta sen
-jälkeen — tai ei pureta, jos radio osoittautuukin päälle kytketyksi.
+**The NFC side is built on a separate ESP32-C3 SuperMini** rather than on
+top of the existing `esp32dev` node. The reason is sequence, not hardware:
+the radio's state is still an open question, and **an NFC read is what
+answers it.** If the radio node is dismantled before the read, the question
+closes permanently; if it is left alone, both are up when the answer comes.
+The DevKit is dismantled only afterwards — or not at all, if the radio turns
+out to be switched on.
 
-Levyn vaihto on myös halvempaa nyt kuin juotosten jälkeen, ja hyllyllä on kuusi
-C3:a.
+Swapping the board is also cheaper now than after soldering, and there are
+six C3s on the shelf.
 
-**Antenniperustelu tarkistettiin ja se kaatui.** Tässä luki hetken että
-mittarin luona WiFi on talon huonoin, koska NFC pakottaa vastaanottimen
-mittarin viereen. Omistaja korjasi: mittari on samassa tilassa 1-Wire-solmun
-kanssa. Mittaus vahvistaa sen riittäväksi:
+**The antenna argument was checked and it fell.** This briefly said that
+Wi-Fi at the meter is the worst in the house, because NFC forces the
+receiver next to the meter. The owner corrected it: the meter is in the same
+room as the 1-Wire node. Measurement confirms it is sufficient:
 
-| Solmu | WiFi |
+| Node | Wi-Fi |
 |---|---|
-| onewire, samassa tilassa | **−70 dBm** (vaihtelu −69…−76) |
+| onewire, same room | **−70 dBm** (varying −69…−76) |
 | stiebel | −77 dBm |
-| axioma työpöydällä | −56 dBm |
+| axioma on the desk | −56 dBm |
 
-−70 ei ole talon paras, mutta se on **todistetusti riittävä**, ja todiste on
-vahvempi kuin lukema: siinä tilassa on jo C3, se on ottanut useita
-OTA-päivityksiä ja streamannut lokia vuorokausia katkeamatta. Sama levytyyppi,
-sama huone.
+−70 is not the best in the house, but it is **demonstrably sufficient**, and
+the evidence is stronger than the reading: there is already a C3 in that
+room, it has taken several OTA updates and streamed logs for days without a
+break. Same board type, same room.
 
-**Siksi hirviradan WROOM-32U jää hirviradalle.** Sen ulkoantenniperustelu
-lepää kipinöivässä harjamoottorissa suljetussa rasiassa, eikä tämä projekti
-tarvitse sitä.
+**That is why hirvirata's WROOM-32U stays with hirvirata.** Its external
+antenna argument rests on a sparking brushed motor in a closed box, and this
+project does not need it.
 
-### Ensimmäinen boot: liittyminen onnistui vasta kuudennella kierroksella
+### First boot: association succeeded only on the sixth round
 
-Solmu nousi työpöydällä ja luki **−58 dB**, mikä vastaa radiosolmun −56 dBm:ää
-samasta paikasta. Mutta liittymiseen meni noin kaksi minuuttia, ja
-epäonnistumiset ovat kahta eri lajia:
+The node came up on the desk and read **−58 dB**, matching the radio node's
+−56 dBm from the same place. But association took about two minutes, and the
+failures are of two different kinds:
 
-| Tukiasema | Signaali | Virhe |
+| Access point | Signal | Error |
 |---|---|---|
-| kauempi | −80…−81 dB | `Probe Request Unsuccessful` |
-| **lähempi** | **−60…−61 dB** | `4-Way Handshake Timeout`, `Authentication Failed`, `Handshake Failed` |
+| the farther one | −80…−81 dB | `Probe Request Unsuccessful` |
+| **the nearer one** | **−60…−61 dB** | `4-Way Handshake Timeout`, `Authentication Failed`, `Handshake Failed` |
 
-**Ylempi rivi selittyy kuuluvuudella, alempi ei.** Kättely epäonnistui kolmesti
-tukiasemaan jonka kenttä on −60 dB, ja onnistui lopulta samaan tukiasemaan
-samalla avaimella — salasana on siis oikea ja signaali riittävä. Verkossa on
-kaksi tukiasemaa samalla SSID:llä **samalla kanavalla 6**, mikä on joko
-mesh-verkon backhaul tai kaksi tukiasemaa häiritsemässä toisiaan.
+**The upper row is explained by signal strength, the lower one is not.** The
+handshake failed three times against an access point whose field is −60 dB,
+and eventually succeeded against the same access point with the same key —
+so the password is right and the signal is sufficient. The network has two
+access points on the same SSID **on the same channel 6**, which is either a
+mesh backhaul or two access points interfering with each other.
 
-**Tätä ei ole korjattu eikä selitetty, vain kirjattu.** Se ei estä mitään:
-levy on verkossa, `Boot seems successful` ja boot-loop-laskuri nollautui.
-Merkitys on siinä että **asennuspaikan odotusarvo on −70 dBm** — kymmenen
-desibeliä heikompi kuin se kenttä jossa kättely jo takkusi. Jos liittyminen
-epäonnistuu mittarin luona, tämä loki on se johon sitä verrataan, eikä
-päätelmä saa silloin olla "C3:n antenni on huono" ennen kuin nämä kolme riviä
-on suljettu pois.
+**This has not been fixed or explained, only recorded.** It prevents
+nothing: the board is on the network, `Boot seems successful` and the boot
+loop counter reset. Its significance is that **the expected value at the
+installation site is −70 dBm** — ten decibels weaker than the field where
+the handshake already struggled. If association fails at the meter, this log
+is what it is compared against, and the conclusion must not then be "the
+C3's antenna is poor" until these three lines have been ruled out.
 
-**Varayhteys ei kelpaa tämän vaiheen merkiksi.** Loki toistaa `Restarting
-adapter` joka kierroksella, ja se vie AP:n alas ja takaisin — `Axioma NFC
-fallback` siis vilkkuu eikä pysy verkkolistassa. Puuttuva AP luettiin tässä
-ensin todisteeksi siitä ettei levy käynnisty lainkaan, ja se oli väärin: levy
-oli koko ajan pystyssä ja yritti. **Sarjaportti on ainoa rehellinen tapa
-katsoa liittymisvaihetta**, koska API-lokivirta liittyy vasta kun laite on jo
-verkossa eikä voi määritelmällisesti näyttää miksi se ei ole.
+**The fallback AP is not a valid sign for this phase.** The log repeats
+`Restarting adapter` on every round, and that takes the AP down and back up
+— so `Axioma NFC fallback` flickers rather than staying in the network list.
+A missing AP was first read here as proof that the board does not start at
+all, and that was wrong: the board was up the whole time and trying. **The
+serial port is the only honest way to watch the association phase**, because
+the API log stream attaches only once the device is already on the network
+and cannot, by definition, show why it is not.
 
-### Se ei ollut liittymisvika vaan pudotus, ja DHCP-loki erotti ne
+### It was not a join failure but a drop, and the DHCP log separated them
 
-Sarjaportti näytti tuntikausia loputonta liittymisyritystä: `Authentication
-Failed`, `Handshake Failed`, `Auth Expired`, `Association Expired`,
-`Restarting adapter`, uusi skannaus. Siitä pääteltiin peräkkäin neljä eri
-syytä — verkon torjunta, NVS:n vanhentunut PMK-välimuisti, PN5180:n levyn
-vaimentama antenni ja syötön notkahdus. **Kaikki neljä olivat vääriä.**
+The serial port showed an endless association attempt for hours:
+`Authentication Failed`, `Handshake Failed`, `Auth Expired`,
+`Association Expired`, `Restarting adapter`, a new scan. Four different
+causes were inferred from it in turn — rejection by the network, a stale PMK
+cache in NVS, an antenna damped by the PN5180's board, and a supply dip.
+**All four were wrong.**
 
-Vastaus tuli tukiasemalta: **MikroTikin lokissa näkyi DHCP-kysely ja
-annettu osoite.** DHCP tapahtuu vasta assosioinnin, tunnistautumisen ja
-nelivaiheisen kättelyn jälkeen — eli **kaikki se mitä yritettiin korjata
-toimi jo.** Laite liittyi, sai osoitteen ja putosi hetken päästä ulos.
+The answer came from the access point: **the MikroTik's log showed a DHCP
+request and an address granted.** DHCP happens only after association,
+authentication and the four-way handshake — so **everything being fixed was
+already working.** The device associated, got an address and dropped out
+shortly afterwards.
 
-`Auth Expired` ja `Association Expired` eivät ole torjuntoja vaan
-**vanhentumisia**: tukiasema pudottaa asiakkaan jonka se uskoo kadonneen.
-MikroTik lähettää keepalive-kehyksiä ja sen `disconnect-timeout` on lyhyt,
-ja **ESP32-C3:n virransäästön oletus on `LIGHT`**, joka nukuttaa
-vastaanottimen majakkavälien välissä. Nukkuva radio missaa kuittaukset.
+`Auth Expired` and `Association Expired` are not rejections but
+**expirations**: the access point drops a client it believes has vanished.
+MikroTik sends keepalive frames and its `disconnect-timeout` is short, and
+**the ESP32-C3's power-save default is `LIGHT`**, which puts the receiver to
+sleep between beacons. A sleeping radio misses the acknowledgements.
 
-Korjaus on `power_save_mode: NONE`, ja tämä on **repon ensimmäinen laite
-joka ansaitsee sen.** Juuren CLAUDE.md sanoo ettei sitä aseteta ilman
-oiretta joka sen oikeuttaa; tämä on se oire.
+The fix is `power_save_mode: NONE`, and this is **the repo's first device to
+earn it.** The root CLAUDE.md says it is not set without a symptom that
+justifies it; this is that symptom.
 
-**Opetus on lähteen valinnassa eikä radiossa.** ESPHomen loki kirjaa vain
-laitteen oman puolen, ja pudotus näyttää siinä identtiseltä sen kanssa ettei
-liittyminen onnistu lainkaan. Ne erottaa vain **toinen osapuoli**, ja se
-osapuoli ei ole missään laitteen lokissa. Sama muoto kuin muualla tässä
-tiedostossa: laitteen oma sanoma voittaa taulukon — mutta kun kyse on
-kahden laitteen välisestä tapahtumasta, **yhden laitteen sanoma ei riitä.**
+**The lesson is in the choice of source, not in the radio.** ESPHome's log
+records only the device's own side, and in it a drop looks identical to a
+join that never succeeds. They are separated only by **the other party**,
+and that party is nowhere in the device's log. The same shape as elsewhere
+in this file: the device's own utterance beats the table — but when the
+event is between two devices, **one device's utterance is not enough.**
 
-Sivuhuomio joka kannattaa säilyttää: RSSI heilui saman istunnon aikana
-−58:n ja −78:n välillä samassa fyysisessä paikassa, ja siitä pääteltiin että
-PN5180:n levy vaimentaa C3:n antennia. **Se oli mittausta lentävästä
-laitteesta**, joka liittyi ja putosi jatkuvasti — skannauslukemat eivät ole
-vertailukelpoisia kun radio käynnistyy uudelleen niiden välissä.
+A side note worth keeping: RSSI swung between −58 and −78 within the same
+session in the same physical place, and it was inferred from that that the
+PN5180's board damps the C3's antenna. **That was measuring a device in
+flight**, associating and dropping continuously — scan readings are not
+comparable when the radio restarts between them.
 
-### Ensimmäinen ajo: SPI nousee, PN5180 ei vastaa
+### First run: SPI comes up, the PN5180 does not answer
 
 ```
 [C][spi:074]:   Using HW SPI: SPI2_HOST        CLK GPIO4 · SDI GPIO3 · SDO GPIO7
@@ -1079,59 +1122,61 @@ vertailukelpoisia kun radio käynnistyy uudelleen niiden välissä.
 [E][component:204]: qalcosonicnfc was marked as failed
 ```
 
-Kolme asiaa tästä.
+Three things from this.
 
-**Väylä nousee kaavion mukaan.** Nastat ovat oikein konfiguraatiossa ja
-ESPHome ottaa laitteistoväylän käyttöön. Se osa on todistettu.
+**The bus comes up per the diagram.** The pins are right in the
+configuration and ESPHome brings the hardware bus into use. That part is
+proven.
 
-**Komponentti ei jumita.** Se merkitsee itsensä epäonnistuneeksi ja lopettaa;
-setup jatkuu ja päättyy `setup() finished successfully!`. **Tämä kumoaa tässä
-tiedostossa aiemmin esitetyn epäilyn** siitä että `BUSY`-odotus söisi
-suoritusajan ja veisi laitteen verkosta. Ajurissa on aikakatkaisu joka
-odotuksessa, eikä komponentti yritä uudelleen.
+**The component does not hang.** It marks itself failed and stops; setup
+continues and ends with `setup() finished successfully!`. **This overturns
+the suspicion presented earlier in this file** that the `BUSY` wait would
+eat the run time and take the device off the network. The driver has a
+timeout on every wait, and the component does not retry.
 
-**`BUSY` lukee matalaa aina.** Step 0 odottaa laskua ja menee läpi; Step 3
-odottaa nousua ja kaatuu. Kolme selitystä, kaikki mitattavissa levy
-virroissa:
+**`BUSY` always reads low.** Step 0 waits for it to fall and passes; Step 3
+waits for it to rise and fails. Three explanations, all measurable with the
+board powered:
 
 | | |
 |---|---|
-| `RST` lukee 0 V | Piiri on pidossa nollauksessa. `BUSY` ei voi nousta |
-| `BUSY` oikosulussa maahan | Juotossilta tai väärä padi |
-| **Rima yhden nastan siirroksissa** | JP1 on `RST NSS MOSI MISO SCK BUSY GND` — askel alaspäin vie `GPIO10`:n maahan ja `GPIO5`:n `NSS`:ään |
+| `RST` reads 0 V | The chip is held in reset. `BUSY` cannot rise |
+| `BUSY` shorted to ground | A solder bridge or the wrong pad |
+| **The header off by one pin** | JP1 is `RST NSS MOSI MISO SCK BUSY GND` — one step down puts `GPIO10` on ground and `GPIO5` on `NSS` |
 
-Kolmas selittäisi kaiken kerralla, ja sen todentaa yhdellä
-jatkuvuusmittauksella: **`JP1 RST` ↔ `C3 GPIO5`.** Jos vastapari onkin
-`GPIO6`, asia on selvä.
+The third would explain everything at once, and one continuity measurement
+verifies it: **`JP1 RST` ↔ `C3 GPIO5`.** If the counterpart is `GPIO6`, the
+matter is settled.
 
-#### Peruttu: `BUSY`-liitos ei ollut irti, ja 353 kΩ oli oikea lukema
+#### Retracted: the `BUSY` joint was not open, and 353 kΩ was the right reading
 
-Tässä luki että `JP1 BUSY` ↔ `C3 GPIO10` mittasi 353 kΩ ja on siis auki.
-**Se oli väärinluettu mittaus.** Lukema oli `BUSY` **maata vasten**, eli se
-poissulkeva koe joka tarkistaa ettei rima ole siirroksissa — ja 353 kΩ on
-sen oikea tulos. Rimanastat mitattiin erikseen ja ne olivat kunnossa.
+This used to say that `JP1 BUSY` ↔ `C3 GPIO10` measured 353 kΩ and is
+therefore open. **That was a misread measurement.** The reading was `BUSY`
+**against ground**, i.e. the exclusion test that checks the header is not
+off by one — and 353 kΩ is its correct result. The header pins were measured
+separately and were fine.
 
-Virhe on oppimisen arvoinen, koska se ei ollut mittausvirhe vaan
-lukuvirhe: annoin kaksi mittausta peräkkäin samassa listassa, ja tulkitsin
-vastauksen kuuluvaksi ensimmäiseen. **Kysy aina mistä kahdesta pisteestä
-mitattiin ennen kuin rakennat lukemasta väitteen** — sähköinen johtopäätös
-on vain niin hyvä kuin tieto siitä mihin mittapäät koskivat.
+The error is worth learning from, because it was not a measurement error but
+a reading error: two measurements were given in sequence in the same list,
+and the answer was taken to belong to the first. **Always ask which two
+points were measured before building a claim on a reading** — an electrical
+conclusion is only as good as the knowledge of where the probes touched.
 
-Rimanasta on lisäksi yhtenäistä messinkiä ja johtaa pelkällä puristuksella
-ilman juotosta. **Kilo-ohmien lukema rimanastan yli ei olisi merkinnyt
-huonoa juotosta vaan puuttuvaa nastaa** — ja sekin päättely olisi pitänyt
-tarkistaa ennen kuin siitä kirjoitettiin ohje.
+A header pin is moreover continuous brass and conducts by friction alone
+with no solder. **A kilo-ohm reading across a header pin would not have
+meant a bad joint but a missing pin** — and that reasoning too should have
+been checked before it was written into an instruction.
 
-Yksi havainto jää silti voimaan suunnittelumuistiinpanona, vaikkei se ollut
-vika: kun `GPIO8` ja `GPIO9` vedetään irti, `GPIO10` jää rimaan yksin
-kahden tyhjän paikan taakse ilman naapurien tukea. Se on paikka jonka
-kannattaa tarkistaa ensimmäisenä, ei paikka josta tiedetään mitään.
+One observation stands as a design note even though it was not the fault:
+when `GPIO8` and `GPIO9` are pulled out, `GPIO10` is left alone in the
+header behind two empty positions with no support from its neighbours. That
+is a place worth checking first, not a place anything is known about.
 
-#### Ja syy oli kaksi kuollutta padia C3:ssa
+#### And the cause was two dead pads in the C3
 
-Kaikki yhdeksän liitosta mitattiin lopulta kunnossa oleviksi, ja silti
-`BUSY` ei noussut. Vika löytyi kun **ESPHomea käskettiin ajamaan nastat ylös
-ehdoitta**, ilman NFC-komponenttia:
+All nine connections were eventually measured good, and `BUSY` still did not
+rise. The fault was found when **ESPHome was told to drive the pins high
+unconditionally**, with no NFC component:
 
 ```yaml
 switch:
@@ -1140,196 +1185,207 @@ switch:
     restore_mode: ALWAYS_ON
 ```
 
-| Nasta | Rivi | Lukema |
+| Pin | Row | Reading |
 |---|---|---|
-| `GPIO1` `GPIO4` `GPIO7` `GPIO8` `GPIO9` `GPIO20` `GPIO21` | molemmat | **3,3 V** |
-| **`GPIO5`** `RST`, riman paikka 1 | rima | **100 mV** |
-| **`GPIO6`** `NSS`, riman paikka 2 | rima | **100 mV** |
+| `GPIO1` `GPIO4` `GPIO7` `GPIO8` `GPIO9` `GPIO20` `GPIO21` | both | **3.3 V** |
+| **`GPIO5`** `RST`, header position 1 | header | **100 mV** |
+| **`GPIO6`** `NSS`, header position 2 | header | **100 mV** |
 
-Seitsemän nastaa nousee, kaksi ei — ja ne kaksi ovat riman ensimmäiset, eli
-ne jotka saivat eniten lämpöä. **Katkos on C3:n sisällä padin ja piirin
-välissä.** Jatkuvuus `JP1`:stä padiin menee läpi, maahan on 860 kΩ, eikä
-naapureiden välillä ole siltaa — kaikki aiemmat mittaukset osuivat oikein ja
-kertoivat silti väärää tarinaa, koska ne mittasivat padin *ulkopuolista*
-puolta.
+Seven pins rise, two do not — and those two are the header's first, i.e. the
+ones that took the most heat. **The break is inside the C3 between the pad
+and the die.** Continuity from `JP1` to the pad passes, there is 860 kΩ to
+ground, and there is no bridge between neighbours — all the earlier
+measurements were made correctly and still told the wrong story, because
+they measured the *outer* side of the pad.
 
-**Kuorma suljettiin pois kahdesti.** Ensin laskemalla: 40 mA:n lähdön
-pitäminen 100 millivoltissa vaatisi kolmen ohmin kuorman, eikä PN5180:n tulo
-voi esittää sellaista. Sitten kokeellisesti — omistaja katkaisi rimanastat,
-todensi eristyksen auki ja mittasi uudelleen: **sama 100 mV.** Laskelma oli
-oikea, mutta koe oli silti oikein tehdä, koska päättely oli kaatunut tänä
-iltana useammin kuin kerran.
+**A load was excluded twice.** First by arithmetic: holding a 40 mA output
+at 100 millivolts would require a three-ohm load, and a PN5180 input cannot
+present one. Then experimentally — the owner cut the header pins, verified
+the isolation was open and measured again: **the same 100 mV.** The
+arithmetic was right, but the experiment was still the right thing to do,
+because reasoning had fallen over more than once that evening.
 
-**Ja ensimmäinen kohdevalinta oli väärä.** `GPIO20` ja `GPIO21` valittiin
-sillä perusteella että ne eivät ole strapping-nastoja ja että UART0 on
-vapaa, koska loggeri käyttää `USB_SERIAL_JTAG`:ia. Se päättely oli oikein
-paperilla ja väärin käytännössä: **boottaus pysähtyi riviin `Using HW SPI:
-SPI2_HOST`**, `spi_device`-riviä ei tullut lainkaan ja `safe_mode` laski
-käynnistyksen epäonnistuneeksi.
+**And the first choice of replacement pins was wrong.** `GPIO20` and
+`GPIO21` were chosen on the grounds that they are not strapping pins and
+that UART0 is free, because the logger uses `USB_SERIAL_JTAG`. That
+reasoning was right on paper and wrong in practice: **the boot stopped at
+the line `Using HW SPI: SPI2_HOST`**, no `spi_device` line appeared at all,
+and `safe_mode` counted the boot as unsuccessful.
 
-Pelkkä nastojen vaihto `GPIO1`:een ja `GPIO0`:aan poisti oireen — langat
-jätettiin koskematta, eli muuta ei muutettu. **Mekanismia ei ole
-todennettu**, ja empiirinen sääntö riittää: älä käytä C3:n UART0-nastoja
-SPI:n ohjauslinjoihin, vaikka loggeri olisi USB:llä.
+Changing only the pins to `GPIO1` and `GPIO0` removed the symptom — the
+wires were left untouched, so nothing else changed. **The mechanism has not
+been verified**, and the empirical rule is enough: do not use the C3's UART0
+pins for SPI control lines, even with the logger on USB.
 
-Sama koe erotti samalla toisen mahdollisuuden pois: jos jumi olisi johtunut
-uudesta juotoksesta, se olisi jatkunut nastojen vaihdon jälkeen.
+The same experiment also excluded the other possibility: if the hang had
+come from a new solder joint, it would have continued after the pin change.
 
-**Korjaus on kaksi lakkalankaa eikä levyn vaihto.** Kuollut padi on avoin
-piiri eikä häiritse mitään, joten vanhat rimanastat saavat jäädä ja rima
-kantaa levyn edelleen `GPIO7`:n kautta.
+**The fix was two enamelled wires rather than a board swap.** A dead pad is
+an open circuit and disturbs nothing, so the old header pins can stay and
+the header still carries the board via `GPIO7`.
 
-**Menetelmä on se osa joka siirtyy muualle:** kun kytkentä on mitattu
-kunnossa olevaksi mutta laite ei silti vastaa, **aja jokainen nasta ylös
-ehdoitta ja mittaa ne verrokkia vasten.** Se erottaa levyn vian kytkennän
-viasta yhdellä käännöksellä, eikä se nojaa siihen että ajuri käyttäytyy
-odotetusti.
+**The method is the part that transfers elsewhere:** when the wiring
+measures good and the device still does not answer, **drive every pin high
+unconditionally and measure them against a control.** That separates a board
+fault from a wiring fault in one build, and it does not rely on the driver
+behaving as expected.
 
-#### Kytkentä on todistettu kokonaan — jäljellä on moduuli
+#### The wiring is proven in full — what remains is the module
 
-Kaikki mitattavissa oleva on mitattu, ja **jokainen tulos on kunnossa**:
+Everything measurable was measured, and **every result is good**:
 
-| | Miten todennettu |
+| | How verified |
 |---|---|
-| `JP1`:n nastajärjestys | moduulin silkkipainatus |
-| C3:n rivikartta | valmistajan nastakuva |
-| Laskusuunta | `JP1` 1 ja 2 antoivat 5 V ja 3,3 V |
-| `RST` → `GPIO1`, `NSS` → `GPIO0` | **nasta ajaa ja lanka kantaa** — 3,3 V molemmissa päissä |
-| `MOSI` → `GPIO7`, `SCK` → `GPIO4` | nasta ajaa, jatkuvuus |
-| `MISO` → `GPIO3`, `BUSY` → `GPIO10` | jatkuvuus |
-| `+5V`, `3.3V`, `GND` | jännitteet padeissa |
-| Oikosulut maahan | `GPIO5` 860 kΩ, `BUSY` 353 kΩ |
-| Naapurisillat `JP1`:ssä | `3↔4` 2 MΩ, `4↔5` `5↔6` `6↔7` `7↔8` kaikki auki |
+| `JP1`'s pin order | the module's silkscreen |
+| The C3's row map | the board vendor's pinout diagram |
+| Counting direction | `JP1` 1 and 2 gave 5 V and 3.3 V |
+| `RST` → `GPIO1`, `NSS` → `GPIO0` | **the pin drives and the wire carries** — 3.3 V at both ends |
+| `MOSI` → `GPIO7`, `SCK` → `GPIO4` | the pin drives, continuity |
+| `MISO` → `GPIO3`, `BUSY` → `GPIO10` | continuity |
+| `+5V`, `3.3V`, `GND` | voltages at the pads |
+| Shorts to ground | `GPIO5` 860 kΩ, `BUSY` 353 kΩ |
+| Neighbour bridges on `JP1` | `3↔4` 2 MΩ, `4↔5` `5↔6` `6↔7` `7↔8` all open |
 
-**Erityisesti se mitä jatkuvuusmittaus ei olisi kertonut** tuli tehdyksi:
-ohjauslinjat ajettiin ylös ehdoitta ESPHomen `gpio`-kytkimillä ja mitattiin
-molemmista päistä. Se erottaa "johdin on olemassa" ja "signaali kulkee" —
-ja juuri se paljasti kaksi kuollutta padia joita mikään muu mittaus ei
-löytänyt.
+(The `GPIO1`/`GPIO0` row is the first board's repair wiring. On the
+replacement board `RST` and `NSS` are back on `GPIO5` and `GPIO6`.)
 
-**PN5180 ei ole vastannut kertaakaan koko projektin aikana.** Joka kerta kun
-se on ollut mitattavissa, jokin muu on ollut rikki: ensin kuolleet padit,
-sitten UART0-nastojen jumi. Nyt kumpikin on poissa eikä moduuli silti vastaa.
+**Specifically what a continuity measurement would not have told** was done:
+the control lines were driven high unconditionally with ESPHome's `gpio`
+switches and measured at both ends. That separates "a conductor exists" from
+"a signal gets through" — and it was exactly that which revealed two dead
+pads no other measurement found.
 
-Se ei ole todiste kuolleesta moduulista, mutta se on ainoa jäljellä oleva
-selitys — eikä sitä voi testata ilman toista moduulia tai toista isäntää.
+**The PN5180 has not answered once in the whole project.** Every time it has
+been measurable, something else has been broken: first the dead pads, then
+the UART0 pins' hang. Now both are gone and the module still does not
+answer.
 
-#### Jäljellä oli kaksi mittaamatonta liitosta
+That is not proof of a dead module, but it is the only remaining explanation
+— and it cannot be tested without a second module or a second host.
 
-Todennettua ovat neljä rimanastaa ja kolme jännitettä. **`MISO` → `GPIO3` ja
-`SCK` → `GPIO4` ovat ainoat joita ei ole tarkistettu millään tavalla.**
+#### Two unmeasured connections remained
 
-Ja `SCK` sopii oireeseen täsmälleen: ilman kelloa PN5180 ei kellota komentoa
-sisään, ei suorita mitään eikä nosta `BUSY`:a. `MISO` ei tuottaisi samaa —
-poikki oleva paluulinja antaisi roskaa mutta `BUSY` liikkuisi silti, ja vika
-näkyisi vasta myöhemmin.
+Verified were four header pins and three voltages. **`MISO` → `GPIO3` and
+`SCK` → `GPIO4` were the only ones not checked in any way.**
 
-### WiFi-vika on tässä levyssä, ei verkossa
+And `SCK` fits the symptom exactly: with no clock the PN5180 does not clock
+the command in, executes nothing and does not raise `BUSY`. `MISO` would not
+produce the same — a broken return line would give rubbish but `BUSY` would
+still move, and the fault would show only later.
 
-Tähän oli kertynyt pitkä lista verkkohypoteeseja: MikroTikin `disable-pmkid`
-ja `management-protection`, Decon `WPA/WPA2`-sekatila ja TKIP-ryhmäavain,
-tukiaseman asiakastaulu, `power_save_mode: NONE`. **Kaikki ne ovat
-tarpeettomia, ja omistaja katkaisi ne yhdellä lauseella: samassa verkossa
-toimii useita muita ESP32-C3-solmuja moitteetta.**
+(Both were subsequently measured good.)
 
-Se on vahvempi todiste kuin yksikään lokista tehty päätelmä. Jos verkko
-rikkoisi C3:n liittymisen, se rikkoisi ne kaikki.
+### The Wi-Fi fault is in this board, not in the network
 
-**Yhteinen tekijä on tämä yksilö**, ja siitä on riippumaton löydös: kaksi
-GPIO-padia on kuollut, ja seitsemän muuta toimii.
+A long list of network hypotheses had accumulated here: the MikroTik's
+`disable-pmkid` and `management-protection`, the Deco's `WPA/WPA2` mixed
+mode and TKIP group key, the access point's client table,
+`power_save_mode: NONE`. **All of them are unnecessary, and the owner cut
+them off with one sentence: several other ESP32-C3 nodes work faultlessly on
+the same network.**
 
-**Mutta "levy ei pysy verkossa" on väärä muotoilu, ja omistaja korjasi sen:
-se pysyy, kun PN5180 ei ole toiminnassa.** Se on ollut verkossa vakaasti
-sekä ilman NFC-komponenttia että komponentin epäonnistuttua — eli aina kun
-moduulia ei ajeta.
+That is stronger evidence than any inference from a log. If the network
+broke a C3's association, it would break all of them.
 
-Silloin kyse ei ole viallisesta radiosta vaan **vuorovaikutuksesta**, ja se
-osoittaa jaettuun syöttöön: lähetinpää piikittää satoja milliampeereja
-samasta viidestä voltista joka ajaa C3:n radiota, eikä levyllä ole mitään
-puskuria niiden välissä.
+**The common factor is this particular board**, and there is an independent
+finding about it: two GPIO pads are dead and seven others work.
 
-**Kondensaattori on nyt asennettu** — 330 µF / 25 V `+5V`:n ja `GND`:n
-väliin — eikä se muuttanut PN5180:n tulosta: `No communication` jatkuu.
-Se oli odotettavissa, koska rekisterin luku ei vedä virtaa. Sen varsinainen
-koe on vasta edessä: näkyykö verkkokatkoksia kun lukuja alkaa tulla.
+**But "the board does not stay on the network" is the wrong phrasing, and
+the owner corrected it: it stays, when the PN5180 is not in operation.** It
+has been on the network steadily both without the NFC component and after
+the component failed — i.e. whenever the module is not being driven.
 
-**Ja se nosti sen 100 µF:n takaisin listalle.** Tässä luki hetken ettei se
-korjaa mitään tunnettua vikaa; jos epävakaus seuraa moduulin toimintaa, se
-on juuri se vika jota kondensaattori korjaa. Ja se selittäisi miksi
-virtalähteen vaihto ei auttanut: **notkahdus tapahtuu levyllä, ei
-lähteessä.**
+Then it is not a faulty radio but an **interaction**, and that points at the
+shared supply: the transmitter side peaks at hundreds of milliamps from the
+same five volts that drives the C3's radio, and there is no buffer between
+them on the board.
 
-Testattavissa vasta kun moduuli vastaa ja lukuja tulee säännöllisesti —
-silloin näkee osuvatko katkokset lukuyritysten kohdalle.
+**The capacitor is now fitted** — 330 µF / 25 V between `+5V` and `GND` —
+and it did not change the PN5180's result: `No communication` continues.
+That was to be expected, because a register read draws no current. Its real
+test is still ahead: whether network drops appear once reads start
+happening.
 
-Oireet sopivat siihen: skannaus ja RSSI ovat kunnossa, mutta liittyminen
-kaatuu kättelyyn ja varayhteyden AP ei näy puhelimessa. Se on vastaanoton ja
-lähetyksen välinen jako, ja lähetys on se suunta joka sietää vähiten.
+**And it put that 100 µF back on the list.** This briefly said it fixes no
+known fault; if the instability follows the module's operation, it is
+exactly the fault a capacitor fixes. And it would explain why swapping the
+power supply did not help: **the dip happens on the board, not in the
+source.**
 
-**`power_save_mode: NONE` jää paikalleen** mutta sen perustelu on nyt
-hypoteesi: se lisättiin kun yksi liittyminen onnistui heti perään, ja se
-luettiin todisteeksi. Verkkovirralla hinta on olematon, joten se saa jäädä —
-mutta tämä kohta sanoo ääneen ettei se ole todennettu korjaus.
+Testable only once the module answers and reads come regularly — then one
+can see whether the drops coincide with read attempts.
 
-**Ja tästä seuraa opetus jota tässä tiedostossa on nyt neljä kertaa:** kun
-kaksi hypoteesia on kaatunut samasta lähteestä, älä ehdota kolmatta samasta
-lähteestä. Hanki uusi lähde — tai kysy omistajalta, jolla on vuosien
-käyttöhistoria laitteista joista lokia on tunteja.
+The symptoms fit: scanning and RSSI are fine, but association fails at the
+handshake and the fallback AP is not visible on a phone. That is the split
+between reception and transmission, and transmission is the direction that
+tolerates least.
 
-#### Seuraus: levy vaihdetaan
+**`power_save_mode: NONE` stays in place** but its justification is now a
+hypothesis: it was added when one association succeeded right afterwards,
+and that was read as proof. On mains power the cost is nil, so it may stay —
+but this section says out loud that it is not a verified fix.
 
-Nykyinen C3 kelpaa PN5180:n todentamiseen, ja se on verkossa vakaasti aina
-kun moduulia ei ajeta. **Todettuja vikoja on siis yksi eikä kaksi: kaksi
-kuollutta padia**, ja ne on kierretty langoilla.
+**And from this follows a lesson that is now in this file four times:** when
+two hypotheses from the same source have fallen, do not propose a third from
+that source. Get a new source — or ask the owner, who has years of operating
+history for devices whose logs cover hours.
 
-Levyn vaihto on silti seuraava koe — ei siksi että radio olisi rikki, vaan
-siksi että **SPI-lohko on ainoa osa jota mittaukset eivät kata**, ja tässä
-yksilössä on jo osoitettu valmistusvirhe.
+#### Consequence: the board is replaced
 
-Kun kytkentä on todettu toimivaksi, yhdeksän liitosta siirretään hyllyn
-toiseen C3:een — ja silloin `RST` ja `NSS` palaavat `GPIO5`:een ja
-`GPIO6`:een, koska korjauslangat olivat tämän yksilön kuolleita padeja
-varten eivätkä suunnittelun osa.
+The first C3 was good enough for verifying the PN5180, and it was on the
+network steadily whenever the module was not being driven. **Established
+faults on it are therefore one and not two: two dead pads**, and they were
+worked around with wires.
 
-**Testaa uuden levyn nastat ennen kuin juotat.** Ks. README, kohta 6,5.
+Replacing the board was still the next experiment — not because the radio is
+broken, but because **the SPI block is the only part the measurements do not
+cover**, and a manufacturing defect has already been demonstrated on that
+particular board.
 
-### Komponentin skeema, todennettuna lähdekoodista
+The replacement passed the pin test on all seven pins, so the nine
+connections move to it — and then `RST` and `NSS` go back to `GPIO5` and
+`GPIO6`, because the repair wires were for that one board's dead pads and
+not part of the design.
 
-`esphome_qalcosonicnfc`:n avaimet luettiin `components/qalcosonicnfc/
-__init__.py`:stä eikä README:stä, ja **kolme asiaa neljästä meni
-ensimmäisessä arvauksessa väärin:**
+**Test a new board's pins before you solder.** See README, step 6.5.
 
-| | Arvaus | Todellisuus |
+### The component's schema, verified from the source
+
+`esphome_qalcosonicnfc`'s keys were read from
+`components/qalcosonicnfc/__init__.py` rather than from the README, and
+**three things out of four were wrong in the first guess:**
+
+| | Guess | Reality |
 |---|---|---|
-| Komponentin nimi | `qalcosonic_nfc` | **`qalcosonicnfc`**, ei alaviivaa |
-| Nastojen avaimet | `cs_pin`, `busy_pin`, `reset_pin` | **`pn5180_nss_pin`**, `pn5180_busy_pin`, `pn5180_rst_pin` … |
-| Erillinen `spi:`-lohko | tarvitaan | **ei tarvita** — `AUTO_LOAD` sisältää `spi`:n ja komponentti ottaa kaikki kuusi nastaa itse |
-| Nastat | kaaviosta | oikein |
+| Component name | `qalcosonic_nfc` | **`qalcosonicnfc`**, no underscore |
+| Pin keys | `cs_pin`, `busy_pin`, `reset_pin` | **`pn5180_nss_pin`**, `pn5180_busy_pin`, `pn5180_rst_pin` … |
+| Separate `spi:` block | needed | **not needed** — `AUTO_LOAD` includes `spi` and the component takes all six pins itself |
+| Pins | from the diagram | right |
 
-Neljäs rivi on se joka merkitsee: **rauta oli oikein ja pelkkä ohjelmisto
-väärin.** Juotokset tehtiin ennen kuin avaimia oli tarkistettu, ja se oli
-turvallista juuri siksi — nastat tulevat kaaviosta ja kytkennästä, eivät
-komponentin dokumentaatiosta.
+The fourth row is the one that matters: **the hardware was right and only
+the software was wrong.** The soldering was done before the keys had been
+checked, and that was safe precisely because of this — the pins come from
+the diagram and the wiring, not from the component's documentation.
 
-`update_interval`:n oletus on **60 s**, mikä polttaisi kuukauden
-kommunikointikreditin puolessa päivässä. Se on nimenomaisesti asetettava.
+`update_interval`'s default is **60 s**, which would burn a month's
+communication credit in half a day. It has to be set explicitly.
 
-**Lähde on kiinnitetty commitiin `bed6773`** eikä haaraan. Perustelu on sama
-kuin radiosolmussa ja kirjattu tässä repossa kolmesti: `@main` on liikkuva
-viittaus, ja sama YAML voi kääntyä eri tavalla ilman että repossa muuttuu
-mitään.
+**The source is pinned to commit `bed6773`** rather than to a branch. The
+reasoning is the same as in the radio node and recorded three times in this
+repo: `@main` is a moving reference, and the same YAML can build differently
+without anything changing in the repo.
 
-Sama opetus kolmatta kertaa tässä tiedostossa, ja tällä kerralla se säästi
-käännöksen: **lähdekoodi kertoo sekunnissa sen mitä README ei.**
+The same lesson for the third time in this file, and this time it saved a
+build: **the source says in a second what the README does not.**
 
-#### Käännös tuottaa parikymmentä varoitusta, ja kaksi niistä ei ole kohinaa
+#### The build produces a couple of dozen warnings, and two are not noise
 
-Valtaosa on `-Wformat=`: RISC-V:llä `uint32_t` on `long unsigned int`, joten
-`%u` ja `%X` varoittavat vaikka tulostus on oikein — molemmat syövät 32
-bittiä. Ne kertovat että komponentti on kirjoitettu toista arkkitehtuuria
-ajatellen, eivät että jokin on rikki.
+Most are `-Wformat=`: on RISC-V `uint32_t` is `long unsigned int`, so `%u`
+and `%X` warn even though the output is correct — both consume 32 bits. They
+say the component was written with another architecture in mind, not that
+anything is broken.
 
-**Nämä kaksi ovat eri asia:**
+**These two are a different matter:**
 
 ```
 qalcosonicnfc.cpp:353: 'snprintf' output may be truncated
@@ -1337,34 +1393,36 @@ qalcosonicnfc.cpp:353: 'snprintf' output may be truncated
   output between 9 and 10 bytes into a destination of size 9
 ```
 
-**Yli kahdeksannumeroinen Meter ID katkeaa.** Puskuri on yhdeksän tavua eli
-kahdeksan numeroa ja päättävä nolla, mutta `uint32_t` voi olla kymmennumeroinen.
-Tämän mittarin numero on kahdeksannumeroinen, joten se ei osu — mutta jos
-`Meter ID` tai `Sarjanumero` näyttää joskus väärältä, syy on tässä eikä
-luvussa.
+**A Meter ID longer than eight digits is truncated.** The buffer is nine
+bytes, i.e. eight digits and a terminating zero, but a `uint32_t` can be ten
+digits. This meter's number is eight digits, so it does not hit — but if
+`Meter ID` or `Serial number` ever looks wrong, this is why, not the read.
 
 ```
 qalcosonicnfc.cpp:489: suggest parentheses around arithmetic in operand of '|'
   int32_t year = (buf[2] >> 5 | (buf[3] >> 1) & 0xF8) + 2000;
 ```
 
-`&` sitoo tiukemmin kuin `|`, joten lauseke on `(buf[2]>>5) | ((buf[3]>>1) &
-0xF8)`. Se on todennäköisesti tarkoitettu niin — seitsemän bitin vuosikenttä
-kahdesta tavusta — mutta **tarkista aikaleima ensimmäisestä onnistuneesta
-luvusta** äläkä oleta sitä. Se on halpaa juuri silloin ja kallista sen
-jälkeen kun sitä on katsottu kuukausi.
+`&` binds more tightly than `|`, so the expression is
+`(buf[2]>>5) | ((buf[3]>>1) & 0xF8)`. That is probably the intent — a
+seven-bit year field from two bytes — but **check the timestamp from the
+first successful read** rather than assuming it. That is cheap right then
+and expensive after a month of looking at it.
 
-#### Kaksi asiaa jotka skeema tekee toisin kuin odottaisi
+Both are worth reporting upstream; the project's language was switched to
+English partly so that they can be copied straight into an issue.
 
-**1. Entiteetti ei jää pois jättämällä se mainitsematta.** Jokaisella
-anturilla on `default={ CONF_NAME: "…" }`, eli **poisjätetty lohko syntyy
-silti englanninkielisellä oletusnimellä.** Listaus ei siis valitse mitkä
-entiteetit luodaan vaan mitkä nimetään suomeksi; laite tuo Home Assistantiin
-kolmisenkymmentä entiteettiä joka tapauksessa. Ei-toivotun saa piiloon
-`internal: true`-rivillä, ei vaikenemalla.
+#### Two things the schema does differently from what one would expect
 
-**2. `timepoint_sensor` on pakollinen vaikka näyttää valinnaiselta.** Se on
-ainoa jonka oletus on tyhjä `{}`:
+**1. An entity is not left out by not mentioning it.** Every sensor has
+`default={ CONF_NAME: "…" }`, so **an omitted block is still created with
+its default name.** The listing therefore does not choose which entities are
+created, only which ones get a name of our own; the device brings about
+thirty entities into Home Assistant either way. An unwanted one is hidden
+with `internal: true`, not by silence.
+
+**2. `timepoint_sensor` is required although it looks optional.** It is the
+only one whose default is an empty `{}`:
 
 ```python
 cv.Optional(CONF_TIMEPOINT_SENSOR, default={}): cv.Schema({
@@ -1375,244 +1433,263 @@ cv.Optional(CONF_TIMEPOINT_SENSOR, default={}): cv.Schema({
 ),
 ```
 
-Nimen oletus on sisemmässä skeemassa, mutta `.extend()` määrittelee saman
-avaimen uudelleen ilman oletusta ja ylikirjoittaa sen. Tulos on lohko jossa
-ei ole `id`:tä eikä `name`:a, ja validointi kaatuu riviin:
+The name's default is in the inner schema, but `.extend()` redeclares the
+same key without a default and overwrites it. The result is a block with
+neither `id` nor `name`, and validation fails with:
 
 ```
 At least one of 'id:' or 'name:' is required!
 ```
 
-**Virhe laukeaa oletuskonfiguraatiolla**, eli komponentti ei validoidu
-sellaisenaan. Ja virheilmoitus ei kerro mistä lohkosta on kyse ellei koko
-tulostetta lue — se on sama vikaluokka kuin muuallakin täällä: oire osoittaa
-kauas syystä.
+**The error fires on the default configuration**, i.e. the component does
+not validate as shipped. And the error message does not say which block it
+concerns unless the whole output is read — the same class of fault as
+elsewhere here: the symptom points far from the cause.
 
-### Kohdistus ilman tulostettua koteloa
+### Alignment without the printed case
 
-Upstream-projektissa on 3D-tulostettu kotelo joka kohdistaa antennin mittarin
-kelaan. **Sitä ei käytetä**, ja syy on parempi kuin maku: kotelo lukitsee
-asennon ennen kuin se on todennettu. Levyssä on neljä kiinnitysreikää, ja
-nippuside tai ohut kaksipuolinen teippi antaa säätää kohdistusta ensimmäisen
-onnistuneen luvun jälkeen — kotelo ei anna.
+The upstream project has a 3D-printed case that aligns the antenna to the
+meter's coil. **It is not used**, and the reason is better than taste: the
+case locks the position before it has been verified. The board has four
+mounting holes, and a cable tie or thin double-sided tape allows the
+alignment to be adjusted after the first successful read — a case does not.
 
-**Asento seuraa fysiikasta eikä ole makuasia:**
+**The orientation follows from physics and is not a matter of taste:**
 
-- **Litteänä pintaa vasten.** NFC on induktiivista kytkentää: kenttä kulkee
-  kelan tason läpi, joten levy ei mene kyljelleen. Kierto tasossa ei merkitse
-  mitään, koska molemmat ovat silmukoita eivätkä dipoleja.
-- **Antennipää kelan päälle, rimapää poispäin.** Levystä vain oikea ~40 mm on
-  antennia, ja kun rima osoittaa poispäin, johdot lähtevät sivuun eivätkä
-  taitu kelan yli.
-- **Sileä puoli mittariin päin.** Komponentit nostavat levyä millimetrejä irti
-  ja kytkentä heikkenee etäisyyden myötä nopeasti.
-- **Ei metallia väliin eikä antennin taakse.** Johtava pinta vaimentaa kentän
-  ja virittää antennin pois. Nippuside on muovia; kannake ei välttämättä ole.
-- **Tuenta antennipäästä, ei rimapäästä.** Ks. seuraava luku: levy saa jäädä
-  vasemmasta päästä irti, mutta kelan pää ei.
+- **Flat against the surface.** NFC is inductive coupling: the field passes
+  through the plane of the coil, so the board does not go on its edge.
+  Rotation in the plane means nothing, because both are loops rather than
+  dipoles.
+- **Antenna end over the coil, header end away.** Only the right ~40 mm of
+  the board is antenna, and with the header pointing away the wires leave to
+  the side rather than folding over the coil.
+- **Smooth side towards the meter.** Components lift the board millimetres
+  away and the coupling weakens quickly with distance.
+- **No metal in between or behind the antenna.** A conductive surface damps
+  the field and detunes the antenna. A cable tie is plastic; a bracket may
+  not be.
+- **Support from the antenna end, not the header end.** See the next
+  section: the board may stay clear of the surface at the left end, but the
+  coil end may not.
 
-### Sileysvaatimus koskee antennialuetta, ei koko alapintaa
+### The flatness requirement covers the antenna area, not the whole underside
 
-Tässä luki ensin ehdottomasti *"älä juota sileälle puolelle"*, ja se on liian
-tiukka. Oikea sääntö on kapeampi ja seuraa siitä mitä kytkentä oikeasti vaatii:
+This first said, absolutely, *"do not solder on the smooth side"*, and that
+is too strict. The correct rule is narrower and follows from what the
+coupling actually requires:
 
-> **Antennin kohdalla alapinnan on oltava sileä. Muualla ei ole väliä.**
+> **Under the antenna the underside has to be smooth. Elsewhere it does not
+> matter.**
 
-Kela on levyn oikea ~40 mm. Vasen kolmannes on yli 30 mm siitä, ja sinne tuleva
-juotosnysty **ei nosta antennia vaan kallistaa levyä** — puoli milliä
-neljänkymmenen millin matkalla on alle asteen.
+The coil is the board's right ~40 mm. The left third is more than 30 mm from
+it, and a solder blob there **does not lift the antenna but tilts the
+board** — half a millimetre over forty millimetres is less than a degree.
 
-**Mutta se pätee vain jos levy tukeutuu antennipäästä.** Jos kiinnitys painaa
-vasemmasta päästä, kallistus kääntyy toisin päin ja nostaa kelan irti
-mittarista — eli tuottaa täsmälleen sen vian jota vältetään. Nippuside tai
-teippi menee siis **antennin puolelle**, ja vasen pää saa jäädä irti.
+**But that only holds if the board is supported at the antenna end.** If the
+fixing presses at the left end, the tilt reverses and lifts the coil away
+from the meter — i.e. produces exactly the fault being avoided. The cable tie
+or tape therefore goes **on the antenna side**, and the left end may stay
+clear.
 
-Tästä seuraa käytännön etu: **PN5180:n pintapuolelle ei tarvitse koskea
-kolvilla kertaakaan.** Rima työnnetään reikiin ylhäältä mutta juotetaan
-altapäin — läpiladonnan normaali tapa — ja hyppylangat juotetaan altapäin
-samoin. Kaikki yhdeksän liitosta tehdään yhdeltä puolelta, ja ne mahtuvat
-vasempaan kolmannekseen.
+A practical benefit follows: **the PN5180's top side never needs to be
+touched with an iron.** The header is pushed into the holes from above but
+soldered from below — the normal through-hole way — and the jumper wires are
+soldered from below as well. All nine connections are made from one side,
+and they fit in the left third.
 
-### Yhdeksän liitosta, kahdeksantoista juotosta
+### Nine connections, eighteen joints
 
-Liitoksia on yhdeksän ja jokaisella on kaksi päätä: toinen PN5180:ssa, toinen
-C3:ssa. "C3:n omia liitoksia" ei ole olemassa — reitti vain on eri.
+There are nine connections and each has two ends: one on the PN5180, one on
+the C3. There is no such thing as "the C3's own connections" — only the
+route differs.
 
-| | Reitti | PN5180:n pää | C3:n pää |
+| | Route | PN5180 end | C3 end |
 |---|---|---|---|
-| `RST` `NSS` `MOSI` `BUSY` | rimanasta | alapuolelta | C3:n padiin |
-| `MISO` `SCK` `+5V` `3.3V` `GND` | lakkalanka 0,2–0,3 mm | alapuolelta | C3:n padiin |
+| `RST` `NSS` `MOSI` `BUSY` | header pin | from below | to the C3's pad |
+| `MISO` `SCK` `+5V` `3.3V` `GND` | enamelled wire 0.2–0.3 mm | from below | to the C3's pad |
 
-**Kokoonpanojärjestys on pakotettu**, koska C3:n alle ei pääse kolvilla sen
-jälkeen kun se on paikallaan:
+**The assembly order is forced**, because there is no getting an iron under
+the C3 once it is in place:
 
-1. Viisi lakkalankaa alapuolelta, vasempaan kolmannekseen
-2. Rima neljään padiin, juotos alapuolelta — teippaa rima kiinni ennen kääntöä
-3. C3 rimaan ylhäältä, lankojen toiset päät sen kauempaan riviin
-4. **100 µF `+5V`:n ja `GND`:n väliin**, PN5180:n viereen
-5. Vetokevennys liimalla tai nippusiteellä
+1. Five enamelled wires from below, into the left third
+2. The header into four pads, soldered from below — tape the header down
+   before turning the board over
+3. The C3 onto the header from above, the wires' other ends into its far row
+4. **100 µF between `+5V` and `GND`**, next to the PN5180
+5. Strain relief with glue or a cable tie
 
-Neljäs askel jäi pois ensimmäisestä kirjauksesta, vaikka se lukee tämän
-tiedoston omalla listalla asioista jotka menevät helposti väärin. Liitoksia
-on yhdeksän ja ne on helppo luetella; kondensaattori ei ole yksikään niistä
-ja putoaa siksi listalta. **Ja sen puuttuminen näyttää verkkovialta**, koska
-syötön notkahdus lähetyksen aikana tuottaa `4-Way Handshake Timeout`:in eikä
-mitään virtaan viittaavaa.
+The fourth step was missing from the first version of this list, even though
+it appears on this file's own list of things that easily go wrong. There are
+nine connections and they are easy to enumerate; the capacitor is not one of
+them and so falls off the list. **And its absence looks like a network
+fault**, because a supply dip during transmission produces a
+`4-Way Handshake Timeout` and nothing that points at power.
 
-Langat ennen rimaa siksi että riman nastat törröttävät alapuolella juuri siinä
-missä ohuita lankoja pitäisi reitittää.
+Wires before the header, because the header's pins protrude underneath
+exactly where the thin wires need to be routed.
 
-### Etsi kela katsomalla, älä pollaamalla — mutta käsin kokeilu on halpaa
+### Find the coil by looking, not by polling — but trying by hand is cheap
 
-Tässä luki hetken että paikkaa ei saa etsiä kokeilemalla lainkaan. **Se oli
-liian jyrkkä.** Ero on automaattisen ja käsin tehdyn välillä:
+This briefly said the position must not be found by trial at all. **That was
+too blunt.** The difference is between automatic and by hand:
 
-| | Krediittiä 1200 s/kk:sta |
+| | Credit out of 1200 s/month |
 |---|---|
-| Kymmenen käsin tehtyä koelukua | ~20–30 s, alle 3 % |
-| Pollausluuppi joka hakee osumaa | kuukausi minuuteissa |
+| Ten hand-triggered test reads | ~20–30 s, under 3 % |
+| A polling loop hunting for a hit | a month in minutes |
 
-Kokeileminen ei siis ole se mikä budjetin polttaa, vaan **silmukka joka jää
-päälle etsimisen ajaksi.** Kytke automaattipollaus päälle vasta kun kohdistus
-on löytynyt ja levy on kiinni pysyvästi.
+Trying is therefore not what burns the budget; **a loop left running while
+you search** is. Switch automatic polling on only once the alignment is
+found and the board is permanently fixed.
 
-Halvin järjestys:
+The cheapest order:
 
-1. **Paikanna kela katsomalla** — nolla krediittiä. Kannessa on usein merkintä
-   tai muotoiltu ympyrä; kela on tyypillisesti näytön lähellä muovin takana; ja
-   **W1:n FCC-hakemuksen sisäkuvat** ovat julkisia ja näyttävät sen suoraan. Se
-   on sama lähde josta upstream-tekijä sen paikansi.
-2. **Kiinnitä löysästi ja lue kerran.**
-3. **Jos ei osu, siirrä senttimetri.**
+1. **Locate the coil by looking** — zero credit. The cover often has a
+   marking or a moulded circle; the coil is typically near the display
+   behind the plastic; and **the W1's FCC filing's internal photographs**
+   are public and show it directly. That is the same source the upstream
+   author located it from.
+2. **Fix it loosely and read once.**
+3. **If it misses, move a centimetre.**
 
-Vasta kun luku onnistuu, kiinnitys tehdään pysyväksi ja pollaus kytketään
-päälle.
+Only once a read succeeds is the fixing made permanent and polling switched
+on.
 
-### Kytkentä
+### Wiring
 
-**Molemmat päät on todennettu lähteestä, ei päättelystä.**
+**Both ends are verified from a source, not from inference.**
 
-`JP1`:n järjestys luettiin **moduulin omasta silkkipainatuksesta** — repon
-juuren tuotekuvassa se on luettavissa, `JP1`-merkinnän päästä alkaen:
+`JP1`'s order was read from **the module's own silkscreen** — it is legible
+in the product photo at the repo root, starting from the `JP1` marking:
 
 ```
 +5V  3.3V  RST  NSS  MOSI  MISO  SCK  BUSY  GND  GPIO  IRQ  AUX  REQ
 ```
 
-Se vahvistettiin myös mittaamalla: nastat 1 ja 2 antoivat 5 V ja 3,3 V, eli
-laskusuunta on oikea.
+It was also confirmed by measurement: pins 1 and 2 gave 5 V and 3.3 V, so
+the counting direction is right.
 
-C3:n rivikartta on valmistajan nastakuvasta: rima USB-C:stä alkaen `GPIO5`
-`GPIO6` `GPIO7` `GPIO8` `GPIO9` `GPIO10` `GPIO20` `GPIO21`, kaukorivi `5V`
-`GND` `3V3` `GPIO4` `GPIO3` `GPIO2` `GPIO1` `GPIO0`.
+The C3's row map comes from the board vendor's pinout diagram: the header
+row from USB-C onwards is `GPIO5` `GPIO6` `GPIO7` `GPIO8` `GPIO9` `GPIO10`
+`GPIO20` `GPIO21`, the far row `5V` `GND` `3V3` `GPIO4` `GPIO3` `GPIO2`
+`GPIO1` `GPIO0`.
 
-**Upstream ei anna C3:lle nastoja lainkaan.** Sen taulukko on tavalliselle
-ESP32:lle (`SCLK 18`, `MISO 19`, `MOSI 23`, `NSS 14`, `BUSY 16`, `RST 17`)
-ja `board: esp32-c3-devkitm-1` on esimerkissä kommentoituna. Nastavalinta on
-siis vapaa, ja tämän projektin valinta perustuu C3:n vapaisiin nastoihin —
-ei siihen että se olisi jostain kopioitu.
+**Upstream gives no pins for the C3 at all.** Its table is for an ordinary
+ESP32 (`SCLK 18`, `MISO 19`, `MOSI 23`, `NSS 14`, `BUSY 16`, `RST 17`) and
+`board: esp32-c3-devkitm-1` is commented out in the example. The pin choice
+is therefore free, and this project's choice is based on the C3's free pins
+— not on having been copied from anywhere.
 
-Kaksi kuvaa, eri kysymykseen:
+Two diagrams, for different questions:
 
 | | |
 |---|---|
-| [`nfc-c3-mount.svg`](nfc-c3-mount.svg) | mihin C3 tulee levyn päällä, mikä on rimanasta ja mikä lakkalanka |
-| [`nfc-wiring.svg`](nfc-wiring.svg) | mikä signaali menee mihin nastaan, ilman mekaniikkaa |
+| [`nfc-c3-mount.svg`](nfc-c3-mount.svg) | where the C3 goes on the board, which connection is a header pin and which a wire |
+| [`nfc-wiring.svg`](nfc-wiring.svg) | which signal goes to which pin, without the mechanics |
 
-**Signaalikaaviossa oli asennon A jälkeen väärä nastakartta** — `RST` `NSS`
-`MOSI` `MISO` osoittivat vielä nastoihin `GPIO3` `GPIO7` `GPIO6` `GPIO5`, eli
-ensimmäiseen ehdotukseen. Se on korjattu. Kaksi kuvaa samasta kytkennästä on
-kaksi paikkaa jotka voivat erkaantua, ja tämä erkaantui heti — **alla oleva
-taulukko on se joka ratkaisee jos kuva on sen kanssa eri mieltä.**
+**The signal diagram had the wrong pin map after orientation A was fixed** —
+`RST` `NSS` `MOSI` `MISO` still pointed at `GPIO3` `GPIO7` `GPIO6` `GPIO5`,
+i.e. the first proposal. That is corrected. Two diagrams of the same wiring
+are two places that can diverge, and this one diverged immediately — **the
+table below is what decides if a diagram disagrees with it.**
 
-**Valittu asento on A: USB-C ylöspäin, UART vapaana.**
+**The chosen orientation is A: USB-C up, UART free.**
 
-| JP1 | C3 | Reitti |
+| JP1 | C3 | Route |
 |---|---|---|
-| `RST` | `GPIO1` | lakkalanka — oli `GPIO5`, padi rikki |
-| `NSS` | `GPIO0` | lakkalanka — oli `GPIO6`, padi rikki |
-| `MOSI` | `GPIO7` | rimanasta |
-| `BUSY` | `GPIO10` | rimanasta |
-| `MISO` | `GPIO3` | lakkalanka |
-| `SCK` | `GPIO4` | lakkalanka |
-| `+5V` | `5V` | lakkalanka |
-| `3.3V` | `3V3` | lakkalanka |
-| `GND` | `GND` | lakkalanka |
+| `RST` | `GPIO5` | header pin |
+| `NSS` | `GPIO6` | header pin |
+| `MOSI` | `GPIO7` | header pin |
+| `BUSY` | `GPIO10` | header pin |
+| `MISO` | `GPIO3` | enamelled wire |
+| `SCK` | `GPIO4` | enamelled wire |
+| `+5V` | `5V` | enamelled wire |
+| `3.3V` | `3V3` | enamelled wire |
+| `GND` | `GND` | enamelled wire |
 
-**Rimasta vedetään irti neljä nastaa** ennen asennusta: `GPIO8` ja `GPIO9` ovat
-strapping, `GPIO20` osuisi maahan ja `GPIO21` käyttämättömään padiin.
+**Four pins are pulled out of the header** before assembly: `GPIO8` and
+`GPIO9` are strapping pins, `GPIO20` would land on ground and `GPIO21` on an
+unused pad.
 
-Käytetyt nastat ovat `3, 4, 5, 6, 7, 10` — sama turvallinen kuusikko kuin
-alusta asti, vain eri signaaleille. Strapping `2, 8, 9`, USB `18/19` ja UART0
-`20/21` jäävät kaikki vapaiksi.
+The pins in use are `3, 4, 5, 6, 7, 10` — the same safe six as from the
+start, only for different signals. Strapping `2, 8, 9`, USB `18/19` and
+UART0 `20/21` all stay free.
 
-**Hylätty vaihtoehto B** olisi kääntänyt C3:n niin että USB-C osoittaa
-käyttämättömien padien suuntaan. Se maksaisi UART0:n, koska kääntö peilaa
-kaikki kahdeksan nastaa ja `GPIO20`/`GPIO21` päätyisivät `RST`:ksi ja
-`NSS`:ksi. USB CDC riittää lokiin, mutta sarjakonsoli on halvempi pitää kuin
-saada takaisin.
+**Do not use `GPIO20` or `GPIO21` as replacements** if a header pad turns
+out to be broken. They hang the boot at `Using HW SPI: SPI2_HOST` — see "And
+the cause was two dead pads in the C3". `GPIO1` and `GPIO0` on the far row
+work.
 
-**A:n hinta on että USB-C jää `+5V`- ja `3.3V`-padien yläpuolelle.**
-Asennuksessa se ei haittaa, koska langat juotetaan ennen C3:a — mutta niiden
-korjaaminen vaatii C3:n irrottamisen. Tee ne huolella kerralla.
+**Rejected alternative B** would have turned the C3 so that USB-C points
+towards the unused pads. That would cost UART0, because flipping mirrors all
+eight pins and `GPIO20`/`GPIO21` would end up as `RST` and `NSS`. USB CDC is
+enough for logging, but a serial console is cheaper to keep than to get
+back.
 
-### Vain SCK osuu silkkipainatukseen
+**A's price is that USB-C ends up above the `+5V` and `3.3V` pads.** During
+assembly that does not matter, because the wires are soldered before the C3
+— but repairing them requires removing the C3. Do them carefully in one go.
 
-C3:n silkki sanoo `GPIO5=MISO`, `GPIO6=MOSI`, `GPIO7=SS`. Tässä ne ovat `RST`,
-`NSS` ja `MOSI`. Ainoa osuma on `GPIO4=SCK`.
+### Only SCK matches the silkscreen
 
-Se on toiminnallisesti yhdentekevää — C3 reitittää SPI:n GPIO-matriisin läpi ja
-ESPHome ottaa nastat konfiguraatiosta — mutta **kirjoita kartta levyn kylkeen
-tussilla.** Kolmen kuukauden päästä silkki valehtelee kahdeksalla nastalla
-yhdeksästä.
+The C3's silkscreen says `GPIO5=MISO`, `GPIO6=MOSI`, `GPIO7=SS`. Here they
+are `RST`, `NSS` and `MOSI`. The only match is `GPIO4=SCK`.
 
+That is functionally irrelevant — the C3 routes SPI through the GPIO matrix
+and ESPHome takes the pins from the configuration — but **write the map on
+the side of the board with a marker.** In three months' time the silkscreen
+will be lying about eight pins out of nine.
 
+Four points that easily go wrong:
 
-Neljä kohtaa jotka menevät helposti väärin:
+- **Both supplies.** The transmitter side takes 5 V and peaks at hundreds of
+  milliamps in an RF burst; the logic is 3.3 V. 100 µF next to the module —
+  and **check that the SuperMini has a 5V pin**, not all clones do.
+- **BUSY is mandatory.** The PN5180 is not an ordinary SPI slave: after
+  every command one has to wait for BUSY to fall. Without it a read returns
+  rubbish rather than an error — again a fault that does not look like one.
+- **The whole module goes against the meter, and the C3 beside it.** The
+  board that arrived is single-piece, so the antenna cannot be placed apart
+  from the logic. SPI is a fast bus and does not tolerate long wires, so the
+  C3 has to be within 10–20 cm — i.e. it ends up at the meter too. That is
+  not a problem in this room, but it removes the flexibility a two-part
+  model would have given.
+- **The read distance is shorter than with a two-part module.** The
+  integrated coil is smaller than a separate credit-card-sized antenna
+  board, so aligning it to the meter's own coil is finer work. Allow time
+  for it the first time.
+- **Check the component's platform support before considering a D1 mini.**
+  On an ESP8266 three safe pins remain after SPI, which is just barely
+  enough — but `esphome_qalcosonicnfc`'s ESP8266 support is unverified and
+  should not be assumed.
 
-- **Molemmat jännitteet.** Lähetinpää ottaa 5 V ja piikittää satoja
-  milliampeereja RF-purskeessa; logiikka on 3,3 V. 100 µF moduulin viereen —
-  ja **tarkista että SuperMinissa on 5V-nasta**, kaikissa kloonoissa ei ole.
-- **BUSY on pakollinen.** PN5180 ei ole tavallinen SPI-orja: jokaisen komennon
-  jälkeen on odotettava BUSY:n laskua. Ilman sitä luku palauttaa roskaa eikä
-  virhettä — taas vika joka ei näytä vialta.
-- **Koko moduuli menee mittaria vasten, ja C3 sen viereen.** Saapunut levy on
-  yksiosainen, joten antennia ei voi sijoittaa erilleen logiikasta. SPI on
-  nopea väylä eikä siedä pitkiä johtoja, joten C3:n on oltava 10–20 cm:n
-  päässä — eli sekin päätyy mittarin luo. Se ei ole ongelma tässä tilassa,
-  mutta se poistaa sen joustavuuden jonka kaksiosainen malli olisi antanut.
-- **Lukuetäisyys on lyhyempi kuin kaksiosaisella.** Integroitu kierukka on
-  pienempi kuin erillinen luottokortin kokoinen antennilevy, joten kohdistus
-  mittarin omaan kelaan on tarkempaa työtä. Varaa siihen aikaa ensimmäisellä
-  kerralla.
-- **Tarkista komponentin alustatuki ennen kuin harkitset D1 miniä.** ESP8266:lla
-  SPI:n jälkeen jää kolme turvallista nastaa, mikä riittää täpärästi — mutta
-  `esphome_qalcosonicnfc`:n ESP8266-tuki on todentamatta, eikä sitä kannata
-  olettaa.
-
-## NFC on myös vaihtoehtoinen reitti koko projektille
+## NFC is also an alternative route for the whole project
 
 [esphome_qalcosonicnfc](https://github.com/dbmaxpayne/esphome_qalcosonicnfc)
-lukee W1:n NFC:llä PN5180-moduulilla ja tuo ESPHomeen kulutuksen, virtaaman,
-lämpötilat, paristotason ja virheliput. **Se ei tarvitse AES-avainta eikä
-lähetysikkunaa** — eli se ohittaa kerralla molemmat tämän projektin esteet.
+reads the W1 over NFC with a PN5180 module and brings consumption, flow,
+temperatures, battery level and error flags into ESPHome. **It needs neither
+an AES key nor a transmission window** — so it defeats both of this
+project's obstacles at once.
 
-Hinta on uusi moduuli ja se että vastaanotin on vietävä mittarin viereen, mikä
-kaataa tämän tiedoston oman perustelun siitä että wM-Bus antaa valita paikan
-vapaasti. Se on siis eri projekti eikä korjaus tähän, mutta se on olemassa jos
-avain ei koskaan tule.
+The price is a new module and the fact that the receiver has to go next to
+the meter, which overturns this file's own argument that wM-Bus lets you
+choose the location freely. It is therefore a different project rather than
+a fix to this one, but it exists if
+the key never arrives.
 
 ---
 
-# Varsinainen ESPHome-konfiguraatio
+# The actual ESPHome configuration
 
-> **Tämä lohko on väärin kahdella tavalla ja säilytetään varoituksena.** Se on
-> `version_4`:n skeema, ja sen `type: axioma` ei ole olemassa ajurina lainkaan —
-> oikea on `q400`. Kenttien nimet `water_m3` ja `flow_m3h` ovat samasta
-> keksityn tuntuisesta perheestä eikä niitä ole nähty missään tulosteessa.
+> **This block is wrong in two ways and is kept as a warning.** It is
+> `version_4`'s schema, and its `type: axioma` does not exist as a driver at
+> all — the right one is `q400`. The field names `water_m3` and `flow_m3h`
+> are from the same invented-sounding family and have not been seen in any
+> output.
 >
-> Ajettava muoto on [`axioma.effection.yaml`](axioma.effection.yaml):ssa
-> kommentoituna ja odottaa Meter ID:tä ja avainta.
+> The form that runs is commented out in
+> [`axioma.effection.yaml`](axioma.effection.yaml) and waits for the Meter
+> ID and the key.
 
 ```yaml
 sensor:
@@ -1621,43 +1698,44 @@ sensor:
     type: axioma
 
     water_m3:
-      name: "Vesimittari"
+      name: "Water meter"
 
     flow_m3h:
-      name: "Virtaus"
+      name: "Flow"
 
     temperature_c:
-      name: "Veden lämpötila"
+      name: "Water temperature"
 ```
 
 ---
 
-# GitHub-projektit
+# GitHub projects
 
-## ESPHome Wireless M-Bus komponentti
+## The ESPHome Wireless M-Bus component
 
 https://github.com/SzczepanLeon/esphome-components
 
-### Versiot ovat kaksi sukupolvea, ja tämä projekti sekoitti ne
+### The versions are two generations, and this project mixed them up
 
-Tarkistettu lähteestä 6.9.2026. Kaksi yhteensopimatonta skeemaa on yhtä aikaa
-elossa, ja haaran nimi ei kerro kumpi on kumpi:
+Checked from the source on 6.9.2026. Two incompatible schemas are alive at
+the same time, and the branch name does not say which is which:
 
-| | Viimeisin | Skeema |
+| | Latest | Schema |
 |---|---|---|
-| `version_4` | 4.1.4, helmikuu 2025 | yksi `wmbus:`-lohko, `gdo0_pin` + `gdo2_pin`, `sensor: - platform: wmbus` |
-| **5.x** | **5.1.6, elokuu 2025** | `spi:` + `wmbus_radio:` + `wmbus_meter:`, `irq_pin`, anturit omalla alustallaan |
+| `version_4` | 4.1.4, February 2025 | one `wmbus:` block, `gdo0_pin` + `gdo2_pin`, `sensor: - platform: wmbus` |
+| **5.x** | **5.1.6, August 2025** | `spi:` + `wmbus_radio:` + `wmbus_meter:`, `irq_pin`, sensors on their own platform |
 
-5.0.0:n julkaisuteksti on `Full refactor/rewrite by Kuba`, mikä selittää miksi
-mikään ei siirry sellaisenaan.
+5.0.0's release note is `Full refactor/rewrite by Kuba`, which explains why
+nothing carries over as it stands.
 
-**YAML oli kiinnitetty `@version_4`:ään ja kirjoitti 5.x:n skeemaa.** Se ei
-olisi kääntynyt: `wmbus_radio` ei ole olemassa nelosessa. Virhe ei ollut
-skeeman valinnassa vaan siinä että versio kiinnitettiin lukematta mitä siihen
-kuuluu — ja tiedoston oma kommentti kehui kiinnittämistä samalla rivillä.
+**The YAML was pinned to `@version_4` and wrote 5.x's schema.** It would not
+have built: `wmbus_radio` does not exist in the four series. The error was
+not in the choice of schema but in pinning a version without reading what
+belongs to it — and the file's own comment praised the pinning on the same
+line.
 
-**Korjaukseksi valittiin julkaisutagi `@5.1.6`, ja se oli väärin sekin.**
-Validointi kaatoi sen heti:
+**The release tag `@5.1.6` was chosen as the fix, and that was wrong too.**
+Validation rejected it immediately:
 
 ```
 Unknown value 'CC1101', valid options are 'SX1276'.
@@ -1665,52 +1743,53 @@ Unknown value 'CC1101', valid options are 'SX1276'.
 [frequency] is an invalid option for [wmbus_radio].
 ```
 
-**Viiden sarja ei tunne CC1101:tä.** Uudelleenkirjoitus lähti liikkeelle
-SX1276:sta, ja CC1101 tuli takaisin vasta sen jälkeen — päähaaraan, jota ei ole
-koskaan julkaistu. Yhtään julkaisua jossa olisi sekä CC1101 että nykyskeema ei
-siis ole olemassa:
+**The five series does not know the CC1101.** The rewrite started from the
+SX1276, and CC1101 came back only afterwards — into the main branch, which
+has never been released. So no release exists with both CC1101 and the
+current schema:
 
-| | CC1101 | Nykyskeema |
+| | CC1101 | Current schema |
 |---|---|---|
-| `version_4` 4.1.4, 2/2025 | kyllä | ei |
-| `5.1.6`, 8/2025 | **ei** | kyllä |
-| `main` | kyllä | kyllä |
+| `version_4` 4.1.4, 2/2025 | yes | no |
+| `5.1.6`, 8/2025 | **no** | yes |
+| `main` | yes | yes |
 
-**Kiinnitys on siksi commit-tunniste**,
-`7eae51c8fcefe854623b029b27bbe42e11c103ea`, päähaaran kärki 20.8.2026. Se on
-ainoa muoto joka antaa molemmat: haara liikkuu, tagissa ei ole CC1101:tä,
-commit ei voi muuttua. Vaihtokauppana koodi on julkaisematonta — se on
-tietoinen valinta, ja vaihtoehto olisi `version_4`:n 19 kuukautta vanha
-julkaisu vanhalla skeemalla.
+**The pin is therefore a commit hash**,
+`7eae51c8fcefe854623b029b27bbe42e11c103ea`, the tip of main on 20.8.2026. It
+is the only form that gives both: a branch moves, a tag has no CC1101, a
+commit cannot change. The trade is that the code is unreleased — a conscious
+choice, and the alternative would be `version_4`'s 19-month-old release with
+the old schema.
 
-`refresh: never` kuuluu tähän: kiinteälle commitille ei ole mitään
-päivitettävää.
+`refresh: never` belongs with this: a fixed commit has nothing to update.
 
-### Kolme kierrosta, ja opetus on lähdekritiikki
+### Three rounds, and the lesson is source criticism
 
-Tämä ratkesi vasta kolmannella yrityksellä, ja joka kierros kaatui samaan
-asiaan: **README:hen luotettiin lähteenä.**
+This was only settled on the third attempt, and every round fell over the
+same thing: **the README was trusted as a source.**
 
-| | Uskottiin | Todellisuus |
+| | Believed | Reality |
 |---|---|---|
-| 1 | `@version_4` + uusi skeema | eri sukupolvet, `wmbus_radio` ei ole nelosessa |
-| 2 | `components: [wmbus_radio, wmbus_meter]` | `wmbus_common` on riippuvuus jota ei mainita |
-| 3 | `@5.1.6` osaa CC1101:n koska README sanoo | README on päähaaran, tagi ei ole |
+| 1 | `@version_4` + the new schema | different generations, `wmbus_radio` is not in the four series |
+| 2 | `components: [wmbus_radio, wmbus_meter]` | `wmbus_common` is a dependency that is not mentioned |
+| 3 | `@5.1.6` knows CC1101 because the README says so | the README is main's, the tag is not |
 
-Kolmas on niistä ikävin: päähaaran README kuvaa päähaaran koodia, ja se luettiin
-todisteena tagista. **Dokumentaatio kuvaa aina sitä haaraa jossa se on.**
+The third is the nastiest: main's README describes main's code, and it was
+read as evidence about a tag. **Documentation always describes the branch it
+is in.**
 
-Ratkaisu tuli `wmbus_radio/__init__.py`:stä: radiotyypit löydetään
-`transceiver_*.cpp`-tiedostoista, `reset_pin` on valinnainen ja `frequency` on
-CC1101:n oma. Lähdekoodi kertoi sekunnissa sen mitä kolme README-lukemaa ei.
+The answer came from `wmbus_radio/__init__.py`: radio types are discovered
+from the `transceiver_*.cpp` files, `reset_pin` is optional and `frequency`
+belongs to the CC1101. The source said in a second what three readings of
+the README did not.
 
-Sama kuvio kuin stiebelin `0x8000`-sentinelleillä ja `VD`-lyhenteellä: **taulukko
-on hypoteesi, laitteen oma sanoma on todiste.**
+The same pattern as stiebel's `0x8000` sentinels and the `VD` abbreviation:
+**a table is a hypothesis, the device's own utterance is evidence.**
 
-### Paljaan levyn boottiloki, 6.9.2026
+### Bare-board boot log, 6.9.2026
 
-Fläshätty ilman CC1101:tä tarkoituksella. Tämä on vertailukohta jota ei saa
-myöhemmin takaisin, ja se tuotti yhden odottamattoman tuloksen.
+Flashed without the CC1101 on purpose. This is a baseline that cannot be
+recovered later, and it produced one unexpected result.
 
 ```
 [C][wmbus.transceiver:157]: Transceiver: CC1101
@@ -1720,151 +1799,162 @@ myöhemmin takaisin, ja se tuotti yhden odottamattoman tuloksen.
 [C][wmbus_common:015]:   Loaded drivers:
 ```
 
-**Mikään ei kerro että radiota ei ole kiinni.** Komponentti tulostaa
-kokoonpanonsa boottissa riippumatta siitä vastaako piiri SPI:llä, eikä
-mitään vikailmoitusta tule.
+**Nothing says the radio is not attached.** The component prints its
+configuration at boot regardless of whether the chip answers over SPI, and
+no error is produced.
 
-Tämä on eri kuin stiebelissä, jossa MCP2515:n puuttuminen tuottaa rivin
-`canbus is marked FAILED: unspecified` ja kytkentävian tunnistaa ennen kuin
-väylään koskee. Kokoonpanotuloste ei siis erottele mitään.
+This differs from stiebel, where a missing MCP2515 produces the line
+`canbus is marked FAILED: unspecified` and a wiring fault is recognised
+before the bus is touched. The configuration dump therefore distinguishes
+nothing.
 
-**Mutta tässä luki että kytkennän oikeellisuus ei ole todettavissa lokista, ja
-se on väärin.** Tarkistus on olemassa, kahdessa kerroksessa piilossa:
+**But this used to say that the correctness of the wiring cannot be
+established from the log, and that is wrong.** The check exists, hidden two
+layers down:
 
 ```
 [VV][CC1101]: part: 00, version: XX
 ```
 
-Se tulostuu tagilla `CC1101` **VERY_VERBOSE-tasolla setup-vaiheessa**, ja
-`version`-rekisteri on se ainoa todiste SPI:stä päästä päähän: **arvon pitää
-olla `04` tai `14`.** Osanumeroon ei voi luottaa, koska ajurin oma tarkistus
-kaatuu vain jos se on jotain muuta kuin nolla — ja kuollut väylä lukee nollaa.
-`Invalid part number` ei siis tule koskaan väärästä kytkennästä.
+It is printed under the tag `CC1101` **at VERY_VERBOSE level during setup**,
+and the `version` register is the one piece of end-to-end evidence about
+SPI: **the value must be `04` or `14`.** The part number cannot be trusted,
+because the driver's own check fails only if it is something other than zero
+— and a dead bus reads zero. `Invalid part number` therefore never comes
+from wrong wiring.
 
-Kaksi syytä miksi se on jäänyt näkemättä:
+Two reasons it has gone unseen:
 
-- **Taso on DEBUG**, ja rivi on VV:llä. VV:n voi nostaa ja SPI-tulvan voi
-  vaientaa tagikohtaisesti `logs:`-lohkossa — aiempi kommentti hylkäsi VV:n
-  tulvan takia eikä kokeillut suodatinta. YAMLissa on ohje siihen, mutta taso
-  on tarkoituksella DEBUG: VV maksaa megatavun lokia tunnissa ja CPU-kuormaa
-  eikä anna vastineeksi mitään ilman sarjaporttia.
-- **API-lokivirta ei näe setup-vaihetta.** `esphome logs` liittyy vasta kun
-  laite on verkossa, joten radion setup, `Receiver task created` ja mahdollinen
-  paniikin backtrace ovat jo menneet. Nämä rivit näkee vain **sarjaportista.**
+- **The level is DEBUG**, and the line is at VV. VV can be raised and the
+  SPI flood silenced per tag in the `logs:` block — an earlier comment
+  rejected VV because of the flood and did not try the filter. The YAML has
+  instructions for it, but the level is deliberately DEBUG: VV costs a
+  megabyte of log per hour and CPU load, and gives nothing in return without
+  a serial port.
+- **The API log stream does not see setup.** `esphome logs` attaches only
+  once the device is on the network, so the radio's setup,
+  `Receiver task created` and any panic backtrace have already passed. These
+  lines are visible only **from the serial port.**
 
-Seuraus vianetsintään: jos kehyksiä ei tule, **loki erottaa syyt toisistaan
-vasta kun se luetaan sarjaportista VV-tasolla.** Ilman sitä väärä kytkentä,
-väärä taajuus, hiljainen mittari ja kehystä kokoamaton vastaanotin näyttävät
-lokissa samalta — nollalta.
+The consequence for troubleshooting: if no frames arrive, **the log
+separates the causes only when it is read from the serial port at VV
+level.** Without that, wrong wiring, the wrong frequency, a silent meter and
+a receiver that does not assemble frames all look the same in the log — like
+zero.
 
-Boottilokin vertaaminen kytkennän jälkeen tähän kertoo kuitenkin yhden asian:
-**jos tulosteeseen ilmestyy uusia rivejä radion kanssa, komponentti kysyy
-piiriltä jotain.** Jos loki on identtinen, se ei kysy — ja silloin yllä oleva
-päättely pätee sellaisenaan.
+Comparing the boot log after wiring against this does say one thing, though:
+**if new lines appear with the radio attached, the component is asking the
+chip something.** If the log is identical, it is not asking — and then the
+reasoning above holds as it stands.
 
-`Loaded drivers:` on tyhjä koska mittarilohkoa ei ole. Se tarkoittaa että
-58,3 %:n flash-luku on **ilman ajureita**.
+`Loaded drivers:` is empty because there is no meter block. That means the
+58.3 % flash figure is **without drivers**.
 
-Versio raportoituu **`v5.1.7`**, eli kiinnitetty commit on yhtä julkaisua
-uudempi kuin `5.1.6`. Se vahvistaa numerolla mitä "julkaisematon koodi"
-tarkoittaa tässä.
+The version reports as **`v5.1.7`**, so the pinned commit is one release
+newer than `5.1.6`. That puts a number on what "unreleased code" means here.
 
-WiFi työpöydällä **−56 dBm**, verkko `IoT`, `axioma.local` /
-192.168.1.119. Se on hyvä lukema, mutta se on mitattu pöydällä — asennuspaikan
-lukema on eri asia ja se on se joka ratkaisee.
+Wi-Fi on the desk **−56 dBm**, network `IoT`, `axioma.local` /
+192.168.1.119. That is a good reading, but it was measured on the desk — the
+reading at the installation site is a different matter and it is the one
+that decides.
 
-Sivuhuomio joka ei vaadi toimia: ESPHome ehdottaa `sram1_as_iram: true`
-(+40 kt IRAMia). IRAM on 60,6 %:ssa, joten tilaa on — merkitty siltä varalta
-että se joskus loppuu.
+A side note requiring no action: ESPHome suggests `sram1_as_iram: true`
+(+40 kB of IRAM). IRAM is at 60.6 %, so there is room — noted in case it
+ever runs out.
 
-### Validoitu
+### Validated
 
 ```
 podman exec esphome esphome config /config/axioma.effection.yaml
 INFO Configuration is valid!
 ```
 
-ESPHome 2026.8.2. Tuloste vahvistaa `radio_type: CC1101`,
-`frequency: 868950000.0` ja `type: esp-idf` — **kehysvaraus jota tässä
-tiedostossa pidettiin auki on tarpeeton**, ESPHome valitsee esp-idf:n (5.5.5)
-oletuksena.
+ESPHome 2026.8.2. The output confirms `radio_type: CC1101`,
+`frequency: 868950000.0` and `type: esp-idf` — **the framework reservation
+held open in this file is unnecessary**, ESPHome picks esp-idf (5.5.5) by
+default.
 
-`GPIO5 is a strapping PIN` -varoitus tulee jokaisella ajolla eikä vaadi
-toimia. Se on juuri se nasta joka on yllä perusteltu turvalliseksi.
+The `GPIO5 is a strapping PIN` warning appears on every run and needs no
+action. It is exactly the pin argued safe above.
 
-**Tämä ei tarkoita että radio toimii.** Validointi tarkoittaa että ESPHome
-suostuu kääntämään; sama todistusvoima kaatoi stiebelissä kaksi oletusta
-peräkkäin. Rautaa ei ole kytketty.
+**This does not mean the radio works.** Validation means ESPHome agrees to
+build; the same evidential weight overturned two assumptions in a row in
+stiebel. No hardware was connected.
 
-### Ajuri on `q400`
+### The driver is `q400`
 
-Mittarin valmistajan nimeä ei ole ajurina. Qalcosonic W1 tunnistuu
-automaattisesti huonosti, mutta `q400` lukee sen; komponentti tarjoaa ajurit
-suoraan wmbusmetersista.
+There is no driver by the meter manufacturer's name. The Qalcosonic W1
+auto-detects poorly, but `q400` reads it; the component offers the drivers
+straight from wmbusmeters.
 
-Julkaistussa `q400`-tulosteessa näkyvät kentät: `total_m3`,
-`consumption_at_set_date_m3`, `meter_datetime`, `set_datetime`, `status` ja
-`rssi_dbm`. **Lämpötilaa ei ole siinä listassa**, vaikka W1 sellaisen mittaa ja
-vaikka tämä tiedosto on luvannut `Veden lämpötila` -entiteetin. Se on nyt
-kommentoitu kaksinkertaisesti ja odottaa ensimmäistä purettua telegrammia —
-mikä on sama sääntö kuin Meter ID:llä: **laitteen oma sanoma voittaa
-taulukon.**
+The published `q400` output shows the fields: `total_m3`,
+`consumption_at_set_date_m3`, `meter_datetime`, `set_datetime`, `status` and
+`rssi_dbm`. **Temperature is not in that list**, even though the W1 measures
+one and even though this file has promised a `Water temperature` entity. It
+is now commented out twice over and waits for the first decoded telegram —
+which is the same rule as with the Meter ID: **the device's own utterance
+beats the table.**
 
-### Alustatuki
+### Platform support
 
-**ESP8266:ta ei tueta**, ja käännös kertoo miksi se ei ole mielivaltainen
-rajaus. Valmis image on **1 069 167 tavua** — yli megatavun, ja se on
-*kuunteleva* konfiguraatio ilman yhtään mittarianturia:
+**The ESP8266 is not supported**, and the build says why that is not an
+arbitrary restriction. The finished image is **1,069,167 bytes** — over a
+megabyte, and that is a *listening* configuration with no meter sensors at
+all:
 
 ```
 RAM:   [===       ]  27.3% (used 49260 bytes from 180736 bytes)
 Flash: [======    ]  58.3% (used 1069167 bytes from 1835008 bytes)
 ```
 
-D1 minin sovelluspartitio on OTA:n kanssa noin megatavu, eli tämä ei
-yksinkertaisesti mahtuisi. Kysymys jota tässä repossa pohdittiin muistin ja
-nastojen kannalta ratkeaa siis kokoon, ja ratkeaa selvästi.
+The D1 mini's application partition with OTA is about a megabyte, so this
+simply would not fit. The question considered in this repo in terms of
+memory and pins is therefore settled by size, and settled clearly.
 
-**Vertailu repon muihin on paikallaan, koska tämä on selvästi raskain:**
+**A comparison with the repo's others is in order, because this is clearly
+the heaviest:**
 
 | | Flash | RAM |
 |---|---|---|
-| stiebel, vaihe 1 | 45,2 % | 40,0 % |
-| aidon | 46,8 % | 53,3 % |
-| **axioma** | **58,3 %** | **27,3 %** |
+| stiebel, stage 1 | 45.2 % | 40.0 % |
+| aidon | 46.8 % | 53.3 % |
+| **axioma** | **58.3 %** | **27.3 %** |
 
-Ero tulee wmbusmetersin ajurikoodista. RAM on väljin koko repossa, koska
-ESP32:ssa sitä on enemmän — muistista ei siis tule ongelmaa, flashista voisi.
-Jäljellä on noin 765 kt, ja mittarilohko lisää siihen vielä `q400`-ajurin. Se
-mahtuu, mutta **jos joskus houkuttaa kääntää kaikki ajurit mukaan, tämä on se
-luku jota vasten sitä katsoo.**
+The difference comes from wmbusmeters' driver code. RAM is the roomiest in
+the whole repo, because the ESP32 has more of it — memory will not become a
+problem, flash could. About 765 kB remain, and the meter block will add the
+`q400` driver to that. It fits, but **if compiling all the drivers in ever
+becomes tempting, this is the figure to look at.**
 
-**ESP32-C3 on nimenomaisesti testattu** — päähaaran README mainitsee
-`ESP32-C3 Super Mini`. Se poistaa toisen tässä repossa auki olleen
-kysymyksen: jos levy joskus vaihtuu C3:een, komponentti ei ole este.
+**The ESP32-C3 is explicitly tested** — main's README mentions
+`ESP32-C3 Super Mini`. That settles another question that was open in this
+repo: if the board ever changes to a C3, the component is not an obstacle.
 
-**Kehysvalinta on todentamatta.** Esimerkit käyttävät `esp-idf`:ää eikä tätä
-ole kokeiltu Arduinolla. Jos käännös kaatuu johonkin muuhun kuin skeemaan, se
-on ensimmäinen asia jota kannattaa vaihtaa.
+**The framework choice is unverified.** The examples use `esp-idf` and this
+has not been tried with Arduino. If the build fails on something other than
+the schema, that is the first thing worth changing.
 
 ---
 
-# Lähteet
+# Sources
 
-Repon tavan mukaan linkitetty eikä kopioitu.
+Linked rather than copied, per the repo's convention.
 
 - [StudioPieters — CC1101 868MHz SPI RF Module, Complete Guide](https://www.studiopieters.nl/cc1101-868mhz-spi-rf-module-complete-guide/)
-  — piirros tästä nimenomaisesta moduulista nastanumeroineen, ja ESP32:n
-  kytkentätaulukko joka vastaa tämän projektin omaa nastasta nastaan
+  — a drawing of this exact module with pin numbers, and an ESP32 wiring
+  table matching this project's own pin for pin
 - [Cirkit Designer — CC1101 Module](https://docs.cirkitdesigner.com/component/c132ba5f-b3e5-4906-a71e-12913dd93300/cc1101-module)
-  — yleinen 10-nastainen kuvaus. **Ei päde tähän levyyn**, ja se on tässä
-  esimerkkinä siitä miksi lähde pitää tarkistaa kuvaa vasten
+  — a generic 10-pin description. **Does not apply to this board**, and it
+  is here as an example of why a source has to be checked against the
+  photograph
 - [SzczepanLeon/esphome-components](https://github.com/SzczepanLeon/esphome-components)
-  — käytetty ESPHome-komponentti
-- [wmbusmeters](https://github.com/wmbusmeters/wmbusmeters) — ajurit, joista
-  `q400` lukee Qalcosonic W1:n
+  — the ESPHome component used
+- [wmbusmeters](https://github.com/wmbusmeters/wmbusmeters) — the drivers,
+  of which `q400` reads the Qalcosonic W1
+- [dbmaxpayne/esphome_qalcosonicnfc](https://github.com/dbmaxpayne/esphome_qalcosonicnfc)
+  — the NFC component, pinned to commit `bed6773`
 
-# Hyödyllisiä hakusanoja
+# Useful search terms
 
 ```
 ESP32 CC1101 ESPHome wmbus
@@ -1876,62 +1966,76 @@ SzczepanLeon esphome-components
 
 ---
 
-# Vianetsintä
+# Troubleshooting
 
-## Ei dataa
+## No data
 
-Tarkista:
+Check:
 
-- antenni kiinni
-- 868 MHz antenni
-- SPI-kytkennät
-- 3.3V käyttöjännite
-- oikea GPIO-määritys
-
----
-
-## Boot-loop
-
-Yleensä:
-
-- GDO0 väärässä pinnissä
-- CS väärässä pinnissä
+- the antenna is attached
+- it is an 868 MHz antenna
+- the SPI wiring
+- the 3.3 V supply
+- the GPIO assignments
 
 ---
 
-## Huono vastaanotto
+## Boot loop
 
-- antenni liian lähellä metallia
-- pitkä etäisyys mittariin
-- huono antenni
+Usually:
 
----
-
-# Seuraavat vaiheet
-
-Rauta on kytketty ja komponentti kääntyy, joten jäljellä on sen selvittäminen
-miksi kehyksiä ei tule. Järjestys on halvin ensin, ja kolme ensimmäistä eivät
-vaadi keneltäkään mitään:
-
-1. **Kuuntele 868,95 MHz arkena klo 6–18.** Oletusaikataulun sisällä, koska
-   molemmat aiemmat mittaukset osuivat sen ulkopuolelle tai väärälle
-   taajuudelle. Tämä on koko selvityksen ratkaisevin ja halvin testi.
-2. **Todenna SPI sarjaportista VV-tasolla.** Etsi `[VV][CC1101]: part: 00,
-   version: XX` ja vaadi `version` = `04` tai `14`. Samalla ajolla näkee
-   setup-vaiheen rivit joita API-lokivirta ei näytä.
-3. **Laske FIFO-kynnys paikallisessa työkopiossa:** `FIFOTHR` arvoon `0x00`.
-   Testaa hypoteesin 3 johtavan epäilyn, eikä vaadi keneltäkään mitään.
-4. **Lue mittarin konfiguraatio NFC:llä** — radiotila, moodi ja aikataulumaskit.
-   Tämä nousi kolmannelta neljännelle, koska sovellusreitti on kiinni: ks.
-   "Mittarin oma konfiguraatio on luettavissa NFC:llä".
-5. **Kysy vesilaitokselta** radiotila, **moodi** ja AES-128-avain. Käynnistä
-   tämä rinnalla heti, koska siihen menee kalenteriaikaa.
-6. Pura ensimmäinen telegrammi ja varmista Meter ID sekä `q400`:n kenttänimet
-   siitä, ei taulukosta.
-7. Lisää mittari Home Assistantiin.
+- GDO0 on the wrong pin
+- CS on the wrong pin
 
 ---
 
-# Huomio
+## Poor reception
 
-Axioma Qalcosonic W1 lähettää yleensä noin **16 sekunnin välein**, joten ensimmäistä telegrammia voi joutua odottamaan hetken.
+- the antenna too close to metal
+- a long distance to the meter
+- a poor antenna
+
+---
+
+# Next steps
+
+**NFC is the primary route now**, because it depends on neither of the radio
+side's obstacles. The radio work resumes only if NFC says wM-Bus is on.
+
+1. **Transfer the wiring to the C3 that passed the pin test**, with `RST`
+   and `NSS` back on `GPIO5` and `GPIO6`
+2. Flash [`axioma-nfc.yaml`](axioma-nfc.yaml) and look for
+   `[D][PN5180:185]: Register value=` — the first proof that SPI answers end
+   to end
+3. If it still does not answer, the module is the only suspect left
+4. **Locate the meter's coil by looking**, fix the board loosely, read once
+5. **Measure the duration of one read** and derive the polling interval from
+   it with a factor of 2–3
+6. **Read the radio state, mode and schedule masks from the meter** — they
+   answer what the radio node has not answered in days
+7. **Ask the water utility** for the radio state, the **mode** and the
+   AES-128 key. Start this in parallel immediately, because it takes
+   calendar time
+8. Decode the first telegram and confirm the Meter ID and `q400`'s field
+   names from it, not from a table
+9. Add the meter to Home Assistant
+
+The radio side's own remaining steps, if the meter turns out to transmit
+after all:
+
+- **Listen on 868.95 MHz on a weekday between 06:00 and 18:00.** Inside the
+  default schedule, because both earlier measurements fell outside it or on
+  the wrong frequency.
+- **Verify SPI from the serial port at VV level.** Look for
+  `[VV][CC1101]: part: 00, version: XX` and require `version` = `04` or
+  `14`. The same run shows the setup lines the API log stream does not.
+- **Lower the FIFO threshold in a local working copy:** `FIFOTHR` to `0x00`.
+  This tests hypothesis 3's leading suspicion and requires nothing from
+  anyone.
+
+---
+
+# Note
+
+The Axioma Qalcosonic W1 normally transmits about every **16 seconds**, so
+the first telegram may take a moment.
