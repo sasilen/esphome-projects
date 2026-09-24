@@ -1521,6 +1521,8 @@ and not this geometry.
 | The hotspot's security mode | `WPA2` and `WPA3` both tried, no difference — PMF and mixed mode are out |
 | The PN5180 itself | answers, initialises, drives the RF field, issues inventories |
 | A static IP | tried, no change — and it **cannot** help: it removes DHCP, which is downstream of the handshake that fails |
+| Bulk capacitance | a 330 µF was fitted on the previous assembly **specifically to test this symptom** and did not help — owner's report. It is **not** on the current assembly |
+| The supply-dip mechanism as a whole | four ways: a different charger, `output_power`, supply shorts measured open, and the capacitor above |
 
 **Two explanations were reached and both were retracted:** that the PN5180's
 ground plane detunes the C3's antenna (killed by the 12:29 success with the
@@ -1733,6 +1735,53 @@ hotspot.**
 **Earlier bare-board tests were run against the home network, not this
 one**, so this is a new measurement rather than a repeat. It is also the
 last one available without a soldering iron.
+
+#### Retracted: lifting the module's supplies is not worth two joints
+
+This file proposed lifting the module's `+5V` and `3.3V` while leaving it
+physically in place, as the experiment that separates an electrical cause
+from an RF one. **It is withdrawn**, because the branch it tests is closed.
+
+The supply-dip mechanism has now been excluded four separate ways: a
+different charger, `output_power: 8.5dB`, supply shorts measured open
+repeatedly, and — the one that settles it — **a bulk capacitor fitted on the
+previous assembly for exactly this symptom, which did not help.**
+
+Two further arguments point the same way. **The module is idle throughout
+every failure**: `Set RF OFF` precedes the Wi-Fi attempts, SPI is quiet, and
+the next read cycle is fifteen minutes away. An idle PN5180 draws a few
+milliamps, so there is no load to remove. And the test would not have been
+clean anyway — an unpowered chip whose SPI lines are still driven takes
+current backwards through its I/O ESD diodes.
+
+**The expected result was "no change", and a measurement whose expected
+result is already known is not worth the risk to a working assembly.**
+
+One bookkeeping correction that came out of this: this file said "the
+capacitor is now fitted". **That was the first assembly.** It did not move
+across when the wiring was transferred to the second C3, so the current
+build has no bulk capacitance — which is a deviation from the assembly
+instructions above, even though it is not the cause.
+
+#### What is left, and what it costs
+
+| | Cost | Branch |
+|---|---|---|
+| **Re-dress the enamelled wires away from the C3's antenna end** | free, reversible | RF |
+| Move the C3 off the module, 10–15 cm of wire | ~18 joints | RF |
+| A board whose antenna is not over the module (XIAO C3, u.FL) | a board + the same joints | RF |
+| An ESP8266 host | 9 joints, three spare pins, no margin | the Wi-Fi stack itself |
+
+**Only the first is free**, and it is the only one that addresses the single
+unexplained point in the timeline: the assembly worked at 12:29 and never
+again after a trip to the meter. The geometry did not change, so something
+physical did — and wires are what move. A quarter wave at 2.4 GHz is 3.1 cm,
+which is the length of these wires; one lying across the antenna end is a
+parasitic element that degrades transmission while leaving reception
+intact.
+
+That is a hypothesis, not a diagnosis. But it is free, and after it there
+are no free moves left.
 
 #### It does not have to be solved
 
