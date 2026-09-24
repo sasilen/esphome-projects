@@ -1809,6 +1809,70 @@ meter, and **`JohnMcLear/esphome_pn5180`** and
 **`bluenazgul/esphome_pn5180_tag_reader`** are generic PN5180 components for
 ESPHome. None of them is closer to this build than kosla-dev's.
 
+#### A third build, and every working one keeps the radio off the module
+
+**[Wolfrax/esp32_watermeter](https://github.com/Wolfrax/esp32_watermeter)**
+is a different meter — a Sagemcom Siconia WM20-L with an `ST25DV04K-I` tag —
+but the same chip and the same protocol, and it is in production and
+confirmed end to end. It is not an ESPHome project at all: bare ESP-IDF with
+its own `wifi.c`, a ported PN5180/ISO 15693 driver, and MQTT to a broker.
+Its author considered ESPHome and chose against it.
+
+What it contributes here is mechanical. **The ESP is an ESP32-C6-DevKitC-1
+on the end of a ribbon cable**, colour-coded per pin, with the PN5180 a
+separate board. Nothing is stacked.
+
+That completes a pattern worth stating plainly:
+
+| Build | The radio relative to the module | Works |
+|---|---|---|
+| kosla-dev | u.FL, antenna on a lead | yes |
+| Wolfrax | its own board, on a cable | yes |
+| **here** | **PCB antenna ~6 mm above the module** | no |
+
+**This is not evidence for the antenna hypothesis.** That one fell to
+measurement and stays fallen: three access points are audible at −61 dB, and
+attenuation is symmetric. A population of two proves no mechanism.
+
+But it is worth recording as what it is: **among builds known to work, none
+has this geometry.** If money is ever spent on this problem, that is the
+direction with a precedent behind it — and both precedents agree, from
+different chips and different software.
+
+One detail that does not transfer: Wolfrax wires `PD/CE` to a GPIO so the
+firmware can power-cycle the chip's logic core out of a stuck state without
+a physical reset. **This module has no such pin.** `JP1` is
+`+5V 3.3V RST NSS MOSI MISO SCK BUSY GND GPIO IRQ AUX REQ` — a different
+board revision, and the recovery trick is not available here.
+
+#### The component's own origin reads no more than we do
+
+**[MrGoodbody/AxiomaQalcosonicW1NFCReaderAndroid](https://github.com/MrGoodbody/AxiomaQalcosonicW1NFCReaderAndroid)**
+is where `esphome_qalcosonicnfc` came from: an Android proof of concept for
+this exact meter, which dbmaxpayne ported and which MrGoodbody now links to
+in place of finishing an ESP version.
+
+It is open source, so **unlike Axilink Lite it could be built and sideloaded
+onto the phone.** That sounds like a way back into the question the ESPHome
+read cannot answer, and it is not.
+
+Its whole source is `MBusParser`, `MBusTelegram`, `CounterEntry` and the NFC
+callbacks. **It reads the same M-Bus data block we already get** — no
+configuration registers, no radio flags, no schedule masks.
+
+So the configuration route is now closed from two directions rather than
+one: the manufacturer's app is behind a password, and the only open
+implementation does not attempt those registers at all. **Radio state, the
+`wMBus T1`/`S1` flags and the schedule masks are obtainable from the water
+utility or not at all** — and per "What the read did not answer", the
+question is moot anyway.
+
+**`egonladd/Qalcosonic-W1`** and **`egonladd/w1-Qalcosonic`** are not
+implementations but questions posted as repositories — *"I have a LoRa
+device called Qalcosonic W1 … I can see the payload, in HEX"*. No code.
+Recorded only because they are a second instance of this meter in LoRaWAN
+use, which is the configuration inferred here.
+
 ### The upstream issue tracker, checked
 
 **No issue anywhere mentions Wi-Fi trouble with this component.** Three
