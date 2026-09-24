@@ -1,70 +1,68 @@
 # Axioma Effectio (Qalcosonic W1) → Home Assistant
 
-> **Yleiskuva.** Tekniset tiedot ja perustelut: [`CLAUDE.md`](CLAUDE.md).
+> **Overview.** Technical detail and rationale: [`CLAUDE.md`](CLAUDE.md).
 
-Vesimittarin lukeminen langattomasti Home Assistantiin ESP32:lla ja CC1101-radiolla.
-Mittari lähettää Wireless M-Bus -telegrammin 868,95 MHz:llä noin 16 sekunnin
-välein; ESP32 vastaanottaa sen ja välittää ESPHomen natiivi-APIlla. Ei MQTT:tä.
+Reading a water meter wirelessly into Home Assistant with an ESP32 and a
+CC1101 radio. The meter transmits a Wireless M-Bus telegram on 868.95 MHz
+roughly every 16 seconds; the ESP32 receives it and forwards it over
+ESPHome's native API. No MQTT.
 
-**Tila: kytketty, kuuntelee, eikä mittari lähetä wM-Busia.** Vastaanotin on
-todistetusti kunnossa — kohinapaketteja tulee läpi — mutta täysi lähetysikkuna
-ma 7.9.2026 klo 10–18 tuotti **nolla kehystä**, ja kaappaus jatkui siitä
-katkeamatta seuraavaan päivään klo 14 asti. Kuuntelua on yhteensä noin
-**36 tuntia ja nolla kehystä**, ikkunan sisä- ja ulkopuolelta.
+**Status: wired, listening, and the meter does not transmit wM-Bus.** The
+receiver is demonstrably fine — noise packets do come through — but a full
+transmission window on Monday 7.9.2026 from 10:00 to 18:00 produced **zero
+frames**, and the capture continued uninterrupted into the next day until
+14:00. That is about **36 hours of listening and zero frames**, from both
+inside and outside the window.
 
-**NFC-solmu on rakennettu ja se on verkossa.** PN5180 ja ESP32-C3 SuperMini
-on juotettu yhteen, yhdeksän liitosta läpäisi mittaukset, ja levy nousee
-verkkoon. Radiosolmu jää pystyyn siihen asti kunnes NFC on kertonut onko
-wM-Bus ylipäätään päällä.
+**The NFC node is built, and it is being rebuilt on a fresh C3.** The first
+ESP32-C3 SuperMini turned out to have **two dead GPIO pads** — `GPIO5` and
+`GPIO6` never rose while seven other pins did — so the wiring is being
+transferred to a replacement board that passed the pin test. The radio node
+stays up until NFC has said whether wM-Bus is switched on at all.
 
-**Mutta PN5180 ei vastaa, ja kytkentä on poissuljettu.** Jokainen yhdeksästä
-liitoksesta on mitattu molemmista päistä, ohjauslinjat ajettu ylös ehdoitta
-ja todennettu, nastakartat luettu moduulin silkkipainatuksesta ja
-valmistajan kuvasta, eikä naapurisiltoja ole. **Ainoa jäljellä oleva
-epäilty on moduuli itse.**
+**The PN5180 has never answered, and the wiring is ruled out.** Every one of
+the nine connections was measured from both ends, the control lines were
+driven high unconditionally and verified, the pin maps were read from the
+module's silkscreen and the board vendor's diagram, and there are no bridges
+between neighbours. What remains is **the module itself or the first C3's
+SPI block** — and the fresh board settles which.
 
-Matkalla löytyi kaksi vikaa jotka eivät liity siihen: **C3:n `GPIO5`- ja
-`GPIO6`-padit ovat kuolleet** (seitsemän muuta nastaa nousee, nämä eivät), ja
-**`GPIO20`/`GPIO21` jumittavat käynnistyksen** vaikka ne ovat vapaita. `RST`
-ja `NSS` on siksi reititetty langalla `GPIO1`:een ja `GPIO0`:aan. Levy on verkossa vakaasti aina kun
-moduulia ei ajeta, joten **radio ei ole rikki** — epävakaus näyttää olevan
-vuorovaikutusta jaetun syötön kautta, ja se nostaa puuttuvan 100 µF:n
-takaisin listalle. Perustelut [`CLAUDE.md`](CLAUDE.md):ssä.
+**Probable cause on the radio side: the meter is on LoRaWAN metering.** In
+the W1, LoRaWAN and wM-Bus are separate flags, and a water utility has no
+reason to keep wM-Bus on if it reads the meter over LoRaWAN — the battery is
+specified for 15 years. LoRaWAN is not an alternative local route, because
+its keys live on the network server. Rationale: [`CLAUDE.md`](CLAUDE.md).
 
-**Todennäköisin syy: mittari on LoRaWAN-luennassa.** W1:ssä LoRaWAN ja wM-Bus
-ovat erilliset liput, ja vesilaitoksella ei ole syytä pitää wM-Busia päällä jos
-se lukee mittarin LoRaWANilla — paristo on mitoitettu 15 vuodeksi. LoRaWAN ei
-ole vaihtoehtoinen paikallinen reitti, koska sen avaimet ovat verkkopalvelimella.
-Perustelut: [`CLAUDE.md`](CLAUDE.md).
+The radio configuration is deliberately **a listener and nothing more**. It
+cannot read the meter's values and does not try — it verifies the radio, the
+wiring, the frequency and the signal. The sensor block sits commented out in
+the file, waiting for two things: the Meter ID from the log and the AES key
+from the water utility.
 
-Konfiguraatio on tarkoituksella **pelkkä kuuntelija**. Se ei osaa lukea mittarin
-arvoja eikä yritäkään — se todentaa radion, kytkennät, taajuuden ja kuuluvuuden.
-Sensorilohko on tiedostossa kommentoituna ja odottaa kahta asiaa: Meter ID:tä
-lokista ja AES-avainta vesilaitokselta.
+**Listen on a weekday between 06:00 and 18:00.** The meter's default
+schedule is Mon–Fri 06:00–18:00, and outside it the radio is silent
+altogether. Silence measured at night or at the weekend says nothing about
+the hardware.
 
-**Kuuntele arkena klo 6–18.** Mittarin oletusaikataulu on ma–pe 6:00–18:00, ja
-sen ulkopuolella radio on hiljaa kokonaan. Yöllä tai viikonloppuna mitattu
-hiljaisuus ei kerro laitteistosta mitään.
+## The meter
 
-## Mittari
-
-| Ominaisuus | Arvo |
+| Property | Value |
 |---|---|
-| Valmistaja | Axioma |
-| Malli | Effectio / Qalcosonic W1 |
-| Tyyppi | LT-1621-MI001-034 |
-| SN | 12345678 — paikanpitäjä, oikea lukee tyyppikilvestä |
+| Manufacturer | Axioma |
+| Model | Effectio / Qalcosonic W1 |
+| Type | LT-1621-MI001-034 |
+| SN | 12345678 — placeholder, the real one is on the nameplate |
 | SW | 1.03 |
-| Valmistusvuosi | 2024 |
+| Year | 2024 |
 
-Meter ID on todennäköisesti sarjanumero `12345678`, mutta se varmistetaan
-vastaanotetusta telegrammista — älä oleta sitä etukäteen.
+The Meter ID is probably the serial number `12345678`, but it is confirmed
+from a received telegram — do not assume it in advance.
 
-## Arkkitehtuuri
+## Architecture
 
 ```
 Axioma Water Meter
-        │  Wireless M-Bus (868,95 MHz, T1)
+        │  Wireless M-Bus (868.95 MHz, T1)
         ▼
     CC1101 Radio
         │  SPI
@@ -75,418 +73,453 @@ Axioma Water Meter
  Home Assistant
 ```
 
-## Rauta
+## Hardware
 
-Kaikki löytyy varastosta, tätä projektia varten tilattuna:
+Everything is in stock, ordered for this project:
 
-- **ESP32 DevKit, 30-nastainen** — sama levy kuin
+- **ESP32 DevKit, 30 pins** — the same board as
   [`../pegasos.enervent/esp32-devkit.jpg`](../pegasos.enervent/esp32-devkit.jpg).
-  Printtiantenni, USB-C, CH340C-siltapiiri. Hyllyssä on kaksi tätä; pegasos
-  ottaa toisen
-- **CC1101 868 MHz**, Huerous — [kuva](cc1101-module.jpg), 26 MHz:n kide.
-  Pigtail antennille tuli mukana
-- **868 MHz omniantenni SMA-liittimellä, 2 kpl**, QWORK, taitettava
+  PCB antenna, USB-C, CH340C bridge. There are two of these on the shelf;
+  pegasos takes the other
+- **CC1101 868 MHz**, Huerous — [photo](cc1101-module.jpg), 26 MHz crystal.
+  The antenna pigtail came with it
+- **868 MHz omni antenna with SMA connector, 2 pcs**, QWORK, foldable
 
-**Antenneja tulee yksi: 868 MHz CC1101:lle.** DevKitin WiFi on moduulin
-printtiantennissa eikä vaadi osaa. Ulkoantennia ei tarvita, koska **wM-Bus on
-radio** — vastaanottimen sijoituspaikan valitset itse, ja se valitaan sieltä
-mistä WiFi kuuluu.
+**Only one antenna is needed: 868 MHz for the CC1101.** The DevKit's Wi-Fi
+is in the module's PCB antenna and needs no part. No external antenna is
+required, because **wM-Bus is radio** — you choose where the receiver goes,
+and you choose somewhere Wi-Fi reaches.
 
-**ESP8266 ei kelpaa tähän, ja syy on koko.** Valmis image on 1 069 167 tavua ja
-D1 minin sovelluspartitio on OTA:n kanssa noin megatavu — ei rajatapaus.
-Vertailu repon muihin projekteihin on [`CLAUDE.md`](CLAUDE.md):ssä.
+**The ESP8266 will not do, and the reason is size.** The built image is
+1,069,167 bytes and the D1 mini's application partition with OTA is about a
+megabyte — not a borderline case. The comparison with the repo's other
+projects is in [`CLAUDE.md`](CLAUDE.md).
 
-## Kytkentä
+## Wiring
 
-Piirretty auki: [`wiring.svg`](wiring.svg).
+Drawn out: [`wiring.svg`](wiring.svg).
 
-**Moduulissa ei ole nastamerkintöjä kummallakaan puolella.** Käännä levy niin
-että **kide on ylöspäin** ja teksti `CC11010 868MHz Module` lukee vasemmassa
-reunassa pystyssä — silloin kahdeksan reikää ovat oikealla ja järjestys on
-ylhäältä alas tämä:
+**The module has no pin markings on either side.** Turn the board so the
+**crystal is up** and the text `CC11010 868MHz Module` reads vertically down
+the left edge — then the eight holes are on the right and the order from top
+to bottom is this:
 
-| # | CC1101 | ESP32 | Levyssä | |
+| # | CC1101 | ESP32 | On the board | |
 |---|---|---|---|---|
-| 1 | CSN | GPIO5 | `D5` | strapping, mutta haluaa HIGH:n ja CS lepää HIGH:ssa |
+| 1 | CSN | GPIO5 | `D5` | strapping, but it wants HIGH and CS idles HIGH |
 | 2 | GDO0 | GPIO4 | `D4` | `irq_pin` |
-| 3 | GDO2 | — | — | **jätä kytkemättä** |
+| 3 | GDO2 | — | — | **leave unconnected** |
 | 4 | MISO | GPIO19 | `D19` | |
 | 5 | SCK | GPIO18 | `D18` | |
 | 6 | MOSI | GPIO23 | `D23` | |
 | 7 | GND | GND | `GND` | |
-| 8 | VCC | 3.3V | `3V3` | **ei 5V eikä VIN** |
+| 8 | VCC | 3.3V | `3V3` | **not 5V and not VIN** |
 
-**DevKitissä `D`-numero on GPIO-numero** — `D18` on GPIO18. Wemosissa vastaava
-ei päde: siellä `D5` on GPIO14. Kaikki seitsemän lankaa menevät DevKitin
-ylempään riviin, alariviin ei tarvitse koskea.
+**On the DevKit the `D` number is the GPIO number** — `D18` is GPIO18. The
+same does not hold on a Wemos: there `D5` is GPIO14. All seven wires go to
+the DevKit's upper row; the lower row needs no attention.
 
-Vasemmassa reunassa **GND — ANT — GND**; keskimmäinen on antenni.
+On the left edge, **GND — ANT — GND**; the middle one is the antenna.
 
-**Reikien jako on 2,0 mm eikä 2,54 mm** — Dupont-hyppylangat eivät mahdu. Juota
-ohut lanka suoraan.
+**The hole pitch is 2.0 mm, not 2.54 mm** — Dupont jumpers do not fit.
+Solder thin wire directly.
 
-**Mittaa VCC ja GND ennen virtaa.** Vain ne kaksi voivat rikkoa piirin, ja ne
-tunnistaa ilman mitään taulukkoa: niiden väliltä vastuslukema nousee hitaasti
-kondensaattorien varautuessa. Jos pari löytyy rivin alapäästä kuten yllä
-luvataan, koko asento on todistettu yhdellä mittauksella.
+**Measure VCC and GND before applying power.** Only those two can destroy
+the chip, and they can be identified without any table: between them the
+resistance reading climbs slowly as the bypass capacitors charge. If the
+pair is found at the end of the row the table promises, the whole
+orientation is proven with one measurement.
 
-**CC1101 toimii vain 3,3 voltilla — älä koskaan käytä 5 V:a.**
+**The CC1101 runs on 3.3 V only — never use 5 V.**
 
-**GDO2 jää kytkemättä.** Nykyinen komponentti tarvitsee yhden keskeytyslinjan ja
-se on GDO0. Vanha taulukko vei GDO2:n GPIO2:een, joka on **strapping-nasta** —
-siihen ajava lähtö estää käynnistyksen, ja se on tämän projektin
-vianetsintätaulukossa kirjattu boot-loop-syy.
+**GDO2 stays unconnected.** The current component needs one interrupt line
+and that is GDO0. The old table routed GDO2 to GPIO2, which is a **strapping
+pin** — an output driving it prevents startup, and this project's own
+troubleshooting table records exactly that as a cause of boot loops.
 
-Moduulien pinnijärjestys vaihtelee; tarkista oman moduulin silkkipainatus äläkä
-luota yleiseen kaavioon.
+Pin orders vary between modules; check your own module's silkscreen rather
+than trusting a generic diagram.
 
 ## ESPHome
 
-Komponentti: [SzczepanLeon/esphome-components](https://github.com/SzczepanLeon/esphome-components).
+Component: [SzczepanLeon/esphome-components](https://github.com/SzczepanLeon/esphome-components).
 
-**Komponentista on kaksi yhteensopimatonta sukupolvea yhtä aikaa elossa.**
-`version_4` (viimeisin 4.1.4, 2/2025) käyttää yhtä `wmbus:`-lohkoa erillisine
-`gdo0`/`gdo2`-pinneineen; **5.x** (viimeisin 5.1.6, 8/2025) on täysi uudelleen-
-kirjoitus ja käyttää ESPHomen omaa `spi:`-komponenttia, `wmbus_radio:`-lohkoa
-yhdellä `irq_pin`illä ja erillistä `wmbus_meter:`-lohkoa.
+**Two incompatible generations of the component are alive at the same
+time.** `version_4` (latest 4.1.4, 2/2025) uses a single `wmbus:` block with
+separate `gdo0`/`gdo2` pins; **5.x** (latest 5.1.6, 8/2025) is a full
+rewrite and uses ESPHome's own `spi:` component, a `wmbus_radio:` block with
+a single `irq_pin`, and a separate `wmbus_meter:` block.
 
-**Eikä kumpikaan julkaisu kelpaa tähän.** `5.1.6` on uusin, mutta viiden sarjan
-uudelleenkirjoitus lähti SX1276:sta eikä tunne CC1101:tä lainkaan; CC1101 tuli
-takaisin vasta päähaaraan, jota ei ole koskaan julkaistu. Julkaisua jossa olisi
-sekä CC1101 että nykyskeema ei ole olemassa.
+**And neither release will do here.** `5.1.6` is the newest, but the five
+series' rewrite started from the SX1276 and does not know the CC1101 at all;
+CC1101 came back only into the main branch, which has never been released.
+No release exists that has both CC1101 and the current schema.
 
-Lähde on siksi kiinnitetty **commit-tunnisteeseen**, ei haaraan eikä tagiin —
-se on ainoa muoto joka antaa molemmat. Vaihtokauppana koodi on julkaisematonta.
+The source is therefore pinned to a **commit hash**, not to a branch or a
+tag — that is the only form that gives both. The trade is that the code is
+unreleased.
 
-Ajuri on **`q400`**, ei mittarin valmistajan nimi. Perustelut, versiotaulukko ja
-kenttien tilanne ovat [`CLAUDE.md`](CLAUDE.md):ssä.
+The driver is **`q400`**, not the meter manufacturer's name. Rationale, the
+version table and the state of the fields are in [`CLAUDE.md`](CLAUDE.md).
 
-Konfiguraatio on **validoitu** ESPHome 2026.8.2:lla (`Configuration is valid!`).
-Se tarkoittaa että ESPHome suostuu kääntämään sen — ei että radio toimii.
-Rautaa ei ole kytketty.
+The configuration is **validated** with ESPHome 2026.8.2
+(`Configuration is valid!`). That means ESPHome agrees to build it — not
+that the radio works.
 
 ```sh
 podman exec esphome esphome config /config/axioma.effection.yaml
 ```
 
-Kun radio toimii, loggeriin ilmestyy rivi tyyliin:
+When the radio works, a line like this appears in the log:
 
 ```
 Received T1 A frame from 12345678 RSSI -70
 ```
 
-Se kertoo kerralla neljä asiaa: radio toimii, kytkennät ovat oikein, taajuus on
-oikein ja mittari kuuluu vastaanottimeen.
+That one line says four things at once: the radio works, the wiring is
+right, the frequency is right, and the meter is audible to the receiver.
 
-## Flashaus
+## Flashing the radio node
 
-**Fläshää ennen kuin kytket.** Syy ei ole tapa vaan se että validointi ei ole
-käännös: `esphome config` tarkisti skeeman, mutta lähde on julkaisematon commit
-eikä riviäkään C++:aa ole käännetty. Ja paljas levy antaa vertailukohdan — kun
-loki tiedetään ilman radiota, ensimmäinen hiljaisuus radion kanssa on kytkentä
-tai kuuluvuus eikä kolmen tuntemattoman summa.
+**Flash before you connect anything.** The reason is not habit but that
+validation is not a build: `esphome config` checked the schema, but the
+source is an unreleased commit and not a line of C++ has been compiled. And
+a bare board gives a baseline — once the log is known without the radio, the
+first silence with the radio is wiring or reception rather than the sum of
+three unknowns.
 
-Sama erottelu on kirjattu [stiebelissä](../stiebel.eltron/CLAUDE.md) omaksi
-luvukseen: SPI-vika ja väylävika näyttävät ulospäin samalta, eli mitään ei
-tapahdu.
+The same distinction is recorded in
+[stiebel](../stiebel.eltron/CLAUDE.md) as a chapter of its own: an SPI fault
+and a bus fault look identical from outside, i.e. nothing happens.
 
-**1. Validoi.** Ilman rautaa, sekunneissa:
+**1. Validate.** No hardware, seconds:
 
 ```sh
 podman cp axioma.effection/axioma.effection.yaml esphome:/config/
 podman exec esphome esphome config /config/axioma.effection.yaml
 ```
 
-`INFO Configuration is valid!` tarkoittaa että skeema kelpaa. `GPIO5 is a
-strapping PIN` -varoitus tulee joka kerta eikä vaadi toimia — ks. Kytkentä.
+`INFO Configuration is valid!` means the schema is acceptable. The
+`GPIO5 is a strapping PIN` warning appears every time and needs no action —
+see Wiring.
 
-**2. Käännä ja kirjoita levylle.** Kontti on palvelimella ja levy tulee
-todennäköisesti kannettavaan, joten sama reitti kuin aidonissa: ESPHomen
-web-käyttöliittymästä **Install → Manual download**, ja `.bin` erikseen
-levylle. Ensimmäinen käännös kestää minuutteja, koska se hakee toolchainin.
+**2. Build and write it to the board.** The container is on the server and
+the board most likely goes to a laptop, so the same route as in aidon:
+**Install → Manual download** in the ESPHome web UI, and the `.bin`
+separately to the board. The first build takes minutes because it fetches
+the toolchain.
 
-Levy on **USB-C** ja siltapiiri **CH340C**, joten koneella pitää olla CH34x-ajuri
-— ei CP210x. Jos portti ei näy, `dmesg` kertoo kytkentähetkellä kumpi laite
-ilmestyi.
+The board is **USB-C** with a **CH340C** bridge, so the machine needs a
+CH34x driver — not CP210x. If the port does not appear, `dmesg` says which
+device showed up at plug-in.
 
 ```sh
 sudo esptool --port /dev/ttyUSB0 --baud 115200 write_flash 0x0 firmware.bin
 ```
 
-Käytä `factory`-tiedostoa, ei `-ota.bin`-versiota. `Permission denied` ratkeaa
-komennolla `sudo usermod -a -G dialout $USER` ja uloskirjautumisella.
+Use the `factory` file, not the `-ota.bin` one. `Permission denied` is
+solved by `sudo usermod -a -G dialout $USER` and logging out.
 
-**3. Katso boottiloki paljaana.** Ei CC1101:tä, ei antennia. Kirjaa muistiin
-mitä `wmbus_radio` sanoo kun radiota ei ole — se rivi on vertailukohta jota ei
-saa myöhemmin takaisin.
+**3. Look at the boot log bare.** No CC1101, no antenna. Note down what
+`wmbus_radio` says when there is no radio — that line is a baseline you
+cannot get back later.
 
-WiFi yhdistyy ja API nousee. `WiFi-signaali` alkaa päivittyä minuutin välein.
+Wi-Fi connects and the API comes up. `Wi-Fi` starts updating every minute.
 
-**4. Mittaa kuuluvuus siinä paikassa johon levy on tulossa.** Varavirtalähde,
-levy paikalleen, luukku kiinni jos sellainen on. `WiFi-signaali` kertoo
-totuuden. Tämä on halpaa nyt ja kallista myöhemmin — aidonissa se mitattiin
-liian myöhään ja on siellä yhä avointen asioiden kärjessä.
+**4. Measure the signal where the board is actually going.** Battery pack,
+board in place, hatch closed if there is one. `Wi-Fi` tells the truth. This
+is cheap now and expensive later — in aidon it was measured too late and is
+still at the top of that project's open-issues list.
 
-**5. Irrota USB. Kytke.** Seitsemän lankaa, GDO2 jää irti, 868 MHz:n antenni
-CC1101:een **ennen** virtaa. Ks. [`wiring.svg`](wiring.svg).
+**5. Unplug USB. Wire it up.** Seven wires, GDO2 left off, the 868 MHz
+antenna on the CC1101 **before** power. See [`wiring.svg`](wiring.svg).
 
-**6. Virta takaisin ja odota.** Lähetysväli on ~16 s, mutta älä tulkitse
-hiljaisuutta viaksi ennen kuin olet odottanut pari minuuttia.
+**6. Power back on and wait.** The transmission interval is ~16 s, but do
+not read silence as a fault before you have waited a couple of minutes.
 
-Sen jälkeen kaikki päivitykset menevät OTA:na eikä levyä tarvitse enää irrottaa.
+After that all updates go over OTA and the board never has to come out
+again.
 
-## Este 1: mittari ei lähetä wM-Busia
+## Obstacle 1: the meter does not transmit wM-Bus
 
-Vastaanottimen puoli on niin pitkälle todistettu kuin ilman kehystä voi: SPI ja
-keskeytys toimivat, taajuus ja moodi ovat oikeat, ja FIFO-kynnyksen lasku 32:sta
-neljään tavuun ei muuttanut mitään. Jäljelle jää mittari, ja LoRaWAN selittää
-sen ilman että mitään on vialla.
+The receiving side is proven as far as it can be without a frame: SPI and
+the interrupt work, the frequency and mode are right, and lowering the FIFO
+threshold from 32 bytes to four changed nothing. What is left is the meter,
+and LoRaWAN explains it without anything being broken.
 
-**Ratkaisu on pyyntö, ei koodi:** onko `wMBus T1` päällä, ja voiko sen kytkeä.
-Se on vesilaitoksen laite ja kieltävä vastaus on mahdollinen.
+**The solution is a request, not code:** is `wMBus T1` on, and can it be
+switched on. It is the utility's device and a refusal is possible.
 
-NFC kertoisi radiotilan suoraan ohi vesilaitoksen, mutta **puhelinreitti on
-kiinni:** mittarin NFC on ISO 15693, jonka Android reitittää vain sallitulle
-sovellukselle — ja sellaista ei ole saatavilla. Paljas napautus on hiljaa
-vaikka tunniste olisi kentässä.
+NFC would tell the radio state directly, bypassing the utility, but **the
+phone route is closed:** the meter's NFC is ISO 15693, which Android routes
+only to a permitted application — and none is available. A bare tap is
+silent even with the tag in the field.
 
-## Ohitus: PN5180 kaataa molemmat esteet
+## The bypass: PN5180 defeats both obstacles
 
-Noin viiden euron NFC-moduuli lukee mittarin suoraan ilman AES-avainta, ilman
-lähetysikkunaa ja riippumatta siitä kumpaa radiota vesilaitos käyttää. Hinta on
-se että vastaanotin on vietävä mittarin viereen — eli WiFin pitää kuulua siellä
-missä mittari on. Ks. [`CLAUDE.md`](CLAUDE.md).
+A five-euro NFC module reads the meter directly with no AES key, no
+transmission window, and regardless of which radio the utility uses. The
+price is that the receiver has to go next to the meter — so Wi-Fi has to
+reach where the meter is. See [`CLAUDE.md`](CLAUDE.md).
 
-Moduuli on saapunut: **PN5180-NFC R1.1, 70 × 39 mm**, yksiosainen. Se saa oman
-solmunsa **ESP32-C3 SuperMinillä** — radiosolmuun ei kosketa, koska NFC-luku on
-se joka vastaa jäljellä olevaan kysymykseen wM-Busin tilasta. Konfiguraatio on
-[`axioma-nfc.yaml`](axioma-nfc.yaml), kytkentä
+The module has arrived: **PN5180-NFC R1.1, 70 × 39 mm**, single-board. It
+gets a node of its own on an **ESP32-C3 SuperMini** — the radio node is left
+alone, because an NFC read is what answers the remaining question about
+wM-Bus. Configuration is [`axioma-nfc.yaml`](axioma-nfc.yaml), wiring
 [`nfc-c3-mount.svg`](nfc-c3-mount.svg).
 
-## Este 2: AES-128-avain
+## Obstacle 2: the AES-128 key
 
-Qalcosonic W1 käyttää yleensä AES-128-salausta. Avain **ei** ole näytössä,
-tyyppikilvessä eikä sarjanumerossa — se pitää pyytää vesilaitokselta,
-isännöitsijältä, rakennuttajalta tai mittarin toimittajalta. Ilman sitä näkyvät
-vain salatut telegrammit.
+The Qalcosonic W1 normally uses AES-128 encryption. The key is **not** on
+the display, the nameplate or in the serial number — it has to be requested
+from the water utility, the building manager, the developer or the meter's
+supplier. Without it only encrypted telegrams are visible.
 
-Tämä kannattaa laittaa liikkeelle heti, koska siihen menee kalenteriaikaa.
-**Kysy samalla kertaa radiotila ja moodi** — moodi ratkaisee onko rautavalinta
-oikea, eikä sitä kannata selvittää kahdessa erässä.
+Put this in motion straight away, because it takes calendar time. **Ask for
+the radio state and the mode at the same time** — the mode decides whether
+the hardware choice is right, and it is not worth finding out in two
+rounds.
 
-## NFC-solmun fläshäys — ennen juottamista
+## Flashing the NFC node — before soldering
 
-**Fläshää C3 ensin, paljaana.** Se ei ole tapa vaan järjestys, ja siihen on
-kaksi syytä:
+**Flash the C3 first, bare.** That is not habit but order, and there are two
+reasons:
 
-- **`BOOT` ja `RESET` ovat levyn pinnalla**, ja rima tulee aivan niiden viereen.
-  Paljaalla levyllä ne painuvat sormella.
-- **Viallinen levy selviää ennen kuin siihen on juotettu yhdeksän liitosta.**
-  Hyllyllä on kuusi C3:a; vaihto maksaa nyt minuutteja ja juotosten jälkeen
-  illan.
+- **`BOOT` and `RESET` are on the surface of the board**, and the header
+  goes right beside them. On a bare board they can be pressed with a finger.
+- **A faulty board is found before nine joints have been made on it.**
+  There are six C3s on the shelf; swapping costs minutes now and an evening
+  after soldering.
 
-Ja kolmas syy on siinä mitä fläshätään: `axioma-nfc.yaml` on vaiheessa 1
-**pelkkä runko ilman SPI:tä ja ilman NFC-komponenttia.** WiFi, API ja OTA
-todennetaan erillään siitä onko komponentin konfiguraatio oikein — kaksi
-tuntematonta kerralla on yksi liikaa.
+And a third reason is in what gets flashed: in stage 1 `axioma-nfc.yaml` is
+**a bare skeleton with no SPI and no NFC component.** Wi-Fi, the API and OTA
+are verified separately from whether the component's configuration is right
+— two unknowns at once is one too many.
 
-**1. Vie ja validoi.** Kontin `/config` on litteä ja `secrets.yaml` on siellä
-jo jaettuna:
+**1. Copy and validate.** The container's `/config` is flat and
+`secrets.yaml` is already there, shared:
 
 ```sh
 podman cp axioma.effection/axioma-nfc.yaml esphome:/config/
 podman exec esphome esphome config /config/axioma-nfc.yaml
 ```
 
-`INFO Configuration is valid!` ennen kuin USB-piuha kaivetaan esiin.
+`INFO Configuration is valid!` before the USB cable comes out.
 
-**2. Käännä ja ota `.bin` talteen.** ESPHomen web-käyttöliittymästä
-**Install → Manual download → Factory format**. Ensimmäinen käännös hakee C3:n
-toolchainin ja kestää minuutteja.
+**2. Build and keep the `.bin`.** From the ESPHome web UI,
+**Install → Manual download → Factory format**. The first build fetches the
+C3 toolchain and takes minutes.
 
-Käytä `factory`-tiedostoa äläkä `-ota.bin`-versiota. Jälkimmäinen on vain
-sovellusosio ja olettaa että levyllä on jo bootloader ja partitiotaulu.
+Use the `factory` file, not the `-ota.bin` one. The latter is only the
+application partition and assumes the board already has a bootloader and a
+partition table.
 
-**3. Aseta levy latautustilaan.** Kumpi tahansa käy:
+**Both `axioma-nfc.yaml` and `pintesti.yaml` use `name: axioma-nfc`**, so
+they build into the same directory and produce an identically named file.
+That is convenient in Home Assistant and a trap at the bench: grab the
+`.bin` immediately after the build you meant, and if in doubt, grep the boot
+log for `GPIO Switch` to see which one is actually on the board.
+
+**3. Put the board into download mode.** Either works:
 
 | | |
 |---|---|
-| Piuha kiinni | pidä `BOOT` pohjassa, napauta `RESET`, päästä `BOOT` |
-| Piuha irti | pidä `BOOT` pohjassa ja kytke USB, päästä `BOOT` |
+| Cable connected | hold `BOOT`, tap `RESET`, release `BOOT` |
+| Cable disconnected | hold `BOOT` while plugging in USB, release `BOOT` |
 
-**4. Kirjoita.** C3 SuperMinissä on **natiivi USB eikä siltapiiriä** — ei
-CH340C:tä kuten DevKitissä, eikä siis CH34x-ajuria. Portti on siksi
-`/dev/ttyACM0` eikä `/dev/ttyUSB0`:
+**4. Write.** The C3 SuperMini has **native USB and no bridge chip** — no
+CH340C as on the DevKit, and therefore no CH34x driver. The port is
+`/dev/ttyACM0` rather than `/dev/ttyUSB0`:
 
 ```sh
 sudo esptool --chip esp32c3 --port /dev/ttyACM0 write_flash 0x0 firmware.factory.bin
 ```
 
-Jos portti ei ilmesty, `dmesg` kertoo kytkentähetkellä mitä tapahtui. `Permission
-denied` ratkeaa komennolla `sudo usermod -a -G dialout $USER` ja
-uloskirjautumisella.
+If the port does not appear, `dmesg` says what happened at plug-in.
+`Permission denied` is solved by `sudo usermod -a -G dialout $USER` and
+logging out.
 
-Natiivi USB **katoaa ja ilmestyy uudelleen** kirjoituksen jälkeen, koska piiri
-käynnistyy uudelleen ja porttilaite luodaan uudestaan. Se näyttää katkokselta
-eikä ole.
+**The number moves.** Native USB means the port device disappears and is
+recreated at every reset and every flash, so it may be `ttyACM1` tomorrow.
+`ls /dev/serial/by-id/` gives a name that does not move.
 
-**5. Todenna laitteesta, älä komennon paluuarvosta.** Tämä on repon oma sääntö
-ja se on ansaittu: `esphome run` on onnistunut näennäisesti samalla kun OTA ei
-edes lähtenyt.
+**5. Verify from the device, not from the command's exit status.** This is
+the repo's own rule and it has been earned: `esphome run` has succeeded in
+appearance while the OTA never even started.
 
 ```sh
 podman exec esphome esphome logs /config/axioma-nfc.yaml
 ```
 
-Odotettu tulos on kolme riviä: WiFi yhdistyy, API nousee, ja **`Uptime` alkaa
-juosta nollasta.** `Uptime` on ainoa rivi joka erottaa uudelleenkäynnistyksen
-siitä että lokiasiakas vain liittyi — kokoonpanobanneri toistuu joka
-liittymisellä eikä todista mitään.
+The expected result is three things: Wi-Fi connects, the API comes up, and
+**`Uptime` starts running from zero.** `Uptime` is the only line that
+distinguishes a reboot from a log client merely attaching — the
+configuration banner repeats on every attach and proves nothing.
 
-`hardware_uart: USB_SERIAL_JTAG` on YAMLissa juuri tätä varten. Ilman sitä
-sarjaportti on hiljaa ja toimiva levy näyttää kuolleelta.
+`hardware_uart: USB_SERIAL_JTAG` is in the YAML for exactly this. Without it
+the serial port is silent and a working board looks dead.
 
-**Anna liittymiselle pari minuuttia, ja älä käytä varayhteyttä merkkinä.**
-Ensimmäinen boot liittyi vasta kuudennella kierroksella, ja siihen meni noin
-kaksi minuuttia. Sitä ennen loki toistaa `Restarting adapter`, ja **jokainen
-uudelleenkäynnistys vie varayhteyden alas ja takaisin** — AP siis vilkkuu eikä
-pysy verkkolistassa. Puuttuva `Axioma NFC fallback` ei tarkoita ettei levy
-käynnisty; se tarkoittaa yhtä hyvin että se on parhaillaan yrittämässä.
+**Give association a couple of minutes, and do not use the fallback AP as a
+sign.** The first boot associated only on the sixth round, and it took about
+two minutes. Before that the log repeats `Restarting adapter`, and **every
+restart takes the fallback AP down and back up** — so the AP flickers rather
+than staying in the network list. A missing `Axioma NFC fallback` does not
+mean the board is not starting; it means just as well that it is currently
+trying.
 
-Sarjaportti on siksi ainoa rehellinen tapa katsoa tätä vaihetta, ja se on sama
-sääntö kuin muuallakin tässä repossa: **API-lokivirta ei voi näyttää sitä miksi
-laite ei ole verkossa**, koska se liittyy vasta kun laite on.
+The serial port is therefore the only honest way to watch this phase, and it
+is the same rule as everywhere else in this repo: **the API log stream
+cannot show why a device is not on the network**, because it attaches only
+once the device is.
 
-**6. Mittaa kuuluvuus siinä paikassa johon levy on tulossa.** Varavirtalähde,
-levy mittarin viereen. Odotus on noin **−70 dBm**, koska samassa tilassa oleva
-1-Wire-solmu lukee sitä. Tämä on halpaa nyt ja kallista juotosten jälkeen.
+**6. Measure the signal where the board is actually going.** Battery pack,
+board next to the meter. The expectation is about **−70 dBm**, because the
+1-Wire node in the same room reads that. This is cheap now and expensive
+after soldering.
 
-**6,5. Todenna nastat ennen kuin juotat.** Fläshää
-[`pintesti.yaml`](pintesti.yaml) ja mittaa seitsemän padia maata vasten —
-kaikkien pitää olla **~3,3 V**.
+**6.5. Verify the pins before you solder.** Flash
+[`pintesti.yaml`](pintesti.yaml) and measure seven pads against ground — all
+of them must be **~3.3 V**.
 
-Se ajaa jokaisen käytettävän nastan ylös ehdoitta, ja mukana on yksi
-kytkemätön nasta verrokiksi. Se joka ei nouse, on rikki — ja levyn
-vaihtaminen maksaa tässä vaiheessa minuutteja.
+It drives every pin the wiring uses high unconditionally, and one
+unconnected pin is included as a control. Whichever does not rise is broken
+— and swapping the board costs minutes at this stage.
 
-**Tämä olisi säästänyt kokonaisen illan.** `GPIO5` ja `GPIO6` osoittautuivat
-rikkinäisiksi vasta kun yhdeksän liitosta oli tehty ja kytkentä mitattu
-kolmeen kertaan kunnossa olevaksi. Katkos oli C3:n sisällä padin ja piirin
-välissä, joten **jatkuvuusmittaus meni läpi ja kertoi väärää tarinaa:**
-jatkuvuus todistaa että johdin on olemassa, tämä testi todistaa että
-signaali kulkee.
+**Measure the control first.** If `GPIO1` does not read 3.3 V the test is
+invalid and the other readings mean nothing: wrong binary, wrong ground
+point or wrong pad. Only once the control is up does a low reading on
+another pin mean a broken pin.
 
-Ja nasta ei paljasta vikaansa ennen kuin sitä käytetään. Se levy oli
-fläshätty ja ajanut WiFiä moitteetta niiden kahden ollessa koko ajan
-rikki.
+**This would have saved an entire evening.** `GPIO5` and `GPIO6` turned out
+to be broken only after nine joints had been made and the wiring measured
+good three times over. The break was inside the C3 between the pad and the
+die, so **a continuity measurement passed and told the wrong story:**
+continuity proves a conductor exists, this test proves a signal gets
+through.
 
-**7. Irrota USB ja juota.** Järjestys on pakotettu, koska C3:n alle ei pääse
-kolvilla sen jälkeen kun se on paikallaan: viisi lakkalankaa ensin, sitten rima,
-sitten C3 päälle. Ks. [`nfc-c3-mount.svg`](nfc-c3-mount.svg) ja
-[`CLAUDE.md`](CLAUDE.md).
+And a pin does not reveal its fault until it is used. That board had been
+flashed and had run Wi-Fi faultlessly with those two broken the whole time.
 
-**Tarkista `BUSY` ensimmäisenä jos jokin ei toimi.** Kun `GPIO8` ja `GPIO9`
-vedetään irti, `GPIO10` jää rimaan yksin kahden tyhjän paikan taakse ilman
-naapurien tukea. Se ei ole tiedetty vika vaan rakenteen heikoin kohta.
+**7. Unplug USB and solder.** The order is forced, because there is no
+getting a soldering iron under the C3 once it is in place: five enamelled
+wires first, then the header, then the C3 on top. See
+[`nfc-c3-mount.svg`](nfc-c3-mount.svg) and [`CLAUDE.md`](CLAUDE.md).
 
-**Ja 100 µF PN5180:n viereen**, `+5V`:n ja `GND`:n väliin. **Tämä puuttui tämän
-ohjeen ensimmäisestä versiosta**, ja se on juuri se osa joka on helpointa jättää
-tekemättä: yhdeksän liitosta on lueteltu nimeltä, kondensaattori ei ole yksikään
-niistä.
+**Check `BUSY` first if something does not work.** When `GPIO8` and `GPIO9`
+are pulled out of the header, `GPIO10` is left alone behind two empty
+positions with no support from its neighbours. That is not a known fault but
+the weakest point of the structure.
 
-Lähetinpää piikittää satoja milliampeereja RF-purskeessa, ja sama syöttö ajaa
-C3:n radiota. Notkahdus siinä hetkessä **näyttää verkkovirheeltä eikä
-virtavialta** — `4-Way Handshake Timeout` ja `Handshake Failed` ovat sen
-oireita, eivät heikon kentän oireita.
+**Do not use `GPIO20` or `GPIO21` as substitutes.** They are free as far as
+the logger is concerned — it uses USB — and they still hang the boot at
+`Using HW SPI: SPI2_HOST`, with no `spi_device` line at all. Changing only
+the pins away from them removed the symptom; nothing else was touched.
 
-**Mittaa ennen kuin kytket virran.** Yleismittari, kolme asiaa tässä
-järjestyksessä:
+**And 100 µF next to the PN5180**, between `+5V` and `GND`. **This was
+missing from the first version of these instructions**, and it is exactly
+the part easiest to leave out: nine connections are listed by name and the
+capacitor is not one of them.
+
+The transmitter side peaks at hundreds of milliamps during an RF burst, and
+the same supply drives the C3's radio. A dip at that moment **looks like a
+network fault rather than a power fault** — `4-Way Handshake Timeout` and
+`Handshake Failed` are its symptoms, not the symptoms of a weak signal.
+
+**Measure before applying power.** Multimeter, three things in this order:
 
 ```
-5V  ↔ GND      auki          nämä kolme voivat rikkoa jotain
-3V3 ↔ GND      auki
-5V  ↔ 3V3      auki
+5V  ↔ GND      open          these three can destroy something
+3V3 ↔ GND      open
+5V  ↔ 3V3      open
 ```
 
-C3:n kaukorivissä järjestys on `5V` `GND` `3V3` — **maa on virtojen välissä**,
-eli molemmat mahdolliset oikosulut ovat vierekkäisten nastojen välissä.
+On the C3's far row the order is `5V` `GND` `3V3` — **ground sits between
+the supplies**, so both possible shorts are between adjacent pins.
 
-Sitten kaksi siltaa jotka eivät riko mitään mutta estävät käynnistyksen:
+Then two bridges that destroy nothing but prevent startup:
 
-- **`GPIO3` ↔ `GPIO2`.** Kaukorivissä lukee `GPIO4` `GPIO3` `GPIO2` ja langat
-  menevät kahteen ylempään. `GPIO2` on strapping, joten silta sitoo `MISO`:n
-  siihen
-- **Neljä irrotettua kohtaa auki.** C3:n `GPIO8` `GPIO9` `GPIO20` `GPIO21` ei
-  saa olla yhteydessä JP1:n `MISO` `SCK` `GND` `GPIO` -padeihin
+- **`GPIO3` ↔ `GPIO2`.** The far row reads `GPIO4` `GPIO3` `GPIO2` and the
+  wires go to the upper two. `GPIO2` is a strapping pin, so a bridge ties
+  `MISO` to it
+- **The four removed positions open.** The C3's `GPIO8` `GPIO9` `GPIO20`
+  `GPIO21` must not connect to JP1's `MISO` `SCK` `GND` `GPIO` pads
 
-Ja vasta lopuksi yhdeksän jatkuvuusmittausta kytkentätaulukon mukaan.
+And only then the nine continuity measurements per the wiring table.
 
-**`GPIO8` ja `GPIO9` eivät ole irti pelkän strappingin takia.** Ne kytkeytyisivät
-suoraan PN5180:n `MISO`- ja `SCK`-linjoihin, jotka on jo johdotettu `GPIO3`:een
-ja `GPIO4`:ään. Boottihetkellä `GPIO8`:n on oltava ylhäällä ja `MISO` vetäisi sen
-alas — **levy ei käynnistyisi lainkaan.** Se on myös se oire jos juotos on
-siltautunut.
+**Measure the neighbouring pairs too, not just each connection.** Continuity
+proves a conductor exists; it does not prove the conductors are separate. A
+bridge between `MOSI` and `MISO` passes every per-connection test and breaks
+SPI completely.
 
-**Levyllä on yhä vaihe 1:n firmware, ja se on funktionaalinen testi.** Jos levy
-nousee ja liittyy verkkoon juotosten jälkeen, yksikään strapping-nasta ei ole
-pidossa. Mutta erottele kaksi syytä toisistaan sarjaportista, älä verkosta:
+**`GPIO8` and `GPIO9` are not pulled out merely because they are strapping
+pins.** They would connect straight to the PN5180's `MISO` and `SCK` lines,
+which are already wired to `GPIO3` and `GPIO4`. At boot `GPIO8` must be high
+and `MISO` would drag it low — **the board would not start at all.** That is
+also the symptom if a joint has bridged.
 
-| Sarjaportti | Tulkinta |
+**The board still has stage 1's firmware, and that is a functional test.**
+If the board comes up and joins the network after soldering, no strapping
+pin is being held. But separate the two causes from the serial port, not
+from the network:
+
+| Serial port | Interpretation |
 |---|---|
-| Tyhjä, tai toistuva teksti | **Juotos.** Strapping-nasta pidossa tai oikosulku |
-| Boottaa, `Restarting adapter` toistuu | **Sama WiFi-ongelma kuin ennen juottamista** — ei liity liitoksiin |
+| Empty, or repeating text | **Soldering.** A strapping pin held, or a short |
+| Boots, `Restarting adapter` repeats | **The same Wi-Fi problem as before soldering** — unrelated to the joints |
 
-**8. Vasta sitten vaihe 2.** Se on nyt aktiivisena `axioma-nfc.yaml`:ssä ja
-lähtee OTA:na. USB-C jää `+5V`- ja `3.3V`-padien yläpuolelle, joten piuhaa ei
-enää saa kätevästi kiinni.
+**8. Only then stage 2.** It is active in
+[`axioma-nfc.yaml`](axioma-nfc.yaml) and goes over OTA. The USB-C connector
+ends up above the `+5V` and `3.3V` pads, so the cable is no longer
+convenient to attach.
 
-Avaimet on **todennettu lähdekoodista** eikä README:stä, ja kolme asiaa meni
-ensimmäisessä arvauksessa väärin: komponentin nimi on `qalcosonicnfc` ilman
-alaviivaa, nastoilla on etuliite `pn5180_`, ja **erillistä `spi:`-lohkoa ei
-tarvita** — komponentin `AUTO_LOAD` sisältää sen ja se ottaa kaikki kuusi
-nastaa omina asetuksinaan. Lähde on kiinnitetty commit-tunnisteeseen, kuten
-radiosolmussakin.
+The keys are **verified from the source** rather than from the README, and
+three things were wrong in the first guess: the component's name is
+`qalcosonicnfc` with no underscore, the pins carry the prefix `pn5180_`, and
+**no separate `spi:` block is needed** — the component's `AUTO_LOAD`
+includes it and it takes all six pins as its own options. The source is
+pinned to a commit hash, as in the radio node.
 
-Ja pollausväli on **kolme tuntia eikä tunti.** Mittarin kommunikointikredit on
-noin 20 min/kk eli 40 s/vrk, ja tunnin väli menee jo yli budjetin kahden
-sekunnin luvulla. Perustelu ja mittausohje: [`CLAUDE.md`](CLAUDE.md).
+And the polling interval is **three hours, not one.** The meter's
+communication credit is about 20 min/month, i.e. 40 s/day, and an hourly
+interval already exceeds the budget at two seconds per read. Rationale and
+measurement instructions: [`CLAUDE.md`](CLAUDE.md).
 
-## Vianetsintä
+## Troubleshooting
 
-| Oire | Tarkista |
+| Symptom | Check |
 |---|---|
-| Ei dataa | Antenni kiinni, 868 MHz antenni, SPI-kytkennät, 3,3 V, GPIO-määritykset |
-| Boot-loop | GDO0 tai CS väärässä pinnissä — tai johto kiinni GPIO2:ssa |
-| Huono vastaanotto | Antenni liian lähellä metallia, etäisyys, antennin laatu |
+| No data | Antenna attached, 868 MHz antenna, SPI wiring, 3.3 V, GPIO assignments |
+| Boot loop | GDO0 or CS on the wrong pin — or a wire on GPIO2 |
+| Poor reception | Antenna too close to metal, distance, antenna quality |
 
-Ensimmäistä telegrammia voi joutua odottamaan hetken — lähetysväli on noin
-16 sekuntia **aikatauluikkunan sisällä.**
+The first telegram may take a moment — the interval is about 16 seconds
+**inside the schedule window.**
 
-## Seuraavat vaiheet
+## Next steps
 
-**NFC on nyt ensisijainen reitti**, koska se ei riipu kummastakaan esteestä —
-36 tuntia kuuntelua tuotti nolla kehystä, eikä kolmea ensimmäistä
-radiotoimenpidettä ole enää mielekästä jatkaa ennen kuin mittarin oma
-konfiguraatio on luettu.
+**NFC is now the primary route**, because it depends on neither obstacle —
+36 hours of listening produced zero frames, and there is no point continuing
+the radio work until the meter's own configuration has been read.
 
-1. **Todenna että solmu pysyy pystyssä ilman NFC-komponenttia.** `Uptime`
-   juoksee katkeamatta tunteja eikä `Association Expired` esiinny kertaakaan.
-   Se todistaa `power_save_mode: NONE`:n ja rajaa vian komponenttiin
-2. **Mittaa PN5180:n `+5V`, `3.3V` ja `BUSY` maata vasten** levy virroissa.
-   Jatkuvuustesti ei kerro tuleeko jännite perille kuormassa — kylmä juotos
-   virtalangassa lukee auki mutta ei kanna virtaa
-3. Kytke vaihe 2 takaisin ja katso kaatuuko se ensimmäiseen lukuyritykseen
-4. **Paikanna mittarin kela katsomalla**, kiinnitä löysästi, lue kerran
-5. **Mittaa yhden luvun kesto** ja johda pollausväli siitä kertoimella 2–3
-6. Lue mittarista radiotila, moodi ja aikataulumaskit — ne vastaavat siihen
-   mitä radiosolmu ei ole vuorokausissa kertonut
-7. Kysy vesilaitokselta rinnalla: onko `wMBus T1` päällä, missä moodissa, ja
-   AES-128-avain. Tähän menee kalenteriaikaa, joten käynnistä se heti
-8. Lisää mittari Home Assistantiin
+1. **Transfer the wiring to the fresh C3** that passed the pin test, with
+   `RST` and `NSS` back on `GPIO5` and `GPIO6`
+2. Flash [`axioma-nfc.yaml`](axioma-nfc.yaml) and look for
+   `[D][PN5180:185]: Register value=` — that line is the first proof that
+   SPI answers end to end
+3. If it still does not answer, the module is the only suspect left and a
+   replacement is justified
+4. **Locate the meter's coil by looking**, fix the board loosely, read once
+5. **Measure the duration of one read** and derive the polling interval from
+   it with a factor of 2–3
+6. Read the radio state, mode and schedule masks from the meter — they
+   answer what the radio node has not answered in days
+7. Ask the water utility in parallel: is `wMBus T1` on, in which mode, and
+   the AES-128 key. This takes calendar time, so start it immediately
+8. Add the meter to Home Assistant
 
-**Radiosolmu jää pystyyn eikä sitä pureta** ennen kuin NFC on kertonut onko
-wM-Bus ylipäätään päällä. Jos se osoittautuu päälle kytketyksi, jäljellä on
-vielä SPI:n todennus sarjaportista (`[VV][CC1101]: part: 00, version: XX`,
-jossa `version` on `04` tai `14`) ja ensimmäisen telegrammin purku.
+**The radio node stays up and is not dismantled** until NFC has said whether
+wM-Bus is on at all. If it turns out to be switched on, what remains is
+verifying SPI from the serial port (`[VV][CC1101]: part: 00, version: XX`,
+where `version` is `04` or `14`) and decoding the first telegram.
 
-Yksityiskohdat: [`CLAUDE.md`](CLAUDE.md).
+Details: [`CLAUDE.md`](CLAUDE.md).
