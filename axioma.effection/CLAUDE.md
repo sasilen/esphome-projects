@@ -1580,39 +1580,66 @@ plausibly touch association, and the fault still follows one of them.
 
 **Nothing is left worth guessing at.** The useful move is below.
 
-#### The static address is kept, as an instrument rather than a remedy
+#### The static address was tried and removed
 
-`manual_ip` and `use_address` are now in the configuration. **Neither is
-expected to change the fault**, for the reason in the table above, and the
-comment in the YAML says so in as many words — otherwise a later reader
-finds a static IP in a file about a Wi-Fi problem and reasonably concludes
-it was the fix.
+`manual_ip` at `192.168.1.42` with `use_address` to match. **No change**,
+which is what the mechanism predicted: a static address removes DHCP, and
+DHCP is downstream of the handshake that fails. The prediction was written
+into the configuration before the test, so this is a confirmed expectation
+rather than a result.
 
-The reason to keep it is that **the observation method changed when
-`hardware_uart` was removed.** The serial log is gone, so the node is
-watched from the server, and mDNS has already produced one wrong answer here
-— `esphome` kept resolving a stale address after it had been changed on the
-device. A fixed address removes name resolution from the chain and reduces
-the question to one command:
+The reason it was worth flashing anyway was observability, not repair. **The
+observation method changed when `hardware_uart` was removed** — the serial
+log is gone, the node is watched from the server, and mDNS has already
+produced one wrong answer here, with `esphome` resolving a stale address
+after it had been changed on the device. A fixed address reduced the
+question to `ping`.
 
-```sh
-ping -c 3 192.168.1.42
-```
+**It is removed again**, for a reason that matters more than tidiness: the
+next test moves the node to a second SSID, and **a second network may be a
+different subnet.** An address from the old one would produce an unreachable
+node whose symptom is indistinguishable from the fault under investigation.
+That would not waste the test; it would corrupt it.
 
-**This is the only node in the repo with a static address**, and the
-exception is deliberate: everything else here is on DHCP and reached by
-name. The reason is this fault and the loss of the serial log, not a change
-of convention — `dns1` points at `.2` rather than the gateway, because the
-resolver on this network is a separate host.
+The secondary reason is the one that removed `power_save_mode: NONE`
+earlier: a setting that fixes nothing is read later as a choice.
 
-An answer means association, authentication and the four-way handshake all
-completed. Silence means they did not. **That distinction previously needed
-a USB cable**, and it is the distinction this whole section turns on.
+#### The network was excluded as a whole, which is not the same as excluded
 
-One hazard that comes with it: **the address has to be outside the router's
-DHCP pool.** A collision is intermittent and presents as a node that is
-sometimes unreachable — indistinguishable from the fault being investigated,
-and therefore capable of wasting the whole measurement.
+**The next test points this node at a second SSID.**
+
+The network has been ruled out four times, each time on the owner's evidence
+that other ESP32-C3 nodes run on it faultlessly — `onewire` among them, a C3
+in the same room. That argument is sound and it is not withdrawn.
+
+**But it excludes the network, not an interaction between this node and one
+particular access point**, and the difference is the whole remaining
+question. `onewire` proves the SSID carries a C3. It does not prove that
+whatever *this* node does during the four-way handshake is tolerated by the
+access point it happens to pick. Nothing measured so far separates those
+two, because every measurement has been taken against the same SSID.
+
+A second SSID separates them for one flash and no soldering, which makes it
+the cheapest untried thing left.
+
+**One condition decides whether the result means anything: the second
+network must be 2.4 GHz.** The ESP32-C3 has no 5 GHz radio, so a `…_5G`
+name produces a node that never sees the access point — and that log is
+indistinguishable from the fault being investigated. It would read as
+confirmation and be nothing of the kind. This is the same error shape
+recorded three times in this file: **a measurement that does not measure
+what its title says.**
+
+The credentials are `wifi_ssid2` and `wifi_password2` in the shared
+`/config/secrets.yaml`.
+
+| Outcome | What it means |
+|---|---|
+| **Associates and stays up** | The fault is an interaction with the first access point, not with the node. Everything above about antennas and supplies is beside the point |
+| **Same failure** | The network is excluded properly this time, and the fault is inside the node — which is where the evidence already pointed |
+
+Either answer is worth more than the last several flashes, because **this is
+the first test whose two outcomes lead somewhere different.**
 
 #### It does not have to be solved
 

@@ -75,8 +75,27 @@ ota:
     encryption:
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  # **The second network, and it is the first test of the network itself.**
+  #
+  # The network was excluded four times on the grounds that other ESP32-C3
+  # nodes run on it faultlessly. That argument is sound and it is not
+  # withdrawn — but **it excludes the network as a whole, not an interaction
+  # between this node and one particular access point**, and those are
+  # different claims. `onewire` proves the SSID works; it does not prove
+  # that whatever this node does during the handshake is tolerated by the
+  # same access point.
+  #
+  # A second SSID separates them for the price of one flash.
+  #
+  # **The second network must be 2.4 GHz.** The ESP32-C3 has no 5 GHz radio
+  # at all, so pointing this at a `…_5G` name produces a node that never
+  # sees the access point — and the log of that is indistinguishable from
+  # the fault being investigated. It would read as a confirmation and be
+  # nothing of the kind.
+  #
+  # To go back, change both lines to `wifi_ssid` and `wifi_password`.
+  ssid: !secret wifi_ssid2
+  password: !secret wifi_password2
 
   # **`power_save_mode: NONE` was here and it was never a fix.**
   #
@@ -96,49 +115,26 @@ wifi:
   # power does not; if the cause is the antenna being detuned by the
   # PN5180's ground plane, it will not help. See CLAUDE.md.
 
-  # **A static address, and it is instrumentation rather than a fix.**
+  # **A static address was tried here and it is gone again.**
   #
-  # The address is the owner's, given for this node, and it has to stay
-  # **outside the router's DHCP pool.** A collision is intermittent and
-  # presents as a node that is sometimes unreachable — indistinguishable
-  # from the fault being investigated here, and therefore able to spoil the
-  # measurement rather than merely inconvenience it.
+  #   manual_ip:  192.168.1.42 / .1 / 255.255.255.0, dns1 .2
+  #   use_address: 192.168.1.42
   #
-  # **`dns1` is `.2`, not the gateway.** The resolver on this network is a
-  # separate host, so do not "correct" it to `.1` — that is the kind of
-  # tidying that looks right and quietly breaks name resolution. It matters
-  # little to this node either way, since the API and OTA are reached by
-  # address, but wrong is wrong.
+  # It changed nothing, which was the prediction: it removes DHCP, and DHCP
+  # is downstream of the handshake that fails. It is removed rather than
+  # left in place for two reasons.
   #
-  # **It cannot fix the current symptom, and that is worth stating so it is
-  # not read later as an attempted cure.** A static address removes DHCP,
-  # and DHCP happens *after* association, authentication and the four-way
-  # handshake. What fails now is the handshake — `Auth Expired`,
-  # `4-Way Handshake Timeout` — i.e. a step upstream of the one this
-  # removes. It was also tried once already and changed nothing.
+  # **The second network may be a different subnet.** An address from the
+  # old one would guarantee an unreachable node — and that failure looks
+  # exactly like the fault under investigation, so it would not merely waste
+  # the test but corrupt it.
   #
-  # **What it buys is observability, and that changed when the logger did.**
-  # With `hardware_uart` removed the serial log is gone, so the only way to
-  # watch this node is from the server — and mDNS has already misled once
-  # here, with `esphome` still resolving a stale address after it had been
-  # changed. A fixed address plus `use_address` takes mDNS out of the chain
-  # entirely:
+  # And a setting that fixes nothing gets read later as a choice. The same
+  # reasoning removed `power_save_mode: NONE` above.
   #
-  #   ping -c 3 192.168.1.42        answers = the handshake completed
-  #   no answer                      it did not, and no log is needed to know
-  #
-  # That turns a question that needed a serial cable into one command.
-  manual_ip:
-    static_ip: 192.168.1.42
-    gateway: 192.168.1.1
-    subnet: 255.255.255.0
-    dns1: 192.168.1.2
-
-  # **Point the tooling at the address, not at the name.** Without this
-  # `esphome` resolves `axioma-nfc.local` over mDNS, which is the part that
-  # went stale before. This is a tooling setting and does not affect the
-  # device's own behaviour.
-  use_address: 192.168.1.42
+  # The cost is that the node is reached by name again, over mDNS, which has
+  # gone stale here once. If it needs to come back and the subnet is known,
+  # the block above is the form.
 
   ap:
     ssid: "Axioma NFC fallback"
