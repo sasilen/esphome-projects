@@ -2353,10 +2353,26 @@ Four points that easily go wrong:
   integrated coil is smaller than a separate credit-card-sized antenna
   board, so aligning it to the meter's own coil is finer work. Allow time
   for it the first time.
-- **Check the component's platform support before considering a D1 mini.**
-  On an ESP8266 three safe pins remain after SPI, which is just barely
-  enough — but `esphome_qalcosonicnfc`'s ESP8266 support is unverified and
-  should not be assumed.
+- **The ESP8266 is not blocked by the component, and that was checked from
+  the source rather than assumed.** `__init__.py` declares no
+  `ESP_PLATFORMS` and no platform guard; the C++ contains no ESP32-only API
+  — no FreeRTOS, no `esp_*` calls, no `HSPI`/`VSPI` — and reaches the bus
+  through ESPHome's own `spi::SPIDevice` at `DATA_RATE_5MHZ`, which an
+  ESP8266's hardware SPI handles. The one static allocation is a 508-byte
+  buffer.
+
+  So this entry changes from **unverified** to **plausible but untested**,
+  which is a different claim and a weaker one than "supported".
+
+  **The pin budget is exactly three, with no margin.** SPI takes `D5` `D6`
+  `D7`, leaving `D0` `D1` `D2` as the safe remainder — and `NSS`, `BUSY` and
+  `RST` need precisely three. `D0`/`GPIO16` works for `BUSY` because it is an
+  input, though it is the odd pin out: no interrupt, and a pull-down instead
+  of a pull-up.
+
+  **That absence of margin is the real objection.** Two pads were lost to
+  heat on a C3 in this project, and the recovery was moving to spare pins.
+  A D1 mini has none to move to.
 
 ## NFC is also an alternative route for the whole project
 
