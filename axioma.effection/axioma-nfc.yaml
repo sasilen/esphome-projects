@@ -62,21 +62,23 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  # **EXPERIMENT: `power_save_mode: NONE` removed.**
+  # **`power_save_mode: NONE` was here and it was never a fix.**
   #
   # It was added on the strength of a single successful association and
-  # flagged at the time as a hypothesis rather than a verified fix. It is
-  # the only Wi-Fi-layer setting this node has that the house's other
-  # working C3 nodes do not, and it had never been tested against the same
-  # hardware without it.
+  # flagged at the time as a hypothesis. Removing it changed nothing: the
+  # node fails to associate with it and without it, on two different
+  # boards, at every signal level from −53 to −88 dB. It is gone because a
+  # setting that fixes nothing gets read later as a choice.
   #
-  # A second, independent C3 then showed the same `Auth Expired` symptom,
-  # which rules out the first board. What remains shared is the
-  # configuration, the location and the PN5180 assembly — and this line was
-  # the cheapest of those to remove.
+  # **If Wi-Fi is still the problem, the next thing to try costs one flash
+  # and no soldering:**
   #
-  # If the symptom persists without it, restore nothing: the setting was
-  # innocent and the suspects are the location and the assembly.
+  #   output_power: 8.5dB
+  #
+  # That lowers the transmit current peak by roughly two-thirds. If the
+  # cause is a supply dip during a burst it may get through where full
+  # power does not; if the cause is the antenna being detuned by the
+  # PN5180's ground plane, it will not help. See CLAUDE.md.
 
   ap:
     ssid: "Axioma NFC fallback"

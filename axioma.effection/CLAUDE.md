@@ -1337,7 +1337,58 @@ still move, and the fault would show only later.
 
 (Both were subsequently measured good.)
 
-### The Wi-Fi fault is in this board, not in the network
+### Open: the Wi-Fi fault follows the PN5180, and the mechanism is unknown
+
+**State at the end of the second day.** The node does not stay on the
+network once the PN5180 is attached, and everything else has been excluded
+by measurement:
+
+| Suspect | Status |
+|---|---|
+| The board | **out** — two different C3s, same symptom |
+| Signal, location, metal | **out** — `Auth Expired` at −53 dB standing next to the access point |
+| Power source | **out** — the same laptop USB throughout |
+| `power_save_mode: NONE` | **out** — removed, no change. It was never a fix |
+| The network | **out** — the owner's call, twice, and right both times |
+| **The PN5180 being attached** | the one thing that tracks the symptom |
+
+The symptom profile is consistent throughout: **the device hears the access
+point perfectly and the access point never completes the handshake.** Scans
+return −53 dB and every association dies in authentication. That is a
+transmit-side failure, and transmission is the direction that tolerates
+least.
+
+**Two mechanisms remain and they have not been separated:**
+
+| | |
+|---|---|
+| **Ground plane** | a 70 × 39 mm board with a copper coil sits ~6 mm under the C3's PCB antenna. That detunes it and absorbs radiated power. Reception survives it; transmission does not |
+| **Load** | the module draws from the same supply that drives the C3's radio, and a dip during a transmit burst kills the handshake |
+
+**The experiment that separates them is to lift the module's `+5V` and
+`3.3V` while leaving it physically in place** — the ground plane stays, the
+current goes. It is safe with stage 2 commented out, because nothing then
+drives the module's pins.
+
+One earlier experiment looked decisive and was not: commenting out stage 2
+leaves `RST`, `NSS`, `MOSI` and `SCK` **floating**, so the module sits in an
+undefined state rather than an idle one. That test separated active driving
+from undefined, not electrical from radio.
+
+**Untried and needing no iron:** `wifi: output_power: 8.5dB` lowers the
+transmit current peak by roughly two-thirds. If the cause is a supply dip it
+may get through where full power does not; if the cause is detuning it will
+not. It is free, and it might also be the fix.
+
+If the ground plane wins, the fix is mechanical: move the C3 off the
+module's footprint — SPI at 2 MHz tolerates 10–20 cm of wire — or use a
+board with a u.FL connector and an external antenna.
+
+**And the NFC side is finished.** The PN5180 answers, initialises, turns on
+the RF field and issues ISO 15693 inventories. Nothing on that side is
+waiting for anything except the board being held against the meter's coil.
+
+### And the Wi-Fi fault is not in the network
 
 A long list of network hypotheses had accumulated here: the MikroTik's
 `disable-pmkid` and `management-protection`, the Deco's `WPA/WPA2` mixed
