@@ -1601,8 +1601,8 @@ table below is what decides if a diagram disagrees with it.**
 | `NSS` | `GPIO6` | header pin |
 | `MOSI` | `GPIO7` | header pin |
 | `BUSY` | `GPIO10` | header pin |
-| `MISO` | `GPIO3` | enamelled wire |
-| `SCK` | `GPIO4` | enamelled wire |
+| `MISO` | `GPIO4` | enamelled wire |
+| `SCK` | `GPIO3` | enamelled wire |
 | `+5V` | `5V` | enamelled wire |
 | `3.3V` | `3V3` | enamelled wire |
 | `GND` | `GND` | enamelled wire |
@@ -1630,10 +1630,19 @@ back.
 assembly that does not matter, because the wires are soldered before the C3
 — but repairing them requires removing the C3. Do them carefully in one go.
 
-### Only SCK matches the silkscreen
+### Nothing matches the silkscreen
 
 The C3's silkscreen says `GPIO5=MISO`, `GPIO6=MOSI`, `GPIO7=SS`. Here they
-are `RST`, `NSS` and `MOSI`. The only match is `GPIO4=SCK`.
+are `RST`, `NSS` and `MOSI`. `GPIO4=SCK` used to be the one match — and then
+`MISO` and `SCK` were soldered the other way round, so now `GPIO4` carries
+`MISO` and `GPIO3` carries `SCK`. Not one of the nine agrees with the
+printing.
+
+**That swap was absorbed in software, not with an iron.** On the C3 SPI goes
+through the GPIO matrix and ESPHome takes the pins from the configuration,
+so either pin serves either signal. Changing two lines was cheaper and safer
+than desoldering two wires beside a mounted C3 — and it is exactly why the
+pin choice was free in the first place.
 
 That is functionally irrelevant — the C3 routes SPI through the GPIO matrix
 and ESPHome takes the pins from the configuration — but **write the map on

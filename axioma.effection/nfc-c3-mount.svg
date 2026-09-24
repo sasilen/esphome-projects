@@ -80,11 +80,11 @@
   <text x="52" y="686" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">WIRING</text>
   <g font-size="10.5" fill="#16212B">
     <text x="52" y="712">header <tspan font-weight="700">RST</tspan>=GPIO5  <tspan font-weight="700">NSS</tspan>=GPIO6  <tspan font-weight="700">MOSI</tspan>=GPIO7  <tspan font-weight="700">BUSY</tspan>=GPIO10</text>
-    <text x="52" y="732">wire   <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
+    <text x="52" y="732">wire   <tspan font-weight="700">MISO</tspan>=GPIO4  <tspan font-weight="700">SCK</tspan>=GPIO3  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
     <text x="52" y="752" fill="#5A6772">pulled from the header: GPIO8 GPIO9 (strapping) &#183; GPIO20 GPIO21 (UART0 &#8212; hangs SPI setup, do not use as replacements)</text>
 
-    <text x="52" y="786" font-weight="700">Only SCK matches the silkscreen.</text>
-    <text x="52" y="803" fill="#5A6772">The C3's silkscreen says GPIO5=MISO, GPIO6=MOSI, GPIO7=SS &#8212; here they are RST, NSS and MOSI.</text>
+    <text x="52" y="786" font-weight="700">Nothing matches the silkscreen.</text>
+    <text x="52" y="803" fill="#5A6772">The C3's silkscreen says GPIO5=MISO, GPIO6=MOSI, GPIO7=SS &#8212; and MISO/SCK are swapped too.</text>
     <text x="52" y="819" fill="#5A6772">Functionally irrelevant, the C3 routes SPI through the matrix. Write the map on the board.</text>
 
     <text x="52" y="853" font-weight="700">The order is forced: there is no getting an iron under the C3 afterwards.</text>

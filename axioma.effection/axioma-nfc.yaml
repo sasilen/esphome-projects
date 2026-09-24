@@ -144,8 +144,13 @@ qalcosonicnfc:
   pn5180_nss_pin: GPIO6      # NSS   — header pin
   pn5180_mosi_pin: GPIO7     # MOSI  — header pin
   pn5180_busy_pin: GPIO10    # BUSY  — header pin
-  pn5180_miso_pin: GPIO3     # MISO  — enamelled wire
-  pn5180_sck_pin: GPIO4      # SCK   — enamelled wire
+  # **MISO and SCK are swapped relative to the first drawing, and that is
+  # fine.** They were soldered the other way round, and on the C3 SPI goes
+  # through the GPIO matrix — either pin serves either signal, and ESPHome
+  # takes them from here. Changing two lines was cheaper and safer than
+  # desoldering two wires beside a mounted C3.
+  pn5180_miso_pin: GPIO4     # MISO  — enamelled wire
+  pn5180_sck_pin: GPIO3      # SCK   — enamelled wire
 
   # **BENCH VALUE. The production value is `3h` — raise it before leaving
   # the device running.**

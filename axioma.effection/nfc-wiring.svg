@@ -19,8 +19,8 @@
     <text x="208" y="242">GPIO5</text>
     <text x="208" y="268">GPIO6</text>
     <text x="208" y="294">GPIO7</text>
-    <text x="208" y="320">GPIO3</text>
-    <text x="208" y="346">GPIO4</text>
+    <text x="208" y="320">GPIO4</text>
+    <text x="208" y="346">GPIO3</text>
     <text x="208" y="372">GPIO10</text>
     <text x="208" y="398">GND</text>
   </g>
