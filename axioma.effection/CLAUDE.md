@@ -1783,6 +1783,50 @@ intact.
 That is a hypothesis, not a diagnosis. But it is free, and after it there
 are no free moves left.
 
+#### Considered and killed by this file's own table: a crystal harmonic
+
+The PN5180 runs a **27.12 MHz** crystal, and its harmonics land across the
+2.4 GHz band roughly every 27 MHz — 2413.7, 2440.8 and 2467.9 MHz. Every
+failure recorded here has been on **channel 2** (2417) or **channel 6**
+(2437), which puts a harmonic 3.3 and 3.8 MHz from the channel centre, well
+inside the 20 MHz passband. The source would be 6 mm under the antenna, in
+the near field.
+
+The arithmetic is suggestive and the mechanism is real. **The timeline
+falsifies it anyway, from both directions:**
+
+| Row | What it does to the hypothesis |
+|---|---|
+| 12:29, component **reading**, network **worked** | The module was initialised, the oscillator running, the field cycling — and Wi-Fi held |
+| 13:xx, stage 2 **out**, **never again** | The module was uninitialised, the same state in which it had worked five times — and Wi-Fi failed |
+
+The module's **operation** does not track the fault in either direction, so
+an emission that exists only while it operates cannot be the cause.
+
+Recorded because the channel coincidence is genuinely close and will look
+like a lead to the next person who notices it. **It was checked and it does
+not survive.** The test that would have settled it — moving the access point
+to channel 4 or 9 — is unavailable in any case: the Deco X60 exposes no
+manual channel selection.
+
+#### The table's real content is time, not configuration
+
+Nothing in the list of successes and failures separates them by
+configuration. **What separates them is 13:xx on day 2.** Everything before
+it worked in some configuration; nothing after it has worked in any. The
+only event in between is the trip to the meter and back.
+
+**And one row of the exclusion table is weaker than it reads.** "The board —
+two different C3s, same symptom" rests on the first board, and **every
+first-board entry is from day 1, before the fault existed.** The sustained
+failure has only ever been observed on the second C3. If the first board has
+not been powered since 13:xx, that exclusion is evidence older than the
+thing it excludes.
+
+This is not a claim that the second board is faulty — it passed the pin test
+on all seven pins, and a radio fault that appears only after a specific hour
+is an odd shape. It is a note that the row should not be leaned on.
+
 #### It does not have to be solved
 
 What this node was built to answer is a one-off question: is `wMBus T1` on,
