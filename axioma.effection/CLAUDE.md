@@ -1531,6 +1531,31 @@ neither explains it.
 A phone also joins `IoT` on request, so the access point accepts new
 associations.
 
+#### The configurations were compared line for line, and the one difference is innocent
+
+onewire is a C3 in the same room, on the same ESPHome version, and it
+associates without trouble. Comparing the two configurations, **everything
+before the sensor blocks is identical** — board, framework, `api`, `ota`,
+`wifi`, `captive_portal`, and the same shared secrets — with one exception:
+
+```yaml
+logger:
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG    # only in axioma-nfc
+```
+
+That suggested a mechanism with a feedback loop, which would have explained
+why the fault got worse rather than staying constant: the log goes out over
+USB and there is a great deal of it, the four-way handshake's timeouts are
+in the hundreds of milliseconds, a failed association produces more log
+lines, and so the next attempt is more likely to fail.
+
+**Lowering the level to `INFO` — over 90 % less output — changed nothing.**
+So the volume is not the cause, and by extension neither is the mechanism.
+
+That leaves the two configurations equivalent in every respect that could
+plausibly touch association, and the fault still follows one of them.
+
 **Nothing is left worth guessing at.** The useful move is below.
 
 #### It does not have to be solved
