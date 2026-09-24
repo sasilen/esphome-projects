@@ -1355,10 +1355,31 @@ Error Flags Raw: 00 00 00 00
 
 **One read takes 1027 ms.** That is the measurement this file has been
 asking for since the polling budget was first written, and it settles the
-interval: at three hours, 8 reads a day is about 8 s against a budget of
-40 s/day — 20 %, with the margin the rationale asks for. The bench value of
-2 min would be 720 reads a day and would burn the month's credit in a bit
-over a day.
+interval:
+
+| Interval | Reads/day | Consumption | Of budget |
+|---|---|---|---|
+| 1 h | 24 | 24.6 s/day | 62 % |
+| **2 h** | **12** | **12.3 s/day** | **31 %** — chosen |
+| 3 h | 8 | 8.2 s/day | 21 % |
+
+**Totals are correct at any of these**, because water is cumulative. What
+changes is how lumpy the hourly graph looks, since Home Assistant computes
+statistics per hour.
+
+Two hours was chosen over one for a reason that is about uncertainty rather
+than the arithmetic: **the 20 min/month credit is a general figure, not
+measured from this meter**, and 1027 ms is a single sample. If both are 30 %
+out the wrong way, an hourly interval is already over budget. A threefold
+margin covers that.
+
+And being wrong is cheap: the interface locks until the hour turns, nothing
+breaks, and `Consecutive read errors` shows it. **Watching that sensor for a
+month is the only way to learn what the credit actually is** — after which
+the interval can be set from measurement instead of assumption.
+
+The bench value of 2 min would be 720 reads a day and would burn the month's
+credit in a bit over a day.
 
 **The Meter ID is not the nameplate serial.** The repo's placeholder was an
 assumption from the nameplate and it was wrong. The real number stays out of

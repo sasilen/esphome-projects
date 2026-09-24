@@ -13,8 +13,9 @@ The NFC route works end to end. On day 2 the whole chain ran: inventory,
 M-Bus checksum, and a full readout — 255.547 m³, water 15.1 °C, external
 18.0 °C, battery 91 %, error flags all zero, 847 days of operating time.
 
-**One read takes 1027 ms**, which settles the polling interval at three
-hours: 8 reads a day, about 20 % of the meter's communication credit.
+**One read takes 1027 ms**, which settles the polling interval at two
+hours: 12 reads a day, about 31 % of the meter's communication credit — a
+threefold margin against a budget figure that is itself an assumption.
 
 Two things the repo had guessed wrong came out of it: **the Meter ID is not
 the nameplate serial**, and the alignment to the meter's coil was found by

@@ -148,12 +148,32 @@ qalcosonicnfc:
   pn5180_miso_pin: GPIO4     # MISO  — enamelled wire
   pn5180_sck_pin: GPIO3      # SCK   — enamelled wire
 
-  # **Three hours, and the number behind it is now measured.**
+  # **Two hours, and the number behind it is now measured.**
   #
   # One successful read took **1027 ms** — the `took a long time for an
-  # operation` warning reports it directly. At three hours that is 8 reads
-  # per day, about 8 s/day against a budget of 40 s/day: **20 %, with the
-  # margin the rationale asks for.**
+  # operation` warning reports it directly. At two hours that is 12 reads a
+  # day, about 12.3 s/day against a budget of 40 s/day: **31 %, a bit over
+  # a threefold margin.**
+  #
+  #   1 h   24 reads   24.6 s/day   62 %
+  #   2 h   12 reads   12.3 s/day   31 %   ← here
+  #   3 h    8 reads    8.2 s/day   21 %
+  #
+  # **Totals are correct at any of these** — water is cumulative. What
+  # changes is how lumpy the hourly graph looks in Home Assistant, whose
+  # statistics are computed per hour.
+  #
+  # One hour is defensible and fits that grid exactly, but **two of the
+  # inputs are assumptions rather than measurements**: the 20 min/month
+  # credit comes from a general source, not from this meter, and 1027 ms is
+  # a single sample that grows if the coupling weakens. If both are 30 %
+  # out the wrong way, an hourly interval is already over.
+  #
+  # **Being wrong is cheap and visible.** If the credit runs out the
+  # interface locks until the hour turns and nothing breaks, and the
+  # `Consecutive read errors` sensor below shows it. That is also the only
+  # way to find out what the credit actually is — watch it for a month and
+  # the interval can be set from measurement instead of assumption.
   #
   # The bench value of 2 min would be 720 reads a day and would burn the
   # month's credit in a bit over a day. It was harmless only while the
@@ -176,7 +196,7 @@ qalcosonicnfc:
   # That is therefore also the moment to raise it: measure the duration of
   # one read from the log timestamps and derive the interval from it with a
   # factor of 2–3. Rationale and table: CLAUDE.md.
-  update_interval: 3h
+  update_interval: 2h
 
   # **Required, although it looks optional.** `timepoint_sensor` is the
   # component's only entity whose default is an empty `{}` rather than
