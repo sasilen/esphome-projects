@@ -1827,6 +1827,58 @@ This is not a claim that the second board is faulty — it passed the pin test
 on all seven pins, and a radio fault that appears only after a specific hour
 is an odd shape. It is a note that the row should not be leaned on.
 
+#### Neither working build has a single extra electrical component
+
+Checked directly, because "we are missing a part" would have been the
+cheapest possible explanation:
+
+| Build | Everything between the module and the ESP |
+|---|---|
+| **Wolfrax** | 150 mm male-female jumper wires. That is the entire list |
+| **kosla-dev** | A custom 2-layer adapter PCB carrying **no components** — its hardware list is the XIAO, the PN5180, a 2.54 mm header strip, the PCB and a printed mount |
+| here | A 4-pin header and five enamelled wires |
+
+**No capacitor, no level shifter, no pull-ups, in either.** Wolfrax's BOM is
+jumper wires, a breadboard, a USB-C cable and a wall charger, and it notes
+the ESP32-C6 and PN5180 together "draw well under 1A even with the RF field
+active".
+
+So this build is not missing a part, and the bulk capacitance that is absent
+here is absent from both working builds too. **The difference between them
+and this one is mechanical, and only mechanical.**
+
+One number transfers directly: **Wolfrax runs SPI over 150 mm jumper wires
+in production.** This file has carried "SPI at 2 MHz tolerates 10–20 cm" as
+an assertion since the module was chosen. It is now a working build rather
+than an estimate.
+
+#### If the C3 is relocated, cut rather than desolder
+
+The obstacle is not the nine new joints but the nine old ones — and four of
+them are a through-hole header, which is the worst kind to remove and the
+kind that has already cost this project two lifted pads.
+
+**It can be skipped entirely.** Cut the four header pins and the five
+enamelled wires close to the C3 with side cutters. That leaves four pin
+stubs and five wire ends standing on the module, all in open air and easy to
+solder to, and **the PN5180 never sees an iron.** The old C3 is sacrificed;
+there are six on the shelf.
+
+| | Cut | Desolder |
+|---|---|---|
+| Joints to remove | **none** | 9, four of them through-hole |
+| Heat applied to the module | **none** | four pins |
+| Risk to `JP1`'s pads | none | the failure this project has already had twice |
+
+**And the labour is the same whichever board goes on the far end**, which
+makes that the moment to choose it rather than a separate decision:
+
+| Board | Cost | Case for it |
+|---|---|---|
+| A spare C3 | nothing | Tests the hypothesis. Wolfrax's 150 mm is the precedent |
+| **XIAO ESP32-C3 + u.FL** | ~€10 | kosla-dev's exact build — the only one **demonstrated** with this meter and this component |
+| D1 mini Pro + u.FL | ~€8 | Also changes the Wi-Fi stack, but ESP8266 support is untested and there are three spare pins with no margin. **The plain D1 mini has no u.FL and would change nothing** |
+
 #### It does not have to be solved
 
 What this node was built to answer is a one-off question: is `wMBus T1` on,
