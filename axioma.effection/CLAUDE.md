@@ -1337,7 +1337,76 @@ still move, and the fault would show only later.
 
 (Both were subsequently measured good.)
 
-### Open: the Wi-Fi fault follows the PN5180, and the mechanism is unknown
+### OPEN PROBLEM: the assembled node will not stay on Wi-Fi
+
+Read this section first if you come back to this. Everything below it is the
+working-out, including several retractions.
+
+**The symptom.** The node associates occasionally and mostly does not.
+Failures are `Auth Expired`, `Authentication Failed`, `4-Way Handshake
+Timeout` and `Handshake Failed`, in no particular order. Scans are normal
+and the access point is audible at −53 dB. **The device hears the access
+point; the access point never completes the handshake.**
+
+**The record of when it has been on the network:**
+
+| When | Board | Stage 2 | `power_save_mode` | Network |
+|---|---|---|---|---|
+| after soldering, day 1 | first | out | no | worked, on the 6th round |
+| day 1, 14:36 | first | active, component FAILED | no | worked |
+| day 1, isolation test | first | out | no | worked |
+| day 1, 15:32 and 17:25 | first | active, FAILED | NONE | worked |
+| day 2, 10:21 | second | out (pin test) | NONE | worked |
+| **day 2, 12:29 and 12:31** | second | **active, component reading** | no | **worked** |
+| day 2, 13:xx onwards | second | out, then active | no | never again |
+
+**There is no consistent factor among the successes.** It has worked with
+the component disabled, with it present and failed, and with it actively
+reading. It has failed with the component disabled.
+
+**The one line that stands out is 13:xx.** Everything before it worked at
+some point; nothing after it has worked at all, in any configuration. The
+only event in between was carrying the board to the meter and back.
+
+**Excluded by measurement, not by argument:**
+
+| | How |
+|---|---|
+| The board | two different C3s, same symptom |
+| Signal, distance, the meter's metal | `Auth Expired` at −53 dB standing next to the access point |
+| Power source | the same laptop USB throughout |
+| `power_save_mode: NONE` | removed, no change; it was never a fix |
+| Transmit power | `output_power: 8.5dB`, no change |
+| Supply shorts | `5V ↔ GND`, `3V3 ↔ GND`, `5V ↔ 3V3` measured open repeatedly |
+| Loose wiring | inspected |
+| Resets and brownouts | priority decayed to −15 within one boot, no banner in between |
+| The network | the owner's call, four times, and right every time |
+| The PN5180 itself | answers, initialises, drives the RF field, issues inventories |
+
+**Two explanations were reached and both were retracted:** that the PN5180's
+ground plane detunes the C3's antenna (killed by the 12:29 success with the
+same geometry), and that the supply dips during transmit bursts (killed by
+the transmit-power cut changing nothing).
+
+**Nothing else is worth guessing at.** The useful move is below.
+
+#### It does not have to be solved
+
+What this node was built to answer is a one-off question: is `wMBus T1` on,
+in which mode, what are the schedule masks, and has transport mode been
+released. **The NFC side works and the serial port works.** A laptop at the
+meter with a USB cable answers all four without Wi-Fi being involved:
+
+```sh
+cat /dev/ttyACM0 | grep -a --line-buffered -E "qalcosonicnfc|Water|Meter|Serial"
+```
+
+The component runs its read cycle with no network — that has been verified.
+And the answer decides whether a permanent node is worth any further work:
+if wM-Bus turns out to be switched on, the radio node is the right route and
+this Wi-Fi problem never needs solving.
+
+### Working notes: the Wi-Fi fault follows the PN5180
 
 **State at the end of the second day.** The node does not stay on the
 network once the PN5180 is attached, and everything else has been excluded
