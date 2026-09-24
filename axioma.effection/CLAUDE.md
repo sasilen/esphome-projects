@@ -1518,6 +1518,7 @@ and not this geometry.
 | The antenna, as **attenuation** | access points visible at −30 dB; a 30–40 dB loss cannot hide behind that. **Mismatch is a separate question and is not excluded** — see below |
 | A client limit on the SSID | a phone joins `IoT` on request — the network does accept new associations |
 | **The network** | **properly excluded**: a phone hotspot — independent hardware, sole access point, −30 dB — gives the same `Auth Expired` six times running |
+| The hotspot's security mode | `WPA2` and `WPA3` both tried, no difference — PMF and mixed mode are out |
 | The PN5180 itself | answers, initialises, drives the RF field, issues inventories |
 | A static IP | tried, no change — and it **cannot** help: it removes DHCP, which is downstream of the handshake that fails |
 
@@ -1680,15 +1681,16 @@ the control for this experiment rather than a repeat of an old one.
 
 If that access point rejects any ESPHome C3, the exclusion above is empty.
 
-**The cheapest form of the control needs no flash at all: check the
-hotspot's security mode on the phone.** A `WPA3` or mixed `WPA2/WPA3`
-setting can produce `Auth Expired` on an ESP by itself — mixed mode with
-mandatory PMF is a known source of ESP32 association failures. If that is
-what it is set to, the measurement is void and has to be repeated on
-`WPA2-PSK`.
+**The security mode was the cheap half of the control, and it is settled:
+both `WPA2` and `WPA3` were tried and both give the same failure.** Mixed
+mode with mandatory PMF is a known source of ESP32 association trouble and
+would have explained `Auth Expired` by itself. It does not apply here — the
+mode makes no difference, so the hotspot's security configuration is
+excluded.
 
-If it is already `WPA2-PSK`, the result stands much better and the bare-C3
-flash becomes optional rather than required.
+That leaves the other half, which does need a flash: **a bare C3 against
+this hotspot.** It is the last measurement available that requires no
+soldering, and it decides which way every hotspot conclusion points.
 
 **This is the project's most repeated mistake, recorded here for the fifth
 time: a measurement without a control.** The conclusion is left standing
