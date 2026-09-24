@@ -2,7 +2,7 @@
   <rect width="880" height="940" fill="#E9ECEF"/>
   <rect x="20" y="20" width="840" height="900" fill="none" stroke="#A8B3BC"/>
   <text x="40" y="58" font-size="20" font-weight="700" fill="#16212B" letter-spacing="1.4">NFC-SOLMU &#8212; C3 PN5180:N P&#196;&#196;LLE, SUORA RIMA</text>
-  <text x="40" y="79" font-size="11.5" fill="#5A6772">Musta padi = rimanasta, viiva = lakkalanka, punainen rengas = rikki tai korjattu &#183; harmaa GPIO vedet&#228;&#228;n irti rimasta</text>
+  <text x="40" y="79" font-size="11.5" fill="#5A6772">Musta padi = rimanasta, viiva = lakkalanka &#183; harmaa GPIO vedet&#228;&#228;n irti rimasta ennen asennusta</text>
   <line x1="20" y1="96" x2="860" y2="96" stroke="#A8B3BC"/>
   <text x="40" y="126" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KUVA YLH&#196;&#196;LT&#196; &#183; PN5180-NFC 70 &#215; 39 mm</text>
     <rect x="170" y="170" width="560.0" height="312.0" rx="5" fill="#FFFFFF" stroke="#16212B" stroke-width="1.8"/>
@@ -22,12 +22,12 @@
   <text x="162" y="208.0" font-size="10" fill="#16212B" text-anchor="end">+5V</text>
   <circle cx="192.4" cy="224.7" r="4.6" fill="#FFFFFF" stroke="#16212B" stroke-width="1.2"/>
   <text x="162" y="228.3" font-size="10" fill="#16212B" text-anchor="end">3.3V</text>
-  <circle cx="192.4" cy="245.0" r="4.6" fill="#FFFFFF" stroke="#B03A2E" stroke-width="1.6"/>
+  <circle cx="192.4" cy="245.0" r="4.6" fill="#16212B" stroke="#16212B" stroke-width="1.2"/>
   <text x="162" y="248.6" font-size="10" fill="#16212B" text-anchor="end">RST</text>
   <text x="200.4" y="242.0" font-size="8" fill="#16212B">GPIO5</text>
   <circle cx="315.6" cy="245.0" r="3.8" fill="#FFFFFF" stroke="#16212B" stroke-width="1.1"/>
   <text x="323.6" y="248.4" font-size="9" fill="#16212B">5V</text>
-  <circle cx="192.4" cy="265.4" r="4.6" fill="#FFFFFF" stroke="#B03A2E" stroke-width="1.6"/>
+  <circle cx="192.4" cy="265.4" r="4.6" fill="#16212B" stroke="#16212B" stroke-width="1.2"/>
   <text x="162" y="269.0" font-size="10" fill="#16212B" text-anchor="end">NSS</text>
   <text x="200.4" y="262.4" font-size="8" fill="#16212B">GPIO6</text>
   <circle cx="315.6" cy="265.4" r="3.8" fill="#FFFFFF" stroke="#16212B" stroke-width="1.1"/>
@@ -68,10 +68,6 @@
   <text x="162" y="431.5" font-size="10" fill="#16212B" text-anchor="end">AUX</text>
   <circle cx="192.4" cy="448.2" r="4.6" fill="#FFFFFF" stroke="#16212B" stroke-width="1.2"/>
   <text x="162" y="451.8" font-size="10" fill="#16212B" text-anchor="end">REQ</text>
-  <g fill="none" stroke="#B03A2E" stroke-width="1.6">
-    <circle cx="315.6" cy="367.0" r="6.8"/>
-    <circle cx="315.6" cy="387.3" r="6.8"/>
-  </g>
   <line x1="20" y1="560" x2="860" y2="560" stroke="#A8B3BC"/>
   <g>
     <rect x="80" y="626" width="230" height="11" fill="#FFFFFF" stroke="#16212B" stroke-width="1.4"/>
@@ -83,17 +79,16 @@
   </g>
   <text x="52" y="686" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KYTKENT&#196;</text>
   <g font-size="10.5" fill="#16212B">
-    <text x="52" y="712">rima  <tspan font-weight="700">MOSI</tspan>=GPIO7  <tspan font-weight="700">BUSY</tspan>=GPIO10</text>
-    <text x="52" y="732">lanka <tspan font-weight="700">RST</tspan>=GPIO1  <tspan font-weight="700">NSS</tspan>=GPIO0  <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
-    <text x="52" y="752" fill="#5A6772">irti rimasta: GPIO8 GPIO9 (strapping) &#183; GPIO20 GPIO21 &#8212; UART0, jumittaa SPI:n alustuksen, &#228;l&#228; k&#228;yt&#228;</text>
-    <text x="52" y="770" fill="#B03A2E">GPIO5- ja GPIO6-padit eiv&#228;t nouse t&#228;ss&#228; yksil&#246;ss&#228;: RST ja NSS vedettiin langalla JP1:n nastoista 3 ja 4 kaukorivin padeihin GPIO1 ja GPIO0.</text>
+    <text x="52" y="712">rima  <tspan font-weight="700">RST</tspan>=GPIO5  <tspan font-weight="700">NSS</tspan>=GPIO6  <tspan font-weight="700">MOSI</tspan>=GPIO7  <tspan font-weight="700">BUSY</tspan>=GPIO10</text>
+    <text x="52" y="732">lanka <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
+    <text x="52" y="752" fill="#5A6772">irti rimasta: GPIO8 GPIO9 (strapping) &#183; GPIO20 GPIO21 (UART0 &#8212; jumittaa SPI:n alustuksen, &#228;l&#228; k&#228;yt&#228; niit&#228; korvaajina)</text>
 
     <text x="52" y="786" font-weight="700">Vain SCK osuu silkkipainatukseen.</text>
-    <text x="52" y="803" fill="#5A6772">C3:n silkki sanoo GPIO7=SS &#8212; t&#228;ss&#228; se on MOSI. GPIO5 ja GPIO6 eiv&#228;t ole k&#228;yt&#246;ss&#228;.</text>
+    <text x="52" y="803" fill="#5A6772">C3:n silkki sanoo GPIO5=MISO, GPIO6=MOSI, GPIO7=SS &#8212; t&#228;ss&#228; ne ovat RST, NSS ja MOSI.</text>
     <text x="52" y="819" fill="#5A6772">Toiminnallisesti yhdentekev&#228;&#228;, C3 reititt&#228;&#228; SPI:n matriisin l&#228;pi. Kirjoita kartta levyyn.</text>
 
     <text x="52" y="853" font-weight="700">J&#228;rjestys on pakotettu: C3:n alle ei p&#228;&#228;se kolvilla j&#228;lkeenp&#228;in.</text>
-    <text x="52" y="870" fill="#5A6772">1. viisi lakkalankaa JP1:n padeista &#8212; 2. rima nelj&#228;&#228;n padiin (t&#228;ss&#228; yksil&#246;ss&#228; kahteen), juotos alta</text>
+    <text x="52" y="870" fill="#5A6772">1. viisi lakkalankaa JP1:n padeista &#8212; 2. rima nelj&#228;&#228;n padiin, juotos alta, katkaise tasan</text>
     <text x="52" y="886" fill="#5A6772">3. C3 rimaan, lankojen toiset p&#228;&#228;t kaukoriviin &#8212; 4. vetokevennys</text>
     <text x="52" y="906" fill="#5A6772">USB-C j&#228;&#228; virtapadien yl&#228;puolelle: asennuksessa se ei haittaa, mutta korjaus vaatii C3:n irti.</text>
   </g>
