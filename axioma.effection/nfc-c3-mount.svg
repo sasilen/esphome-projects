@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 940" width="880" height="940" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
   <rect width="880" height="940" fill="#E9ECEF"/>
   <rect x="20" y="20" width="840" height="900" fill="none" stroke="#A8B3BC"/>
-  <text x="40" y="58" font-size="20" font-weight="700" fill="#16212B" letter-spacing="1.4">NFC-SOLMU &#8212; C3 PN5180:N P&#196;&#196;LLE, SUORA RIMA</text>
-  <text x="40" y="79" font-size="11.5" fill="#5A6772">Musta padi = rimanasta, viiva = lakkalanka &#183; harmaa GPIO vedet&#228;&#228;n irti rimasta ennen asennusta</text>
+  <text x="40" y="58" font-size="20" font-weight="700" fill="#16212B" letter-spacing="1.4">NFC NODE &#8212; C3 ON TOP OF THE PN5180, STRAIGHT HEADER</text>
+  <text x="40" y="79" font-size="11.5" fill="#5A6772">Black pad = header pin, line = enamelled wire &#183; grey GPIOs are pulled out of the header before assembly</text>
   <line x1="20" y1="96" x2="860" y2="96" stroke="#A8B3BC"/>
-  <text x="40" y="126" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KUVA YLH&#196;&#196;LT&#196; &#183; PN5180-NFC 70 &#215; 39 mm</text>
+  <text x="40" y="126" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">PLAN VIEW &#183; PN5180-NFC 70 &#215; 39 mm</text>
     <rect x="170" y="170" width="560.0" height="312.0" rx="5" fill="#FFFFFF" stroke="#16212B" stroke-width="1.8"/>
   <rect x="410.0" y="186.0" width="304.0" height="280.0" rx="4" fill="#DDE4EA" stroke="#A8B3BC"/>
-  <text x="562.0" y="338.0" font-size="13" fill="#5A6772" text-anchor="middle">antenni</text>
-  <text x="366.0" y="330.0" font-size="9" fill="#A8B3BC" text-anchor="middle" transform="rotate(-90 366.0 330.0)">L1 L2 sovitus</text>
+  <text x="562.0" y="338.0" font-size="13" fill="#5A6772" text-anchor="middle">antenna</text>
+  <text x="366.0" y="330.0" font-size="9" fill="#A8B3BC" text-anchor="middle" transform="rotate(-90 366.0 330.0)">L1 L2 matching</text>
   <rect x="181.2" y="199.6" width="144.0" height="180.0" rx="4" fill="#16212B" fill-opacity="0.05" stroke="#16212B" stroke-width="1.5" stroke-dasharray="7 4"/>
   <text x="250.0" y="403.6" font-size="10" fill="#5A6772" text-anchor="middle">ESP32-C3 SuperMini 22,5 &#215; 18 mm</text>
   <rect x="218.0" y="201.2" width="72.0" height="10.4" rx="1" fill="#16212B"/>
@@ -73,23 +73,23 @@
     <rect x="80" y="626" width="230" height="11" fill="#FFFFFF" stroke="#16212B" stroke-width="1.4"/>
     <rect x="92" y="606" width="12" height="20" fill="#A8B3BC" stroke="#16212B"/>
     <rect x="80" y="595" width="145" height="11" fill="#FFFFFF" stroke="#16212B" stroke-width="1.4"/>
-    <text x="325" y="637" font-size="9.5" fill="#5A6772">PN5180 1,6 mm &#8212; alapinta mittaria vasten, kelan kohdalta sile&#228;</text>
-    <text x="325" y="618" font-size="9.5" fill="#5A6772">rima: C3 j&#228;&#228; 2,5&#8211;6 mm ilmaan, lakkalangat mahtuvat alle</text>
-    <text x="325" y="601" font-size="9.5" fill="#5A6772">C3 1,2 mm &#183; kokonaiskorkeus ~11 mm</text>
+    <text x="325" y="637" font-size="9.5" fill="#5A6772">PN5180 1.6 mm &#8212; underside against the meter, smooth over the coil</text>
+    <text x="325" y="618" font-size="9.5" fill="#5A6772">header: the C3 sits 2.5&#8211;6 mm up, the wires fit underneath</text>
+    <text x="325" y="601" font-size="9.5" fill="#5A6772">C3 1.2 mm &#183; total height ~11 mm</text>
   </g>
-  <text x="52" y="686" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">KYTKENT&#196;</text>
+  <text x="52" y="686" font-size="11" font-weight="700" fill="#5A6772" letter-spacing="1">WIRING</text>
   <g font-size="10.5" fill="#16212B">
-    <text x="52" y="712">rima  <tspan font-weight="700">RST</tspan>=GPIO5  <tspan font-weight="700">NSS</tspan>=GPIO6  <tspan font-weight="700">MOSI</tspan>=GPIO7  <tspan font-weight="700">BUSY</tspan>=GPIO10</text>
-    <text x="52" y="732">lanka <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
-    <text x="52" y="752" fill="#5A6772">irti rimasta: GPIO8 GPIO9 (strapping) &#183; GPIO20 GPIO21 (UART0 &#8212; jumittaa SPI:n alustuksen, &#228;l&#228; k&#228;yt&#228; niit&#228; korvaajina)</text>
+    <text x="52" y="712">header <tspan font-weight="700">RST</tspan>=GPIO5  <tspan font-weight="700">NSS</tspan>=GPIO6  <tspan font-weight="700">MOSI</tspan>=GPIO7  <tspan font-weight="700">BUSY</tspan>=GPIO10</text>
+    <text x="52" y="732">wire   <tspan font-weight="700">MISO</tspan>=GPIO3  <tspan font-weight="700">SCK</tspan>=GPIO4  <tspan font-weight="700">+5V</tspan>  <tspan font-weight="700">3.3V</tspan>  <tspan font-weight="700">GND</tspan></text>
+    <text x="52" y="752" fill="#5A6772">pulled from the header: GPIO8 GPIO9 (strapping) &#183; GPIO20 GPIO21 (UART0 &#8212; hangs SPI setup, do not use as replacements)</text>
 
-    <text x="52" y="786" font-weight="700">Vain SCK osuu silkkipainatukseen.</text>
-    <text x="52" y="803" fill="#5A6772">C3:n silkki sanoo GPIO5=MISO, GPIO6=MOSI, GPIO7=SS &#8212; t&#228;ss&#228; ne ovat RST, NSS ja MOSI.</text>
-    <text x="52" y="819" fill="#5A6772">Toiminnallisesti yhdentekev&#228;&#228;, C3 reititt&#228;&#228; SPI:n matriisin l&#228;pi. Kirjoita kartta levyyn.</text>
+    <text x="52" y="786" font-weight="700">Only SCK matches the silkscreen.</text>
+    <text x="52" y="803" fill="#5A6772">The C3's silkscreen says GPIO5=MISO, GPIO6=MOSI, GPIO7=SS &#8212; here they are RST, NSS and MOSI.</text>
+    <text x="52" y="819" fill="#5A6772">Functionally irrelevant, the C3 routes SPI through the matrix. Write the map on the board.</text>
 
-    <text x="52" y="853" font-weight="700">J&#228;rjestys on pakotettu: C3:n alle ei p&#228;&#228;se kolvilla j&#228;lkeenp&#228;in.</text>
-    <text x="52" y="870" fill="#5A6772">1. viisi lakkalankaa JP1:n padeista &#8212; 2. rima nelj&#228;&#228;n padiin, juotos alta, katkaise tasan</text>
-    <text x="52" y="886" fill="#5A6772">3. C3 rimaan, lankojen toiset p&#228;&#228;t kaukoriviin &#8212; 4. vetokevennys</text>
-    <text x="52" y="906" fill="#5A6772">USB-C j&#228;&#228; virtapadien yl&#228;puolelle: asennuksessa se ei haittaa, mutta korjaus vaatii C3:n irti.</text>
+    <text x="52" y="853" font-weight="700">The order is forced: there is no getting an iron under the C3 afterwards.</text>
+    <text x="52" y="870" fill="#5A6772">1. five enamelled wires from JP1's pads &#8212; 2. header into four pads, soldered from below</text>
+    <text x="52" y="886" fill="#5A6772">3. C3 onto the header, wire ends into the far row &#8212; 4. 100 &#181;F &#8212; 5. strain relief</text>
+    <text x="52" y="906" fill="#5A6772">USB-C ends up above the supply pads: harmless during assembly, but a repair needs the C3 off.</text>
   </g>
 </svg>
