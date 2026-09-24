@@ -1358,7 +1358,41 @@ return −53 dB and every association dies in authentication. That is a
 transmit-side failure, and transmission is the direction that tolerates
 least.
 
-#### Separated: it is the antenna, not the supply
+#### Retracted: it is not the antenna either, and the timeline says so
+
+The section below concluded that the C3's PCB antenna, sitting on the
+PN5180's ground plane, is the cause. **That is wrong, and one line of the
+timeline kills it:**
+
+| Time | State | Network |
+|---|---|---|
+| 10:21 | bare C3 | worked |
+| **12:29** | **soldered, component active** | **worked** |
+| **12:31** | **read cycle running** | **worked** |
+| 13:xx onwards | the same assembly | fails everywhere |
+
+**The assembly worked soldered, with the component running.** The ground
+plane was in exactly the same place then as now. If the copper were the
+cause, 12:29 could not have happened.
+
+So the variable is **the trip to the meter and back** — the only thing that
+happened between 12:31 and the first failure. Something changed physically:
+a wire, a joint, or the 330 µF and its legs, when the board was pressed
+against the meter.
+
+**What that implies for the transmit-power experiment below:** cutting power
+did not help, which still argues against a supply dip being the *whole*
+story — but a short created on the trip would load the supply in a way that
+no software setting can compensate for, and that is untested.
+
+**The measurement that would settle it needs no iron:** with USB out,
+`5V ↔ GND`, `3V3 ↔ GND` and `5V ↔ 3V3` must all read open. A short there
+would not stop SPI — the chip still gets a supply — but it would load the
+same five volts the radio needs during a transmit burst. It is the first
+explanation that covers both that it worked at 12:29 and that it does not
+now.
+
+#### The experiment that was read as separating antenna from supply
 
 `output_power: 8.5dB` was flashed — a two-thirds cut in the transmit current
 peak. **No change:** `Handshake Failed` and `Authentication Failed` at
