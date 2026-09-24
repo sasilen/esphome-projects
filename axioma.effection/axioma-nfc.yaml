@@ -96,6 +96,50 @@ wifi:
   # power does not; if the cause is the antenna being detuned by the
   # PN5180's ground plane, it will not help. See CLAUDE.md.
 
+  # **A static address, and it is instrumentation rather than a fix.**
+  #
+  # The address is the owner's, given for this node, and it has to stay
+  # **outside the router's DHCP pool.** A collision is intermittent and
+  # presents as a node that is sometimes unreachable — indistinguishable
+  # from the fault being investigated here, and therefore able to spoil the
+  # measurement rather than merely inconvenience it.
+  #
+  # **`dns1` is `.2`, not the gateway.** The resolver on this network is a
+  # separate host, so do not "correct" it to `.1` — that is the kind of
+  # tidying that looks right and quietly breaks name resolution. It matters
+  # little to this node either way, since the API and OTA are reached by
+  # address, but wrong is wrong.
+  #
+  # **It cannot fix the current symptom, and that is worth stating so it is
+  # not read later as an attempted cure.** A static address removes DHCP,
+  # and DHCP happens *after* association, authentication and the four-way
+  # handshake. What fails now is the handshake — `Auth Expired`,
+  # `4-Way Handshake Timeout` — i.e. a step upstream of the one this
+  # removes. It was also tried once already and changed nothing.
+  #
+  # **What it buys is observability, and that changed when the logger did.**
+  # With `hardware_uart` removed the serial log is gone, so the only way to
+  # watch this node is from the server — and mDNS has already misled once
+  # here, with `esphome` still resolving a stale address after it had been
+  # changed. A fixed address plus `use_address` takes mDNS out of the chain
+  # entirely:
+  #
+  #   ping -c 3 192.168.1.42        answers = the handshake completed
+  #   no answer                      it did not, and no log is needed to know
+  #
+  # That turns a question that needed a serial cable into one command.
+  manual_ip:
+    static_ip: 192.168.1.42
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.2
+
+  # **Point the tooling at the address, not at the name.** Without this
+  # `esphome` resolves `axioma-nfc.local` over mDNS, which is the part that
+  # went stale before. This is a tooling setting and does not affect the
+  # device's own behaviour.
+  use_address: 192.168.1.42
+
   ap:
     ssid: "Axioma NFC fallback"
     password: !secret ap_password

@@ -1519,6 +1519,7 @@ and not this geometry.
 | A client limit on the SSID | a phone joins `IoT` on request — the network does accept new associations |
 | The network | the owner's call, four times, and right every time |
 | The PN5180 itself | answers, initialises, drives the RF field, issues inventories |
+| A static IP | tried, no change — and it **cannot** help: it removes DHCP, which is downstream of the handshake that fails |
 
 **Two explanations were reached and both were retracted:** that the PN5180's
 ground plane detunes the C3's antenna (killed by the 12:29 success with the
@@ -1578,6 +1579,40 @@ That leaves the two configurations equivalent in every respect that could
 plausibly touch association, and the fault still follows one of them.
 
 **Nothing is left worth guessing at.** The useful move is below.
+
+#### The static address is kept, as an instrument rather than a remedy
+
+`manual_ip` and `use_address` are now in the configuration. **Neither is
+expected to change the fault**, for the reason in the table above, and the
+comment in the YAML says so in as many words — otherwise a later reader
+finds a static IP in a file about a Wi-Fi problem and reasonably concludes
+it was the fix.
+
+The reason to keep it is that **the observation method changed when
+`hardware_uart` was removed.** The serial log is gone, so the node is
+watched from the server, and mDNS has already produced one wrong answer here
+— `esphome` kept resolving a stale address after it had been changed on the
+device. A fixed address removes name resolution from the chain and reduces
+the question to one command:
+
+```sh
+ping -c 3 192.168.1.42
+```
+
+**This is the only node in the repo with a static address**, and the
+exception is deliberate: everything else here is on DHCP and reached by
+name. The reason is this fault and the loss of the serial log, not a change
+of convention — `dns1` points at `.2` rather than the gateway, because the
+resolver on this network is a separate host.
+
+An answer means association, authentication and the four-way handshake all
+completed. Silence means they did not. **That distinction previously needed
+a USB cable**, and it is the distinction this whole section turns on.
+
+One hazard that comes with it: **the address has to be outside the router's
+DHCP pool.** A collision is intermittent and presents as a node that is
+sometimes unreachable — indistinguishable from the fault being investigated,
+and therefore capable of wasting the whole measurement.
 
 #### It does not have to be solved
 
